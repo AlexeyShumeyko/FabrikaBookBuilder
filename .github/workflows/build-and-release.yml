@@ -150,17 +150,23 @@ jobs:
         $notes += "- Обновления из последнего коммита`n"
         $notes | Out-File -FilePath ./release-notes.md -Encoding UTF8
         
-    - name: Find installer file
+    - name: Find installer file and create ZIP
       id: find_installer
       run: |
         $installerExe = Get-ChildItem -Path . -Filter "BookBuilder-Studio-Setup-${{ env.VERSION }}.exe" -ErrorAction SilentlyContinue
-        if ($installerExe) {
-          echo "INSTALLER_FILE=$($installerExe.Name)" >> $env:GITHUB_ENV
-          echo "INSTALLER_FILE=$($installerExe.Name)" >> $env:GITHUB_OUTPUT
-        } else {
+        if (-not $installerExe) {
           Write-Error "Installer .exe file not found"
           exit 1
         }
+        
+        # Создаём ZIP архив с установщиком
+        $zipFileName = "BookBuilder-Studio-Setup-${{ env.VERSION }}.zip"
+        Compress-Archive -Path $installerExe.FullName -DestinationPath $zipFileName -Force
+        
+        echo "INSTALLER_EXE=$($installerExe.Name)" >> $env:GITHUB_ENV
+        echo "INSTALLER_EXE=$($installerExe.Name)" >> $env:GITHUB_OUTPUT
+        echo "INSTALLER_ZIP=$zipFileName" >> $env:GITHUB_ENV
+        echo "INSTALLER_ZIP=$zipFileName" >> $env:GITHUB_OUTPUT
         
     - name: Create Release
       uses: softprops/action-gh-release@v2
@@ -169,8 +175,66 @@ jobs:
         name: Release v${{ env.VERSION }}
         body_path: ./release-notes.md
         files: |
-          ${{ env.INSTALLER_FILE }}
+          ${{ env.INSTALLER_ZIP }}
         draft: false
         prerelease: false
         generate_release_notes: true
+        
+    - name: Update previous releases with new installer
+      run: |
+        $token = "${{ secrets.GITHUB_TOKEN }}"
+        $owner = "AlexeyShumeyko"
+        $repo = "FabrikaBookBuilder"
+        $newInstallerZip = "${{ env.INSTALLER_ZIP }}"
+        $newInstallerExe = "${{ env.INSTALLER_EXE }}"
+        $currentVersion = "${{ env.VERSION }}"
+        
+        # Получаем все релизы через GitHub API
+        $headers = @{
+          "Authorization" = "Bearer $token"
+          "Accept" = "application/vnd.github+json"
+          "X-GitHub-Api-Version" = "2022-11-28"
+        }
+        
+        Write-Host "Fetching all releases..."
+        $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/$owner/$repo/releases" -Headers $headers -Method Get
+        
+        # Обновляем каждый предыдущий релиз
+        foreach ($release in $releases) {
+          if ($release.tag_name -eq "v$currentVersion") {
+            Write-Host "Skipping current release: $($release.tag_name)"
+            continue
+          }
+          
+          Write-Host "Updating release: $($release.tag_name)"
+          
+          # Удаляем старые установщики из релиза
+          foreach ($asset in $release.assets) {
+            if ($asset.name -like "BookBuilder-Studio-Setup-*.zip" -or $asset.name -like "BookBuilder-Studio-Setup-*.exe") {
+              Write-Host "Deleting old asset: $($asset.name)"
+              Invoke-RestMethod -Uri $asset.url -Headers $headers -Method Delete
+            }
+          }
+          
+          # Загружаем новый установщик в этот релиз
+          Write-Host "Uploading new installer to release: $($release.tag_name)"
+          $uploadUrl = $release.upload_url -replace '\{.*\}', "?name=$newInstallerZip"
+          
+          try {
+            $fileContent = [System.IO.File]::ReadAllBytes($newInstallerZip)
+            $uploadHeaders = @{
+              "Authorization" = "Bearer $token"
+              "Accept" = "application/vnd.github+json"
+              "X-GitHub-Api-Version" = "2022-11-28"
+              "Content-Type" = "application/zip"
+            }
+            
+            # Загружаем файл напрямую
+            Invoke-RestMethod -Uri $uploadUrl -Headers $uploadHeaders -Method Post -Body $fileContent
+            Write-Host "Successfully updated release: $($release.tag_name)"
+          } catch {
+            Write-Host "Error updating release $($release.tag_name): $($_.Exception.Message)"
+            # Не прерываем выполнение, если не удалось обновить старый релиз
+          }
+        }
 

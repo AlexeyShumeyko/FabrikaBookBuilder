@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -80,19 +81,19 @@ namespace PhotoBookRenamer.Services
                 var releases = await _client.Repository.Release.GetLatest(Owner, Repo);
                 var version = releases.TagName.TrimStart('v');
                 
-                // Ищем EXE файл с установщиком (приоритет) или ZIP файл (fallback)
+                // Ищем ZIP файл с установщиком (приоритет, так как теперь установщик упакован в ZIP)
                 foreach (var asset in releases.Assets)
                 {
-                    if (asset.Name.Contains("BookBuilder-Studio-Setup") && asset.Name.EndsWith(".exe"))
+                    if (asset.Name.Contains("BookBuilder-Studio-Setup") && asset.Name.EndsWith(".zip"))
                     {
                         return asset.BrowserDownloadUrl;
                     }
                 }
                 
-                // Fallback на ZIP, если EXE не найден
+                // Fallback на EXE, если ZIP не найден (для обратной совместимости)
                 foreach (var asset in releases.Assets)
                 {
-                    if (asset.Name.Contains("BookBuilder-Studio-Setup") && asset.Name.EndsWith(".zip"))
+                    if (asset.Name.Contains("BookBuilder-Studio-Setup") && asset.Name.EndsWith(".exe"))
                     {
                         return asset.BrowserDownloadUrl;
                     }
@@ -118,8 +119,9 @@ namespace PhotoBookRenamer.Services
                 Directory.CreateDirectory(tempDir);
 
                 // Определяем расширение файла из URL
+                var isZip = downloadUrl.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
                 var isExe = downloadUrl.EndsWith(".exe", StringComparison.OrdinalIgnoreCase);
-                var extension = isExe ? ".exe" : ".zip";
+                var extension = isZip ? ".zip" : (isExe ? ".exe" : ".zip");
                 var filePath = Path.Combine(tempDir, $"update{extension}");
                 
                 // Загружаем файл
@@ -149,38 +151,63 @@ namespace PhotoBookRenamer.Services
                     }
                 }
 
+                // Если это ZIP - распаковываем и ищем EXE установщик
+                if (isZip)
+                {
+                    var extractPath = Path.Combine(tempDir, "extracted");
+                    Directory.CreateDirectory(extractPath);
+                    ZipFile.ExtractToDirectory(filePath, extractPath);
+
+                    // Ищем EXE установщик в распакованном архиве
+                    var installerExe = Directory.GetFiles(extractPath, "*.exe", SearchOption.AllDirectories)
+                        .FirstOrDefault(f => Path.GetFileName(f).Contains("BookBuilder-Studio-Setup"));
+                    
+                    if (installerExe != null && File.Exists(installerExe))
+                    {
+                        var processInfo = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = installerExe,
+                            UseShellExecute = true,
+                            Verb = "runas" // Запуск от имени администратора
+                        };
+
+                        System.Diagnostics.Process.Start(processInfo);
+                        
+                        // Закрываем текущее приложение
+                        await Task.Delay(1000);
+                        System.Windows.Application.Current.Shutdown();
+                        
+                        return true;
+                    }
+                    
+                    // Fallback: ищем install.bat (для обратной совместимости)
+                    var installerPath = Path.Combine(extractPath, "install.bat");
+                    if (File.Exists(installerPath))
+                    {
+                        var processInfo = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = installerPath,
+                            WorkingDirectory = extractPath,
+                            UseShellExecute = true,
+                            Verb = "runas" // Запуск от имени администратора
+                        };
+
+                        System.Diagnostics.Process.Start(processInfo);
+                        
+                        // Закрываем текущее приложение
+                        await Task.Delay(1000);
+                        System.Windows.Application.Current.Shutdown();
+                        
+                        return true;
+                    }
+                }
+                
                 // Если это EXE установщик - запускаем напрямую
                 if (isExe)
                 {
                     var processInfo = new System.Diagnostics.ProcessStartInfo
                     {
                         FileName = filePath,
-                        UseShellExecute = true,
-                        Verb = "runas" // Запуск от имени администратора
-                    };
-
-                    System.Diagnostics.Process.Start(processInfo);
-                    
-                    // Закрываем текущее приложение
-                    await Task.Delay(1000);
-                    System.Windows.Application.Current.Shutdown();
-                    
-                    return true;
-                }
-                
-                // Если это ZIP - распаковываем и запускаем install.bat
-                var extractPath = Path.Combine(tempDir, "extracted");
-                Directory.CreateDirectory(extractPath);
-                ZipFile.ExtractToDirectory(filePath, extractPath);
-
-                // Запускаем установщик
-                var installerPath = Path.Combine(extractPath, "install.bat");
-                if (File.Exists(installerPath))
-                {
-                    var processInfo = new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = installerPath,
-                        WorkingDirectory = extractPath,
                         UseShellExecute = true,
                         Verb = "runas" // Запуск от имени администратора
                     };
