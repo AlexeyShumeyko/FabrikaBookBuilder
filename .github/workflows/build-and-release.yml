@@ -159,8 +159,8 @@ jobs:
           exit 1
         }
         
-        # Создаём ZIP архив с установщиком
-        $zipFileName = "BookBuilder-Studio-Setup-${{ env.VERSION }}.zip"
+        # Создаём ZIP архив с установщиком (без версии в названии)
+        $zipFileName = "BookBuilder-Studio-Setup.zip"
         Compress-Archive -Path $installerExe.FullName -DestinationPath $zipFileName -Force
         
         echo "INSTALLER_EXE=$($installerExe.Name)" >> $env:GITHUB_ENV
@@ -208,9 +208,9 @@ jobs:
           
           Write-Host "Updating release: $($release.tag_name)"
           
-          # Удаляем старые установщики из релиза
+          # Удаляем старые установщики из релиза (с версией и без)
           foreach ($asset in $release.assets) {
-            if ($asset.name -like "BookBuilder-Studio-Setup-*.zip" -or $asset.name -like "BookBuilder-Studio-Setup-*.exe") {
+            if ($asset.name -like "BookBuilder-Studio-Setup*.zip" -or $asset.name -like "BookBuilder-Studio-Setup*.exe") {
               Write-Host "Deleting old asset: $($asset.name)"
               Invoke-RestMethod -Uri $asset.url -Headers $headers -Method Delete
             }

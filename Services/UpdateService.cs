@@ -81,7 +81,16 @@ namespace PhotoBookRenamer.Services
                 var releases = await _client.Repository.Release.GetLatest(Owner, Repo);
                 var version = releases.TagName.TrimStart('v');
                 
-                // Ищем ZIP файл с установщиком (приоритет, так как теперь установщик упакован в ZIP)
+                // Ищем ZIP файл с установщиком (приоритет на файл без версии, затем с версией)
+                foreach (var asset in releases.Assets)
+                {
+                    if (asset.Name == "BookBuilder-Studio-Setup.zip")
+                    {
+                        return asset.BrowserDownloadUrl;
+                    }
+                }
+                
+                // Fallback: ищем ZIP с версией (для обратной совместимости)
                 foreach (var asset in releases.Assets)
                 {
                     if (asset.Name.Contains("BookBuilder-Studio-Setup") && asset.Name.EndsWith(".zip"))
