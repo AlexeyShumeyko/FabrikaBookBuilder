@@ -9,7 +9,7 @@
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <AssemblyName>PhotoBookRenamer</AssemblyName>
     <RootNamespace>PhotoBookRenamer</RootNamespace>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <Authors>PhotoBook Renamer</Authors>
     <Description>Professional photo book renaming application</Description>
   </PropertyGroup>
