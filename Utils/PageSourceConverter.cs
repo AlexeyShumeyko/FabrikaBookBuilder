@@ -15,7 +15,7 @@ namespace PhotoBookRenamer.Utils
         private static readonly System.Collections.Generic.Dictionary<string, BitmapImage> _imageCache = new();
         private static readonly object _cacheLock = new();
         
-        // Метод для очистки кэша конкретного файла
+        // Метод для очистки кэша конкретного файла.
         public static void ClearCacheForFile(string filePath)
         {
             if (string.IsNullOrEmpty(filePath)) return;
