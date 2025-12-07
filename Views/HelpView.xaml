@@ -1,0 +1,1163 @@
+<UserControl x:Class="PhotoBookRenamer.Views.HelpView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:PhotoBookRenamer.ViewModels"
+             xmlns:models="clr-namespace:PhotoBookRenamer.Models"
+             xmlns:utils="clr-namespace:PhotoBookRenamer.Utils"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+    <Grid Background="#eceff5" 
+          HorizontalAlignment="Stretch"
+          VerticalAlignment="Stretch"
+          ClipToBounds="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64"/> <!-- Верхняя панель -->
+            <RowDefinition Height="*"/> <!-- Основной контент -->
+        </Grid.RowDefinitions>
+        
+        <!-- Верхняя панель -->
+        <Border Grid.Row="0" 
+                Background="White"
+                BorderBrush="#E7E0EC"
+                BorderThickness="0,0,0,1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="3" ShadowDepth="0" Opacity="0.08" Color="#000000"/>
+            </Border.Effect>
+            <Grid Margin="32,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Заголовок -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Справка и документация" 
+                               FontSize="20"
+                               FontWeight="600"
+                               Foreground="#1C1B1F"
+                               UseLayoutRounding="True"
+                               SnapsToDevicePixels="True"
+                               TextOptions.TextFormattingMode="Display"
+                               TextOptions.TextRenderingMode="ClearType"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock Text="Полное руководство по использованию программы" 
+                               FontSize="14"
+                               Foreground="#625B71"
+                               Margin="0,2,0,0"
+                               UseLayoutRounding="True"
+                               SnapsToDevicePixels="True"
+                               TextOptions.TextFormattingMode="Display"
+                               TextOptions.TextRenderingMode="ClearType"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                </StackPanel>
+                
+                <!-- Кнопка назад -->
+                <Button Grid.Column="1"
+                        Command="{Binding BackCommand}"
+                        Padding="16,8"
+                        Height="36"
+                        FontSize="14"
+                        FontWeight="500"
+                        Margin="0,0,8,0"
+                        Cursor="Hand"
+                        VerticalAlignment="Center">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="White"/>
+                            <Setter Property="Foreground" Value="#6750A4"/>
+                            <Setter Property="BorderBrush" Value="#79747E"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="8"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#E7E0EC"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="←" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Назад" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+        
+        <!-- Основной контент -->
+        <ScrollViewer Grid.Row="1" 
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Padding="32"
+                      PreviewMouseWheel="ScrollViewer_PreviewMouseWheel">
+            <Grid MaxWidth="1400" 
+                  HorizontalAlignment="Stretch"
+                  Margin="0,0,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="250"/> <!-- Боковая навигация -->
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/> <!-- Основной контент -->
+                </Grid.ColumnDefinitions>
+                
+                <!-- Боковая навигация -->
+                <Border Grid.Column="0"
+                        Background="White"
+                        BorderBrush="#E7E0EC"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="Разделы справки" 
+                                   FontSize="16"
+                                   FontWeight="600"
+                                   Foreground="#1C1B1F"
+                                   Margin="0,0,0,16"/>
+                        
+                        <Button Command="{Binding NavigateToSectionCommand}"
+                                CommandParameter="{x:Static models:HelpSection.Overview}"
+                                Tag="{x:Static models:HelpSection.Overview}"
+                                Style="{StaticResource HelpNavButtonStyle}"
+                                Content="Обзор программы"
+                                Margin="0,0,0,8"/>
+                        
+                        <Button Command="{Binding NavigateToSectionCommand}"
+                                CommandParameter="{x:Static models:HelpSection.ProjectList}"
+                                Tag="{x:Static models:HelpSection.ProjectList}"
+                                Style="{StaticResource HelpNavButtonStyle}"
+                                Content="Мои проекты"
+                                Margin="0,0,0,8"/>
+                        
+                        <Button Command="{Binding NavigateToSectionCommand}"
+                                CommandParameter="{x:Static models:HelpSection.StartScreen}"
+                                Tag="{x:Static models:HelpSection.StartScreen}"
+                                Style="{StaticResource HelpNavButtonStyle}"
+                                Content="Выбор режима"
+                                Margin="0,0,0,8"/>
+                        
+                        <Button Command="{Binding NavigateToSectionCommand}"
+                                CommandParameter="{x:Static models:HelpSection.UniqueFolders}"
+                                Tag="{x:Static models:HelpSection.UniqueFolders}"
+                                Style="{StaticResource HelpNavButtonStyle}"
+                                Content="Режим уникальных папок"
+                                Margin="0,0,0,8"/>
+                        
+                        <Button Command="{Binding NavigateToSectionCommand}"
+                                CommandParameter="{x:Static models:HelpSection.Combined}"
+                                Tag="{x:Static models:HelpSection.Combined}"
+                                Style="{StaticResource HelpNavButtonStyle}"
+                                Content="Комбинированный режим"
+                                Margin="0,0,0,8"/>
+                        
+                        <Button Command="{Binding NavigateToSectionCommand}"
+                                CommandParameter="{x:Static models:HelpSection.FAQ}"
+                                Tag="{x:Static models:HelpSection.FAQ}"
+                                Style="{StaticResource HelpNavButtonStyle}"
+                                Content="Частые вопросы (FAQ)"
+                                Margin="0,0,0,8"/>
+                        
+                        <Button Command="{Binding NavigateToSectionCommand}"
+                                CommandParameter="{x:Static models:HelpSection.Troubleshooting}"
+                                Tag="{x:Static models:HelpSection.Troubleshooting}"
+                                Style="{StaticResource HelpNavButtonStyle}"
+                                Content="Ошибки и решения"
+                                Margin="0,0,0,8"/>
+                        
+                        <Button Command="{Binding NavigateToSectionCommand}"
+                                CommandParameter="{x:Static models:HelpSection.License}"
+                                Tag="{x:Static models:HelpSection.License}"
+                                Style="{StaticResource HelpNavButtonStyle}"
+                                Content="Пользовательское соглашение"
+                                Margin="0,0,0,8"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Основной контент -->
+                <Border Grid.Column="2"
+                        Background="White"
+                        BorderBrush="#E7E0EC"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="48">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  PreviewMouseWheel="InnerScrollViewer_PreviewMouseWheel">
+                        <StackPanel>
+                            <StackPanel.Resources>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="TextWrapping" Value="Wrap"/>
+                                </Style>
+                            </StackPanel.Resources>
+                            <!-- Обзор программы -->
+                            <StackPanel Visibility="{Binding CurrentSection, Converter={StaticResource HelpSectionToVisibilityConverter}, ConverterParameter=Overview}">
+                                <TextBlock Text="Введение" 
+                                           FontSize="32"
+                                           FontWeight="700"
+                                           Foreground="#6750A4"
+                                           Margin="0,0,0,24"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,32">
+                                    <Run Text="Fabrika BookBuilder Studio — утилита для быстрого и безопасного переименования изображений и подготовки их к пакетной загрузке в систему печати фотокниг. Программа позволяет автоматически распределять изображения по книгам, назначать общие и индивидуальные развороты, генерировать корректную нумерацию файлов и пакет для загрузки."/>
+                                    <LineBreak/>
+                                    <LineBreak/>
+                                    <Run Text="Важно: все операции выполняются с копиями файлов — оригиналы остаются без изменений." FontWeight="600"/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="Быстрый старт (3 шага)" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="1. Создайте новый проект: Создать проект → введите имя (по умолчанию ставится &quot;Новый проект&quot;)" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="2. Выберите режим работы:" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="   • Режим уникальных папок — каждая выбранная папка превращается в одну книгу" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="20,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="   • Комбинированный режим — вручную формируйте книги и назначьте общие/индивидуальные файлы" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="20,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="3. После заполнения всех слотов — нажмите Экспорт и укажите папку для сохранения итогового пакета" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="Общие понятия и правила нумерации" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,16">
+                                    <Run Text="Книга — набор файлов: одна обложка (индекс 00) и набор разворотов (01, 02, ...)."/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="Формат нумерации: KK-FF.jpg" 
+                                           FontSize="18"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,12"/>
+                                
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="• KK — номер книги (двузначный, от 01 до 99)" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="• FF — номер файла внутри книги (00 — обложка, 01, 02... — развороты)" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="Пример: 05-00.jpg — обложка пятой книги; 05-03.jpg — третий разворот пятой книги" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,12"
+                                               FontStyle="Italic"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="При экспорте программа копирует файлы в одну итоговую папку с корректными именами." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                </StackPanel>
+                            </StackPanel>
+                                        
+                            <!-- Мои проекты -->
+                            <StackPanel Visibility="{Binding CurrentSection, Converter={StaticResource HelpSectionToVisibilityConverter}, ConverterParameter=ProjectList}">
+                                <TextBlock Text="Работа с проектами" 
+                                           FontSize="32"
+                                           FontWeight="700"
+                                           Foreground="#6750A4"
+                                           Margin="0,0,0,24"/>
+                                
+                                <TextBlock Text="Создание проекта" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,16">
+                                    <Run Text="Нажмите Создать проект → введите имя → проект появится в списке «Мои проекты»."/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="Открытие проекта" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,16">
+                                    <Run Text="Нажмите Открыть на карточке проекта."/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="Сохранение" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,16">
+                                    <Run Text="Проекты сохраняются локально в папке настроек приложения. Рекомендуется периодически нажимать Сохранить проект перед экспортом."/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="Удаление проекта" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,16">
+                                    <Run Text="Нажмите Удалить → подтвердите действие."/>
+                                </TextBlock>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#DC143C"
+                                           FontWeight="600"
+                                           LineHeight="28"
+                                           Margin="0,0,0,32">
+                                    <Run Text="ВНИМАНИЕ: удаление проекта не удаляет оригинальные изображения на вашем диске."/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="Статусы проектов" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="⚠️ Не заполнен — проект создан, но не содержит данных" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="✏️ В работе — проект содержит данные и готов к редактированию" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="✓ Готов к печати — проект успешно экспортирован" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                </StackPanel>
+                            </StackPanel>
+                                        
+                            <!-- Выбор режима -->
+                            <StackPanel Visibility="{Binding CurrentSection, Converter={StaticResource HelpSectionToVisibilityConverter}, ConverterParameter=StartScreen}">
+                                            <TextBlock Text="Выбор режима работы" 
+                                                       FontSize="32"
+                                                       FontWeight="700"
+                                                       Foreground="#6750A4"
+                                                       Margin="0,0,0,24"/>
+                                            
+                                            <TextBlock TextWrapping="Wrap"
+                                                       FontSize="16"
+                                                       Foreground="#1C1B1F"
+                                                       LineHeight="28"
+                                                       Margin="0,0,0,32">
+                                                <Run Text="На экране выбора режима вы можете выбрать один из двух режимов работы программы в зависимости от ваших задач."/>
+                                            </TextBlock>
+                                            
+                                            <TextBlock Text="Режим уникальных папок" 
+                                                       FontSize="24"
+                                                       FontWeight="600"
+                                                       Foreground="#1C1B1F"
+                                                       Margin="0,0,0,16"/>
+                                            
+                                            <TextBlock TextWrapping="Wrap"
+                                                       FontSize="16"
+                                                       Foreground="#1C1B1F"
+                                                       LineHeight="28"
+                                                       Margin="0,0,0,16">
+                                                <Run Text="Идеально подходит для пакетной обработки большого количества папок. Каждая папка автоматически преобразуется в отдельную книгу. Обложка определяется автоматически по максимальному разрешению изображения."/>
+                                            </TextBlock>
+                                            
+                                            <TextBlock Text="Когда использовать:" 
+                                                       FontSize="20"
+                                                       FontWeight="600"
+                                                       Foreground="#1C1B1F"
+                                                       Margin="0,16,0,12"/>
+                                            
+                                            <StackPanel Margin="0,0,0,32">
+                                                <TextBlock Text="• У вас есть несколько папок с фотографиями" 
+                                                           FontSize="16"
+                                                           Foreground="#1C1B1F"
+                                                           Margin="0,0,0,12"
+                                                           LineHeight="24"/>
+                                                <TextBlock Text="• Каждая папка должна стать отдельной книгой" 
+                                                           FontSize="16"
+                                                           Foreground="#1C1B1F"
+                                                           Margin="0,0,0,12"
+                                                           LineHeight="24"/>
+                                                <TextBlock Text="• Все папки содержат одинаковое количество файлов" 
+                                                           FontSize="16"
+                                                           Foreground="#1C1B1F"
+                                                           Margin="0,0,0,12"
+                                                           LineHeight="24"/>
+                                                <TextBlock Text="• Нужна автоматическая обработка без ручной настройки" 
+                                                           FontSize="16"
+                                                           Foreground="#1C1B1F"
+                                                           Margin="0,0,0,12"
+                                                           LineHeight="24"/>
+                                            </StackPanel>
+                                            
+                                            <TextBlock Text="Комбинированный режим" 
+                                                       FontSize="24"
+                                                       FontWeight="600"
+                                                       Foreground="#1C1B1F"
+                                                       Margin="0,0,0,16"/>
+                                            
+                                            <TextBlock TextWrapping="Wrap"
+                                                       FontSize="16"
+                                                       Foreground="#1C1B1F"
+                                                       LineHeight="28"
+                                                       Margin="0,0,0,16">
+                                                <Run Text="Предоставляет максимальную гибкость в создании книг. Вы можете вручную формировать структуру книг, перетаскивать файлы на слоты, назначать общие и индивидуальные развороты."/>
+                                            </TextBlock>
+                                            
+                                            <TextBlock Text="Когда использовать:" 
+                                                       FontSize="20"
+                                                       FontWeight="600"
+                                                       Foreground="#1C1B1F"
+                                                       Margin="0,16,0,12"/>
+                                            
+                                            <StackPanel Margin="0,0,0,32">
+                                                <TextBlock Text="• Нужен полный контроль над структурой книг" 
+                                                           FontSize="16"
+                                                           Foreground="#1C1B1F"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,0,0,12"
+                                                           LineHeight="24"/>
+                                                <TextBlock Text="• Хотите вручную распределять файлы по разворотам" 
+                                                           FontSize="16"
+                                                           Foreground="#1C1B1F"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,0,0,12"
+                                                           LineHeight="24"/>
+                                                <TextBlock Text="• Нужно применить один файл ко всем книгам" 
+                                                           FontSize="16"
+                                                           Foreground="#1C1B1F"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,0,0,12"
+                                                           LineHeight="24"/>
+                                                <TextBlock Text="• Книги имеют разное количество разворотов" 
+                                                           FontSize="16"
+                                                           Foreground="#1C1B1F"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,0,0,12"
+                                                           LineHeight="24"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        
+                            <!-- Режим уникальных папок -->
+                            <StackPanel Visibility="{Binding CurrentSection, Converter={StaticResource HelpSectionToVisibilityConverter}, ConverterParameter=UniqueFolders}">
+                                <TextBlock Text="Режим «Уникальные папки» — пошаговое использование" 
+                                           FontSize="32"
+                                           FontWeight="700"
+                                           Foreground="#6750A4"
+                                           Margin="0,0,0,24"/>
+                                
+                                <TextBlock Text="Когда использовать" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,32">
+                                    <Run Text="У вас заранее подготовлены папки, каждая из которых содержит файлы одной книги."/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="Шаги работы" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="1. Нажмите &quot;Выбрать папки…&quot;" 
+                                               FontSize="16"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="2. Выберите несколько папок, содержащих только JPG/JPEG файлы" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,16"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="3. Программа проверит папки:" 
+                                               FontSize="16"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="   • Все папки должны содержать одинаковое количество файлов; если это не так, появится предупреждение" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="20,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="   • Если в папке есть файлы другого формата — появится ошибка" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="20,0,0,16"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="4. После успешной проверки программа создаст карточки книг:" 
+                                               FontSize="16"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="   • Обложка определяется автоматически (изображение с наибольшим разрешением / количеством пикселей)" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="20,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="   • При необходимости выберите другую обложку вручную: клик по миниатюре → Сделать обложкой" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="20,0,0,16"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="5. Проверьте распределение файлов в каждой карточке" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="6. Нажмите Экспорт → выберите папку назначения" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="7. Программа создаст итоговую папку со всеми файлами KK-FF.jpg" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,16"
+                                               LineHeight="24"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="Полезные советы" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="• Если одна папка имеет неправильный набор (например, лишний файл) — удалите её из выбора и загрузите заново" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="• Вы можете изменить имя книги прямо в карточке" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="• Перемещение страниц: используйте кнопки ↑ и ↓ для изменения порядка страниц" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="• Назначение номера страницы: нажмите на номер страницы для ручного ввода" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="• Удаление страницы: нажмите кнопку удаления на странице" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                </StackPanel>
+                            </StackPanel>
+                                        
+                            <!-- Комбинированный режим -->
+                            <StackPanel Visibility="{Binding CurrentSection, Converter={StaticResource HelpSectionToVisibilityConverter}, ConverterParameter=Combined}">
+                                <TextBlock Text="Комбинированный режим — пошаговое использование" 
+                                           FontSize="32"
+                                           FontWeight="700"
+                                           Foreground="#6750A4"
+                                           Margin="0,0,0,24"/>
+                                
+                                <TextBlock Text="Когда использовать" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,32">
+                                    <Run Text="Вам нужен полный контроль над тем, какие файлы куда попадают; смешанные общие/индивидуальные развороты."/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="Подготовка" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="1. Укажите количество книг и количество разворотов на книгу в панели конфигурации" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="2. Нажмите Обновить, программа создаст пустую структуру книг (каждая книга — слот обложки + N разворотов)" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="Заполнение слотов (Drag &amp; Drop)" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="1. Загрузите файлы кнопкой &quot;Загрузить файлы&quot; или перетащите файлы в левую панель" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="2. Перетащите миниатюру из левой панели на нужный слот обложки или разворота" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="3. После Drop программа предложит вариант размещения:" 
+                                               FontSize="16"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="   • Для всех книг — назначить этот файл во все соответствующие слоты всех книг (например, общий 1-й разворот)" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="20,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="   • Только для этой книги — файл будет применён только к выбранному слоту" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="20,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="   • Выбрать книги — вручную отметьте, в какие книги применить (при необходимости)" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="20,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="Для общих слотов поле будет заблокировано для редактирования в тех книгах, где файл применён." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               FontStyle="Italic"
+                                               LineHeight="24"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="Индивидуальные развороты" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="• Если развороты уникальны для каждой книги, перетащите для каждой книги свой файл в соответствующий слот" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="• Важно: если вы хотите, чтобы группа файлов относилась к одной книге (например, развороты мальчика — все от одной книги), перетаскивайте их строго по очереди в слоты той книги" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               FontWeight="600"
+                                               LineHeight="24"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="Проверка и экспорт" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="• Перед экспортом убедитесь, что все обязательные слоты заполнены" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="• Нажмите Экспорт → укажите папку назначения" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="Советы" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           Margin="0,0,0,16"/>
+                                
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="• Для ускорения работы используйте функции Применить ко всем для повторяющихся разворотов/обложек" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="• Используйте сочетания клавиш для быстрой навигации (см. раздел Горячие клавиши)" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="• Изменение количества книг: используйте кнопки + и - в верхней панели" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="• Изменение количества разворотов: используйте кнопки + и - для разворотов" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <!-- FAQ -->
+                            <StackPanel Visibility="{Binding CurrentSection, Converter={StaticResource HelpSectionToVisibilityConverter}, ConverterParameter=FAQ}">
+                                <TextBlock Text="Частые вопросы (FAQ)" 
+                                           FontSize="32"
+                                           FontWeight="700"
+                                           Foreground="#6750A4"
+                                           Margin="0,0,0,24"/>
+                                
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="Q: Изменятся ли оригинальные файлы?" 
+                                               FontSize="18"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,8"/>
+                                    <TextBlock Text="A: Нет. Программа всегда создаёт копии при экспорте и не перезаписывает оригиналы." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               Margin="0,0,0,24"
+                                               LineHeight="24"/>
+                                    
+                                    <TextBlock Text="Q: Как программа определяет обложку в режиме «Уникальные папки»?" 
+                                               FontSize="18"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="26"/>
+                                    <TextBlock Text="A: По наибольшему количеству пикселей (ширина × высота). Вы всегда можете выбрать другую обложку вручную." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,24"
+                                               LineHeight="24"/>
+                                    
+                                    <TextBlock Text="Q: Можно ли изменить нумерацию файлов после экспорта?" 
+                                               FontSize="18"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="26"/>
+                                    <TextBlock Text="A: Не рекомендуется. Не изменяйте имена файлов после экспорта — это может разрушить порядок при загрузке на сайт, который ориентируется на имена." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,24"
+                                               LineHeight="24"/>
+                                    
+                                    <TextBlock Text="Q: Что делать, если в папках разное количество файлов?" 
+                                               FontSize="18"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="26"/>
+                                    <TextBlock Text="A: В режиме уникальных папок все папки должны содержать одинаковое количество файлов. Удалите некорректную папку из выбора или исправьте количество файлов в ней." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,24"
+                                               LineHeight="24"/>
+                                    
+                                    <TextBlock Text="Q: Поддерживаются ли другие форматы изображений кроме JPG/JPEG?" 
+                                               FontSize="18"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="26"/>
+                                    <TextBlock Text="A: Нет, программа поддерживает только JPG/JPEG файлы." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,24"
+                                               LineHeight="24"/>
+                                    
+                                    <TextBlock Text="Q: Где сохраняются проекты?" 
+                                               FontSize="18"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="26"/>
+                                    <TextBlock Text="A: Проекты сохраняются локально в папке настроек приложения. Рекомендуется периодически нажимать Сохранить проект перед экспортом." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,24"
+                                               LineHeight="24"/>
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <!-- Troubleshooting -->
+                            <StackPanel Visibility="{Binding CurrentSection, Converter={StaticResource HelpSectionToVisibilityConverter}, ConverterParameter=Troubleshooting}">
+                                <TextBlock Text="Ошибки и решения (Troubleshooting)" 
+                                           FontSize="32"
+                                           FontWeight="700"
+                                           Foreground="#6750A4"
+                                           Margin="0,0,0,24"/>
+                                
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="Ошибка: «Разное количество файлов найдено в папках»" 
+                                               FontSize="20"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="26"/>
+                                    <TextBlock Text="Причина: одна или несколько папок содержат количество JPG-файлов, отличное от остальных." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="Решение: проверьте и удалите некорректную папку либо исправьте количество файлов в ней." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,24"
+                                               LineHeight="24"/>
+                                    
+                                    <TextBlock Text="Ошибка: «Файл занят другим процессом»" 
+                                               FontSize="20"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="26"/>
+                                    <TextBlock Text="Причина: другой процесс (например, просмотрщик) держит файл открытым." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="Решение: закройте программу, которая использует файл, и повторите операцию." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,24"
+                                               LineHeight="24"/>
+                                    
+                                    <TextBlock Text="Экспорт прерывается" 
+                                               FontSize="20"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="26"/>
+                                    <TextBlock Text="Решение: проверьте права записи в папке назначения и свободное место на диске." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,24"
+                                               LineHeight="24"/>
+                                    
+                                    <TextBlock Text="Файлы не отображаются в списке" 
+                                               FontSize="20"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="26"/>
+                                    <TextBlock Text="Решение: убедитесь, что файлы имеют расширение .jpg или .jpeg (регистр не важен). Проверьте, что файлы не повреждены и доступны для чтения." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,24"
+                                               LineHeight="24"/>
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <!-- License -->
+                            <StackPanel Visibility="{Binding CurrentSection, Converter={StaticResource HelpSectionToVisibilityConverter}, ConverterParameter=License}">
+                                <TextBlock Text="Пользовательское соглашение" 
+                                           FontSize="32"
+                                           FontWeight="700"
+                                           Foreground="#6750A4"
+                                           Margin="0,0,0,24"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,32">
+                                    <Run Text="Настоящее Пользовательское соглашение (далее — «Соглашение») регулирует отношения между разработчиком программного обеспечения Fabrika BookBuilder Studio (далее — «Разработчик») и пользователем данного программного обеспечения (далее — «Пользователь»)."/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="1. Общие положения" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,32">
+                                    <Run Text="1.1. Используя программное обеспечение Fabrika BookBuilder Studio, Пользователь подтверждает, что он прочитал, понял и согласен соблюдать все условия настоящего Соглашения."/>
+                                    <LineBreak/>
+                                    <Run Text="1.2. Разработчик предоставляет программное обеспечение «как есть» (as is), без каких-либо гарантий, явных или подразумеваемых."/>
+                                    <LineBreak/>
+                                    <Run Text="1.3. Разработчик оставляет за собой право изменять условия настоящего Соглашения в любое время без предварительного уведомления."/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="2. Права и ограничения" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,16"/>
+                                
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="2.1. Пользователь получает право использовать программное обеспечение в соответствии с его функциональным назначением." 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,12"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="2.2. Запрещается:" 
+                                               FontSize="16"
+                                               FontWeight="600"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="   • Распространять, копировать, модифицировать программное обеспечение без письменного разрешения Разработчика" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="20,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="   • Использовать программное обеспечение в коммерческих целях без соответствующей лицензии" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="20,0,0,8"
+                                               LineHeight="24"/>
+                                    <TextBlock Text="   • Осуществлять обратную инженерию, декомпиляцию или дизассемблирование программного обеспечения" 
+                                               FontSize="16"
+                                               Foreground="#1C1B1F"
+                                               TextWrapping="Wrap"
+                                               Margin="20,0,0,12"
+                                               LineHeight="24"/>
+                                </StackPanel>
+                                
+                                <TextBlock Text="3. Отказ от ответственности" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,32">
+                                    <Run Text="3.1. Разработчик не несёт ответственности за любой ущерб, прямой или косвенный, возникший в результате использования или невозможности использования программного обеспечения, включая, но не ограничиваясь: потерю данных, упущенную выгоду, прерывание коммерческой деятельности."/>
+                                    <LineBreak/>
+                                    <Run Text="3.2. Разработчик не гарантирует, что программное обеспечение будет работать бесперебойно и без ошибок, соответствовать ожиданиям Пользователя или быть совместимым с любым оборудованием или программным обеспечением."/>
+                                    <LineBreak/>
+                                    <Run Text="3.3. Пользователь несёт полную ответственность за резервное копирование своих данных. Разработчик не несёт ответственности за потерю данных в результате использования программного обеспечения."/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="4. Защита данных" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,32">
+                                    <Run Text="4.1. Программное обеспечение обрабатывает данные локально на устройстве Пользователя. Разработчик не собирает, не хранит и не передаёт третьим лицам персональные данные или содержимое файлов Пользователя."/>
+                                    <LineBreak/>
+                                    <Run Text="4.2. Проекты и настройки сохраняются локально в папке настроек приложения на устройстве Пользователя."/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="5. Интеллектуальная собственность" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,32">
+                                    <Run Text="5.1. Все права на программное обеспечение, включая авторские права, товарные знаки и другие права интеллектуальной собственности, принадлежат Разработчику."/>
+                                    <LineBreak/>
+                                    <Run Text="5.2. Пользователь не получает никаких прав на программное обеспечение, кроме права использования в соответствии с настоящим Соглашением."/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="6. Прекращение использования" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,32">
+                                    <Run Text="6.1. Пользователь вправе прекратить использование программного обеспечения в любое время."/>
+                                    <LineBreak/>
+                                    <Run Text="6.2. Разработчик вправе прекратить предоставление доступа к программному обеспечению в случае нарушения Пользователем условий настоящего Соглашения."/>
+                                </TextBlock>
+                                
+                                <TextBlock Text="7. Заключительные положения" 
+                                           FontSize="24"
+                                           FontWeight="600"
+                                           Foreground="#1C1B1F"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock TextWrapping="Wrap"
+                                           FontSize="16"
+                                           Foreground="#1C1B1F"
+                                           LineHeight="28"
+                                           Margin="0,0,0,32">
+                                    <Run Text="7.1. Настоящее Соглашение регулируется законодательством Российской Федерации."/>
+                                    <LineBreak/>
+                                    <Run Text="7.2. Все споры, возникающие в связи с настоящим Соглашением, подлежат разрешению путём переговоров. В случае невозможности достижения соглашения споры подлежат рассмотрению в суде по месту нахождения Разработчика."/>
+                                    <LineBreak/>
+                                    <Run Text="7.3. Если какое-либо положение настоящего Соглашения признано недействительным, остальные положения остаются в силе."/>
+                                    <LineBreak/>
+                                    <LineBreak/>
+                                    <Run Text="Дата последнего обновления: 2025" FontStyle="Italic"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
+

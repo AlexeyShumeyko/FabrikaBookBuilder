@@ -1,0 +1,808 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:utils="clr-namespace:PhotoBookRenamer.Utils">
+    
+    <!-- Глобальные настройки рендеринга для четкости -->
+    <Style TargetType="FrameworkElement">
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+        <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
+    </Style>
+    
+    <Style TargetType="TextBlock">
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+        <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
+    </Style>
+    
+    <Style TargetType="Border">
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+    </Style>
+    
+    <!-- Converters -->
+    <utils:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    <utils:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+    <utils:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+    <utils:InverseNullToVisibilityConverter x:Key="InverseNullToVisibilityConverter"/>
+    <utils:CountToBooleanConverter x:Key="CountToBooleanConverter"/>
+    <utils:PagesWithoutCoverConverter x:Key="PagesWithoutCoverConverter"/>
+    <utils:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
+    <utils:ErrorToBackgroundConverter x:Key="ErrorToBackgroundConverter"/>
+    <utils:ErrorToForegroundConverter x:Key="ErrorToForegroundConverter"/>
+    <utils:ErrorToFontWeightConverter x:Key="ErrorToFontWeightConverter"/>
+    <utils:PageSlotConverter x:Key="PageSlotConverter"/>
+    <utils:PageByIndexConverter x:Key="PageByIndexConverter"/>
+    <utils:PageFileNameConverter x:Key="PageFileNameConverter"/>
+    <utils:PageSourcePathConverter x:Key="PageSourcePathConverter"/>
+    <utils:PageCommandParameterConverter x:Key="PageCommandParameterConverter"/>
+    <utils:PageMoveUpCommandConverter x:Key="PageMoveUpCommandConverter"/>
+    <utils:PageMoveDownCommandConverter x:Key="PageMoveDownCommandConverter"/>
+    <utils:PageAssignCommandConverter x:Key="PageAssignCommandConverter"/>
+    <utils:FilePathToThumbnailConverter x:Key="FilePathToThumbnailConverter"/>
+    <utils:FileNameConverter x:Key="FileNameConverter"/>
+    <utils:ModeToIconConverter x:Key="ModeToIconConverter"/>
+    <utils:CoverOrPageByIndexConverter x:Key="CoverOrPageByIndexConverter"/>
+    <utils:HelpSectionToVisibilityConverter x:Key="HelpSectionToVisibilityConverter"/>
+    <utils:HelpSectionEqualsConverter x:Key="HelpSectionEqualsConverter"/>
+    <utils:PageSourceConverter x:Key="PageSourceConverter"/>
+    <utils:IsPageFilledConverter x:Key="IsPageFilledConverter"/>
+    <utils:IsBookFilledConverter x:Key="IsBookFilledConverter"/>
+    <utils:StringToBooleanConverter x:Key="StringToBooleanConverter"/>
+    <utils:OrientationToVisibilityConverter x:Key="OrientationToVisibilityConverter"/>
+    <utils:IsSlotFilledConverter x:Key="IsSlotFilledConverter"/>
+    <utils:IsZeroToVisibilityConverter x:Key="IsZeroToVisibilityConverter"/>
+    <utils:IsNotZeroToVisibilityConverter x:Key="IsNotZeroToVisibilityConverter"/>
+    <utils:StatusToRussianConverter x:Key="StatusToRussianConverter"/>
+    <utils:MultiplyConverter x:Key="MultiplyByTwoConverter" Multiplier="2"/>
+    <utils:SlotIndexToPageNumberConverter x:Key="SlotIndexToPageNumberConverter"/>
+    
+    <!-- ============================================ -->
+    <!-- ЦВЕТОВАЯ ПАЛИТРА MATERIAL YOU (ИЗ HTML ШАБЛОНА) -->
+    <!-- ============================================ -->
+    
+    <!-- Основные цвета Material You (точные значения из HTML) -->
+    <SolidColorBrush x:Key="PrimaryColor" Color="#7C3AED"/>
+    <SolidColorBrush x:Key="PrimaryLight" Color="#EDE9FE"/>
+    <SolidColorBrush x:Key="PrimaryDark" Color="#6D28D9"/>
+    <SolidColorBrush x:Key="PrimaryContainer" Color="#F5F3FF"/>
+    <SolidColorBrush x:Key="OnPrimary" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="OnPrimaryContainer" Color="#1E293B"/>
+    
+    <SolidColorBrush x:Key="SecondaryColor" Color="#625B71"/>
+    <SolidColorBrush x:Key="SecondaryContainer" Color="#E8DEF8"/>
+    <SolidColorBrush x:Key="OnSecondary" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="OnSecondaryContainer" Color="#1D192B"/>
+    
+    <!-- Фоны (точные значения из HTML) -->
+    <SolidColorBrush x:Key="BackgroundMain" Color="#F5F3FF"/>
+    <SolidColorBrush x:Key="BackgroundSecondary" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BackgroundElevated" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BackgroundCard" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BackgroundCardHover" Color="#F8FAFC"/>
+    <SolidColorBrush x:Key="Surface" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SurfaceVariant" Color="#F8FAFC"/>
+    
+    <!-- Текст (точные значения из HTML) -->
+    <SolidColorBrush x:Key="TextPrimary" Color="#1C1B1F"/>
+    <SolidColorBrush x:Key="TextSecondary" Color="#625B71"/>
+    <SolidColorBrush x:Key="TextTertiary" Color="#79747E"/>
+    
+    <!-- Границы (точные значения из HTML) -->
+    <SolidColorBrush x:Key="BorderColor" Color="#E2E8F0"/>
+    <SolidColorBrush x:Key="BorderLight" Color="#CAC4D0"/>
+    <SolidColorBrush x:Key="Outline" Color="#E2E8F0"/>
+    
+    <!-- Акриловые эффекты (для размытия) -->
+    <SolidColorBrush x:Key="AcrylicBackground" Color="#FFFFFF" Opacity="0.8"/>
+    <SolidColorBrush x:Key="AcrylicBorder" Color="#FFFFFF" Opacity="0.6"/>
+    
+    <!-- Статусы -->
+    <SolidColorBrush x:Key="SuccessColor" Color="#10B981"/>
+    <SolidColorBrush x:Key="ErrorColor" Color="#EF4444"/>
+    <SolidColorBrush x:Key="WarningColor" Color="#F59E0B"/>
+    <SolidColorBrush x:Key="InfoColor" Color="#3B82F6"/>
+    
+    <!-- Градиенты (светлая тема) -->
+    
+    <LinearGradientBrush x:Key="CardGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FEF7FF" Offset="0"/>
+        <GradientStop Color="#F5F7FA" Offset="1"/>
+    </LinearGradientBrush>
+    
+    <LinearGradientBrush x:Key="BackgroundGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#F5F3FF" Offset="0"/>
+        <GradientStop Color="#F8FAFC" Offset="1"/>
+    </LinearGradientBrush>
+    
+    <!-- Градиент для кнопок (из HTML) -->
+    <LinearGradientBrush x:Key="PrimaryGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#7C3AED" Offset="0"/>
+        <GradientStop Color="#8B5CF6" Offset="1"/>
+    </LinearGradientBrush>
+    
+    <!-- Градиент для акцентов -->
+    <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#EC4899" Offset="0"/>
+        <GradientStop Color="#F472B6" Offset="1"/>
+    </LinearGradientBrush>
+    
+    <!-- Тени из HTML шаблона -->
+    <DropShadowEffect x:Key="Shadow1" BlurRadius="3" ShadowDepth="0" Opacity="0.08" Color="#000000" RenderingBias="Quality"/>
+    <DropShadowEffect x:Key="Shadow2" BlurRadius="12" ShadowDepth="0" Opacity="0.12" Color="#000000" RenderingBias="Quality"/>
+    <DropShadowEffect x:Key="Shadow3" BlurRadius="24" ShadowDepth="0" Opacity="0.16" Color="#000000" RenderingBias="Quality"/>
+    <DropShadowEffect x:Key="ShadowTop" BlurRadius="1" ShadowDepth="0" Opacity="0.08" Color="#000000" Direction="270" RenderingBias="Quality"/>
+    <DropShadowEffect x:Key="ShadowCard" BlurRadius="8" ShadowDepth="0" Opacity="0.08" Color="#7C3AED" RenderingBias="Quality"/>
+    
+    <!-- Legacy для совместимости (обновлено для светлой темы) -->
+    <SolidColorBrush x:Key="FluentBackground" Color="#F5F7FA"/>
+    <SolidColorBrush x:Key="FluentCardBackground" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="FluentCardBackgroundHover" Color="#F5F0FA"/>
+    <SolidColorBrush x:Key="FluentTextPrimary" Color="#1C1B1F"/>
+    <SolidColorBrush x:Key="FluentTextSecondary" Color="#625B71"/>
+    <SolidColorBrush x:Key="FluentBorder" Color="#E7E0EC"/>
+    <SolidColorBrush x:Key="FluentAccent" Color="#6750A4"/>
+    <SolidColorBrush x:Key="FluentAccentHover" Color="#5A4B8F"/>
+    <SolidColorBrush x:Key="FluentError" Color="#BA1A1A"/>
+    <SolidColorBrush x:Key="FluentSuccess" Color="#006C4C"/>
+    <SolidColorBrush x:Key="MaterialPrimary" Color="#6750A4"/>
+    <SolidColorBrush x:Key="MaterialOnPrimary" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="MaterialPrimaryContainer" Color="#EADDFF"/>
+    <SolidColorBrush x:Key="MaterialOnError" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="MaterialError" Color="#EF4444"/>
+    <SolidColorBrush x:Key="MaterialOnSuccess" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="MaterialSuccess" Color="#10B981"/>
+    <SolidColorBrush x:Key="BackgroundPrimary" Color="#0F172A"/>
+    <SolidColorBrush x:Key="CardBackground" Color="#1E293B"/>
+    <SolidColorBrush x:Key="CardBackgroundHover" Color="#334155"/>
+    <SolidColorBrush x:Key="TextLight" Color="#F8FAFC"/>
+    <SolidColorBrush x:Key="TextDark" Color="#F8FAFC"/>
+    <SolidColorBrush x:Key="BorderColorLight" Color="#475569"/>
+    <SolidColorBrush x:Key="PrimaryOrange" Color="#6366F1"/>
+    <SolidColorBrush x:Key="PrimaryOrangeLight" Color="#818CF8"/>
+    <SolidColorBrush x:Key="PrimaryYellow" Color="#6366F1"/>
+    <SolidColorBrush x:Key="LightYellow" Color="#1E293B"/>
+    <SolidColorBrush x:Key="LightOrange" Color="#1E293B"/>
+    <SolidColorBrush x:Key="WhiteBg" Color="#1E293B"/>
+    <SolidColorBrush x:Key="HoverColor" Color="#818CF8"/>
+    <SolidColorBrush x:Key="MaterialBackground" Color="#0F172A"/>
+    <SolidColorBrush x:Key="MaterialSecondary" Color="#8B5CF6"/>
+    <SolidColorBrush x:Key="MaterialSecondaryContainer" Color="#4C1D95"/>
+    <SolidColorBrush x:Key="MaterialOnSecondary" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="MaterialTertiary" Color="#94A3B8"/>
+    <SolidColorBrush x:Key="MaterialTertiaryContainer" Color="#475569"/>
+    <SolidColorBrush x:Key="MaterialOnTertiary" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="MaterialErrorContainer" Color="#7F1D1D"/>
+    <SolidColorBrush x:Key="MaterialOnErrorContainer" Color="#FEE2E2"/>
+    <SolidColorBrush x:Key="MaterialSuccessContainer" Color="#065F46"/>
+    <SolidColorBrush x:Key="MaterialWarning" Color="#F59E0B"/>
+    <SolidColorBrush x:Key="MaterialWarningContainer" Color="#78350F"/>
+    <SolidColorBrush x:Key="MaterialOnWarning" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="MaterialSurface" Color="#1E293B"/>
+    <SolidColorBrush x:Key="MaterialSurfaceVariant" Color="#334155"/>
+    <SolidColorBrush x:Key="MaterialSurfaceDim" Color="#0F172A"/>
+    <SolidColorBrush x:Key="MaterialSurfaceBright" Color="#334155"/>
+    <SolidColorBrush x:Key="MaterialOnSurface" Color="#F8FAFC"/>
+    <SolidColorBrush x:Key="MaterialOnSurfaceVariant" Color="#CBD5E1"/>
+    <SolidColorBrush x:Key="MaterialOutline" Color="#334155"/>
+    <SolidColorBrush x:Key="MaterialOutlineVariant" Color="#475569"/>
+    <SolidColorBrush x:Key="FluentDivider" Color="#334155"/>
+    <SolidColorBrush x:Key="FluentCardBorder" Color="#334155"/>
+    <SolidColorBrush x:Key="FluentAccentPressed" Color="#4F46E5"/>
+    <SolidColorBrush x:Key="FluentTextTertiary" Color="#94A3B8"/>
+    <SolidColorBrush x:Key="MaterialPrimaryVariant" Color="#4F46E5"/>
+    <SolidColorBrush x:Key="MaterialOnPrimaryContainer" Color="#E0E7FF"/>
+    <SolidColorBrush x:Key="MaterialOnSecondaryContainer" Color="#EDE9FE"/>
+    <SolidColorBrush x:Key="MaterialOnTertiaryContainer" Color="#F1F5F9"/>
+    <SolidColorBrush x:Key="SoftPink" Color="#1E293B"/>
+    <SolidColorBrush x:Key="SoftPurple" Color="#1E293B"/>
+    <SolidColorBrush x:Key="SoftBlue" Color="#1E293B"/>
+    
+    <!-- ============================================ -->
+    <!-- СОВРЕМЕННАЯ ТИПОГРАФИКА -->
+    <!-- ============================================ -->
+    
+    <Style x:Key="DisplayLarge" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+        <Setter Property="FontSize" Value="36"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="LineHeight" Value="44"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+        <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
+    </Style>
+    
+    <Style x:Key="DisplayMedium" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+        <Setter Property="FontSize" Value="28"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="LineHeight" Value="36"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+        <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
+    </Style>
+    
+    <Style x:Key="TitleLarge" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+        <Setter Property="FontSize" Value="22"/>
+        <Setter Property="FontWeight" Value="600"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="LineHeight" Value="28"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+        <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
+    </Style>
+    
+    <Style x:Key="TitleMedium" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontWeight" Value="600"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="LineHeight" Value="24"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+        <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
+    </Style>
+    
+    <Style x:Key="BodyLarge" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontWeight" Value="400"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="LineHeight" Value="24"/>
+    </Style>
+    
+    <Style x:Key="BodyMedium" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="400"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="LineHeight" Value="20"/>
+    </Style>
+    
+    <Style x:Key="BodySmall" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="400"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+        <Setter Property="LineHeight" Value="16"/>
+    </Style>
+    
+    <!-- Legacy стили -->
+    <Style x:Key="FluentDisplayLarge" TargetType="TextBlock" BasedOn="{StaticResource DisplayLarge}"/>
+    <Style x:Key="FluentDisplayMedium" TargetType="TextBlock" BasedOn="{StaticResource DisplayMedium}"/>
+    <Style x:Key="FluentTitleStyle" TargetType="TextBlock" BasedOn="{StaticResource TitleLarge}"/>
+    <Style x:Key="FluentSubtitleStyle" TargetType="TextBlock" BasedOn="{StaticResource TitleMedium}"/>
+    <Style x:Key="FluentBodyStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyMedium}"/>
+    <Style x:Key="FluentBodyMedium" TargetType="TextBlock" BasedOn="{StaticResource BodyMedium}"/>
+    <Style x:Key="FluentCaptionStyle" TargetType="TextBlock" BasedOn="{StaticResource BodySmall}"/>
+    <Style x:Key="Heading1Style" TargetType="TextBlock" BasedOn="{StaticResource DisplayLarge}"/>
+    <Style x:Key="Heading2Style" TargetType="TextBlock" BasedOn="{StaticResource TitleLarge}"/>
+    <Style x:Key="Heading3Style" TargetType="TextBlock" BasedOn="{StaticResource TitleMedium}"/>
+    <Style x:Key="BodyTextStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyMedium}"/>
+    <Style x:Key="CaptionTextStyle" TargetType="TextBlock" BasedOn="{StaticResource BodySmall}"/>
+    <Style x:Key="MaterialDisplayLarge" TargetType="TextBlock" BasedOn="{StaticResource DisplayLarge}"/>
+    <Style x:Key="MaterialDisplayMedium" TargetType="TextBlock" BasedOn="{StaticResource DisplayMedium}"/>
+    <Style x:Key="MaterialDisplaySmall" TargetType="TextBlock" BasedOn="{StaticResource TitleLarge}"/>
+    <Style x:Key="MaterialHeadlineLarge" TargetType="TextBlock" BasedOn="{StaticResource TitleLarge}"/>
+    <Style x:Key="MaterialHeadlineMedium" TargetType="TextBlock" BasedOn="{StaticResource TitleMedium}"/>
+    <Style x:Key="MaterialHeadlineSmall" TargetType="TextBlock" BasedOn="{StaticResource TitleMedium}"/>
+    <Style x:Key="MaterialTitleLarge" TargetType="TextBlock" BasedOn="{StaticResource TitleMedium}"/>
+    <Style x:Key="MaterialTitleMedium" TargetType="TextBlock" BasedOn="{StaticResource BodyMedium}"/>
+    <Style x:Key="MaterialTitleSmall" TargetType="TextBlock" BasedOn="{StaticResource BodyMedium}"/>
+    <Style x:Key="MaterialBodyLarge" TargetType="TextBlock" BasedOn="{StaticResource BodyLarge}"/>
+    <Style x:Key="MaterialBodyMedium" TargetType="TextBlock" BasedOn="{StaticResource BodyMedium}"/>
+    <Style x:Key="MaterialBodySmall" TargetType="TextBlock" BasedOn="{StaticResource BodySmall}"/>
+    <Style x:Key="MaterialLabelLarge" TargetType="TextBlock" BasedOn="{StaticResource BodyMedium}"/>
+    <Style x:Key="MaterialLabelMedium" TargetType="TextBlock" BasedOn="{StaticResource BodySmall}"/>
+    <Style x:Key="MaterialLabelSmall" TargetType="TextBlock" BasedOn="{StaticResource BodySmall}"/>
+    
+    <!-- ============================================ -->
+    <!-- СОВРЕМЕННЫЕ КНОПКИ -->
+    <!-- ============================================ -->
+    
+    <Style x:Key="ModernPrimaryButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+        <Setter Property="Foreground" Value="{StaticResource OnPrimary}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="500"/>
+        <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+        <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="8"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True"
+                            UseLayoutRounding="True"
+                            RenderOptions.BitmapScalingMode="HighQuality">
+                        <Border.Effect>
+                            <StaticResource ResourceKey="Shadow1"/>
+                        </Border.Effect>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#5A4B8F"/>
+                            <Setter TargetName="border" Property="Effect">
+                                <Setter.Value>
+                                    <StaticResource ResourceKey="Shadow2"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="border" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform Y="-1"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#5A4B8F"/>
+                            <Setter TargetName="border" Property="Opacity" Value="0.8"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="border" Property="Background" Value="#E7E0EC"/>
+                            <Setter Property="Foreground" Value="#79747E"/>
+                            <Setter TargetName="border" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect BlurRadius="0" ShadowDepth="0" Opacity="0" Color="#000000"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <Style x:Key="ModernSecondaryButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource Surface}"/>
+        <Setter Property="Foreground" Value="{StaticResource PrimaryColor}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Outline}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="500"/>
+        <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Height" Value="36"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+        <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True"
+                            UseLayoutRounding="True"
+                            RenderOptions.BitmapScalingMode="HighQuality">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                         SnapsToDevicePixels="True"
+                                         UseLayoutRounding="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource SurfaceVariant}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource SurfaceVariant}"/>
+                            <Setter TargetName="border" Property="Opacity" Value="0.8"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="border" Property="BorderBrush" Value="#E7E0EC"/>
+                            <Setter Property="Foreground" Value="#79747E"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <Style x:Key="ModernIconButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="12"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Width" Value="44"/>
+        <Setter Property="Height" Value="44"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="22"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#334155"/>
+                            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#475569"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- Legacy -->
+    <Style x:Key="FluentFilledButton" TargetType="Button" BasedOn="{StaticResource ModernPrimaryButton}"/>
+    <Style x:Key="FluentOutlinedButton" TargetType="Button" BasedOn="{StaticResource ModernSecondaryButton}"/>
+    <Style x:Key="FluentTextButton" TargetType="Button" BasedOn="{StaticResource ModernSecondaryButton}"/>
+    <Style x:Key="FluentIconButton" TargetType="Button" BasedOn="{StaticResource ModernIconButton}"/>
+    <Style TargetType="Button" BasedOn="{StaticResource ModernPrimaryButton}">
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+        <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled"/>
+    </Style>
+    <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernPrimaryButton}"/>
+    <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernSecondaryButton}"/>
+    <Style x:Key="IconButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernIconButton}"/>
+    <Style x:Key="MaterialFilledButton" TargetType="Button" BasedOn="{StaticResource ModernPrimaryButton}"/>
+    <Style x:Key="MaterialOutlinedButton" TargetType="Button" BasedOn="{StaticResource ModernSecondaryButton}"/>
+    <Style x:Key="MaterialTextButton" TargetType="Button" BasedOn="{StaticResource ModernSecondaryButton}"/>
+    
+    <!-- ============================================ -->
+    <!-- ТЕКСТОВЫЕ ПОЛЯ -->
+    <!-- ============================================ -->
+    
+    <Style TargetType="TextBox">
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Outline}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="border" 
+                            Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8"
+                            Padding="{TemplateBinding Padding}">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryColor}"/>
+                            <Setter TargetName="border" Property="BorderThickness" Value="2"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryColor}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <Style x:Key="FluentTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}"/>
+    
+    <!-- ============================================ -->
+    <!-- СОВРЕМЕННЫЕ КАРТОЧКИ -->
+    <!-- ============================================ -->
+    
+    <Style x:Key="ModernCard" TargetType="Border">
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="BorderBrush" Value="{StaticResource SurfaceVariant}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="20"/>
+        <Setter Property="Padding" Value="24"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.15" Color="#000000"/>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource BackgroundCardHover}"/>
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <StaticResource ResourceKey="Shadow3"/>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <Style x:Key="ModernElevatedCard" TargetType="Border">
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="BorderBrush" Value="{StaticResource SurfaceVariant}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="20"/>
+        <Setter Property="Padding" Value="24"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.19" Color="#000000"/>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource BackgroundCardHover}"/>
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.25" Color="#000000"/>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- Legacy -->
+    <Style x:Key="FluentCardStyle" TargetType="Border" BasedOn="{StaticResource ModernCard}"/>
+    <Style x:Key="FluentElevatedCardStyle" TargetType="Border" BasedOn="{StaticResource ModernElevatedCard}"/>
+    <Style x:Key="MaterialCard" TargetType="Border" BasedOn="{StaticResource ModernCard}"/>
+    <Style x:Key="MaterialElevatedCard" TargetType="Border" BasedOn="{StaticResource ModernElevatedCard}"/>
+    <Style x:Key="ModernCardStyle" TargetType="Border" BasedOn="{StaticResource ModernCard}"/>
+    <Style x:Key="ElevatedCardStyle" TargetType="Border" BasedOn="{StaticResource ModernElevatedCard}"/>
+    <Style x:Key="MaterialOutlinedCardStyle" TargetType="Border" BasedOn="{StaticResource ModernCard}"/>
+    
+    <!-- ============================================ -->
+    <!-- PROGRESS BAR -->
+    <!-- ============================================ -->
+    
+    <Style TargetType="ProgressBar">
+        <Setter Property="Background" Value="{StaticResource SurfaceVariant}"/>
+        <Setter Property="Foreground" Value="{StaticResource PrimaryColor}"/>
+        <Setter Property="Height" Value="6"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Border Background="{TemplateBinding Background}" 
+                            CornerRadius="3"
+                            BorderThickness="0">
+                        <Border x:Name="PART_Track" 
+                                Background="{TemplateBinding Background}" 
+                                CornerRadius="3">
+                            <Border x:Name="PART_Indicator" 
+                                    Background="{TemplateBinding Foreground}" 
+                                    CornerRadius="3"
+                                    HorizontalAlignment="Left"/>
+                        </Border>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- ============================================ -->
+    <!-- CHECKBOX -->
+    <!-- ============================================ -->
+    
+    <Style TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border x:Name="checkBoxBorder"
+                                Grid.Column="0"
+                                Width="24"
+                                Height="24"
+                                Background="White"
+                                BorderBrush="{StaticResource Outline}"
+                                BorderThickness="2"
+                                CornerRadius="6"
+                                Margin="0,0,12,0"
+                                VerticalAlignment="Center">
+                            <TextBlock x:Name="checkMark"
+                                       Text="✓"
+                                       FontSize="16"
+                                       FontWeight="Bold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Opacity="0"/>
+                        </Border>
+                        <ContentPresenter Grid.Column="1"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,0,0"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="checkBoxBorder" Property="Background" Value="{StaticResource PrimaryColor}"/>
+                            <Setter TargetName="checkBoxBorder" Property="BorderBrush" Value="{StaticResource PrimaryColor}"/>
+                            <Setter TargetName="checkMark" Property="Opacity" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="checkBoxBorder" Property="BorderBrush" Value="{StaticResource PrimaryColor}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="checkBoxBorder" Property="Background" Value="{StaticResource PrimaryContainer}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- ============================================ -->
+    <!-- SCROLLBAR -->
+    <!-- ============================================ -->
+    
+    <Style TargetType="ScrollBar">
+        <Setter Property="Background" Value="#E7E0EC"/>
+        <Setter Property="Width" Value="12"/>
+        <Setter Property="MinWidth" Value="12"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid Background="#E7E0EC">
+                        <Track x:Name="PART_Track" Grid.IsSharedSizeScope="True" Focusable="False" IsDirectionReversed="True">
+                            <Track.Thumb>
+                                <Thumb Style="{DynamicResource ModernScrollBarThumbStyle}"/>
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <Style x:Key="ModernScrollBarThumbStyle" TargetType="Thumb">
+        <Setter Property="Background" Value="#6750A4"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Rectangle Fill="{TemplateBinding Background}" 
+                               RadiusX="6" 
+                               RadiusY="6"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#8651F3"/>
+            </Trigger>
+            <Trigger Property="IsDragging" Value="True">
+                <Setter Property="Background" Value="#5A4B8F"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- Стиль для Track (для реверса направления) -->
+    <Style TargetType="Track">
+        <Setter Property="IsDirectionReversed" Value="True"/>
+    </Style>
+    
+    <!-- ============================================ -->
+    <!-- СТИЛИ НАВИГАЦИИ -->
+    <!-- ============================================ -->
+    
+    <Style x:Key="NavButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="16,16"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="500"/>
+        <Setter Property="FontFamily" Value="Inter, Segoe UI"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="12"
+                            Padding="{TemplateBinding Padding}"
+                            Margin="{TemplateBinding Margin}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource SurfaceVariant}"/>
+                            <Setter Property="Foreground" Value="{StaticResource PrimaryColor}"/>
+                        </Trigger>
+                        <Trigger Property="Tag" Value="Active">
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryContainer}"/>
+                            <Setter Property="Foreground" Value="{StaticResource PrimaryColor}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- Стиль для кнопок навигации в справке -->
+    <Style x:Key="HelpNavButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#625B71"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="400"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="8"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#F5F3FF"/>
+                            <Setter Property="Foreground" Value="#6750A4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <DataTrigger Value="True">
+                <DataTrigger.Binding>
+                    <MultiBinding Converter="{StaticResource HelpSectionEqualsConverter}">
+                        <Binding Path="DataContext.CurrentSection" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                        <Binding Path="Tag" RelativeSource="{RelativeSource Self}"/>
+                    </MultiBinding>
+                </DataTrigger.Binding>
+                <Setter Property="Background" Value="#EADDFF"/>
+                <Setter Property="Foreground" Value="#6750A4"/>
+                <Setter Property="FontWeight" Value="600"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    
+</ResourceDictionary>
