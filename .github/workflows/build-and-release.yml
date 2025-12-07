@@ -1,0 +1,116 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_NAME: 'PhotoBookRenamer'
+  SOLUTION_FILE: 'PhotoBookRenamer.sln'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Get version from project
+      id: get_version
+      run: |
+        $version = (Select-Xml -Path "PhotoBookRenamer.csproj" -XPath "//Version").Node.InnerText
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_FILE }}
+      
+    - name: Build project
+      run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore /p:Version=${{ env.VERSION }}
+      
+    - name: Publish application
+      run: |
+        dotnet publish ${{ env.SOLUTION_FILE }} `
+          --configuration Release `
+          --output ./publish `
+          --self-contained true `
+          --runtime win-x64 `
+          /p:PublishSingleFile=true `
+          /p:IncludeNativeLibrariesForSelfExtract=true `
+          /p:Version=${{ env.VERSION }}
+          
+    - name: Create installer directory
+      run: |
+        New-Item -ItemType Directory -Force -Path ./installer
+        Copy-Item -Path ./publish/* -Destination ./installer/ -Recurse -Force
+        
+    - name: Create installer script
+      run: |
+        $installerScript = @"
+        @echo off
+        setlocal
+        
+        set INSTALL_DIR=%ProgramFiles%\Fabrika BookBuilder Studio
+        set APP_NAME=Fabrika BookBuilder Studio
+        
+        echo Installing %APP_NAME%...
+        
+        if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
+        
+        xcopy /E /I /Y "%~dp0*" "%INSTALL_DIR%\"
+        
+        echo Creating Start Menu shortcut...
+        set START_MENU=%APPDATA%\Microsoft\Windows\Start Menu\Programs
+        set SHORTCUT=%START_MENU%\%APP_NAME%.lnk
+        
+        powershell -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%SHORTCUT%'); $Shortcut.TargetPath = '%INSTALL_DIR%\PhotoBookRenamer.exe'; $Shortcut.WorkingDirectory = '%INSTALL_DIR%'; $Shortcut.IconLocation = '%INSTALL_DIR%\icon.ico'; $Shortcut.Description = '%APP_NAME%'; $Shortcut.Save()"
+        
+        echo Creating Desktop shortcut...
+        set DESKTOP=%USERPROFILE%\Desktop
+        set DESKTOP_SHORTCUT=%DESKTOP%\%APP_NAME%.lnk
+        
+        powershell -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%DESKTOP_SHORTCUT%'); $Shortcut.TargetPath = '%INSTALL_DIR%\PhotoBookRenamer.exe'; $Shortcut.WorkingDirectory = '%INSTALL_DIR%'; $Shortcut.IconLocation = '%INSTALL_DIR%\icon.ico'; $Shortcut.Description = '%APP_NAME%'; $Shortcut.Save()"
+        
+        echo Installation completed!
+        pause
+        "@
+        $installerScript | Out-File -FilePath ./installer/install.bat -Encoding ASCII
+        
+    - name: Create ZIP archive
+      run: |
+        Compress-Archive -Path ./installer/* -DestinationPath ./BookBuilder-Studio-Setup-${{ env.VERSION }}.zip -Force
+        
+    - name: Create release notes
+      id: release_notes
+      run: |
+        $notes = "## Что нового в версии ${{ env.VERSION }}`n`n"
+        $notes += "Автоматическая сборка от $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n`n"
+        $notes += "### Изменения:`n"
+        $notes += "- Обновления из последнего коммита`n"
+        $notes | Out-File -FilePath ./release-notes.md -Encoding UTF8
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ env.VERSION }}
+        name: Release v${{ env.VERSION }}
+        body_path: ./release-notes.md
+        files: |
+          BookBuilder-Studio-Setup-${{ env.VERSION }}.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

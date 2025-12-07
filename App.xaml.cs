@@ -28,31 +28,30 @@ namespace PhotoBookRenamer
             {
                 try
                 {
+                    await Task.Delay(2000); // Ждем 2 секунды после запуска приложения
+                    
                     var updateService = _serviceProvider.GetRequiredService<IUpdateService>();
                     var hasUpdate = await updateService.CheckForUpdatesAsync();
                     if (hasUpdate)
                     {
-                        Application.Current.Dispatcher.Invoke(() =>
+                        Application.Current.Dispatcher.Invoke(async () =>
                         {
-                            var latestVersion = updateService.GetLatestVersionAsync().Result;
-                            var result = MessageBox.Show(
-                                $"Доступна новая версия: {latestVersion}\n\nХотите обновить сейчас?",
-                                "Обновление доступно",
-                                MessageBoxButton.YesNo,
-                                MessageBoxImage.Information);
+                            var latestVersion = await updateService.GetLatestVersionAsync();
+                            var releaseNotes = await updateService.GetLatestReleaseNotesAsync();
                             
-                            if (result == MessageBoxResult.Yes)
+                            if (!string.IsNullOrEmpty(latestVersion))
                             {
-                                // TODO: Реализовать загрузку и установку обновления
-                                MessageBox.Show("Функция обновления будет реализована в следующей версии.", 
-                                    "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                                var updateVm = new ViewModels.UpdateDialogViewModel(updateService, latestVersion, releaseNotes);
+                                var updateDialog = new Views.UpdateDialog(updateVm);
+                                updateDialog.ShowDialog();
                             }
                         });
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Игнорируем ошибки проверки обновлений
+                    // Логируем ошибки, но не показываем пользователю
+                    System.Diagnostics.Debug.WriteLine($"Ошибка проверки обновлений: {ex.Message}");
                 }
             });
 

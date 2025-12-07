@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 namespace PhotoBookRenamer.Services
@@ -6,7 +7,10 @@ namespace PhotoBookRenamer.Services
     {
         Task<bool> CheckForUpdatesAsync();
         Task<string?> GetLatestVersionAsync();
-        Task<bool> DownloadUpdateAsync(string downloadUrl);
+        Task<string?> GetLatestReleaseNotesAsync();
+        Task<string?> GetDownloadUrlAsync();
+        Task<bool> DownloadAndInstallUpdateAsync(string downloadUrl, IProgress<double>? progress = null);
+        string GetCurrentVersion();
     }
 }
 

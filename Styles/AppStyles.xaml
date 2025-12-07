@@ -28,6 +28,7 @@
     <!-- Converters -->
     <utils:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     <utils:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+    <utils:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
     <utils:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
     <utils:InverseNullToVisibilityConverter x:Key="InverseNullToVisibilityConverter"/>
     <utils:CountToBooleanConverter x:Key="CountToBooleanConverter"/>
