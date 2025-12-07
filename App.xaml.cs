@@ -3,13 +3,14 @@ using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using PhotoBookRenamer.Services;
-using PhotoBookRenamer.ViewModels;
-using PhotoBookRenamer.Views;
+using PhotoBookRenamer.Application;
+using PhotoBookRenamer.Infrastructure;
+using PhotoBookRenamer.Presentation.ViewModels;
+using PhotoBookRenamer.Presentation.Views;
 
 namespace PhotoBookRenamer
 {
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
         private ServiceProvider? _serviceProvider;
 
@@ -34,15 +35,15 @@ namespace PhotoBookRenamer
                     var hasUpdate = await updateService.CheckForUpdatesAsync();
                     if (hasUpdate)
                     {
-                        Application.Current.Dispatcher.Invoke(async () =>
+                        System.Windows.Application.Current.Dispatcher.Invoke(async () =>
                         {
                             var latestVersion = await updateService.GetLatestVersionAsync();
                             var releaseNotes = await updateService.GetLatestReleaseNotesAsync();
                             
                             if (!string.IsNullOrEmpty(latestVersion))
                             {
-                                var updateVm = new ViewModels.UpdateDialogViewModel(updateService, latestVersion, releaseNotes);
-                                var updateDialog = new Views.UpdateDialog(updateVm);
+                                var updateVm = new Presentation.ViewModels.UpdateDialogViewModel(updateService, latestVersion, releaseNotes);
+                                var updateDialog = new Presentation.Views.UpdateDialog(updateVm);
                                 updateDialog.ShowDialog();
                             }
                         });

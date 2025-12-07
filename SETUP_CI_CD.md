@@ -131,3 +131,4 @@ dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=
 
 Подробная документация находится в файле `README_CI_CD.md`.
 
+

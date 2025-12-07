@@ -1,0 +1,590 @@
+<UserControl x:Class="PhotoBookRenamer.Presentation.Views.StartScreenView"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:PhotoBookRenamer.Presentation.ViewModels"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True"
+             RenderOptions.BitmapScalingMode="HighQuality"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType">
+    <Grid Background="#eceff5" 
+          HorizontalAlignment="Stretch"
+          VerticalAlignment="Stretch"
+          ClipToBounds="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64"/> <!-- Верхняя панель -->
+            <RowDefinition Height="*"/> <!-- Основной контент -->
+        </Grid.RowDefinitions>
+        
+        <!-- Верхняя панель -->
+        <Border Grid.Row="0" 
+                Background="White"
+                BorderBrush="#E7E0EC"
+                BorderThickness="0,0,0,1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="3" ShadowDepth="0" Opacity="0.08" Color="#000000"/>
+            </Border.Effect>
+            <Grid Margin="32,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Заголовок и подзаголовок -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="BookBuilder Studio" 
+                               FontSize="20"
+                               FontWeight="600"
+                               Foreground="#1C1B1F"
+                               UseLayoutRounding="True"
+                               SnapsToDevicePixels="True"
+                               TextOptions.TextFormattingMode="Display"
+                               TextOptions.TextRenderingMode="ClearType"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock Text="Выберите режим работы" 
+                               FontSize="14"
+                               Foreground="#625B71"
+                               Margin="0,2,0,0"
+                               UseLayoutRounding="True"
+                               SnapsToDevicePixels="True"
+                               TextOptions.TextFormattingMode="Display"
+                               TextOptions.TextRenderingMode="ClearType"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                </StackPanel>
+                
+                <!-- Кнопка помощи -->
+                <Button Grid.Column="1"
+                        Padding="16,8"
+                        Height="36"
+                        FontSize="14"
+                        FontWeight="500"
+                        Margin="0,0,8,0"
+                        Cursor="Hand"
+                        Click="OnHelpClick">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="#625B71"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="BorderBrush" Value="#79747E"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="8"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#F5F3FF"/>
+                                    <Setter Property="Foreground" Value="#6750A4"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="?" FontSize="18" FontWeight="600" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Помощь" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                
+                <!-- Кнопки действий -->
+                <StackPanel Grid.Column="2" 
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <Button Padding="16,8"
+                            Height="36"
+                            FontSize="14"
+                            FontWeight="500"
+                            Margin="0,0,8,0"
+                            Cursor="Hand"
+                            Click="OnBackClick">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="White"/>
+                                <Setter Property="Foreground" Value="#6750A4"/>
+                                <Setter Property="BorderBrush" Value="#79747E"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="8"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#E7E0EC"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="←" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Назад" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Padding="16,8"
+                            Height="36"
+                            FontSize="14"
+                            FontWeight="500"
+                            Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="White"/>
+                                <Setter Property="Foreground" Value="#6750A4"/>
+                                <Setter Property="BorderBrush" Value="#79747E"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="8"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#E7E0EC"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="?" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Помощь" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Основной контент -->
+        <ScrollViewer Grid.Row="1" 
+                      VerticalScrollBarVisibility="Auto"
+                      Padding="32">
+            <StackPanel MaxWidth="800" 
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                
+                <!-- Заголовок -->
+                <TextBlock Text="Выберите режим работы" 
+                           FontSize="32"
+                           FontWeight="600"
+                           Foreground="#6750A4"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,32"
+                           UseLayoutRounding="True"
+                           SnapsToDevicePixels="True"
+                           TextOptions.TextFormattingMode="Display"
+                           TextOptions.TextRenderingMode="ClearType"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                
+                <!-- Карточки режимов -->
+                <Grid Margin="0,0,0,32">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" MinWidth="350"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*" MinWidth="350"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Карточка: Режим уникальных папок -->
+                    <Border Grid.Column="0"
+                            Background="White"
+                            BorderBrush="#E7E0EC"
+                            BorderThickness="1"
+                            CornerRadius="20"
+                            Padding="32"
+                            Cursor="Hand"
+                            MouseLeftButtonDown="OnUniqueFoldersClick"
+                            ClipToBounds="False">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.15" Color="#000000" RenderingBias="Quality"/>
+                        </Border.Effect>
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="RenderTransform">
+                                            <Setter.Value>
+                                                <TranslateTransform Y="-4"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter Property="Effect">
+                                            <Setter.Value>
+                                                <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.19" Color="#000000"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel>
+                            <!-- Иконка -->
+                            <Border Background="#EADDFF"
+                                    Width="80"
+                                    Height="80"
+                                    CornerRadius="9999"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,0,0,24">
+                                <TextBlock Text="📁" 
+                                           FontSize="36"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="#6750A4"/>
+                            </Border>
+                            
+                            <!-- Заголовок -->
+                            <TextBlock Text="Режим уникальных папок" 
+                                       FontSize="24"
+                                       FontWeight="600"
+                                       Foreground="#1C1B1F"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,16"
+                                       TextAlignment="Center"
+                                       UseLayoutRounding="True"
+                                       SnapsToDevicePixels="True"
+                                       TextOptions.TextFormattingMode="Display"
+                                       TextOptions.TextRenderingMode="ClearType"
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                            
+                            <!-- Описание -->
+                            <TextBlock TextWrapping="Wrap"
+                                       TextAlignment="Center"
+                                       FontSize="14"
+                                       Foreground="#625B71"
+                                       LineHeight="22"
+                                       Margin="0,0,0,24">
+                                Каждая папка = одна книга. Каждая папка автоматически преобразуется в отдельную книгу - идеально для обработки большого количества отдельных папок. Обложка выбирается автоматически по максимальному разрешению.
+                            </TextBlock>
+                            
+                            <!-- Список функций -->
+                            <StackPanel Margin="0,0,0,24" HorizontalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="✓" 
+                                               FontSize="16"
+                                               Foreground="#6750A4"
+                                               Margin="0,0,8,0"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="Автоматическое определение обложки" 
+                                               FontSize="14"
+                                               Foreground="#625B71"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="✓" 
+                                               FontSize="16"
+                                               Foreground="#6750A4"
+                                               Margin="0,0,8,0"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="Каждая папка = отдельная книга" 
+                                               FontSize="14"
+                                               Foreground="#625B71"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="✓" 
+                                               FontSize="16"
+                                               Foreground="#6750A4"
+                                               Margin="0,0,8,0"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="Пакетная обработка" 
+                                               FontSize="14"
+                                               Foreground="#625B71"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <!-- Кнопка -->
+                            <Button HorizontalAlignment="Center"
+                                    Padding="24,12"
+                                    Height="36"
+                                    FontSize="14"
+                                    FontWeight="500"
+                                    Cursor="Hand"
+                                    Click="OnUniqueFoldersClick">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="#6750A4"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            CornerRadius="8"
+                                                            Padding="{TemplateBinding Padding}">
+                                                        <Border.Effect>
+                                                            <DropShadowEffect BlurRadius="3" ShadowDepth="0" Opacity="0.12" Color="#000000"/>
+                                                        </Border.Effect>
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#5A4B8F"/>
+                                                <Setter Property="RenderTransform">
+                                                    <Setter.Value>
+                                                        <TranslateTransform Y="-1"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Setter Property="Effect">
+                                                    <Setter.Value>
+                                                        <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.15" Color="#000000"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="→" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Выбрать режим" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Карточка: Комбинированный режим -->
+                    <Border Grid.Column="2"
+                            Background="White"
+                            BorderBrush="#E7E0EC"
+                            BorderThickness="1"
+                            CornerRadius="20"
+                            Padding="32"
+                            Cursor="Hand"
+                            MouseLeftButtonDown="OnCombinedModeClick"
+                            ClipToBounds="False">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.15" Color="#000000" RenderingBias="Quality"/>
+                        </Border.Effect>
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="RenderTransform">
+                                            <Setter.Value>
+                                                <TranslateTransform Y="-4"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter Property="Effect">
+                                            <Setter.Value>
+                                                <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.19" Color="#000000"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel>
+                            <!-- Иконка -->
+                            <Border Background="#EADDFF"
+                                    Width="80"
+                                    Height="80"
+                                    CornerRadius="9999"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,0,0,24">
+                                <TextBlock Text="🎨" 
+                                           FontSize="36"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="#6750A4"/>
+                            </Border>
+                            
+                            <!-- Заголовок -->
+                            <TextBlock Text="Комбинированный режим" 
+                                       FontSize="24"
+                                       FontWeight="600"
+                                       Foreground="#1C1B1F"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,16"
+                                       TextAlignment="Center"
+                                       UseLayoutRounding="True"
+                                       SnapsToDevicePixels="True"
+                                       TextOptions.TextFormattingMode="Display"
+                                       TextOptions.TextRenderingMode="ClearType"
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                            
+                            <!-- Описание -->
+                            <TextBlock TextWrapping="Wrap"
+                                       TextAlignment="Center"
+                                       FontSize="14"
+                                       Foreground="#625B71"
+                                       LineHeight="22"
+                                       Margin="0,0,0,24">
+                                Максимальная гибкость в создании книг. Ручное формирование структуры книг. Перетаскивайте файлы на слоты, назначайте общие и индивидуальные развороты.
+                            </TextBlock>
+                            
+                            <!-- Список функций -->
+                            <StackPanel Margin="0,0,0,24" HorizontalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="✓" 
+                                               FontSize="16"
+                                               Foreground="#6750A4"
+                                               Margin="0,0,8,0"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="Полный контроль над разворотами" 
+                                               FontSize="14"
+                                               Foreground="#625B71"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="✓" 
+                                               FontSize="16"
+                                               Foreground="#6750A4"
+                                               Margin="0,0,8,0"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="Drag &amp; Drop интерфейс" 
+                                               FontSize="14"
+                                               Foreground="#625B71"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="✓" 
+                                               FontSize="16"
+                                               Foreground="#6750A4"
+                                               Margin="0,0,8,0"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="Применение файла ко всем книгам" 
+                                               FontSize="14"
+                                               Foreground="#625B71"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="✓" 
+                                               FontSize="16"
+                                               Foreground="#6750A4"
+                                               Margin="0,0,8,0"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="Гибкое создание книг" 
+                                               FontSize="14"
+                                               Foreground="#625B71"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <!-- Кнопка -->
+                            <Button HorizontalAlignment="Center"
+                                    Padding="24,12"
+                                    Height="36"
+                                    FontSize="14"
+                                    FontWeight="500"
+                                    Cursor="Hand"
+                                    Click="OnCombinedModeClick">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="#6750A4"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            CornerRadius="8"
+                                                            Padding="{TemplateBinding Padding}">
+                                                        <Border.Effect>
+                                                            <DropShadowEffect BlurRadius="3" ShadowDepth="0" Opacity="0.12" Color="#000000"/>
+                                                        </Border.Effect>
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#5A4B8F"/>
+                                                <Setter Property="RenderTransform">
+                                                    <Setter.Value>
+                                                        <TranslateTransform Y="-1"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Setter Property="Effect">
+                                                    <Setter.Value>
+                                                        <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.15" Color="#000000"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="→" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Выбрать режим" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+                
+                <!-- Ссылка "Вернуться к списку проектов" -->
+                <Button HorizontalAlignment="Center"
+                        Margin="0,24,0,0"
+                        Padding="0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Click="OnBackClick">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Foreground" Value="#6750A4"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="←" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="#6750A4"/>
+                        <TextBlock x:Name="BackLinkText"
+                                   Text="Вернуться к списку проектов" 
+                                   FontSize="14"
+                                   FontWeight="500"
+                                   VerticalAlignment="Center"
+                                   Foreground="#6750A4">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
+                                            <Setter Property="TextDecorations">
+                                                <Setter.Value>
+                                                    <TextDecorationCollection>
+                                                        <TextDecoration Location="Underline"/>
+                                                    </TextDecorationCollection>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

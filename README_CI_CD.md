@@ -111,3 +111,4 @@ dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=
 - Убедитесь, что приложение запущено от имени администратора
 - Проверьте права доступа к папке установки
 
+

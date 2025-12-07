@@ -113,3 +113,4 @@ $uninstallerScript | Out-File -FilePath "$OutputPath\uninstall.bat" -Encoding AS
 Write-Host "Installer created successfully!" -ForegroundColor Green
 Write-Host "Location: $OutputPath" -ForegroundColor Cyan
 
+
