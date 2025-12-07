@@ -55,9 +55,14 @@ jobs:
           /p:Version=${{ env.VERSION }}
           
     - name: Install Inno Setup
-      uses: ammaraskar/setup-inno-setup@v1.1.0
-      with:
-        version: '6.2.2'
+      run: |
+        $innoUrl = "https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe"
+        $innoPath = "$env:TEMP\innosetup.exe"
+        Write-Host "Downloading Inno Setup..."
+        Invoke-WebRequest -Uri $innoUrl -OutFile $innoPath -UseBasicParsing
+        Write-Host "Installing Inno Setup silently..."
+        Start-Process -FilePath $innoPath -ArgumentList "/SILENT /SUPPRESSMSGBOXES /NORESTART" -Wait
+        Start-Sleep -Seconds 5
         
     - name: Create installer script (Inno Setup)
       run: |
@@ -100,22 +105,41 @@ jobs:
         [Run]
         Filename: "{app}\PhotoBookRenamer.exe"; Description: "{cm:LaunchProgram,Fabrika BookBuilder Studio}"; Flags: nowait postinstall skipifsilent
         "@
-        $issScript | Out-File -FilePath ./installer.iss -Encoding UTF8 -NoNewline
+        $issScript | Out-File -FilePath ./installer.iss -Encoding UTF8
         
     - name: Build installer with Inno Setup
       run: |
-        $innoPath = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-        if (Test-Path $innoPath) {
-          & $innoPath installer.iss
-        } else {
-          $innoPath = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
-          if (Test-Path $innoPath) {
-            & $innoPath installer.iss
-          } else {
-            Write-Error "Inno Setup not found"
-            exit 1
+        # Ищем Inno Setup в стандартных местах установки
+        $innoPaths = @(
+          "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+          "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
+        )
+        
+        $innoPath = $null
+        foreach ($path in $innoPaths) {
+          if (Test-Path $path) {
+            $innoPath = $path
+            break
           }
         }
+        
+        if ($null -eq $innoPath) {
+          # Пробуем найти через PATH
+          $found = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+          if ($found) {
+            $innoPath = $found.Source
+          }
+        }
+        
+        if ($null -eq $innoPath) {
+          Write-Error "Inno Setup not found. Tried paths: $($innoPaths -join ', ')"
+          Get-ChildItem "${env:ProgramFiles(x86)}" -Filter "*Inno*" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+          Get-ChildItem "${env:ProgramFiles}" -Filter "*Inno*" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+          exit 1
+        }
+        
+        Write-Host "Using Inno Setup at: $innoPath"
+        & $innoPath installer.iss
         
     - name: Create release notes
       id: release_notes
