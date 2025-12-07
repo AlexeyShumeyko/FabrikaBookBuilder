@@ -15,6 +15,9 @@ env:
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: write
+      pull-requests: write
     
     steps:
     - name: Checkout code
@@ -102,7 +105,7 @@ jobs:
         $notes | Out-File -FilePath ./release-notes.md -Encoding UTF8
         
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ env.VERSION }}
         name: Release v${{ env.VERSION }}
@@ -111,6 +114,5 @@ jobs:
           BookBuilder-Studio-Setup-${{ env.VERSION }}.zip
         draft: false
         prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        generate_release_notes: true
 
