@@ -80,7 +80,16 @@ namespace PhotoBookRenamer.Services
                 var releases = await _client.Repository.Release.GetLatest(Owner, Repo);
                 var version = releases.TagName.TrimStart('v');
                 
-                // Ищем ZIP файл с установщиком
+                // Ищем EXE файл с установщиком (приоритет) или ZIP файл (fallback)
+                foreach (var asset in releases.Assets)
+                {
+                    if (asset.Name.Contains("BookBuilder-Studio-Setup") && asset.Name.EndsWith(".exe"))
+                    {
+                        return asset.BrowserDownloadUrl;
+                    }
+                }
+                
+                // Fallback на ZIP, если EXE не найден
                 foreach (var asset in releases.Assets)
                 {
                     if (asset.Name.Contains("BookBuilder-Studio-Setup") && asset.Name.EndsWith(".zip"))
@@ -108,7 +117,10 @@ namespace PhotoBookRenamer.Services
                 }
                 Directory.CreateDirectory(tempDir);
 
-                var zipPath = Path.Combine(tempDir, "update.zip");
+                // Определяем расширение файла из URL
+                var isExe = downloadUrl.EndsWith(".exe", StringComparison.OrdinalIgnoreCase);
+                var extension = isExe ? ".exe" : ".zip";
+                var filePath = Path.Combine(tempDir, $"update{extension}");
                 
                 // Загружаем файл
                 using (var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead))
@@ -117,7 +129,7 @@ namespace PhotoBookRenamer.Services
                     var totalBytes = response.Content.Headers.ContentLength ?? 0L;
                     var downloadedBytes = 0L;
 
-                    using (var fileStream = new FileStream(zipPath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.None))
+                    using (var fileStream = new FileStream(filePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.None))
                     using (var contentStream = await response.Content.ReadAsStreamAsync())
                     {
                         var buffer = new byte[8192];
@@ -137,10 +149,29 @@ namespace PhotoBookRenamer.Services
                     }
                 }
 
-                // Распаковываем архив
+                // Если это EXE установщик - запускаем напрямую
+                if (isExe)
+                {
+                    var processInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = filePath,
+                        UseShellExecute = true,
+                        Verb = "runas" // Запуск от имени администратора
+                    };
+
+                    System.Diagnostics.Process.Start(processInfo);
+                    
+                    // Закрываем текущее приложение
+                    await Task.Delay(1000);
+                    System.Windows.Application.Current.Shutdown();
+                    
+                    return true;
+                }
+                
+                // Если это ZIP - распаковываем и запускаем install.bat
                 var extractPath = Path.Combine(tempDir, "extracted");
                 Directory.CreateDirectory(extractPath);
-                ZipFile.ExtractToDirectory(zipPath, extractPath);
+                ZipFile.ExtractToDirectory(filePath, extractPath);
 
                 // Запускаем установщик
                 var installerPath = Path.Combine(extractPath, "install.bat");

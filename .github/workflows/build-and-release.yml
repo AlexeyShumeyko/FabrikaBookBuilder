@@ -54,46 +54,68 @@ jobs:
           /p:IncludeNativeLibrariesForSelfExtract=true `
           /p:Version=${{ env.VERSION }}
           
-    - name: Create installer directory
+    - name: Install Inno Setup
+      uses: ammaraskar/setup-inno-setup@v1.1.0
+      with:
+        version: '6.2.2'
+        
+    - name: Create installer script (Inno Setup)
       run: |
-        New-Item -ItemType Directory -Force -Path ./installer
-        Copy-Item -Path ./publish/* -Destination ./installer/ -Recurse -Force
+        $issScript = @"
+        [Setup]
+        AppId={{8B8E5F3C-5F3C-4B8E-9F3C-5F3C4B8E9F3C}
+        AppName=Fabrika BookBuilder Studio
+        AppVersion=${{ env.VERSION }}
+        AppPublisher=Fabrika
+        AppPublisherURL=https://github.com/AlexeyShumeyko/FabrikaBookBuilder
+        DefaultDirName={autopf}\Fabrika BookBuilder Studio
+        DefaultGroupName=Fabrika BookBuilder Studio
+        OutputDir=.
+        OutputBaseFilename=BookBuilder-Studio-Setup-${{ env.VERSION }}
+        Compression=lzma2
+        SolidCompression=yes
+        SetupIconFile=publish\icon.ico
+        UninstallDisplayIcon={app}\PhotoBookRenamer.exe
+        PrivilegesRequired=admin
+        LicenseFile=
+        InfoBeforeFile=
+        InfoAfterFile=
         
-    - name: Create installer script
-      run: |
-        $installerScript = @"
-        @echo off
-        setlocal
+        [Languages]
+        Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
         
-        set INSTALL_DIR=%ProgramFiles%\Fabrika BookBuilder Studio
-        set APP_NAME=Fabrika BookBuilder Studio
+        [Tasks]
+        Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+        Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1
         
-        echo Installing %APP_NAME%...
+        [Files]
+        Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
         
-        if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
+        [Icons]
+        Name: "{group}\Fabrika BookBuilder Studio"; Filename: "{app}\PhotoBookRenamer.exe"; IconFilename: "{app}\icon.ico"
+        Name: "{group}\{cm:UninstallProgram,Fabrika BookBuilder Studio}"; Filename: "{uninstallexe}"
+        Name: "{autodesktop}\Fabrika BookBuilder Studio"; Filename: "{app}\PhotoBookRenamer.exe"; IconFilename: "{app}\icon.ico"; Tasks: desktopicon
+        Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Fabrika BookBuilder Studio"; Filename: "{app}\PhotoBookRenamer.exe"; IconFilename: "{app}\icon.ico"; Tasks: quicklaunchicon
         
-        xcopy /E /I /Y "%~dp0*" "%INSTALL_DIR%\"
-        
-        echo Creating Start Menu shortcut...
-        set START_MENU=%APPDATA%\Microsoft\Windows\Start Menu\Programs
-        set SHORTCUT=%START_MENU%\%APP_NAME%.lnk
-        
-        powershell -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%SHORTCUT%'); $Shortcut.TargetPath = '%INSTALL_DIR%\PhotoBookRenamer.exe'; $Shortcut.WorkingDirectory = '%INSTALL_DIR%'; $Shortcut.IconLocation = '%INSTALL_DIR%\icon.ico'; $Shortcut.Description = '%APP_NAME%'; $Shortcut.Save()"
-        
-        echo Creating Desktop shortcut...
-        set DESKTOP=%USERPROFILE%\Desktop
-        set DESKTOP_SHORTCUT=%DESKTOP%\%APP_NAME%.lnk
-        
-        powershell -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%DESKTOP_SHORTCUT%'); $Shortcut.TargetPath = '%INSTALL_DIR%\PhotoBookRenamer.exe'; $Shortcut.WorkingDirectory = '%INSTALL_DIR%'; $Shortcut.IconLocation = '%INSTALL_DIR%\icon.ico'; $Shortcut.Description = '%APP_NAME%'; $Shortcut.Save()"
-        
-        echo Installation completed!
-        pause
+        [Run]
+        Filename: "{app}\PhotoBookRenamer.exe"; Description: "{cm:LaunchProgram,Fabrika BookBuilder Studio}"; Flags: nowait postinstall skipifsilent
         "@
-        $installerScript | Out-File -FilePath ./installer/install.bat -Encoding ASCII
+        $issScript | Out-File -FilePath ./installer.iss -Encoding UTF8 -NoNewline
         
-    - name: Create ZIP archive
+    - name: Build installer with Inno Setup
       run: |
-        Compress-Archive -Path ./installer/* -DestinationPath ./BookBuilder-Studio-Setup-${{ env.VERSION }}.zip -Force
+        $innoPath = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+        if (Test-Path $innoPath) {
+          & $innoPath installer.iss
+        } else {
+          $innoPath = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
+          if (Test-Path $innoPath) {
+            & $innoPath installer.iss
+          } else {
+            Write-Error "Inno Setup not found"
+            exit 1
+          }
+        }
         
     - name: Create release notes
       id: release_notes
@@ -104,6 +126,18 @@ jobs:
         $notes += "- Обновления из последнего коммита`n"
         $notes | Out-File -FilePath ./release-notes.md -Encoding UTF8
         
+    - name: Find installer file
+      id: find_installer
+      run: |
+        $installerExe = Get-ChildItem -Path . -Filter "BookBuilder-Studio-Setup-${{ env.VERSION }}.exe" -ErrorAction SilentlyContinue
+        if ($installerExe) {
+          echo "INSTALLER_FILE=$($installerExe.Name)" >> $env:GITHUB_ENV
+          echo "INSTALLER_FILE=$($installerExe.Name)" >> $env:GITHUB_OUTPUT
+        } else {
+          Write-Error "Installer .exe file not found"
+          exit 1
+        }
+        
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
@@ -111,7 +145,7 @@ jobs:
         name: Release v${{ env.VERSION }}
         body_path: ./release-notes.md
         files: |
-          BookBuilder-Studio-Setup-${{ env.VERSION }}.zip
+          ${{ env.INSTALLER_FILE }}
         draft: false
         prerelease: false
         generate_release_notes: true
