@@ -7,14 +7,14 @@
              HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
     <UserControl.Resources>
-        <!-- p-4 rounded-2xl, 1px border; hover shadow-card -->
-        <Style x:Key="SpreadCard" TargetType="Border">
+        <!-- Контейнер книги: белый блок с рамкой, внутри шапка и ряд разворотов -->
+        <Style x:Key="BookBlock" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource Surface}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderDefault}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="16" />
-            <Setter Property="Padding" Value="16" />
-            <Setter Property="Margin" Value="0,0,24,24" />
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="Margin" Value="0,0,0,24" />
             <Setter Property="Effect" Value="{StaticResource ShadowSubtle}" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
@@ -23,28 +23,43 @@
             </Style.Triggers>
         </Style>
 
-        <!-- ОБЛОЖКА badge: px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500 -->
-        <Style x:Key="CoverBadge" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource Emerald500}" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="10,4" />
-            <Setter Property="Effect" Value="{StaticResource ShadowSm}" />
+        <!-- Номер книги: 28x28 rounded-lg indigo-50 / indigo-600 -->
+        <Style x:Key="BookIndexBadge" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Indigo50}" />
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="CornerRadius" Value="8" />
         </Style>
 
-        <!-- Разворот N badge: px-2.5 py-1 rounded-md text-xs font-semibold slate -->
-        <Style x:Key="SpreadBadge" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource Slate100}" />
-            <Setter Property="BorderBrush" Value="{StaticResource Slate200}" />
+        <!-- Карточка разворота: фото прижато к краям, скругление режет фото -->
+        <Style x:Key="SpreadCard" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Surface}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderDefault}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,16,16" />
+            <Setter Property="ClipToBounds" Value="True" />
+            <Setter Property="Effect" Value="{StaticResource ShadowSubtle}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Effect" Value="{StaticResource ShadowCard}" />
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
-        <!-- Filename chip: px-2 py-0.5 rounded text-xs font-mono font-bold -->
-        <Style x:Key="FileChip" TargetType="Border">
+        <!-- Плашка имени файла поверх фото: slate-900, rounded-md, mono -->
+        <Style x:Key="PhotoNameBadge" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Slate900}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="8,4" />
+        </Style>
+
+        <!-- Пилюля со стрелками в подвале карточки -->
+        <Style x:Key="ArrowPill" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource Slate100}" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Padding" Value="8,2" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="2" />
         </Style>
 
         <!-- p-1 arrows in the card footer -->
@@ -195,37 +210,81 @@
                     </Border>
 
                     <!--
-                        UniformGrid Columns="4" reproduces md:2 lg:3 xl:4 from the mockup.
-                        gap-6 (24) comes from the card Margin.
+                        UniformGrid Columns="4" keeps md:2 lg:3 xl:4 from the mockup.
+                        The gap is now 16 (card Margin), see doc/DESIGN_SPEC.md 5.2.
                     -->
                     <ItemsControl ItemsSource="{Binding Books}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type models:Book}">
-                                <StackPanel Margin="0,0,0,8">
-                                    <!-- Book header -->
-                                    <Grid Margin="0,0,0,16">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Border Background="{StaticResource Brand50}" CornerRadius="4"
-                                                    Padding="8,3" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding BookIndex, StringFormat='Книга {0}'}"
-                                                           Style="{StaticResource TextBadge}" FontSize="10"
-                                                           Foreground="{StaticResource Brand600}" />
-                                            </Border>
-                                            <TextBlock Text="{Binding Name}" Style="{StaticResource TextSmBold}"
-                                                       Margin="10,0,0,0" VerticalAlignment="Center"
-                                                       MaxWidth="520" TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Text="{Binding Converter={StaticResource BookSummaryConverter}}"
-                                                       Style="{StaticResource TextXs}" Margin="10,0,0,0"
-                                                       Foreground="{StaticResource Slate400}" VerticalAlignment="Center" />
-                                        </StackPanel>
+                                <Border Style="{StaticResource BookBlock}">
+                                    <StackPanel>
 
-                                        <Button HorizontalAlignment="Right" Style="{StaticResource DangerGhostButton}"
-                                                ToolTip="Удалить книгу"
-                                                Command="{Binding DataContext.DeleteBookCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}">
-                                            <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" FontSize="14" />
-                                        </Button>
-                                    </Grid>
+                                        <!-- Book header -->
+                                        <Grid Margin="0,0,0,16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal"
+                                                        VerticalAlignment="Center">
+                                                <Border Style="{StaticResource BookIndexBadge}">
+                                                    <TextBlock Text="{Binding BookIndex, StringFormat={}{0:D2}}"
+                                                               Style="{StaticResource TextXsBold}"
+                                                               Foreground="{StaticResource Indigo600}"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center" />
+                                                </Border>
+                                                <TextBlock Text="{Binding Name}" Style="{StaticResource TextSmBold}"
+                                                           Foreground="{StaticResource TextStrong}"
+                                                           Margin="12,0,0,0" VerticalAlignment="Center"
+                                                           MaxWidth="460" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center"
+                                                       HorizontalAlignment="Left" TextAlignment="Left"
+                                                       TextTrimming="CharacterEllipsis" MaxWidth="460"
+                                                       ToolTip="{Binding FolderPath}"
+                                                       Visibility="{Binding FolderPath, Converter={StaticResource StringToVisibilityConverter}}">
+                                                <Run Text="(Папка: " Foreground="{StaticResource Slate400}" FontSize="12" />
+                                                <Run Text="{Binding FolderPath}" Foreground="{StaticResource Slate400}" FontSize="12" />
+                                            </TextBlock>
+
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                        VerticalAlignment="Center">
+                                                <!-- fa-circle-check: every slot is filled -->
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsValid, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}"
+                                                               FontSize="12" Foreground="{StaticResource Emerald600}"
+                                                               VerticalAlignment="Center" />
+                                                    <TextBlock Text="Структура корректна"
+                                                               Style="{StaticResource TextXsSemibold}"
+                                                               Foreground="{StaticResource Emerald600}"
+                                                               VerticalAlignment="Center" Margin="6,0,0,0" />
+                                                </StackPanel>
+
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsValid, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                                    <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource IconFont}"
+                                                               FontSize="12" Foreground="{StaticResource Amber600}"
+                                                               VerticalAlignment="Center" />
+                                                    <TextBlock Text="Структура неполная"
+                                                               Style="{StaticResource TextXsSemibold}"
+                                                               Foreground="{StaticResource Amber600}"
+                                                               VerticalAlignment="Center" Margin="6,0,0,0" />
+                                                </StackPanel>
+
+                                                <Button Margin="12,0,0,0" Style="{StaticResource DangerGhostButton}"
+                                                        ToolTip="Удалить книгу"
+                                                        AutomationProperties.Name="Удалить книгу"
+                                                        Command="{Binding DataContext.DeleteBookCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" FontSize="12" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
 
                                     <ItemsControl ItemsSource="{Binding AllSlotsPages}">
                                         <ItemsControl.ItemsPanel>
@@ -240,56 +299,21 @@
                                                         <Style TargetType="Border" BasedOn="{StaticResource SpreadCard}">
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsCover}" Value="True">
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource Emerald500}" />
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource Brand500}" />
                                                                     <Setter Property="BorderThickness" Value="2" />
-                                                                    <Setter Property="Effect" Value="{StaticResource ShadowCard}" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
-                                                    <StackPanel>
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto" />
+                                                            <RowDefinition Height="Auto" />
+                                                        </Grid.RowDefinitions>
 
-                                                        <!-- Row 1: role badge + export filename -->
-                                                        <Grid>
-                                                            <Border Style="{StaticResource CoverBadge}"
-                                                                    HorizontalAlignment="Left"
-                                                                    Visibility="{Binding IsCover, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <TextBlock Text="&#xE735;" FontFamily="{StaticResource IconFont}"
-                                                                               FontSize="10" Foreground="White" VerticalAlignment="Center" />
-                                                                    <TextBlock Text="ОБЛОЖКА" Style="{StaticResource TextXsBold}"
-                                                                               Foreground="White" Margin="4,0,0,0" />
-                                                                </StackPanel>
-                                                            </Border>
-                                                            <Border Style="{StaticResource SpreadBadge}"
-                                                                    HorizontalAlignment="Right"
-                                                                    Visibility="{Binding IsCover, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                                                                <TextBlock Text="{Binding Index, StringFormat='Разворот {0}'}"
-                                                                           Style="{StaticResource TextXsSemibold}"
-                                                                           Foreground="{StaticResource Slate700}" />
-                                                            </Border>
-                                                        </Grid>
-
-                                                        <!-- Row 2: filename chip, mt-2 -->
-                                                        <Border HorizontalAlignment="Left" Margin="0,8,0,0">
-                                                            <Border.Style>
-                                                                <Style TargetType="Border" BasedOn="{StaticResource FileChip}">
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsCover}" Value="True">
-                                                                            <Setter Property="Background" Value="{StaticResource Emerald50}" />
-                                                                            <Setter Property="BorderBrush" Value="{StaticResource Emerald200}" />
-                                                                            <Setter Property="BorderThickness" Value="1" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Border.Style>
-                                                            <TextBlock Text="{Binding ExportFileName}" Style="{StaticResource TextMono}"
-                                                                       FontSize="12"
-                                                                       Foreground="{StaticResource Slate600}" />
-                                                        </Border>
-
-                                                        <!-- Row 3: 16/10 photo frame, mt-2 -->
-                                                        <Grid x:Name="FrameHost" Margin="0,8,0,0">
+                                                        <!-- Photo: 16/10, clipped by the card's own corner radius -->
+                                                        <Grid Grid.Row="0" x:Name="FrameHost"
+                                                              Background="{StaticResource Slate100}">
                                                             <Grid.Height>
                                                                 <MultiBinding Converter="{StaticResource AspectHeightConverter}">
                                                                     <Binding Path="ActualWidth" ElementName="FrameHost" />
@@ -297,102 +321,172 @@
                                                                 </MultiBinding>
                                                             </Grid.Height>
 
-                                                            <Border Style="{StaticResource PhotoFrame}" ClipToBounds="True">
-                                                                <Grid>
-                                                                    <Image Source="{Binding Converter={StaticResource PageSourceConverter}}"
-                                                                           Stretch="UniformToFill" Tag="{Binding}"
-                                                                           MouseLeftButtonDown="OnPageImageDoubleClick" />
+                                                            <Image Source="{Binding Converter={StaticResource PageSourceConverter}}"
+                                                                   Stretch="UniformToFill" Tag="{Binding}"
+                                                                   MouseLeftButtonDown="OnPageImageDoubleClick" />
 
-                                                                    <!-- bg-slate-900/40, group-hover -> 1 -->
-                                                                    <Border Background="#66000000" Opacity="0"
-                                                                            MouseLeftButtonDown="OnPageImageDoubleClick"
-                                                                            Cursor="Hand">
-                                                                        <Border.Style>
-                                                                            <Style TargetType="Border">
-                                                                                <Setter Property="Opacity" Value="0" />
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Value="True"
-                                                                                                 Binding="{Binding IsMouseOver, ElementName=FrameHost}">
-                                                                                        <Setter Property="Opacity" Value="1" />
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </Border.Style>
-                                                                        <Button Style="{StaticResource GhostButton}"
-                                                                                Background="{StaticResource Surface}"
-                                                                                Foreground="{StaticResource Slate800}"
-                                                                                FontWeight="Medium" Padding="8"
-                                                                                IsHitTestVisible="False">
-                                                                                <StackPanel Orientation="Horizontal">
-                                                                                    <TextBlock Text="&#xE71E;" FontFamily="{StaticResource IconFont}"
-                                                                                               FontSize="12" Foreground="{StaticResource Slate800}" />
-                                                                                    <TextBlock Text="Просмотр" Style="{StaticResource TextXsMedium}"
-                                                                                               Foreground="{StaticResource Slate800}" Margin="6,0,0,0" />
-                                                                                </StackPanel>
-                                                                        </Button>
-                                                                    </Border>
-                                                                </Grid>
+                                                            <!-- bg-slate-900/40, hover -> 1 -->
+                                                            <Border Background="#66000000"
+                                                                    MouseLeftButtonDown="OnPageImageDoubleClick"
+                                                                    Cursor="Hand">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Opacity" Value="0" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Value="True"
+                                                                                         Binding="{Binding IsMouseOver, ElementName=FrameHost}">
+                                                                                <Setter Property="Opacity" Value="1" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                                <Button Style="{StaticResource GhostButton}"
+                                                                        Background="{StaticResource Surface}"
+                                                                        Foreground="{StaticResource Slate800}"
+                                                                        FontWeight="Medium" Padding="8"
+                                                                        IsHitTestVisible="False"
+                                                                        AutomationProperties.Name="Просмотр">
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <TextBlock Text="&#xE71E;" FontFamily="{StaticResource IconFont}"
+                                                                                   FontSize="12" Foreground="{StaticResource Slate800}" />
+                                                                        <TextBlock Text="Просмотр" Style="{StaticResource TextXsMedium}"
+                                                                                   Foreground="{StaticResource Slate800}" Margin="6,0,0,0" />
+                                                                    </StackPanel>
+                                                                </Button>
+                                                            </Border>
+
+                                                            <!-- export file name on the photo; star + (Обложка) on the cover -->
+                                                            <Border Style="{StaticResource PhotoNameBadge}"
+                                                                    HorizontalAlignment="Left"
+                                                                    VerticalAlignment="Top"
+                                                                    Margin="10">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="&#xE735;" FontFamily="{StaticResource IconFont}"
+                                                                               FontSize="10" Foreground="White"
+                                                                               VerticalAlignment="Center" Margin="0,0,6,0"
+                                                                               Visibility="{Binding IsCover, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                                    <TextBlock Text="{Binding ExportFileName}"
+                                                                               Style="{StaticResource TextMono}"
+                                                                               FontSize="12" Foreground="White"
+                                                                               VerticalAlignment="Center" />
+                                                                    <TextBlock Text="(Обложка)"
+                                                                               Style="{StaticResource TextXsSemibold}"
+                                                                               Foreground="White" VerticalAlignment="Center"
+                                                                               Margin="6,0,0,0"
+                                                                               Visibility="{Binding IsCover, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                                </StackPanel>
                                                             </Border>
                                                         </Grid>
 
-                                                        <!-- Row 4: footer, mt-4 pt-3 border-t -->
-                                                        <Border Height="1" Background="{StaticResource Slate100}" Margin="0,16,0,0" />
-                                                        <Grid Margin="0,12,0,0">
+                                                        <!-- Footer: caption / on-hover action + arrow pill -->
+                                                        <Grid Grid.Row="1" Margin="10,8,10,10">
                                                             <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="Auto" />
                                                                 <ColumnDefinition Width="*" />
                                                                 <ColumnDefinition Width="Auto" />
                                                             </Grid.ColumnDefinitions>
 
-                                                            <!-- fa-regular fa-image + filename, max-w-[140px] -->
-                                                            <StackPanel Grid.Column="0" Orientation="Horizontal"
-                                                                        VerticalAlignment="Center">
-                                                                <TextBlock Text="&#xE8B9;" FontFamily="{StaticResource IconFont}"
-                                                                           FontSize="12" Foreground="{StaticResource Slate400}"
-                                                                           VerticalAlignment="Center" />
-                                                                <TextBlock Text="{Binding FileName}"
-                                                                           Style="{StaticResource LinkText}"
-                                                                           Foreground="{StaticResource Slate500}"
-                                                                           VerticalAlignment="Center" Margin="6,0,0,0"
-                                                                           TextTrimming="CharacterEllipsis"
-                                                                           MaxWidth="140" ToolTip="{Binding SourcePath}" />
-                                                            </StackPanel>
+                                                            <Grid Grid.Column="0">
+                                                                <TextBlock Text="Обложка" VerticalAlignment="Center">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextXsSemibold}">
+                                                                            <Setter Property="Foreground" Value="{StaticResource Brand600}" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsCover}" Value="False">
+                                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Value="True" Binding="{Binding IsMouseOver, ElementName=CardRoot}">
+                                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
 
-                                                            <!-- p-1 arrows, spreads only -->
-                                                            <StackPanel Grid.Column="1" Orientation="Horizontal"
-                                                                        HorizontalAlignment="Center"
-                                                                        Visibility="{Binding IsCover, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                                                                <Button Style="{StaticResource ArrowButton}" Tag="{Binding}"
-                                                                        Click="OnMovePageLeftClick" ToolTip="Переместить левее">
-                                                                    <TextBlock Text="&#xE72B;" FontFamily="{StaticResource IconFont}" FontSize="12" />
-                                                                </Button>
-                                                                <Button Style="{StaticResource ArrowButton}" Tag="{Binding}"
-                                                                        Click="OnMovePageRightClick" ToolTip="Переместить правее" Margin="4,0,0,0">
-                                                                    <TextBlock Text="&#xE72A;" FontFamily="{StaticResource IconFont}" FontSize="12" />
-                                                                </Button>
-                                                            </StackPanel>
+                                                                <TextBlock Text="{Binding Index, StringFormat='Разворот {0}'}"
+                                                                           VerticalAlignment="Center">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextXsSemibold}">
+                                                                            <Setter Property="Foreground" Value="{StaticResource Slate500}" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsCover}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Value="True" Binding="{Binding IsMouseOver, ElementName=CardRoot}">
+                                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
 
-                                                            <!-- "Назначить обложкой" (spread) / "Заменить" (cover) -->
-                                                            <TextBlock Grid.Column="2" Text="Назначить обложкой"
-                                                                       Style="{StaticResource LinkText}"
-                                                                       Foreground="{StaticResource Emerald600}"
-                                                                       VerticalAlignment="Center" Cursor="Hand"
-                                                                       Tag="{Binding}" MouseLeftButtonDown="OnSetCoverClick"
-                                                                       Visibility="{Binding IsCover, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                                                <!-- "Заменить" on the cover, takes the caption's slot on hover -->
+                                                                <TextBlock Text="Заменить" VerticalAlignment="Center"
+                                                                           Cursor="Hand" Tag="{Binding}"
+                                                                           MouseLeftButtonDown="OnReplaceClick"
+                                                                           AutomationProperties.Name="Заменить обложку">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextXsSemibold}">
+                                                                            <Setter Property="Foreground" Value="{StaticResource Brand600}" />
+                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsCover}" Value="False">
+                                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Value="True" Binding="{Binding IsMouseOver, ElementName=CardRoot}">
+                                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
 
-                                                            <TextBlock Grid.Column="2" Text="Заменить"
-                                                                       Style="{StaticResource TextXsSemibold}"
-                                                                       Foreground="{StaticResource Brand600}"
-                                                                       VerticalAlignment="Center" Cursor="Hand"
-                                                                       Tag="{Binding}" MouseLeftButtonDown="OnReplaceClick"
-                                                                       Visibility="{Binding IsCover, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                                <!-- "Назначить обложкой" on a spread, same slot -->
+                                                                <TextBlock Text="Назначить обложкой" VerticalAlignment="Center"
+                                                                           Cursor="Hand" Tag="{Binding}"
+                                                                           MouseLeftButtonDown="OnSetCoverClick"
+                                                                           AutomationProperties.Name="Назначить обложкой">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource LinkText}">
+                                                                            <Setter Property="Foreground" Value="{StaticResource Emerald600}" />
+                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsCover}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Value="True" Binding="{Binding IsMouseOver, ElementName=CardRoot}">
+                                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
+                                                            </Grid>
+
+                                                            <Border Grid.Column="1" Style="{StaticResource ArrowPill}"
+                                                                    VerticalAlignment="Center"
+                                                                    Visibility="{Binding IsCover, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <Button Style="{StaticResource ArrowButton}" Tag="{Binding}"
+                                                                            Click="OnMovePageLeftClick" ToolTip="Переместить левее"
+                                                                            AutomationProperties.Name="Переместить левее">
+                                                                        <TextBlock Text="&#xE72B;" FontFamily="{StaticResource IconFont}" FontSize="12" />
+                                                                    </Button>
+                                                                    <Border Width="1" Margin="2,0" Background="{StaticResource Slate200}" />
+                                                                    <Button Style="{StaticResource ArrowButton}" Tag="{Binding}"
+                                                                            Click="OnMovePageRightClick" ToolTip="Переместить правее"
+                                                                            AutomationProperties.Name="Переместить правее">
+                                                                        <TextBlock Text="&#xE72A;" FontFamily="{StaticResource IconFont}" FontSize="12" />
+                                                                    </Button>
+                                                                </StackPanel>
+                                                            </Border>
                                                         </Grid>
-                                                    </StackPanel>
+                                                    </Grid>
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                </StackPanel>
+                                    </StackPanel>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
