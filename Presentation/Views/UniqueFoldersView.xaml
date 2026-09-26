@@ -333,7 +333,7 @@
                                         width, so they flow and wrap. Inside a book all
                                         widths are equal, so the rows still line up.
                                     -->
-                                    <ItemsControl ItemsSource="{Binding AllSlotsPages}">
+                                    <ItemsControl x:Name="SpreadsList" ItemsSource="{Binding AllSlotsPages}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <WrapPanel />
@@ -374,26 +374,34 @@
                                                         </Grid.RowDefinitions>
 
                                                         <!--
-                                                            Photo frame. The HEIGHT is the
-                                                            mockup's compact value and stays
-                                                            fixed; the width follows the
-                                                            book's own format
-                                                            (Page.FrameAspect = median of
-                                                            its photos), so every row is the
-                                                            same height and a 21x30 book does
-                                                            not get a portrait box. 190 here
-                                                            and in the converter parameter
-                                                            below are the same number on
-                                                            purpose - change both together.
+                                                            Photo frame. Natural size is the
+                                                            mockup's 190px tall and that
+                                                            times the book's own format wide
+                                                            (Page.FrameAspect). Both sides
+                                                            then scale together - keeping the
+                                                            proportions - when one whole extra
+                                                            card per row is within reach, so a
+                                                            wide monitor leaves no strip of
+                                                            dead space. The room comes from
+                                                            the row area's width only, never
+                                                            from how many photos there are,
+                                                            so a half-empty last row changes
+                                                            nothing.
                                                         -->
                                                         <Grid Grid.Row="0" x:Name="FrameHost"
-                                                              Height="190"
                                                               Background="{StaticResource Slate100}">
                                                             <Grid.Width>
-                                                                <MultiBinding Converter="{StaticResource FrameWidthConverter}" ConverterParameter="190,150,480">
+                                                                <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="width">
+                                                                    <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
                                                                     <Binding />
                                                                 </MultiBinding>
                                                             </Grid.Width>
+                                                            <Grid.Height>
+                                                                <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="height">
+                                                                    <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
+                                                                    <Binding />
+                                                                </MultiBinding>
+                                                            </Grid.Height>
 
                                                             <Image Source="{Binding Converter={StaticResource PageSourceConverter}}"
                                                                    Stretch="UniformToFill" Tag="{Binding}"
@@ -457,8 +465,12 @@
                                                             <Grid Grid.Column="0">
                                                                 <!-- One element, four states. It was four overlapping TextBlocks before, and
                                                                      the caption could not be hidden on hover, so the link was drawn on top of
-                                                                     "Разворот N". A single TextBlock cannot overlap itself. -->
+                                                                     "Разворот N". A single TextBlock cannot overlap itself.
+                                                                     TextTrimming: a very portrait book gets a narrow card (the frame keeps
+                                                                     its shape), and the label shortens instead of colliding with
+                                                                     the arrow pill. -->
                                                                 <TextBlock VerticalAlignment="Center" Tag="{Binding}"
+                                                                           TextTrimming="CharacterEllipsis"
                                                                            MouseLeftButtonDown="OnFooterActionClick">
                                                                     <TextBlock.Style>
                                                                         <Style TargetType="TextBlock" BasedOn="{StaticResource TextXsSemibold}">

@@ -95,8 +95,8 @@
     <!-- Rounded clip for card content: Border.ClipToBounds clips to a rectangle only -->
     <utils:RoundedClipGeometryConverter       x:Key="RoundedClipGeometryConverter" />
 
-    <!-- Card width from a fixed height and the book's own format -->
-    <utils:FrameWidthConverter                x:Key="FrameWidthConverter" />
+    <!-- Card size from the book's format and the room left in the row -->
+    <utils:AdaptiveCardSizeConverter            x:Key="AdaptiveCardSizeConverter" />
 
     <!-- Mode chip on a saved project's card: label, or the tab glyph with "icon" -->
     <utils:AppModeToLabelConverter             x:Key="AppModeToLabelConverter" />

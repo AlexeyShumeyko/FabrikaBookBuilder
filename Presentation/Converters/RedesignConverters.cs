@@ -531,55 +531,124 @@ namespace PhotoBookRenamer.Presentation.Converters
     }
 
     /// <summary>
-    /// Card width for a photo frame whose HEIGHT is fixed.
+    /// Card size for a spread card: the photo frame's width and height, adapted to how
+    /// much room the book block actually has.
     ///
-    /// The shape of a card is the one thing a photographer cannot work with, so the height
-    /// stays at the mockup's value and the width follows the book's own format
-    /// (<see cref="Page.FrameAspect"/>, the median of its photos). That keeps the cards
-    /// compact and every row the same height, while a 0.68 post-print still gets a frame
-    /// of its own shape instead of being cut in half by a 16:10 box.
+    /// Natural size: <see cref="NaturalHeight"/> tall, and that times the book's own
+    /// format wide (<see cref="Page.FrameAspect"/>). The height is the mockup's value on
+    /// purpose - the card's shape is the one thing a photographer cannot work with, so the
+    /// format decides the width and never the height.
     ///
-    /// Usage: bind a frame's Width to a MultiBinding of its own DataContext with
-    /// ConverterParameter="height,minWidth,maxWidth".
+    /// Adaptation: if a whole extra card does not fit in the row but the leftover space is
+    /// enough that scaling everything down by a small factor would make it fit, the card is
+    /// scaled by exactly that factor, both sides together, so the format and the card's
+    /// proportions are preserved. The decision uses ONLY the available width, never the
+    /// number of items, so a half-empty last row cannot change the size.
+    ///
+    /// A scale below <see cref="MinScale"/>, or an absolute width below
+    /// <see cref="MinWidth"/>, is rejected: at that point the photos stop being big enough
+    /// to judge, and losing a card is better than losing the ability to see the photo.
+    ///
+    /// Usage: MultiBinding of the row area's ActualWidth and the Page, with
+    /// ConverterParameter="width" or "height".
     /// </summary>
-    public class FrameWidthConverter : IMultiValueConverter
+    public class AdaptiveCardSizeConverter : IMultiValueConverter
     {
+        /// <summary>Mockup card height. See doc/DESIGN_SPEC.md 5.2.</summary>
+        private const double NaturalHeight = 190d;
+
+        /// <summary>Gap between cards. Must match SpreadCard's Margin in the view.</summary>
+        private const double CardMargin = 16d;
+
+        /// <summary>
+        /// What the card adds around the photo frame: a 1px border on each side. The
+        /// WrapPanel packs the CARD, not the frame, and leaving this out costs exactly the
+        /// last card of the row.
+        /// </summary>
+        private const double CardChrome = 2d;
+
+        /// <summary>How far a card may be scaled down to win one more per row.</summary>
+        private const double MinScale = 0.8d;
+
+        /// <summary>
+        /// How much dead space has to be on the right before shrinking is worth it, as a
+        /// share of one card's step. Below this the gap is barely noticeable and the
+        /// design size is kept - the "if it already fits, leave it alone" case.
+        /// </summary>
+        private const double LeftoverShare = 0.25d;
+
+        /// <summary>
+        /// Safety floor only, deliberately low. Clamping the width would change the frame's
+        /// aspect and crop the photo again, which is the whole point of this sizing rule -
+        /// so a very portrait format simply gets a narrow card and the footer text is
+        /// trimmed instead.
+        /// </summary>
+        private const double MinWidth = 120d;
+
+        /// <summary>Upper clamp, so an extreme panorama cannot become a banner.</summary>
+        private const double MaxWidth = 480d;
+
+        private const double FallbackAspect = 1.6d;   // the mockup's 16/10
+
         public object Convert(object?[]? values, Type targetType, object? parameter, CultureInfo culture)
         {
-            (double height, double min, double max) = ParseSpec(parameter as string);
-
-            double aspect = values != null && values.Length > 0 && values[0] is Page page && page.FrameAspect > 0d
+            double available = values != null && values.Length > 0 ? ToDouble(values[0]) : 0d;
+            double aspect = values != null && values.Length > 1 && values[1] is Page page && page.FrameAspect > 0d
                 ? page.FrameAspect
-                : 1.6;   // the mockup's 16/10
+                : FallbackAspect;
 
-            double width = height * aspect;
-            width = Math.Clamp(width, min, max);
+            double naturalWidth = NaturalHeight * aspect;
+            double width = FitWidth(available, naturalWidth);
 
-            return Math.Round(width, 1);
+            return Math.Round(string.Equals(parameter as string, "height", StringComparison.OrdinalIgnoreCase)
+                ? width / aspect
+                : width, 1);
         }
 
-        /// <summary>Reads "190,150,480"; falls back to 190 tall, 150..480 wide.</summary>
-        private static (double, double, double) ParseSpec(string? spec)
+        /// <summary>
+        /// The width to lay out with. <paramref name="naturalWidth"/> is the designed size;
+        /// the answer is that size scaled down by the factor that fits one more card per
+        /// row, when such a factor exists inside the allowed range.
+        /// </summary>
+        private static double FitWidth(double available, double naturalWidth)
         {
-            double height = 190, min = 150, max = 480;
+            double natural = Math.Clamp(naturalWidth, MinWidth, MaxWidth);
 
-            if (string.IsNullOrWhiteSpace(spec)) return (height, min, max);
+            // First layout pass: nothing is measured yet, so start from the design size.
+            if (available <= 0d) return natural;
 
-            var parts = spec.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length == 0) return (height, min, max);
+            // A window narrower than one card: fill the width rather than overflow it.
+            if (natural + CardChrome + CardMargin > available)
+                return Math.Max(available - CardChrome - CardMargin, MinWidth);
 
-            if (double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double h))
-                height = h;
-            if (parts.Length > 1 && double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double lo))
-                min = lo;
-            if (parts.Length > 2 && double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out double hi))
-                max = hi;
+            // WrapPanel wraps as soon as the NEXT item's full step no longer fits, and that
+            // step is the whole CARD: frame + border on both sides + right margin. N cards
+            // need N * step <= available. Counting the step without the card's border is
+            // what left a card short of the edge.
+            double step = natural + CardChrome + CardMargin;
+            int perRow = (int)(available / step);
+            if (perRow < 1) perRow = 1;
 
-            if (min <= 0) min = 1;
-            if (max < min) max = min;
+            double leftover = available - perRow * step;
+            if (leftover < step * LeftoverShare) return natural;   // small gap, not worth shrinking
 
-            return (height, min, max);
+            // Frame width that would fit one more card per row, with a pixel of slack so
+            // floating point rounding cannot push the last item over the edge.
+            double target = available / (perRow + 1) - CardChrome - CardMargin - 1d;
+
+            if (target >= natural * MinScale && target < natural)
+                return target;
+
+            return natural;
         }
+
+        private static double ToDouble(object? o) => o switch
+        {
+            double d => d,
+            int i => i,
+            float f => f,
+            _ => 0d
+        };
 
         public object?[] ConvertBack(object? value, Type[] targetTypes, object? parameter, CultureInfo culture)
             => Array.Empty<object?>();
