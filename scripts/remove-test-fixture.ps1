@@ -5,6 +5,13 @@
 #
 # Usage:  pwsh -File scripts\remove-test-fixture.ps1
 
+# The harness console runs on code page 866, which turns every Cyrillic string this
+# script prints into "?" and floods the agent context with mojibake. Force UTF-8 on
+# both channels; a child powershell.exe resets these on its own, so it has to be set
+# inside each script rather than once in the caller.
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
 $ErrorActionPreference = 'Stop'
 
 $fixture = Join-Path $env:TEMP 'FBR-TestFixture'

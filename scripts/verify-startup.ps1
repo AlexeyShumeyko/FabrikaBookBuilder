@@ -1,4 +1,4 @@
-# Verifies the app actually starts.
+﻿# Verifies the app actually starts.
 #
 # A WPF app with a broken ResourceDictionary or a binding typo compiles fine and then
 # dies with an unhandled XamlParseException before the window ever appears. This script
@@ -11,6 +11,13 @@ param(
     [string]$Configuration = 'Release',
     [int]$TimeoutSeconds = 25
 )
+
+# The harness console runs on code page 866, which turns every Cyrillic string this
+# script prints into "?" and floods the agent context with mojibake. Force UTF-8 on
+# both channels; a child powershell.exe resets these on its own, so it has to be set
+# inside each script rather than once in the caller.
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
