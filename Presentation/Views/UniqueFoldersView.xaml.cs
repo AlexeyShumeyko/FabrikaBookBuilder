@@ -39,7 +39,7 @@ namespace PhotoBookRenamer.Presentation.Views
             => RunPageCommand(sender, page => _viewModel.AssignPageNumberCommand.Execute(page));
 
         /// <summary>Promotes the clicked spread to be the book's cover.</summary>
-        private void OnSetCoverClick(object sender, RoutedEventArgs e)
+        private void OnSetCoverClick(object sender, MouseButtonEventArgs e)
         {
             if (sender is FrameworkElement { Tag: Page page })
                 _viewModel.AssignCoverCommand.Execute(page);
@@ -49,7 +49,7 @@ namespace PhotoBookRenamer.Presentation.Views
         /// "Заменить" on the cover. Reuses SelectCoverCommand, which opens a file picker
         /// and assigns the chosen file to the owning book's cover.
         /// </summary>
-        private void OnReplaceClick(object sender, RoutedEventArgs e)
+        private void OnReplaceClick(object sender, MouseButtonEventArgs e)
         {
             if (sender is not FrameworkElement { Tag: Page page }) return;
 

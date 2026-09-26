@@ -3,216 +3,228 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:models="clr-namespace:PhotoBookRenamer.Domain"
              UseLayoutRounding="True" SnapsToDevicePixels="True"
+             FontFamily="{StaticResource UiFont}"
              HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
     <UserControl.Resources>
-        <!-- Project card. Lifts on hover, per the design. -->
         <Style x:Key="ProjectCard" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource Surface}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderDefault}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="16" />
             <Setter Property="Padding" Value="20" />
-            <Setter Property="Margin" Value="0,0,0,20" />
+            <Setter Property="Effect" Value="{StaticResource ShadowSubtle}" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="{StaticResource Brand200}" />
                     <Setter Property="Effect" Value="{StaticResource ShadowCard}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
-
-        <Style x:Key="CardTitle" TargetType="TextBlock" BasedOn="{StaticResource TextH3}">
-            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-            <Setter Property="TextWrapping" Value="NoWrap" />
-        </Style>
-
-        <Style x:Key="StatLabel" TargetType="TextBlock" BasedOn="{StaticResource TextCaption}">
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-        <Style x:Key="StatValue" TargetType="TextBlock" BasedOn="{StaticResource TextCaption}">
+        <!-- py-2 px-3 rounded-xl bg-slate-100, hover -> brand-50/brand-600 -->
+        <Style x:Key="OpenProjectButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+            <Setter Property="Background" Value="{StaticResource Slate100}" />
+            <Setter Property="BorderThickness" Value="0" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{StaticResource Slate800}" />
-            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="12"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                              TextElement.FontWeight="{TemplateBinding FontWeight}"
+                                              TextElement.FontSize="{TemplateBinding FontSize}"
+                                              TextElement.FontFamily="{TemplateBinding FontFamily}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource Brand50}" />
+                                <Setter Property="Foreground" Value="{StaticResource Brand600}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </UserControl.Resources>
 
-    <Grid>
+    <Grid MaxWidth="1600" Margin="32,24,32,24" HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- The design centres all content in a max-1600px column. -->
-        <Grid MaxWidth="1600" Margin="32,24,32,0" HorizontalAlignment="Stretch">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+        <!-- ============================================================== -->
+        <!--  Section header: p-6 (24), rounded-2xl, title text-xl (20)   -->
+        <!-- ============================================================== -->
+        <Border Grid.Row="0" Style="{StaticResource Card}" Padding="24" Effect="{StaticResource ShadowSubtle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <!-- ============================================================== -->
-            <!--  Section header                                                -->
-            <!-- ============================================================== -->
-            <Border Grid.Row="0" Style="{StaticResource Card}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Проекты фотокниг" Style="{StaticResource TextXlBold}" />
+                    <TextBlock Text="Управляйте подготовленными макетами и запускайте их в автоматический экспорт"
+                               Style="{StaticResource TextXs}" Foreground="{StaticResource Slate500}" Margin="0,2,0,0" />
+                </StackPanel>
 
-                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="Проекты фотокниг" Style="{StaticResource TextH1}" />
-                        <TextBlock Text="Управляйте подготовленными макетами и запускайте их в автоматический экспорт"
-                                   Style="{StaticResource TextCaption}" Margin="0,3,0,0" />
+                <Button Grid.Column="1" Style="{StaticResource PrimaryButton}" Padding="16,10"
+                        AutomationProperties.Name="Создать проект"
+                        Command="{Binding CreateProjectCommand}" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
+                        <TextBlock Text="Создать проект" Margin="6,0,0,0" Foreground="White" />
                     </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
 
-                    <Button Grid.Column="1" Style="{StaticResource PrimaryButton}"
-                            AutomationProperties.Name="Создать проект"
-                            Command="{Binding CreateProjectCommand}" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="White" />
-                            <TextBlock Text="Создать проект" Margin="6,0,0,0" Foreground="White" />
-                        </StackPanel>
-                    </Button>
-                </Grid>
+        <!-- ============================================================== -->
+        <!--  Grid: max 3 columns, gap-6 (24)                               -->
+        <!-- ============================================================== -->
+        <Grid Grid.Row="1" Margin="0,24,0,0">
+            <Border Background="#CC0F172A" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="Загрузка проектов..." Style="{StaticResource TextXs}"
+                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
 
-            <!-- ============================================================== -->
-            <!--  Project grid / empty state                                   -->
-            <!-- ============================================================== -->
-            <Grid Grid.Row="1" Margin="0,24,0,32">
-                <!-- Loading -->
-                <Border Background="#CC0F172A" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <TextBlock Text="Загрузка проектов..." Style="{StaticResource TextBody}"
-                               Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                </Border>
+            <Border Background="{StaticResource Red50}" BorderBrush="{StaticResource Red200}" BorderThickness="1"
+                    CornerRadius="12" Padding="16" VerticalAlignment="Top" Margin="0,0,0,20"
+                    Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                <TextBlock Text="{Binding ErrorMessage}" Style="{StaticResource TextXs}"
+                           Foreground="{StaticResource Red700}" TextWrapping="Wrap" />
+            </Border>
 
-                <!-- Error -->
-                <Border Background="{StaticResource Red50}" BorderBrush="{StaticResource Red200}" BorderThickness="1"
-                        CornerRadius="12" Padding="16" VerticalAlignment="Top" Margin="0,0,0,20"
-                        Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
-                    <TextBlock Text="{Binding ErrorMessage}" Style="{StaticResource TextBody}"
-                               Foreground="{StaticResource Red700}" TextWrapping="Wrap" />
-                </Border>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+                <StackPanel>
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
-                    <StackPanel>
-                        <!-- Empty state -->
-                        <Border Style="{StaticResource Card}" MaxWidth="520" HorizontalAlignment="Center"
-                                Margin="0,60,0,0"
-                                Visibility="{Binding ProjectsCount, Converter={StaticResource CountToBoolConverter}, ConverterParameter=invert}">
-                            <StackPanel>
-                                <Border Width="56" Height="56" CornerRadius="16" HorizontalAlignment="Center"
-                                        Background="{StaticResource Brand50}">
-                                    <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="24"
-                                               Foreground="{StaticResource Brand600}"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                                <TextBlock Text="Проектов пока нет" Style="{StaticResource TextH2}"
-                                           HorizontalAlignment="Center" Margin="0,20,0,0" />
-                                <TextBlock Text="Создайте первый проект, выберите режим вёрстки и загрузите фотографии."
-                                           Style="{StaticResource TextCaption}" TextWrapping="Wrap" TextAlignment="Center"
-                                           Margin="0,8,0,20" MaxWidth="380" HorizontalAlignment="Center" />
-                                <Button Style="{StaticResource PrimaryButton}" Command="{Binding CreateProjectCommand}"
-                                        HorizontalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="White" />
-                                        <TextBlock Text="Создать проект" Margin="6,0,0,0" Foreground="White" />
+                    <!-- Empty state -->
+                    <Border Style="{StaticResource Card}" Padding="24" MaxWidth="520" HorizontalAlignment="Center"
+                            Margin="0,40,0,0" Effect="{StaticResource ShadowSubtle}"
+                            Visibility="{Binding ProjectsCount, Converter={StaticResource CountToBoolConverter}, ConverterParameter=invert}">
+                        <StackPanel>
+                            <Border Width="56" Height="56" CornerRadius="16" HorizontalAlignment="Center"
+                                    Background="{StaticResource Brand50}">
+                                <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="24"
+                                           Foreground="{StaticResource Brand600}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="Проектов пока нет" Style="{StaticResource TextLgBold}"
+                                       HorizontalAlignment="Center" Margin="0,20,0,0" />
+                            <TextBlock Text="Создайте первый проект, выберите режим вёрстки и загрузите фотографии."
+                                       Style="{StaticResource TextXs}" TextWrapping="Wrap" TextAlignment="Center"
+                                       Foreground="{StaticResource Slate500}"
+                                       Margin="0,8,0,20" MaxWidth="380" HorizontalAlignment="Center" />
+                            <Button Style="{StaticResource PrimaryButton}" Padding="16,10"
+                                    Command="{Binding CreateProjectCommand}" HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
+                                    <TextBlock Text="Создать проект" Margin="6,0,0,0" Foreground="White" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                    <!--
+                        UniformGrid Columns="3" reproduces md:grid-cols-2 lg:grid-cols-3.
+                        A WrapPanel with fixed widths was what made the first pass look wrong.
+                    -->
+                    <ItemsControl ItemsSource="{Binding Projects}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="3" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:ProjectInfo}">
+                                <Border Style="{StaticResource ProjectCard}" Margin="0,0,24,24">
+                                    <StackPanel>
+
+                                        <!-- Status pill px-2.5 py-1 rounded-full + 11px timestamp -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border Grid.Column="0" CornerRadius="999" Padding="10,4"
+                                                    Background="{Binding Status, Converter={StaticResource StatusToBrushConverter}}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                                                             Fill="{Binding Status, Converter={StaticResource StatusToLabelConverter}, ConverterParameter=dot}" />
+                                                    <TextBlock Text="{Binding Status, Converter={StaticResource StatusToLabelConverter}}"
+                                                               Style="{StaticResource TextXsSemibold}" Margin="6,0,0,0"
+                                                               Foreground="{StaticResource Slate700}" />
+                                                </StackPanel>
+                                            </Border>
+
+                                            <TextBlock Grid.Column="1" Style="{StaticResource TextTiny}"
+                                                       Foreground="{StaticResource Slate400}" HorizontalAlignment="Right"
+                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                       Text="{Binding LastModified, Converter={StaticResource LastModifiedTextConverter}, ConverterParameter=prefix}" />
+                                        </Grid>
+
+                                        <!-- Title text-base bold, mt-3 -->
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource TextBaseBold}"
+                                                   Margin="0,12,0,0" TextTrimming="CharacterEllipsis" />
+
+                                        <!-- Stats: mt-4 pt-3 (16/12), border-t spans the full card -->
+                                        <Border Height="1" Background="{StaticResource Slate100}" Margin="0,16,0,0" />
+                                        <Grid Margin="0,12,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal"
+                                                        VerticalAlignment="Center">
+                                                <TextBlock Text="&#xE8D7;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                                           Foreground="{StaticResource Slate400}" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding BookCount, StringFormat='Книг: {0} шт.'}"
+                                                           Style="{StaticResource TextXs}" Foreground="{StaticResource Slate600}"
+                                                           Margin="6,0,0,0" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                        VerticalAlignment="Center">
+                                                <TextBlock Text="&#xE8B9;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                                           Foreground="{StaticResource Slate400}" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding PageCount, StringFormat='Разворотов: {0} стр.'}"
+                                                           Style="{StaticResource TextXs}" Foreground="{StaticResource Slate600}"
+                                                           Margin="6,0,0,0" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Footer: mt-5 pt-3, border-t, gap-2 -->
+                                        <Border Height="1" Background="{StaticResource Slate100}" Margin="0,16,0,0" />
+                                        <Grid Margin="0,12,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Button Grid.Column="0" Style="{StaticResource OpenProjectButton}"
+                                                    Command="{Binding DataContext.OpenProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}">
+                                                <TextBlock Text="Открыть проект" />
+                                            </Button>
+
+                                            <Button Grid.Column="1" Style="{StaticResource DangerGhostButton}"
+                                                    Margin="8,0,0,0" ToolTip="Удалить проект"
+                                                    Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}">
+                                                <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" FontSize="14" />
+                                            </Button>
+                                        </Grid>
                                     </StackPanel>
-                                </Button>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Cards -->
-                        <ItemsControl ItemsSource="{Binding Projects}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type models:ProjectInfo}">
-                                    <Border Style="{StaticResource ProjectCard}" Width="384" Margin="0,0,20,20">
-                                        <StackPanel>
-
-                                            <!-- Status pill + timestamp -->
-                                            <Grid Margin="0,0,0,12">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-
-                                                <Border Grid.Column="0" CornerRadius="999" Padding="10,4"
-                                                        Background="{Binding Status, Converter={StaticResource StatusToBrushConverter}}">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <Ellipse Width="6" Height="6" VerticalAlignment="Center"
-                                                                 Fill="{Binding Status, Converter={StaticResource StatusToLabelConverter}, ConverterParameter=dot}" />
-                                                        <TextBlock Text="{Binding Status, Converter={StaticResource StatusToLabelConverter}}"
-                                                                   Style="{StaticResource TextMicro}" Margin="6,0,0,0"
-                                                                   Foreground="{StaticResource Slate700}" />
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <TextBlock Grid.Column="1" Style="{StaticResource TextMicro}"
-                                                           Foreground="{StaticResource TextFaint}" HorizontalAlignment="Right"
-                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                                                           Text="{Binding LastModified, Converter={StaticResource LastModifiedTextConverter}, ConverterParameter=prefix}" />
-                                            </Grid>
-
-                                            <!-- Name -->
-                                            <TextBlock Text="{Binding Name}" Style="{StaticResource CardTitle}" />
-
-                                            <!-- Divider + stats -->
-                                            <Border Height="1" Background="{StaticResource Slate100}" Margin="0,16,0,0" />
-
-                                            <Grid Margin="0,14,0,0">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                                    <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                                               Foreground="{StaticResource Slate400}" VerticalAlignment="Center" />
-                                                    <TextBlock Text="{Binding BookCount, StringFormat='Книг: {0} шт.'}"
-                                                               Style="{StaticResource StatLabel}" Margin="6,0,0,0" />
-                                                </StackPanel>
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                    <TextBlock Text="&#xE8B9;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                                               Foreground="{StaticResource Slate400}" VerticalAlignment="Center" />
-                                                    <TextBlock Text="{Binding PageCount, StringFormat='Разворотов: {0} стр.'}"
-                                                               Style="{StaticResource StatLabel}" Margin="6,0,0,0" />
-                                                </StackPanel>
-                                            </Grid>
-
-                                            <!-- Actions -->
-                                            <Border Height="1" Background="{StaticResource Slate100}" Margin="0,16,0,0" />
-                                            <Grid Margin="0,16,0,0">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-
-                                                <Button Grid.Column="0" Style="{StaticResource SecondaryButton}"
-                                                        Command="{Binding DataContext.OpenProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                        CommandParameter="{Binding}">
-                                                    <TextBlock Text="Открыть проект" />
-                                                </Button>
-
-                                                <Button Grid.Column="1" Style="{StaticResource DangerGhostButton}"
-                                                        Margin="8,0,0,0" ToolTip="Удалить проект"
-                                                        Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                        CommandParameter="{Binding}">
-                                                    <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13" />
-                                                </Button>
-                                            </Grid>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </ScrollViewer>
-            </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
         </Grid>
     </Grid>
 </UserControl>

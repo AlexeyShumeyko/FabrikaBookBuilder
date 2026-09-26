@@ -408,13 +408,71 @@ namespace PhotoBookRenamer.Presentation.Converters
             => Array.Empty<object?>();
     }
 
-    /// <summary>IsCover bool -&gt; "ОБЛОЖКА" / "Разворот" label for a slot header.</summary>
+    /// <summary>
+    /// Page -&gt; the role label a slot header shows: "ОБЛОЖКА" for the cover, otherwise
+    /// "Разворот N". Takes the whole Page rather than a bool because the mockup numbers the
+    /// spreads ("Разворот 1", "Разворот 2"), which a bool cannot produce.
+    /// </summary>
     public class SlotRoleConverter : IValueConverter
     {
         public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-            => (value is bool b && b) ? "ОБЛОЖКА" : "Разворот";
+        {
+            if (value is not Page page) return string.Empty;
+            return page.IsCover ? "ОБЛОЖКА" : $"Разворот {page.Index}";
+        }
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
             => Binding.DoNothing;
+    }
+
+    /// <summary>
+    /// Reproduces Tailwind's <c>aspect-[16/10]</c>, which the mockup uses for every image
+    /// frame. WPF has no aspect-ratio layout, so the height is derived from the measured width.
+    ///
+    /// Usage: bind an element's Height to a MultiBinding of that element's ActualWidth and
+    /// its own DataContext, with ConverterParameter="16,10" on the target.
+    ///
+    /// A hardcoded pixel height was why the first pass looked wrong: fixed-width cards with
+    /// fixed-height images never matched the mockup's proportions.
+    /// </summary>
+    public class AspectHeightConverter : IMultiValueConverter
+    {
+        public object Convert(object?[]? values, Type targetType, object? parameter, CultureInfo culture)
+        {
+            double width = values != null && values.Length > 0 ? ToDouble(values[0]) : 0d;
+            if (width <= 0d) return double.NaN;   // fall back to whatever the layout gives
+
+            (double w, double h) = ParseRatio(parameter as string);
+            if (w <= 0d) return double.NaN;
+
+            return Math.Round(width * h / w, 2);
+        }
+
+        /// <summary>Reads "16,10" (or "16/10") into a width:height pair; defaults to 16:10.</summary>
+        private static (double, double) ParseRatio(string? spec)
+        {
+            if (string.IsNullOrWhiteSpace(spec)) return (16d, 10d);
+
+            var parts = spec.Replace('/', ',').Split(',', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 2) return (16d, 10d);
+
+            if (double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double w) &&
+                double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double h))
+            {
+                return (w, h);
+            }
+            return (16d, 10d);
+        }
+
+        private static double ToDouble(object? o) => o switch
+        {
+            double d => d,
+            int i => i,
+            float f => f,
+            _ => 0d
+        };
+
+        public object?[] ConvertBack(object? value, Type[] targetTypes, object? parameter, CultureInfo culture)
+            => Array.Empty<object?>();
     }
 }

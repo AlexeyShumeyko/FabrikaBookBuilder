@@ -553,6 +553,30 @@
     </Style>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ helpers ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!--
+      Dashed outlines. Border has no dash support in WPF, but Rectangle does
+      (StrokeDashArray), so a dashed frame is a Rectangle laid over the padded
+      Border that carries the background. Radius is CornerRadius - StrokeThickness/2
+      so the dashes sit on the same curve.
+    -->
+    <Style x:Key="DashedFrame" TargetType="Rectangle">
+        <Setter Property="Stroke" Value="{StaticResource Slate300}" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="StrokeDashArray" Value="4,3" />
+        <Setter Property="RadiusX" Value="15" />
+        <Setter Property="RadiusY" Value="15" />
+        <Setter Property="Fill" Value="Transparent" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <!-- dropzone: rounded-xl (12) -->
+    <Style x:Key="DashedFrameInset" TargetType="Rectangle" BasedOn="{StaticResource DashedFrame}">
+        <Setter Property="Stroke" Value="{StaticResource Slate200}" />
+        <Setter Property="RadiusX" Value="11" />
+        <Setter Property="RadiusY" Value="11" />
+    </Style>
+
     <!-- 16/10 photo frame, the shape the mockup uses for every image -->
     <Style x:Key="PhotoFrame" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource Slate100}" />
