@@ -571,6 +571,14 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             }
         }
 
+        /// <summary>
+        /// Raised after a whole-project export has finished and the success dialog was
+        /// dismissed - from the header "Экспорт" button or Ctrl+Shift+S. MainViewModel
+        /// ends the project session on it and returns to the project list. Exporting a
+        /// single book does NOT raise it: the project is still being worked on.
+        /// </summary>
+        public event EventHandler? ProjectExported;
+
         public ICommand LoadFoldersCommand { get; }
         public ICommand SelectCoverCommand { get; }
         public ICommand ExportCommand { get; }
@@ -860,6 +868,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                 ErrorMessage = null;
                 await ShowExportSuccessAsync(outputFolder);
+                ProjectExported?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception ex)
             {
@@ -924,6 +933,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                 ErrorMessage = null;
                 await ShowExportSuccessAsync(outputFolder);
+                ProjectExported?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception ex)
             {

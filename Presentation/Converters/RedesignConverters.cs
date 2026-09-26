@@ -441,6 +441,45 @@ namespace PhotoBookRenamer.Presentation.Converters
     }
 
     /// <summary>
+    /// AppMode -&gt; the label a saved project's card shows, so the user can see which
+    /// mode it was created in before opening it.
+    ///
+    /// ConverterParameter picks the shape: "icon" returns the matching Segoe MDL2
+    /// codepoint (the same glyph the tab uses, see doc/ICONS.md), "visibility" returns
+    /// Visible only for the two real project modes - a project record saved before a mode
+    /// was stamped still carries AppMode.StartScreen, and an empty chip would read as a
+    /// bug rather than as missing data.
+    /// </summary>
+    public class AppModeToLabelConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is not AppMode mode) return string.Empty;
+
+            string? role = parameter as string;
+
+            if (string.Equals(role, "visibility", StringComparison.OrdinalIgnoreCase))
+                return mode is AppMode.UniqueFolders or AppMode.Combined
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+
+            bool wantIcon = string.Equals(role, "icon", StringComparison.OrdinalIgnoreCase);
+
+            return (mode, wantIcon) switch
+            {
+                (AppMode.UniqueFolders, false) => "Уникальные папки",
+                (AppMode.UniqueFolders, true) => "\uE8C0",
+                (AppMode.Combined, false) => "Комбинированный",
+                (AppMode.Combined, true) => "\uE71D",
+                _ => string.Empty
+            };
+        }
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => Binding.DoNothing;
+    }
+
+    /// <summary>
     /// Reproduces Tailwind's <c>aspect-[16/10]</c>, which the mockup uses for every image
     /// frame. WPF has no aspect-ratio layout, so the height is derived from the measured width.
     ///

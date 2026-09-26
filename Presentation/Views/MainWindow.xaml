@@ -51,31 +51,20 @@
 
                 <!-- ============ Logo + project name ============ -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Width="36" Height="36" CornerRadius="12" VerticalAlignment="Center">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#4F46E5" Offset="0" />
-                                <GradientStop Color="#818CF8" Offset="1" />
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="4" ShadowDepth="1" Direction="270"
-                                              Opacity="0.05" RenderingBias="Quality" Color="#0F172A" />
-                        </Border.Effect>
-                        <TextBlock Text="&#xE8D7;" FontFamily="{StaticResource IconFont}" FontSize="16"
-                                   Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
+                    <!--
+                        Company logo (Resources/logo.png, 160x160 PNG, transparent
+                        corners). It replaced the placeholder key glyph; no background
+                        plate any more, the artwork is a yellow disc on transparency.
+                    -->
+                    <Image Source="pack://application:,,,/Resources/logo.png"
+                           Width="34" Height="34" Stretch="Uniform"
+                           VerticalAlignment="Center"
+                           AutomationProperties.Name="Фабрика Фотокниги" />
 
                     <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Фабрика Фотокниги" Style="{StaticResource TextSmBold}"
                                        FontSize="14" />
-                            <Border Background="{StaticResource Brand50}" BorderBrush="{StaticResource Brand100}"
-                                    BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="8,0,0,0"
-                                    VerticalAlignment="Center">
-                                <TextBlock Text="PRO" Style="{StaticResource TextBadge}" FontSize="10"
-                                           Foreground="{StaticResource Brand600}" />
-                            </Border>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                             <TextBlock Text="Проект:" Style="{StaticResource TextXsMedium}"
@@ -88,7 +77,13 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- ============ Screen tabs: bg-slate-200/70 p-1 rounded-xl ============ -->
+                <!--
+                    Screen tabs: bg-slate-200/70 p-1 rounded-xl.
+                    "Мои проекты" and "Выбор режима" are always live. The two editor
+                    tabs stay visible but are only enabled while their project is open -
+                    a mode is reached through a project, not directly. StartSession()
+                    (mode card / saved project) is what enables them.
+                -->
                 <Border Grid.Column="1" Background="#EBEDF0" CornerRadius="12"
                         BorderBrush="#DDE1E6" BorderThickness="1"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Padding="4">
@@ -113,6 +108,8 @@
                         </RadioButton>
                         <RadioButton Style="{StaticResource TabButton}" GroupName="ScreenTabs"
                                      AutomationProperties.Name="Уникальные папки"
+                                     IsEnabled="{Binding CanOpenUniqueFoldersTab}"
+                                     ToolTip="Открывается только внутри проекта"
                                      IsChecked="{Binding CurrentMode, Mode=TwoWay, Converter={StaticResource AppModeEqualsConverter}, ConverterParameter=UniqueFolders}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE8E9;" FontFamily="{StaticResource IconFont}" FontSize="12"
@@ -122,6 +119,8 @@
                         </RadioButton>
                         <RadioButton Style="{StaticResource TabButton}" GroupName="ScreenTabs"
                                      AutomationProperties.Name="Комбинированный"
+                                     IsEnabled="{Binding CanOpenCombinedTab}"
+                                     ToolTip="Открывается только внутри проекта"
                                      IsChecked="{Binding CurrentMode, Mode=TwoWay, Converter={StaticResource AppModeEqualsConverter}, ConverterParameter=Combined}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE71D;" FontFamily="{StaticResource IconFont}" FontSize="12"
@@ -132,8 +131,15 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ============ Quick actions: px-3 py-2 / px-3.5 py-2, gap 8 ============ -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <!--
+                    Quick actions. "Сохранить" and "Экспорт" are shown only in the two
+                    editors: on the project list and the mode-select screen they were
+                    dead buttons (CanSave / CanExport are false there), so they are
+                    hidden rather than disabled. The commands and keyboard shortcuts
+                    still work.
+                -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding ShowProjectActions, Converter={StaticResource BooleanToVisibilityConverter}}">
 
                     <StackPanel Orientation="Horizontal" Margin="0,0,8,0"
                                 Visibility="{Binding ShowUndoRedo, Converter={StaticResource BooleanToVisibilityConverter}}">

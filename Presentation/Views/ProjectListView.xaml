@@ -176,9 +176,42 @@
                                                        Text="{Binding LastModified, Converter={StaticResource LastModifiedTextConverter}, ConverterParameter=prefix}" />
                                         </Grid>
 
-                                        <!-- Title text-base bold, then the preview strip (mt-4) -->
-                                        <TextBlock Text="{Binding Name}" Style="{StaticResource TextBaseBold}"
-                                                   Margin="0,12,0,0" TextTrimming="CharacterEllipsis" />
+                                        <!--
+                                            Title + mode chip. The chip is not decoration:
+                                            a saved project is only reachable through its
+                                            mode, so the user has to be able to see which
+                                            mode it belongs to before opening it.
+                                        -->
+                                        <Grid Margin="0,12,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}"
+                                                       Style="{StaticResource TextBaseBold}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center" />
+
+                                            <Border Grid.Column="1" Margin="8,0,0,0"
+                                                    CornerRadius="6" Padding="8,3"
+                                                    Background="{StaticResource Slate50}"
+                                                    BorderBrush="{StaticResource Slate200}"
+                                                    BorderThickness="1"
+                                                    VerticalAlignment="Center"
+                                                    Visibility="{Binding Mode, Converter={StaticResource AppModeToLabelConverter}, ConverterParameter=visibility}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Mode, Converter={StaticResource AppModeToLabelConverter}, ConverterParameter=icon}"
+                                                               FontFamily="{StaticResource IconFont}" FontSize="11"
+                                                               Foreground="{StaticResource Slate400}"
+                                                               VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding Mode, Converter={StaticResource AppModeToLabelConverter}}"
+                                                               Style="{StaticResource TextTiny}"
+                                                               Foreground="{StaticResource Slate500}"
+                                                               VerticalAlignment="Center" Margin="5,0,0,0" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
 
                                         <!--
                                             Preview Photos Mini Strip. Three 48x48 tiles

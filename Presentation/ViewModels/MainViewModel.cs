@@ -36,6 +36,15 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private object? _currentView;
         private bool _isReturningFromHelp;
 
+        /// <summary>
+        /// Mode of the project the user currently has open, or null when no project is
+        /// open. The two editor tabs stay visible at all times, but they are only
+        /// reachable while this is set: a mode is a property of a project, not a screen
+        /// of its own. Set by <see cref="StartSession"/> (mode card, saved project) and
+        /// cleared by <see cref="EndSession"/>.
+        /// </summary>
+        private AppMode? _openProjectMode;
+
         public HelpSection? HelpSection { get; private set; }
 
         public MainViewModel(UniqueFoldersViewModel uniqueFolders, CombinedModeViewModel combinedMode)
@@ -50,8 +59,17 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             GoToProjectsCommand = new RelayCommand(() => CurrentMode = AppMode.ProjectList);
             GoToModeSelectCommand = new RelayCommand(() => CurrentMode = AppMode.StartScreen);
+
+            // These two exist for the Ctrl+1 / Ctrl+2 bindings. They cannot bypass the
+            // session check: the setter below refuses an editor mode with no open
+            // project, so the shortcut cannot become a back door into a mode.
             GoToUniqueFoldersCommand = new RelayCommand(() => CurrentMode = AppMode.UniqueFolders);
             GoToCombinedModeCommand = new RelayCommand(() => CurrentMode = AppMode.Combined);
+
+            // A finished export ends the session: the user is done with the project and
+            // belongs back on the project list.
+            _uniqueFolders.ProjectExported += (_, _) => EndSession();
+            _combinedMode.ProjectExported += (_, _) => EndSession();
 
             // Legacy names kept for the old Ctrl+1 / Ctrl+2 bindings.
             SwitchToUniqueFoldersCommand = GoToModeSelectCommand;
@@ -83,7 +101,18 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             get => _currentMode;
             set
             {
+                // Single choke point for the "a mode needs a project" rule. Every route
+                // in - tab click, Ctrl+1 / Ctrl+2, the mode cards, the project list -
+                // ends up here, and only StartSession may enter an editor without one.
+                if (value is AppMode.UniqueFolders or AppMode.Combined && !CanEnterMode(value))
+                    return;
+
                 if (!SetProperty(ref _currentMode, value)) return;
+
+                // Leaving an editor by tab or shortcut also ends the session, otherwise
+                // the mode tab would stay enabled with no project behind it.
+                if (value is AppMode.ProjectList or AppMode.StartScreen)
+                    _openProjectMode = null;
 
                 // Если мы возвращаемся из помощи, не создаем новый View
                 if (_isReturningFromHelp)
@@ -94,6 +123,32 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                 BuildView();
             }
+        }
+
+        private bool CanEnterMode(AppMode mode)
+            => mode == _currentMode || mode == _openProjectMode;
+
+        /// <summary>
+        /// Opens an editor for a project: a mode card for a brand new project, or a saved
+        /// project from the list. This is the only supported way into "Уникальные папки"
+        /// and "Комбинированный".
+        /// </summary>
+        public void StartSession(AppMode mode)
+        {
+            if (mode is not (AppMode.UniqueFolders or AppMode.Combined)) return;
+
+            _openProjectMode = mode;
+            CurrentMode = mode;
+        }
+
+        /// <summary>
+        /// The project is saved or exported, so the editor is done: drop the session and
+        /// go back to the project list, which reloads and shows the fresh state.
+        /// </summary>
+        public void EndSession()
+        {
+            _openProjectMode = null;
+            CurrentMode = AppMode.ProjectList;
         }
 
         public object? CurrentView
@@ -187,6 +242,22 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         public bool CanUndo => ShowUndoRedo && _uniqueFolders.UndoCommand.CanExecute(null);
         public bool CanRedo => ShowUndoRedo && _uniqueFolders.RedoCommand.CanExecute(null);
 
+        /// <summary>
+        /// The two mode tabs stay in the header but are only clickable while their
+        /// project is open. Reachable: the mode card for a new project, a saved project
+        /// from the list, or the tab itself while already inside that mode.
+        /// </summary>
+        public bool CanOpenUniqueFoldersTab => _currentMode == AppMode.UniqueFolders || _openProjectMode == AppMode.UniqueFolders;
+
+        public bool CanOpenCombinedTab => _currentMode == AppMode.Combined || _openProjectMode == AppMode.Combined;
+
+        /// <summary>
+        /// "Сохранить" and "Экспорт" only make sense with a project in front of the user.
+        /// On the project list and the mode-select screen they were dead buttons
+        /// (CanSave / CanExport are already false there), so they are hidden instead.
+        /// </summary>
+        public bool ShowProjectActions => _currentMode is AppMode.UniqueFolders or AppMode.Combined;
+
         private void Editor_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName is nameof(UniqueFoldersViewModel.ProjectName)
@@ -212,6 +283,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             OnPropertyChanged(nameof(ShowUndoRedo));
             OnPropertyChanged(nameof(CanUndo));
             OnPropertyChanged(nameof(CanRedo));
+            OnPropertyChanged(nameof(CanOpenUniqueFoldersTab));
+            OnPropertyChanged(nameof(CanOpenCombinedTab));
+            OnPropertyChanged(nameof(ShowProjectActions));
         }
 
         // ------------------------------------------------------------------

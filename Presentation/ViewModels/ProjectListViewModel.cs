@@ -103,8 +103,30 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             }
         }
 
+        /// <summary>
+        /// Opening a saved project is one of the two ways into an editor. The mode tab is
+        /// disabled otherwise, so this has to go through StartSession rather than a plain
+        /// CurrentMode change - the setter would refuse it.
+        /// </summary>
+        private void OpenProjectMode(AppMode mode)
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
+                var mainVm = serviceProvider?.GetRequiredService<MainViewModel>();
+                mainVm?.StartSession(mode);
+            });
+        }
+
         private async Task LoadProjectsAsync()
         {
+            // Two loads can start at once: the constructor fires one and BuildView() asks
+            // for another right after creating the ViewModel. Each of them only clears
+            // Projects after awaiting the file reads, so they interleave as
+            // clear / clear / add / add and every project shows up twice. A second load
+            // while one is running reads the same data anyway, so skipping it is safe.
+            if (_isLoading) return;
+
             IsLoading = true;
             ErrorMessage = null;
 
@@ -418,7 +440,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 // ОТЛАДКА: Логируем захваченные данные
                 
                 // Переключаемся на режим редактирования проекта ПОСЛЕ сохранения данных
-                CurrentMode = projectMode;
+                OpenProjectMode(projectMode);
                 
                 // КРИТИЧЕСКИ ВАЖНО: Создаём НОВЫЙ projectInfo из захваченных данных ПЕРЕД асинхронным вызовом
                 // Это гарантирует, что мы используем правильные данные выбранного проекта

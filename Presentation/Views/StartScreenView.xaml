@@ -203,9 +203,14 @@
                 </Border>
             </UniformGrid>
 
+            <!--
+                Reworded: the mode tabs are no longer a way in. A mode is reached by
+                picking it here (or by opening a saved project), and the tab only lights
+                up while that project is open.
+            -->
             <TextBlock Style="{StaticResource TextXs}" HorizontalAlignment="Center" Margin="0,32,0,0"
                        TextAlignment="Center" Foreground="{StaticResource Slate500}"
-                       Text="Можно также переключиться на нужный режим прямо на вкладках вверху." />
+                       Text="Выбранный режим откроется в отдельной вкладке и будет доступен, пока проект открыт." />
         </StackPanel>
     </ScrollViewer>
 </UserControl>

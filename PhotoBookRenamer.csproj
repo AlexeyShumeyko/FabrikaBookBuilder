@@ -49,5 +49,14 @@
     <Resource Include="Resources\Fonts\Inter-Bold.ttf" />
   </ItemGroup>
 
+  <!--
+    Company logo, 160x160 PNG with a transparent background, shown in the header in
+    place of the placeholder glyph. Kept in Resources/ next to the fonts so the header
+    can load it through a pack URI: pack://application:,,,/Resources/logo.png
+  -->
+  <ItemGroup>
+    <Resource Include="Resources\logo.png" />
+  </ItemGroup>
+
 </Project>
 

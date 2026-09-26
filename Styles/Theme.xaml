@@ -393,6 +393,15 @@
                             <Setter Property="FontWeight" Value="SemiBold" />
                             <Setter TargetName="bd" Property="Effect" Value="{StaticResource ShadowSubtle}" />
                         </Trigger>
+                        <!--
+                            Declared last so it wins over IsMouseOver: a tab the user may
+                            not click yet (a mode without an open project) stays visible
+                            but greyed, with the default arrow cursor.
+                        -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{StaticResource Slate300}" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

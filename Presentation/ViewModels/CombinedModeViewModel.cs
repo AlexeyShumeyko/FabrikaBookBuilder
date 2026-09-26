@@ -348,6 +348,13 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             set => SetProperty(ref _draggedFile, value);
         }
 
+        /// <summary>
+        /// Raised after a whole-project export has finished and the success dialog was
+        /// dismissed. MainViewModel ends the project session on it and returns to the
+        /// project list.
+        /// </summary>
+        public event EventHandler? ProjectExported;
+
         public ICommand LoadFilesCommand { get; }
         public ICommand ClearFilesCommand { get; }
         public ICommand GenerateStructureCommand { get; }
@@ -750,6 +757,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                 ErrorMessage = null;
                 await ShowExportSuccessAsync(outputFolder);
+                ProjectExported?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception ex)
             {

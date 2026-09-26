@@ -144,8 +144,9 @@ namespace PhotoBookRenamer.Presentation.Views
         }
 
         /// <summary>
-        /// Silent save with no navigation. The legacy SaveProjectCommand navigates back to
-        /// the project list, which is wrong for a header button.
+        /// Saves and then closes the project session. The editor is a working copy of one
+        /// project: once it is saved the user is done with it, so the header takes them
+        /// back to the project list, which reloads and shows the new state.
         /// </summary>
         private async void OnSaveClick(object sender, RoutedEventArgs e) => await SaveCurrentProjectAsync();
 
@@ -164,18 +165,25 @@ namespace PhotoBookRenamer.Presentation.Views
 
         private async System.Threading.Tasks.Task SaveCurrentProjectAsync()
         {
+            bool saved = false;
+
             switch (_viewModel.CurrentMode)
             {
                 case AppMode.UniqueFolders:
                     var unique = TryGet<UniqueFoldersViewModel>();
-                    if (unique != null) await unique.QuickSaveAsync();
+                    if (unique != null) saved = await unique.QuickSaveAsync();
                     break;
 
                 case AppMode.Combined:
                     var combined = TryGet<CombinedModeViewModel>();
-                    if (combined != null) await combined.QuickSaveAsync();
+                    if (combined != null) saved = await combined.QuickSaveAsync();
                     break;
             }
+
+            // Export does its own navigation through ProjectExported; save has none of
+            // its own, and QuickSaveAsync reports whether anything was written.
+            if (saved)
+                _viewModel.EndSession();
         }
     }
 }
