@@ -39,6 +39,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        # Full history: the warning step below diffs against the base branch.
+        fetch-depth: 0
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -57,12 +60,25 @@ jobs:
         Write-Host "Version in csproj: $version"
         Write-Host "Note: the version is only published to customers when this code is merged into master."
 
-    - name: Verify no release workflow was modified in this PR
+    - name: "Warn if the release workflow was touched in this PR"
       if: github.event_name == 'pull_request'
+      continue-on-error: true
       run: |
+        # This step only produces a review hint. It must never fail the build.
         $base = "${{ github.event.pull_request.base.ref }}"
-        $changed = git diff --name-only "origin/$base...HEAD" -- '.github/workflows/build-and-release.yml'
+        $target = "origin/$base"
+        git rev-parse --verify $target 2>$null | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "::warning::Base ref '$target' is not available locally; skipping the release-workflow diff."
+          exit 0
+        }
+        $changed = git diff --name-only "$target...HEAD" -- '.github/workflows/build-and-release.yml'
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "::warning::Could not diff against $target; skipping the release-workflow diff."
+          exit 0
+        }
         if ($changed) {
-          Write-Host "::warning::The release workflow was modified in this PR: $changed"
-          Write-Host "::warning::It only takes effect after this PR is merged into master. Review the diff carefully."
+          Write-Host "::warning::The release workflow was modified in this PR ($changed). It only takes effect after merge into master, and it decides what is shipped to customers. Review that diff carefully."
+        } else {
+          Write-Host "Release workflow untouched by this PR."
         }
