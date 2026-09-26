@@ -132,10 +132,12 @@ namespace PhotoBookRenamer.Presentation.Converters
                 bitmap.BeginInit();
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
                 bitmap.CreateOptions = BitmapCreateOptions.None;
-                // КРИТИЧЕСКИ ВАЖНО: Ограничиваем размер декодируемого изображения для производительности
-                // 600x900 достаточно для отображения в ячейках 220px высотой
+                // КРИТИЧЕСКИ ВАЖНО: размер декодируемого изображения ограничен, но задаётся
+                // ТОЛЬКО DecodePixelWidth. Если задать обе стороны, WPF растягивает картинку
+                // ровно в эти размеры и пропорции теряются: фото выглядит вытянутым и
+                // искажённым. С одной стороной вторая считается по пропорциям оригинала.
+                // 600px хватает с запасом для карточки 190px высотой.
                 bitmap.DecodePixelWidth = 600;
-                bitmap.DecodePixelHeight = 900;
                 bitmap.UriSource = new Uri(imagePath, UriKind.Absolute);
                 bitmap.EndInit();
                 bitmap.Freeze();

@@ -66,7 +66,8 @@ namespace PhotoBookRenamer.Presentation.Converters
                         bitmap.BeginInit();
                         bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
                         bitmap.DecodePixelWidth = decode;
-                        bitmap.DecodePixelHeight = decode;
+                        // Только DecodePixelWidth: обе стороны растянули бы фото в квадрат,
+                        // вторая считается по пропорциям оригинала.
                         bitmap.UriSource = new Uri(filePath, UriKind.Absolute);
                         bitmap.EndInit();
                         bitmap.Freeze();
