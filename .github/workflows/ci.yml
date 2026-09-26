@@ -1,0 +1,68 @@
+name: CI (dev only)
+
+# ============================================================================
+#  Проверочная сборка для разработки.
+#  НИКОГДА не создаёт релиз, установщик и не трогает релизы на GitHub.
+#  Вся установка и автообновление клиентов живут только в build-and-release.yml,
+#  который запускается исключительно из ветки master.
+# ============================================================================
+on:
+  push:
+    branches:
+      - develop
+      - 'feature/**'
+      - 'fix/**'
+      - 'hotfix/**'
+      - 'release/**'
+      - 'chore/**'
+  pull_request:
+    branches:
+      - master
+      - develop
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  SOLUTION_FILE: 'PhotoBookRenamer.sln'
+
+jobs:
+  build:
+    name: Build check
+    runs-on: windows-latest
+
+    concurrency:
+      group: ci-${{ github.ref }}
+      cancel-in-progress: true
+
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_FILE }}
+
+    - name: Build project
+      run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
+
+    - name: Report version
+      run: |
+        $version = (Select-Xml -Path "PhotoBookRenamer.csproj" -XPath "//Version").Node.InnerText
+        Write-Host "Version in csproj: $version"
+        Write-Host "Note: the version is only published to customers when this code is merged into master."
+
+    - name: Verify no release workflow was modified in this PR
+      if: github.event_name == 'pull_request'
+      run: |
+        $base = "${{ github.event.pull_request.base.ref }}"
+        $changed = git diff --name-only "origin/$base...HEAD" -- '.github/workflows/build-and-release.yml'
+        if ($changed) {
+          Write-Host "::warning::The release workflow was modified in this PR: $changed"
+          Write-Host "::warning::It only takes effect after this PR is merged into master. Review the diff carefully."
+        }
