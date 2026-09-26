@@ -33,5 +33,21 @@
     <Resource Include="icon.ico" />
   </ItemGroup>
 
+  <!--
+    Inter is the typeface the design specifies. It does not ship with Windows, and
+    referencing it by name only silently falls back to Segoe UI on every machine that
+    lacks it, which is why the UI did not match the mockup. The four static weights are
+    embedded as WPF resources and resolved through the folder pack URI
+    "pack://application:,,,/Resources/Fonts/#Inter", so WPF sees one family with all
+    weights and honours FontWeight (500 Medium, 600 SemiBold, 700 Bold).
+    Source: https://github.com/rsms/inter (SIL Open Font License 1.1)
+  -->
+  <ItemGroup>
+    <Resource Include="Resources\Fonts\Inter-Regular.ttf" />
+    <Resource Include="Resources\Fonts\Inter-Medium.ttf" />
+    <Resource Include="Resources\Fonts\Inter-SemiBold.ttf" />
+    <Resource Include="Resources\Fonts\Inter-Bold.ttf" />
+  </ItemGroup>
+
 </Project>
 
