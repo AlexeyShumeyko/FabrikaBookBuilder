@@ -105,7 +105,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         /// <summary>
         /// Opening a saved project is one of the two ways into an editor. The mode tab is
-        /// disabled otherwise, so this has to go through StartSession rather than a plain
+        /// disabled otherwise, so this has to go through OpenProject rather than a plain
         /// CurrentMode change - the setter would refuse it.
         /// </summary>
         private void OpenProjectMode(AppMode mode)
@@ -114,7 +114,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
                 var mainVm = serviceProvider?.GetRequiredService<MainViewModel>();
-                mainVm?.StartSession(mode);
+                mainVm?.OpenProject(mode);
             });
         }
 

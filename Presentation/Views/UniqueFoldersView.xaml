@@ -114,13 +114,24 @@
                         </Border>
 
                         <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                            <!--
+                                "Проект", not "Папка": this is the project's name. The pencil
+                                is the affordance - the label alone did not read as editable,
+                                so clicking the name did nothing a user would expect.
+                            -->
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Папка:" Style="{StaticResource TextSmBold}" VerticalAlignment="Center" />
+                                <TextBlock Text="Проект:" Style="{StaticResource TextSmBold}" VerticalAlignment="Center" />
                                 <TextBlock x:Name="ProjectNameTextBlock" Text="{Binding DisplayProjectName}"
                                            Style="{StaticResource TextSmBold}" Margin="6,0,0,0"
                                            VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                            MaxWidth="420" Cursor="Hand"
                                            MouseLeftButtonDown="OnProjectNameClick" />
+                                <Button Style="{StaticResource IconButton}" Margin="6,0,0,0"
+                                        Click="OnProjectNamePencilClick"
+                                        ToolTip="Переименовать проект"
+                                        AutomationProperties.Name="Переименовать проект">
+                                    <TextBlock Text="&#xE70F;" FontFamily="{StaticResource IconFont}" FontSize="12" />
+                                </Button>
                                 <TextBox x:Name="ProjectNameTextBox" Visibility="Collapsed" Width="360"
                                          Margin="6,0,0,0" VerticalAlignment="Center" FontSize="13"
                                          LostFocus="OnProjectNameLostFocus" KeyDown="OnProjectNameKeyDown" />
@@ -133,23 +144,29 @@
                         </StackPanel>
                     </StackPanel>
 
+                    <!--
+                        Project control panel. The header bar no longer duplicates any of
+                        this: "Сохранить" and "Экспорт" moved here, "Сбросить порядок" moved
+                        into each book, so it is gone from here.
+                    -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Style="{StaticResource SecondaryButton}" Command="{Binding LoadFoldersCommand}"
-                                AutomationProperties.Name="Выбрать папки" Margin="0,0,8,0">
+                                AutomationProperties.Name="Добавить или заменить папки" Margin="0,0,8,0"
+                                ToolTip="Догрузить новые папки или заменить все папки проекта">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE8E9;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                            Foreground="{StaticResource Slate400}" />
-                                <TextBlock Text="Сменить папку" Margin="6,0,0,0" />
+                                <TextBlock Text="Добавить или заменить папки" Margin="6,0,0,0" />
                             </StackPanel>
                         </Button>
 
-                        <Button Style="{StaticResource SecondaryButton}" Command="{Binding ResetOrderCommand}"
-                                AutomationProperties.Name="Сбросить порядок" Margin="0,0,8,0"
-                                ToolTip="Вернуть развороты в исходный порядок по именам файлов">
+                        <Button Style="{StaticResource SecondaryButton}" Command="{Binding SaveProjectCommand}"
+                                AutomationProperties.Name="Сохранить проект" Margin="0,0,8,0"
+                                ToolTip="Сохранить проект и вернуться к списку проектов">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE777;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                <TextBlock Text="&#xE8E7;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                            Foreground="{StaticResource Slate400}" />
-                                <TextBlock Text="Сбросить порядок" Margin="6,0,0,0" />
+                                <TextBlock Text="Сохранить проект" Margin="6,0,0,0" />
                             </StackPanel>
                         </Button>
 
@@ -158,10 +175,11 @@
 
                         <Button Style="{StaticResource PrimaryButton}" Padding="16,8"
                                 Command="{Binding ExportCommand}"
-                                AutomationProperties.Name="Экспортировать" IsEnabled="{Binding CanExport}">
+                                AutomationProperties.Name="Экспортировать" IsEnabled="{Binding CanExport}"
+                                ToolTip="Выгрузка всех книг проекта в одну папку">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE768;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
-                                <TextBlock Text="Экспортировать эту книгу" Margin="6,0,0,0" Foreground="White" />
+                                <TextBlock Text="Экспортировать все книги" Margin="6,0,0,0" Foreground="White" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -253,6 +271,26 @@
 
                                             <StackPanel Grid.Column="2" Orientation="Horizontal"
                                                         VerticalAlignment="Center">
+                                                <!--
+                                                    Per book, not per project: re-sorts only
+                                                    this book. GhostButton inherits a WHITE
+                                                    Foreground from PrimaryButton, so the
+                                                    colour has to be set here or the label
+                                                    renders white on a white card.
+                                                -->
+                                                <Button Style="{StaticResource GhostButton}" Margin="0,0,12,0"
+                                                        Padding="10,6"
+                                                        Foreground="{StaticResource Slate600}"
+                                                        Click="OnResetBookOrderClick" Tag="{Binding}"
+                                                        ToolTip="Вернуть развороты этой книги в исходный порядок по именам файлов"
+                                                        AutomationProperties.Name="Сбросить порядок книги">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE777;" FontFamily="{StaticResource IconFont}"
+                                                                   FontSize="12" />
+                                                        <TextBlock Text="Сбросить порядок" Margin="6,0,0,0" />
+                                                    </StackPanel>
+                                                </Button>
+
                                                 <!-- fa-circle-check: every slot is filled -->
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
                                                             Visibility="{Binding IsValid, Converter={StaticResource BooleanToVisibilityConverter}}">

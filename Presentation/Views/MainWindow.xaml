@@ -81,7 +81,7 @@
                     Screen tabs: bg-slate-200/70 p-1 rounded-xl.
                     "Мои проекты" and "Выбор режима" are always live. The two editor
                     tabs stay visible but are only enabled while their project is open -
-                    a mode is reached through a project, not directly. StartSession()
+                    a mode is reached through a project, not directly. OpenProject() / CreateProject()
                     (mode card / saved project) is what enables them.
                 -->
                 <Border Grid.Column="1" Background="#EBEDF0" CornerRadius="12"
@@ -132,14 +132,12 @@
                 </Border>
 
                 <!--
-                    Quick actions. "Сохранить" and "Экспорт" are shown only in the two
-                    editors: on the project list and the mode-select screen they were
-                    dead buttons (CanSave / CanExport are false there), so they are
-                    hidden rather than disabled. The commands and keyboard shortcuts
-                    still work.
+                    Quick actions. Each group carries its own visibility: "Сохранить" and
+                    "Экспорт" are shown only in Combined now (Unique Folders has them in
+                    the project panel, and on the list / mode screen they were dead
+                    buttons), while undo / redo belong to the Unique Folders editor.
                 -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
-                            Visibility="{Binding ShowProjectActions, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
 
                     <StackPanel Orientation="Horizontal" Margin="0,0,8,0"
                                 Visibility="{Binding ShowUndoRedo, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -166,7 +164,8 @@
 
                     <Button Style="{StaticResource SecondaryButton}" Click="OnSaveClick"
                             AutomationProperties.Name="Сохранить" Margin="0,0,8,0"
-                            IsEnabled="{Binding CanSave}">
+                            IsEnabled="{Binding CanSave}"
+                            Visibility="{Binding ShowProjectActions, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE8E7;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                        Foreground="{StaticResource Slate400}" />
@@ -175,7 +174,8 @@
                     </Button>
 
                     <Button Style="{StaticResource PrimaryButton}" Click="OnExportClick"
-                            AutomationProperties.Name="Экспорт" IsEnabled="{Binding CanExport}">
+                            AutomationProperties.Name="Экспорт" IsEnabled="{Binding CanExport}"
+                            Visibility="{Binding ShowProjectActions, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE898;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
                             <TextBlock Text="Экспорт" Margin="6,0,0,0" Foreground="White" />

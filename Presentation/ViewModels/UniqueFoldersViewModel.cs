@@ -37,13 +37,18 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         public bool CanExport => Project?.IsValid ?? false;
 
-        /// <summary>"1 обложка + 5 разворотов" style summary of the whole project.</summary>
+        /// <summary>
+        /// Counts for the project panel: "2 обложек · 6 разворотов · 2 папок".
+        ///
+        /// All three are always shown, zeros included - a project the user has just
+        /// started should read "0 обложек · 0 разворотов · 0 папок" rather than switch to
+        /// a different sentence, so the numbers stay put and only their values move.
+        /// One folder becomes one book, so the folder count is the book count.
+        /// </summary>
         public string BooksSummary
         {
             get
             {
-                if (Books.Count == 0) return "ничего не загружено";
-
                 int covers = 0, spreads = 0;
                 foreach (var b in Books)
                 {
@@ -53,9 +58,19 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                             if (p != null && !p.IsCover && !p.IsEmpty) spreads++;
                 }
 
-                if (spreads == 0) return $"{covers} обложек";
-                return $"{covers} обложек · {spreads} разворотов";
+                return $"{covers} {Plural(covers, "обложка", "обложки", "обложек")} · " +
+                       $"{spreads} {Plural(spreads, "разворот", "разворота", "разворотов")} · " +
+                       $"{Books.Count} {Plural(Books.Count, "папка", "папки", "папок")}";
             }
+        }
+
+        private static string Plural(int n, string one, string few, string many)
+        {
+            int mod10 = n % 10;
+            int mod100 = n % 100;
+            if (mod10 == 1 && mod100 != 11) return one;
+            if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+            return many;
         }
 
         public ProjectInfo? CurrentProjectInfo
@@ -114,16 +129,16 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 // Возвращаемся на главную страницу со списком проектов
                 CurrentMode = AppMode.ProjectList;
             });
-            SaveProjectCommand = new AsyncRelayCommand(SaveProjectAsync, () => CurrentProjectInfo != null);
+            SaveProjectCommand = new AsyncRelayCommand(SaveAndCloseAsync);
             DeleteBookCommand = new RelayCommand<Book>(DeleteBook);
             ResetProjectCommand = new RelayCommand(ResetProject);
+            ResetBookOrderCommand = new RelayCommand<Book>(ResetBookOrder);
             UndoCommand = new RelayCommand(Undo, () => _projectService.CanUndo);
             RedoCommand = new RelayCommand(Redo, () => _projectService.CanRedo);
             MovePageUpCommand = new RelayCommand<Page>(MovePageUp);
             MovePageDownCommand = new RelayCommand<Page>(MovePageDown);
             AssignPageNumberCommand = new RelayCommand<Page>(AssignPageNumber);
             AssignCoverCommand = new RelayCommand<Page>(AssignCover);
-            ResetOrderCommand = new RelayCommand(ResetOrder);
             OpenHelpCommand = new RelayCommand(OpenHelp);
 
             // WPF only re-evaluates a binding when the SOURCE raises PropertyChanged.
@@ -401,90 +416,27 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             
         }
         
-        private async Task SaveProjectAsync()
+        /// <summary>
+        /// "Сохранить проект" in the project panel: writes the project and closes the
+        /// session, the same as the header button.
+        ///
+        /// This replaces a 60-line copy of the save routine that refused to work on a
+        /// project with no record yet ("Информация о проекте не найдена") - exactly the
+        /// project a user has just created and wants to keep. QuickSaveAsync creates the
+        /// record on demand and reports whether anything was written.
+        /// </summary>
+        private async Task SaveAndCloseAsync()
         {
-            if (CurrentProjectInfo == null)
+            if (!await QuickSaveAsync())
             {
-                System.Windows.MessageBox.Show("Информация о проекте не найдена. Пожалуйста, создайте новый проект.", 
-                    "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                ErrorMessage = "Не удалось сохранить проект.";
+                OnPropertyChanged(nameof(ErrorMessage));
                 return;
             }
-            
-            // Инициализируем Project, если его нет
-            if (Project == null)
-            {
-                Project = new Project { Mode = CurrentProjectInfo.Mode };
-            }
-            
-            try
-            {
-                IsLoading = true;
-                
-                // КРИТИЧЕСКИ ВАЖНО: Сохраняем Id проекта в локальную переменную СРАЗУ
-                // Это гарантирует, что мы используем правильный Id для сохранения
-                var projectId = CurrentProjectInfo?.Id ?? string.Empty;
-                if (string.IsNullOrEmpty(projectId))
-                {
-                    projectId = Guid.NewGuid().ToString();
-                    if (CurrentProjectInfo != null)
-                    {
-                        CurrentProjectInfo.Id = projectId;
-                    }
-                }
-                
-                // КРИТИЧЕСКИ ВАЖНО: Формируем путь на основе Id проекта
-                // В новой системе файлы хранятся прямо в папке Projects, формат: {ProjectId}.json
-                var projectsDir = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "PhotoBookRenamer",
-                    "Projects");
-                
-                if (!Directory.Exists(projectsDir))
-                {
-                    Directory.CreateDirectory(projectsDir);
-                }
-                
-                // ВСЕГДА формируем путь на основе Id из локальной переменной
-                var projectFilePath = Path.Combine(projectsDir, $"{projectId}.json");
-                
-                // Сохраняем проект в файл
-                await _projectService.SaveProjectAsync(Project, projectFilePath);
-                
-                // Обновляем информацию о проекте
-                if (CurrentProjectInfo != null)
-                {
-                    CurrentProjectInfo.FilePath = projectFilePath;
-                    CurrentProjectInfo.Name = ProjectName ?? CurrentProjectInfo.Name;
-                    CurrentProjectInfo.BookCount = Project.Books?.Count ?? 0;
-                    // КРИТИЧЕСКИ ВАЖНО: PageCount - это количество разворотов в одной книге, а не сумма по всем книгам
-                CurrentProjectInfo.PageCount = Project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
-                    CurrentProjectInfo.Status = DetermineProjectStatus(Project);
-                    CurrentProjectInfo.LastModified = DateTime.Now;
-                }
-                
-                // Сохраняем обновленную информацию о проекте в список
-                if (CurrentProjectInfo != null)
-                {
-                    await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
-                }
-                
-                // После сохранения возвращаемся на главную страницу со списком проектов
-                CurrentMode = AppMode.ProjectList;
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Ошибка сохранения проекта: {ex.Message}";
-                _loggingService.LogError("Ошибка сохранения проекта", ex);
-                System.Windows.MessageBox.Show(
-                    $"Ошибка сохранения проекта: {ex.Message}\n\nПроверьте, что файл не используется другой программой.",
-                    "Ошибка",
-                    System.Windows.MessageBoxButton.OK,
-                    System.Windows.MessageBoxImage.Error);
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+
+            // The ViewModel's own CurrentMode setter goes through MainViewModel, which
+            // drops the project session - the mode tab goes back out with it.
+            CurrentMode = AppMode.ProjectList;
         }
         
         /// <summary>
@@ -587,6 +539,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         public ICommand SaveProjectCommand { get; }
         public ICommand DeleteBookCommand { get; }
         public ICommand ResetProjectCommand { get; }
+
+        /// <summary>Re-sorts one book's spreads back to alphabetical by file name.</summary>
+        public ICommand ResetBookOrderCommand { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
         public ICommand MovePageUpCommand { get; }
@@ -595,12 +550,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         /// <summary>Promotes a spread to be the book's cover, keeping the file it points at.</summary>
         public ICommand AssignCoverCommand { get; }
-
-        /// <summary>
-        /// Restores the original folder order of spreads (alphabetical by file name).
-        /// Distinct from <see cref="ResetProjectCommand"/>, which wipes the project.
-        /// </summary>
-        public ICommand ResetOrderCommand { get; }
 
         public ICommand OpenHelpCommand { get; }
         
@@ -966,8 +915,15 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             Project = null;
             Books.Clear();
+            // The project record has to go too. This ViewModel is a singleton, so keeping
+            // CurrentProjectInfo meant that "Создать проект" dropped the user into the
+            // previous project - and the next save overwrote it. Combined mode already
+            // cleared these two.
+            CurrentProjectInfo = null;
+            ProjectName = null;
             ErrorMessage = null;
             _projectService.ClearHistory();
+            Presentation.Converters.PageSourceConverter.ClearCache();
         }
 
         private void Undo()
@@ -1111,6 +1067,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 p.Index = displayIndex;
                 displayIndex++;
             }
+
+            // AllSlotsPages is built by ordering on Index, and the collection change that
+            // got us here already rebuilt it using the OLD numbers. Without this second
+            // pass the cards stay where they were and only their captions change, which
+            // reads as "some other spread moved and mine did not".
+            book.UpdatePageSlots();
         }
 
         /// <summary>
@@ -1163,36 +1125,28 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// <summary>
         /// Restores spreads to the order they had when the folders were first read
         /// (alphabetical by file name). Does not touch covers or project metadata.
+        ///
+        /// Per book on purpose: the button lives in the book block, so pressing it must
+        /// only re-sort that book. Re-ordering the whole project from one book's header
+        /// is exactly the kind of surprise this used to cause.
         /// </summary>
-        private void ResetOrder()
+        private void ResetBookOrder(Book? book)
         {
-            if (Project == null || Books.Count == 0) return;
+            if (Project == null || book == null) return;
 
-            bool changed = false;
-            foreach (var book in Books)
-            {
-                var current = book.Pages.Where(p => !p.IsCover).ToList();
-                var sorted = current
-                    .OrderBy(p => p.SourcePath, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+            var current = book.Pages.Where(p => !p.IsCover).ToList();
+            var sorted = current
+                .OrderBy(p => p.SourcePath, StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
-                if (current.SequenceEqual(sorted)) continue;
+            if (current.SequenceEqual(sorted)) return;
 
-                _projectService.SaveState(Project);
+            _projectService.SaveState(Project);
 
-                foreach (var p in current) book.Pages.Remove(p);
-                foreach (var p in sorted) book.Pages.Add(p);
+            foreach (var p in current) book.Pages.Remove(p);
+            foreach (var p in sorted) book.Pages.Add(p);
 
-                UpdatePageDisplayIndices(book);
-                book.UpdatePageSlots();
-                changed = true;
-            }
-
-            if (changed)
-            {
-                OnPropertyChanged(nameof(Books));
-                OnPropertyChanged(nameof(BooksSummary));
-            }
+            UpdatePageDisplayIndices(book);
         }
 
         private async Task LoadThumbnailForPage(Page page)

@@ -24,13 +24,13 @@ namespace PhotoBookRenamer.Presentation.Views
         private void OnUniqueFoldersClick(object sender, MouseButtonEventArgs e)
         {
             if (ClickLandedOnInnerButton(e)) return;
-            _viewModel.StartSession(AppMode.UniqueFolders);
+            _viewModel.CreateProject(AppMode.UniqueFolders);
         }
 
         private void OnCombinedModeClick(object sender, MouseButtonEventArgs e)
         {
             if (ClickLandedOnInnerButton(e)) return;
-            _viewModel.StartSession(AppMode.Combined);
+            _viewModel.CreateProject(AppMode.Combined);
         }
 
         /// <summary>
