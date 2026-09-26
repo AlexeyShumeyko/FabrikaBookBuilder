@@ -214,35 +214,67 @@ namespace PhotoBookRenamer.Presentation.Converters
             => Binding.DoNothing;
     }
 
-    /// <summary>Non-null / non-empty -> true. Drives filled vs empty slot visuals.</summary>
+    /// <summary>
+    /// Non-null / non-empty -> true. Drives filled vs empty slot visuals.
+    /// Returns a <see cref="Visibility"/> when the target is a Visibility property.
+    /// </summary>
     public class HasValueConverter : IValueConverter
     {
         public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (value is string s) return !string.IsNullOrWhiteSpace(s);
-            if (value is System.Collections.ICollection c) return c.Count > 0;
-            return value != null;
+            bool result;
+            if (value is string s) result = !string.IsNullOrWhiteSpace(s);
+            else if (value is System.Collections.ICollection c) result = c.Count > 0;
+            else result = value != null;
+
+            return targetType == typeof(Visibility)
+                ? (result ? Visibility.Visible : Visibility.Collapsed)
+                : result;
         }
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
             => Binding.DoNothing;
     }
 
-    /// <summary>Collection count > 0 -> true. Works with any IEnumerable.</summary>
+    /// <summary>
+    /// Collection count > 0 -> true. Works with any IEnumerable.
+    /// Pass ConverterParameter="invert" to flip it, which is how empty states are shown.
+    ///
+    /// Returns a <see cref="Visibility"/> when the binding target is a Visibility property:
+    /// WPF will not coerce a bool to Visibility on its own, so returning a raw bool there
+    /// silently leaves the element Visible.
+    /// </summary>
     public class CountToBoolConverter : IValueConverter
     {
         public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (value is null) return false;
-            if (value is string s) return !string.IsNullOrEmpty(s);
-            if (value is System.Collections.ICollection c) return c.Count > 0;
-            if (value is System.Collections.IEnumerable e)
+            bool result = HasItems(value);
+            if (string.Equals(parameter as string, "invert", StringComparison.OrdinalIgnoreCase))
+                result = !result;
+
+            return targetType == typeof(Visibility)
+                ? (result ? Visibility.Visible : Visibility.Collapsed)
+                : result;
+        }
+
+        private static bool HasItems(object? value)
+        {
+            switch (value)
             {
-                var en = e.GetEnumerator();
-                try { return en.MoveNext(); }
-                finally { (en as IDisposable)?.Dispose(); }
+                case null: return false;
+                case string s: return !string.IsNullOrEmpty(s);
+                // Numeric counts are treated as "is it greater than zero", so the same
+                // converter works for both a collection and a ProjectsCount-style int.
+                case int i: return i > 0;
+                case long l: return l > 0;
+                case double d: return d > 0;
+                case System.Collections.ICollection c: return c.Count > 0;
+                case System.Collections.IEnumerable e:
+                    var en = e.GetEnumerator();
+                    try { return en.MoveNext(); }
+                    finally { (en as IDisposable)?.Dispose(); }
+                default: return false;
             }
-            return false;
         }
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

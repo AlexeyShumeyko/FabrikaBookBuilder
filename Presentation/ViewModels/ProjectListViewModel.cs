@@ -33,10 +33,25 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             OpenHelpCommand = new RelayCommand(OpenHelp);
             
             // Загружаем проекты при создании
+            // CollectionChanged -> ProjectsCount, so "N проектов" and the empty state
+            // re-evaluate. See the remark on ProjectsCount.
+            Projects.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ProjectsCount));
             _ = LoadProjectsAsync();
         }
 
         public ObservableCollection<ProjectInfo> Projects { get; }
+
+        /// <summary>
+        /// Count for bindings that must react to items being added.
+        ///
+        /// WPF does not re-evaluate a binding just because an ObservableCollection grew:
+        /// it only listens for INotifyPropertyChanged on the binding source. Binding
+        /// straight to <c>Projects</c> therefore latched onto whatever the collection
+        /// contained at load time (empty), and the "no projects yet" panel stayed on top
+        /// of the freshly loaded cards. Subscribing to CollectionChanged and re-raising is
+        /// what makes such bindings update.
+        /// </summary>
+        public int ProjectsCount => Projects.Count;
 
         public ProjectInfo? SelectedProject
         {

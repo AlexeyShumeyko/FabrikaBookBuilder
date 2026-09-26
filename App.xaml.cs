@@ -1,6 +1,9 @@
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PhotoBookRenamer.Application;
@@ -16,9 +19,54 @@ namespace PhotoBookRenamer
 
         public IServiceProvider? GetServiceProvider() => _serviceProvider;
 
+        /// <summary>
+        /// Dumps WPF data-binding diagnostics to %TEMP%\PhotoBookRenamer\binding.log when
+        /// the FBR_BINDING_TRACE environment variable is set.
+        ///
+        /// A silently broken binding in WPF does not throw: the target keeps its default
+        /// value, so a failed converter or a typo in a property path looks like "the
+        /// feature just does not work". This makes those failures visible.
+        /// </summary>
+        private void EnableBindingTraceIfRequested()
+        {
+            var mode = Environment.GetEnvironmentVariable("FBR_BINDING_TRACE");
+            if (string.IsNullOrWhiteSpace(mode)) return;
+
+            try
+            {
+                var dir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer");
+                Directory.CreateDirectory(dir);
+                var log = Path.Combine(dir, "binding.log");
+                if (File.Exists(log)) File.Delete(log);
+
+                var listener = new TextWriterTraceListener(new StreamWriter(log, append: false))
+                {
+                    TraceOutputOptions = TraceOptions.Timestamp | TraceOptions.Callstack
+                };
+
+                var level = string.Equals(mode, "verbose", StringComparison.OrdinalIgnoreCase)
+                    ? SourceLevels.Warning | SourceLevels.Information
+                    : SourceLevels.Warning;
+
+                PresentationTraceSources.Refresh();
+                PresentationTraceSources.DataBindingSource.Listeners.Add(listener);
+                PresentationTraceSources.DataBindingSource.Switch.Level = level;
+                PresentationTraceSources.DataBindingSource.Listeners.Add(
+                    new ConsoleTraceListener());
+
+                Debug.WriteLine($"[FBR] binding trace -> {log}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[FBR] binding trace could not be enabled: {ex.Message}");
+            }
+        }
+
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            EnableBindingTraceIfRequested();
 
             var services = new ServiceCollection();
             ConfigureServices(services);

@@ -92,15 +92,17 @@
                         HorizontalAlignment="Center" VerticalAlignment="Center" Padding="4">
                     <StackPanel Orientation="Horizontal">
                         <RadioButton Style="{StaticResource TabButton}" GroupName="ScreenTabs"
+                                     AutomationProperties.Name="Мои проекты"
                                      IsChecked="{Binding CurrentMode, Mode=TwoWay, Converter={StaticResource AppModeEqualsConverter}, ConverterParameter=ProjectList}"
                                      ToolTip="Список проектов">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                <TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
                                 <TextBlock Text="Мои проекты" Margin="6,0,0,0" />
                             </StackPanel>
                         </RadioButton>
                         <RadioButton Style="{StaticResource TabButton}" GroupName="ScreenTabs"
+                                     AutomationProperties.Name="Выбор режима"
                                      IsChecked="{Binding CurrentMode, Mode=TwoWay, Converter={StaticResource AppModeEqualsConverter}, ConverterParameter=StartScreen}"
                                      ToolTip="Выбор режима вёрстки">
                             <StackPanel Orientation="Horizontal">
@@ -110,6 +112,7 @@
                             </StackPanel>
                         </RadioButton>
                         <RadioButton Style="{StaticResource TabButton}" GroupName="ScreenTabs"
+                                     AutomationProperties.Name="Уникальные папки"
                                      IsChecked="{Binding CurrentMode, Mode=TwoWay, Converter={StaticResource AppModeEqualsConverter}, ConverterParameter=UniqueFolders}"
                                      ToolTip="Каждая папка — отдельная книга">
                             <StackPanel Orientation="Horizontal">
@@ -119,10 +122,11 @@
                             </StackPanel>
                         </RadioButton>
                         <RadioButton Style="{StaticResource TabButton}" GroupName="ScreenTabs"
+                                     AutomationProperties.Name="Комбинированный"
                                      IsChecked="{Binding CurrentMode, Mode=TwoWay, Converter={StaticResource AppModeEqualsConverter}, ConverterParameter=Combined}"
                                      ToolTip="Ручная сборка книг из общего пула">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE81D;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
                                 <TextBlock Text="Комбинированный" Margin="6,0,0,0" />
                             </StackPanel>
@@ -137,12 +141,13 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0"
                                 Visibility="{Binding ShowUndoRedo, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button Style="{StaticResource IconButton}" Command="{Binding ActiveEditor.UndoCommand}"
-                                ToolTip="Отменить (Ctrl+Z)" Content="&#xE7A7;" />
+                                AutomationProperties.Name="Отменить" ToolTip="Отменить (Ctrl+Z)" Content="&#xE7A7;" />
                         <Button Style="{StaticResource IconButton}" Command="{Binding ActiveEditor.RedoCommand}"
-                                ToolTip="Вернуть (Ctrl+Y)" Content="&#xE72A;" Margin="4,0,0,0" />
+                                AutomationProperties.Name="Вернуть" ToolTip="Вернуть (Ctrl+Y)" Content="&#xE72A;" Margin="4,0,0,0" />
                     </StackPanel>
 
                     <Button Style="{StaticResource SecondaryButton}" Click="OnChooseSourceClick"
+                            AutomationProperties.Name="Выбрать источник"
                             Visibility="{Binding ShowSourcePicker, Converter={StaticResource BooleanToVisibilityConverter}}"
                             ToolTip="Выбрать папки с фотографиями">
                         <StackPanel Orientation="Horizontal">
@@ -153,6 +158,7 @@
                     </Button>
 
                     <Button Style="{StaticResource SecondaryButton}" Click="OnSaveClick"
+                            AutomationProperties.Name="Сохранить"
                             IsEnabled="{Binding CanSave}" ToolTip="Сохранить проект (Ctrl+S)">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="12"
@@ -162,6 +168,7 @@
                     </Button>
 
                     <Button Style="{StaticResource PrimaryButton}" Click="OnExportClick"
+                            AutomationProperties.Name="Экспорт"
                             IsEnabled="{Binding CanExport}" ToolTip="Экспорт готовых файлов"
                             Margin="8,0,0,0">
                         <StackPanel Orientation="Horizontal">
