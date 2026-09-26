@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using PhotoBookRenamer.Domain;
 
@@ -12,6 +13,20 @@ namespace PhotoBookRenamer.Application
     {
         private readonly string _projectsDirectory;
         private readonly string _projectsListPath;
+
+        /// <summary>
+        /// Every read-modify-write of projects.json goes through this gate.
+        ///
+        /// The service is a SINGLETON and the index is one shared file, while callers save
+        /// from several places at once without awaiting: CombinedModeViewModel fires
+        /// SaveProjectInfoAsync off a background task, ProjectListViewModel saves each
+        /// project while the list loads, the editors save on rename. Two of those read the
+        /// same snapshot and the later write silently dropped the earlier one's entry -
+        /// that is where "my project disappeared from the list" came from. Reading was
+        /// not safe either: GetAllProjectsAsync used to repair the file as a side effect
+        /// of reading it, so a plain read could overwrite a concurrent write.
+        /// </summary>
+        private readonly SemaphoreSlim _indexGate = new(1, 1);
 
         public ProjectListService()
         {
@@ -67,39 +82,15 @@ namespace PhotoBookRenamer.Application
         /// </summary>
         public async Task<List<ProjectInfo>> GetAllProjectsAsync()
         {
+            await _indexGate.WaitAsync();
             try
             {
-                if (!File.Exists(_projectsListPath))
-                {
-                    // Попытка миграции старых проектов
-                    await MigrateOldProjectsAsync();
-                    if (!File.Exists(_projectsListPath))
-                    {
-                        return new List<ProjectInfo>();
-                    }
-                }
-
-                var json = await File.ReadAllTextAsync(_projectsListPath);
-                if (string.IsNullOrWhiteSpace(json))
-                {
-                    return new List<ProjectInfo>();
-                }
-
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-                var projects = JsonSerializer.Deserialize<List<ProjectInfo>>(json, options);
-                
-                if (projects == null)
-                {
-                    return new List<ProjectInfo>();
-                }
+                var projects = await ReadAllProjects_NoLock();
 
                 // КРИТИЧЕСКИ ВАЖНО: Валидация и исправление проектов
                 var validatedProjects = new List<ProjectInfo>();
                 var usedIds = new HashSet<string>();
+                bool repaired = false;
 
                 foreach (var project in projects)
                 {
@@ -112,20 +103,27 @@ namespace PhotoBookRenamer.Application
                             newId = Guid.NewGuid().ToString();
                         } while (usedIds.Contains(newId) || validatedProjects.Any(p => p.Id == newId));
                         project.Id = newId;
+                        repaired = true;
                     }
                     usedIds.Add(project.Id);
-                    
+
                     // ВСЕГДА формируем FilePath на основе Id
-                    project.FilePath = GetProjectFilePath(project.Id);
-                    
+                    string expected = GetProjectFilePath(project.Id);
+                    if (project.FilePath != expected)
+                    {
+                        project.FilePath = expected;
+                        repaired = true;
+                    }
+
                     validatedProjects.Add(project);
                 }
 
-                // Сохраняем исправленный список, если были изменения
-                if (validatedProjects.Count != projects.Count || 
-                    validatedProjects.Any(p => p.Id != projects.FirstOrDefault(pr => pr.Name == p.Name)?.Id))
+                // Сохраняем исправленный список, только если правки действительно были.
+                // Раньше здесь сравнение шло по Name, из-за чего перезапись происходила
+                // почти при каждом чтении.
+                if (repaired)
                 {
-                    await SaveProjectsListAsync(validatedProjects);
+                    await WriteAllProjects_NoLock(validatedProjects);
                 }
 
                 return validatedProjects;
@@ -134,6 +132,39 @@ namespace PhotoBookRenamer.Application
             {
                 return new List<ProjectInfo>();
             }
+            finally
+            {
+                _indexGate.Release();
+            }
+        }
+
+        /// <summary>
+        /// Reads and deserializes the index. The caller must hold <see cref="_indexGate"/>.
+        /// </summary>
+        private async Task<List<ProjectInfo>> ReadAllProjects_NoLock()
+        {
+            if (!File.Exists(_projectsListPath))
+            {
+                // Попытка миграции старых проектов
+                await MigrateOldProjectsAsync();
+                if (!File.Exists(_projectsListPath))
+                {
+                    return new List<ProjectInfo>();
+                }
+            }
+
+            var json = await File.ReadAllTextAsync(_projectsListPath);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return new List<ProjectInfo>();
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            return JsonSerializer.Deserialize<List<ProjectInfo>>(json, options) ?? new List<ProjectInfo>();
         }
 
         /// <summary>
@@ -141,9 +172,10 @@ namespace PhotoBookRenamer.Application
         /// </summary>
         public async Task<ProjectInfo?> CreateProjectAsync(AppMode mode, string name)
         {
+            await _indexGate.WaitAsync();
             try
             {
-                var allProjects = await GetAllProjectsAsync();
+                var allProjects = await ReadAllProjects_NoLock();
                 
                 // Генерируем уникальный ID
                 string projectId;
@@ -167,13 +199,17 @@ namespace PhotoBookRenamer.Application
                 };
 
                 allProjects.Add(projectInfo);
-                await SaveProjectsListAsync(allProjects);
+                await WriteAllProjects_NoLock(allProjects);
 
                 return projectInfo;
             }
             catch
             {
                 return null;
+            }
+            finally
+            {
+                _indexGate.Release();
             }
         }
 
@@ -183,25 +219,32 @@ namespace PhotoBookRenamer.Application
         /// </summary>
         public async Task<bool> SaveProjectInfoAsync(ProjectInfo projectInfo)
         {
+            // КРИТИЧЕСКИ ВАЖНО: Проверяем, что ID установлен
+            if (string.IsNullOrEmpty(projectInfo.Id))
+            {
+                return false;
+            }
+
+            await _indexGate.WaitAsync();
             try
             {
-                // КРИТИЧЕСКИ ВАЖНО: Проверяем, что ID установлен
-                if (string.IsNullOrEmpty(projectInfo.Id))
-                {
-                    throw new InvalidOperationException("Нельзя сохранить проект без Id");
-                }
-
                 var projectId = projectInfo.Id;
                 var projectFilePath = GetProjectFilePath(projectId);
 
-                var allProjects = await GetAllProjectsAsync();
-                
+                var allProjects = await ReadAllProjects_NoLock();
+
                 // КРИТИЧЕСКИ ВАЖНО: Ищем проект ТОЛЬКО по ID
                 var existingIndex = allProjects.FindIndex(p => p.Id == projectId);
-                
+
                 if (existingIndex >= 0)
                 {
-                    // Обновляем существующий проект - создаём новый объект с правильными данными
+                    var existing = allProjects[existingIndex];
+
+                    // Обновляем существующий проект. PageCount и CreatedDate переносим из
+                    // записи индекса: их нет в том объекте, который присылают редакторы
+                    // (там только то, что изменилось), и раньше они молча обнулялись -
+                    // в карточке проекта пропадало число страниц, а сортировка по дате
+                    // создания съезжала.
                     allProjects[existingIndex] = new ProjectInfo
                     {
                         Id = projectId, // ВСЕГДА используем оригинальный ID
@@ -209,6 +252,8 @@ namespace PhotoBookRenamer.Application
                         FilePath = projectFilePath, // ВСЕГДА формируем на основе ID
                         Mode = projectInfo.Mode,
                         BookCount = projectInfo.BookCount,
+                        PageCount = projectInfo.PageCount > 0 ? projectInfo.PageCount : existing.PageCount,
+                        CreatedDate = projectInfo.CreatedDate != default ? projectInfo.CreatedDate : existing.CreatedDate,
                         Status = projectInfo.Status,
                         LastModified = DateTime.Now
                     };
@@ -218,16 +263,21 @@ namespace PhotoBookRenamer.Application
                     // Если проект не найден, добавляем новый
                     projectInfo.FilePath = projectFilePath;
                     projectInfo.LastModified = DateTime.Now;
+                    if (projectInfo.CreatedDate == default) projectInfo.CreatedDate = DateTime.Now;
                     allProjects.Add(projectInfo);
                 }
 
-                await SaveProjectsListAsync(allProjects);
+                await WriteAllProjects_NoLock(allProjects);
                 return true;
             }
             catch (Exception ex)
             {
                 // Логируем ошибку для отладки
                 return false;
+            }
+            finally
+            {
+                _indexGate.Release();
             }
         }
 
@@ -236,36 +286,41 @@ namespace PhotoBookRenamer.Application
         /// </summary>
         public async Task<bool> DeleteProjectAsync(ProjectInfo projectInfo)
         {
+            if (string.IsNullOrEmpty(projectInfo?.Id))
+            {
+                return false;
+            }
+
+            await _indexGate.WaitAsync();
             try
             {
-                if (string.IsNullOrEmpty(projectInfo.Id))
+                var allProjects = await ReadAllProjects_NoLock();
+                var projectToDelete = allProjects.FirstOrDefault(p => p.Id == projectInfo.Id);
+
+                if (projectToDelete == null)
                 {
                     return false;
                 }
 
-                var allProjects = await GetAllProjectsAsync();
-                var projectToDelete = allProjects.FirstOrDefault(p => p.Id == projectInfo.Id);
-                
-                if (projectToDelete != null)
+                allProjects.Remove(projectToDelete);
+                await WriteAllProjects_NoLock(allProjects);
+
+                // Удаляем файл проекта
+                var projectFilePath = GetProjectFilePath(projectInfo.Id);
+                if (File.Exists(projectFilePath))
                 {
-                    allProjects.Remove(projectToDelete);
-                    await SaveProjectsListAsync(allProjects);
-                    
-                    // Удаляем файл проекта
-                    var projectFilePath = GetProjectFilePath(projectInfo.Id);
-                    if (File.Exists(projectFilePath))
-                    {
-                        File.Delete(projectFilePath);
-                    }
-                    
-                    return true;
+                    File.Delete(projectFilePath);
                 }
-                
-                return false;
+
+                return true;
             }
             catch
             {
                 return false;
+            }
+            finally
+            {
+                _indexGate.Release();
             }
         }
 
@@ -307,33 +362,36 @@ namespace PhotoBookRenamer.Application
         }
 
         /// <summary>
-        /// Сохраняет список всех проектов в projects.json
+        /// Serializes and writes the whole index. The caller must hold
+        /// <see cref="_indexGate"/>.
+        ///
+        /// The write goes to a temporary file that then REPLACES the index, because
+        /// File.WriteAllTextAsync truncates the target first: a crash or a concurrent
+        /// reader in that window saw an empty or half-written projects.json, and the
+        /// project list came back empty. File.Move with overwrite is atomic on NTFS.
         /// </summary>
-        private async Task SaveProjectsListAsync(List<ProjectInfo> projects)
+        private async Task WriteAllProjects_NoLock(List<ProjectInfo> projects)
         {
-            try
+            // КРИТИЧЕСКИ ВАЖНО: Убеждаемся, что у всех проектов есть правильный ID и FilePath
+            foreach (var project in projects)
             {
-                // КРИТИЧЕСКИ ВАЖНО: Убеждаемся, что у всех проектов есть правильный ID и FilePath
-                foreach (var project in projects)
+                if (string.IsNullOrEmpty(project.Id))
                 {
-                    if (string.IsNullOrEmpty(project.Id))
-                    {
-                        project.Id = Guid.NewGuid().ToString();
-                    }
-                    project.FilePath = GetProjectFilePath(project.Id);
+                    project.Id = Guid.NewGuid().ToString();
                 }
+                project.FilePath = GetProjectFilePath(project.Id);
+            }
 
-                var options = new JsonSerializerOptions 
-                { 
-                    WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-                var json = JsonSerializer.Serialize(projects, options);
-                await File.WriteAllTextAsync(_projectsListPath, json);
-            }
-            catch (Exception ex)
-            {
-            }
+            var options = new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            var json = JsonSerializer.Serialize(projects, options);
+
+            string tempPath = _projectsListPath + ".tmp";
+            await File.WriteAllTextAsync(tempPath, json);
+            File.Move(tempPath, _projectsListPath, overwrite: true);
         }
 
         /// <summary>
@@ -416,10 +474,11 @@ namespace PhotoBookRenamer.Application
                     }
                 }
 
-                // Сохраняем мигрированные проекты
+                // Сохраняем мигрированные проекты. Вызывается только из
+                // ReadAllProjects_NoLock, то есть гейт уже удерживается.
                 if (migratedProjects.Count > 0)
                 {
-                    await SaveProjectsListAsync(migratedProjects);
+                    await WriteAllProjects_NoLock(migratedProjects);
                 }
             }
             catch
