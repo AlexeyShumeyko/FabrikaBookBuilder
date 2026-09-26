@@ -115,7 +115,7 @@ try {
     $main = [System.Windows.Automation.AutomationElement]::FromHandle($proc.MainWindowHandle)
     $trigger = switch ($Dialog) {
         'Export'  { Find-ByName $main 'Экспорт' 'Button' }
-        'Folders' { Find-ByName $main 'Выбор папок' 'Button' }
+        'Folders' { Find-ByName $main 'Выбрать папки' 'Button' }
         default   { throw "unknown -Dialog '$Dialog'" }
     }
     if ($null -eq $trigger) { throw "could not find the '$Dialog' trigger button" }
