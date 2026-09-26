@@ -13,8 +13,7 @@ using PhotoBookRenamer.Domain;
 using PhotoBookRenamer.Application;
 using PhotoBookRenamer.Infrastructure;
 using PhotoBookRenamer.Presentation.Views;
-using PhotoBookRenamer.Presentation.Converters;
-using PhotoBookRenamer.Presentation.Dialogs;
+using PhotoBookRenamer.Presentation.Converters;using PhotoBookRenamer.Presentation.Dialogs;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
 {
@@ -658,61 +657,99 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             if (Project == null) return;
 
-            var missingSlots = Books.SelectMany((book, idx) =>
-                book.Pages.Where(p => p.IsEmpty).Select(p => $"Книга {idx + 1}, разворот {p.Index}")
-            ).ToList();
-
-            if (missingSlots.Any())
+            // Combined mode must not silently skip empty slots the way Unique Folders
+            // mode does, so the validation stays here - before the options modal opens.
+            var missingSlots = new List<string>();
+            foreach (var book in Books)
             {
-                var message = "Не все развороты заполнены:\n" + string.Join("\n", missingSlots);
-                System.Windows.MessageBox.Show(message, "Предупреждение", 
-                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                foreach (var p in book.Pages.Where(p => p.IsEmpty))
+                    missingSlots.Add($"Книга {book.BookIndex}, разворот {p.Index}");
+            }
+
+            if (missingSlots.Count > 0)
+            {
+                var list = string.Join("\n", missingSlots.Take(12));
+                if (missingSlots.Count > 12) list += $"\n... и ещё {missingSlots.Count - 12}";
+                System.Windows.MessageBox.Show($"Не все развороты заполнены:\n\n{list}",
+                    "Предупреждение", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 return;
             }
 
-            var outputFolder = await _fileService.SelectOutputFolderWithNameAsync(
-                defaultPath: Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-                defaultFolderName: "PhotoBookExport");
-            
-            if (string.IsNullOrEmpty(outputFolder))
+            await RunExportAsync();
+        }
+
+        /// <summary>
+        /// Ctrl+Shift+S. Validates covers as well, which the plain export does not, and
+        /// otherwise shares the same options modal.
+        /// </summary>
+        private async Task ExportWithFolderAsync()
+        {
+            if (Project == null) return;
+
+            var missingCovers = Books
+                .Where(b => b.Cover == null || b.Cover.IsEmpty)
+                .Select(b => $"Книга {b.BookIndex}: не назначена обложка")
+                .ToList();
+
+            var missingPages = new List<string>();
+            foreach (var book in Books)
+            {
+                foreach (var p in book.Pages.Where(p => p.IsEmpty))
+                    missingPages.Add($"Книга {book.BookIndex}, разворот {p.Index}");
+            }
+
+            if (missingCovers.Count > 0 || missingPages.Count > 0)
+            {
+                var parts = new List<string>();
+                if (missingCovers.Count > 0)
+                {
+                    parts.Add("Не назначены обложки:\n" + string.Join("\n", missingCovers.Take(10)));
+                }
+                if (missingPages.Count > 0)
+                {
+                    var list = string.Join("\n", missingPages.Take(10));
+                    if (missingPages.Count > 10) list += $"\n... и ещё {missingPages.Count - 10}";
+                    parts.Add("Не заполнены развороты:\n" + list);
+                }
+
+                System.Windows.MessageBox.Show("Перед экспортом необходимо заполнить все обязательные поля:\n\n"
+                                + string.Join("\n\n", parts),
+                    "Предупреждение", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 return;
+            }
+
+            await RunExportAsync();
+        }
+
+        /// <summary>
+        /// Opens the options modal, which performs the copy, then updates the project
+        /// status and shows the success dialog.
+        /// </summary>
+        private async Task RunExportAsync()
+        {
+            if (Project == null) return;
+
+            var options = new Presentation.Dialogs.ExportDialog(Project, _exportService);
+            options.Owner = System.Windows.Application.Current.MainWindow;
 
             IsLoading = true;
             try
             {
-                var success = await _exportService.ExportProjectAsync(Project, outputFolder);
-                if (success)
+                if (options.ShowDialog() != true || !options.Exported)
+                    return;
+
+                string outputFolder = options.ExportedFolder;
+
+                Project.OutputFolder = outputFolder;
+                if (CurrentProjectInfo != null)
                 {
-                    ErrorMessage = null;
-                    
-                    // Обновляем статус проекта после успешного экспорта
-                    if (CurrentProjectInfo != null)
-                    {
-                        CurrentProjectInfo.Status = ProjectStatus.SuccessfullyCompleted;
-                        // КРИТИЧЕСКИ ВАЖНО: PageCount - это количество разворотов в одной книге, а не сумма по всем книгам
-                        CurrentProjectInfo.PageCount = Project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
-                        Project.OutputFolder = outputFolder;
-                        await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
-                    }
-                    
-                    var dialog = new Presentation.Dialogs.ExportSuccessDialog(outputFolder);
-                    dialog.Owner = System.Windows.Application.Current.MainWindow;
-                    if (dialog.ShowDialog() == true && dialog.GoToFolder)
-                    {
-                        try
-                        {
-                            System.Diagnostics.Process.Start("explorer.exe", outputFolder);
-                        }
-                        catch
-                        {
-                            // Игнорируем ошибки открытия папки
-                        }
-                    }
+                    CurrentProjectInfo.Status = ProjectStatus.SuccessfullyCompleted;
+                    CurrentProjectInfo.PageCount = Books.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
+                    await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
                 }
-                else
-                {
-                    ErrorMessage = "Ошибка при экспорте";
-                }
+
+                ErrorMessage = null;
+                await ShowExportSuccessAsync(outputFolder);
             }
             catch (Exception ex)
             {
@@ -725,90 +762,23 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             }
         }
 
-        private async Task ExportWithFolderAsync()
+        private async Task ShowExportSuccessAsync(string outputFolder)
         {
-            if (Project == null) return;
-
-            var missingCovers = Books.Where((book, idx) => book.Cover == null || book.Cover.IsEmpty)
-                .Select((book, idx) => $"Книга {idx + 1}").ToList();
-
-            var missingPages = Books.SelectMany((book, idx) =>
-                book.Pages.Where(p => p.IsEmpty).Select(p => $"Книга {idx + 1}, разворот {p.Index}")
-            ).ToList();
-
-            var errors = new List<string>();
-            if (missingCovers.Any())
+            var dialog = new Presentation.Dialogs.ExportSuccessDialog(outputFolder);
+            dialog.Owner = System.Windows.Application.Current.MainWindow;
+            if (dialog.ShowDialog() == true && dialog.GoToFolder)
             {
-                errors.Add("Не заполнены обложки:\n" + string.Join("\n", missingCovers));
-            }
-            if (missingPages.Any())
-            {
-                errors.Add("Не заполнены развороты:\n" + string.Join("\n", missingPages.Take(10)));
-                if (missingPages.Count > 10)
+                await System.Threading.Tasks.Task.Run(() =>
                 {
-                    errors[errors.Count - 1] += $"\n... и еще {missingPages.Count - 10}";
-                }
-            }
-
-            if (errors.Any())
-            {
-                var message = "Перед экспортом необходимо заполнить все обязательные поля:\n\n" + string.Join("\n\n", errors);
-                System.Windows.MessageBox.Show(message, "Предупреждение", 
-                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-                return;
-            }
-
-            var outputFolder = await _fileService.SelectOutputFolderAsync(
-                defaultPath: Environment.GetFolderPath(Environment.SpecialFolder.Desktop));
-            
-            if (string.IsNullOrEmpty(outputFolder))
-                return;
-
-            IsLoading = true;
-            try
-            {
-                var success = await _exportService.ExportProjectAsync(Project, outputFolder);
-                if (success)
-                {
-                    ErrorMessage = null;
-                    
-                    // Обновляем статус проекта после успешного экспорта
-                    if (CurrentProjectInfo != null)
+                    try
                     {
-                        CurrentProjectInfo.Status = ProjectStatus.SuccessfullyCompleted;
-                        // КРИТИЧЕСКИ ВАЖНО: PageCount - это количество разворотов в одной книге, а не сумма по всем книгам
-                        CurrentProjectInfo.PageCount = Project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
-                        Project.OutputFolder = outputFolder;
-                        await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
+                        System.Diagnostics.Process.Start("explorer.exe", outputFolder);
                     }
-                    
-                    var dialog = new Presentation.Dialogs.ExportSuccessDialog(outputFolder);
-                    dialog.Owner = System.Windows.Application.Current.MainWindow;
-                    if (dialog.ShowDialog() == true && dialog.GoToFolder)
+                    catch
                     {
-                        try
-                        {
-                            System.Diagnostics.Process.Start("explorer.exe", outputFolder);
-                        }
-                        catch
-                        {
-                            // Игнорируем ошибки открытия папки
-                        }
+                        // Explorer failing to open is not worth surfacing.
                     }
-                }
-                else
-                {
-                    ErrorMessage = "Ошибка при экспорте";
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Ошибка экспорта: {ex.Message}";
-                _loggingService.LogError("Ошибка экспорта", ex);
-            }
-            finally
-            {
-                IsLoading = false;
+                });
             }
         }
 

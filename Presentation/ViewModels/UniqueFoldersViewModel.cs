@@ -835,48 +835,31 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             if (Project == null) return;
 
-            var outputFolder = await _fileService.SelectOutputFolderWithNameAsync(
-                defaultPath: Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-                defaultFolderName: "PhotoBookExport");
-            
-            if (string.IsNullOrEmpty(outputFolder))
-                return;
+            // The options modal owns the copy so it can show a progress bar, and it runs
+            // the export itself. This method only handles the surrounding bookkeeping.
+            var options = new Presentation.Dialogs.ExportDialog(Project, _exportService);
+            options.Owner = System.Windows.Application.Current.MainWindow;
 
             IsLoading = true;
             try
             {
-                var success = await _exportService.ExportProjectAsync(Project, outputFolder);
-                if (success)
+                if (options.ShowDialog() != true || !options.Exported)
+                    return;
+
+                string outputFolder = options.ExportedFolder;
+
+                Project.OutputFolder = outputFolder;
+                if (CurrentProjectInfo != null)
                 {
-                    // КРИТИЧЕСКИ ВАЖНО: Обновляем статус проекта на "Завершён" после успешного экспорта
-                    Project.OutputFolder = outputFolder;
-                    if (CurrentProjectInfo != null)
-                    {
-                        CurrentProjectInfo.Status = ProjectStatus.SuccessfullyCompleted;
-                        // КРИТИЧЕСКИ ВАЖНО: PageCount - это количество разворотов в одной книге, а не сумма по всем книгам
-                CurrentProjectInfo.PageCount = Project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
-                        await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
-                    }
-                    
-                    ErrorMessage = null;
-                    var dialog = new Presentation.Dialogs.ExportSuccessDialog(outputFolder);
-                    dialog.Owner = System.Windows.Application.Current.MainWindow;
-                    if (dialog.ShowDialog() == true && dialog.GoToFolder)
-                    {
-                        try
-                        {
-                            System.Diagnostics.Process.Start("explorer.exe", outputFolder);
-                        }
-                        catch
-                        {
-                            // Игнорируем ошибки открытия папки
-                        }
-                    }
+                    CurrentProjectInfo.Status = ProjectStatus.SuccessfullyCompleted;
+                    // PageCount is the number of spreads in ONE book, not a sum.
+                    CurrentProjectInfo.PageCount =
+                        Project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
+                    await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
                 }
-                else
-                {
-                    ErrorMessage = "Ошибка при экспорте";
-                }
+
+                ErrorMessage = null;
+                await ShowExportSuccessAsync(outputFolder);
             }
             catch (Exception ex)
             {
@@ -889,51 +872,58 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             }
         }
 
+        /// <summary>Success modal, with an optional "open the folder" action.</summary>
+        private async Task ShowExportSuccessAsync(string outputFolder)
+        {
+            var dialog = new Presentation.Dialogs.ExportSuccessDialog(outputFolder);
+            dialog.Owner = System.Windows.Application.Current.MainWindow;
+            if (dialog.ShowDialog() == true && dialog.GoToFolder)
+            {
+                await System.Threading.Tasks.Task.Run(() =>
+                {
+                    try
+                    {
+                        System.Diagnostics.Process.Start("explorer.exe", outputFolder);
+                    }
+                    catch
+                    {
+                        // Explorer failing to open is not worth surfacing.
+                    }
+                });
+            }
+        }
+
+        /// <summary>
+        /// Ctrl+Shift+S. Same modal as <see cref="ExportAsync"/> - the only difference
+        /// used to be that the target folder was picked without a name prompt, which the
+        /// new options modal handles itself.
+        /// </summary>
         private async Task ExportWithFolderAsync()
         {
             if (Project == null) return;
 
-            var outputFolder = await _fileService.SelectOutputFolderAsync(
-                defaultPath: Environment.GetFolderPath(Environment.SpecialFolder.Desktop));
-            
-            if (string.IsNullOrEmpty(outputFolder))
-                return;
+            var options = new Presentation.Dialogs.ExportDialog(Project, _exportService);
+            options.Owner = System.Windows.Application.Current.MainWindow;
 
             IsLoading = true;
             try
             {
-                var success = await _exportService.ExportProjectAsync(Project, outputFolder);
-                if (success)
+                if (options.ShowDialog() != true || !options.Exported)
+                    return;
+
+                string outputFolder = options.ExportedFolder;
+
+                Project.OutputFolder = outputFolder;
+                if (CurrentProjectInfo != null)
                 {
-                    // КРИТИЧЕСКИ ВАЖНО: Обновляем статус проекта на "Завершён" после успешного экспорта
-                    Project.OutputFolder = outputFolder;
-                    if (CurrentProjectInfo != null)
-                    {
-                        CurrentProjectInfo.Status = ProjectStatus.SuccessfullyCompleted;
-                        // КРИТИЧЕСКИ ВАЖНО: PageCount - это количество разворотов в одной книге, а не сумма по всем книгам
-                CurrentProjectInfo.PageCount = Project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
-                        await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
-                    }
-                    
-                    ErrorMessage = null;
-                    var dialog = new Presentation.Dialogs.ExportSuccessDialog(outputFolder);
-                    dialog.Owner = System.Windows.Application.Current.MainWindow;
-                    if (dialog.ShowDialog() == true && dialog.GoToFolder)
-                    {
-                        try
-                        {
-                            System.Diagnostics.Process.Start("explorer.exe", outputFolder);
-                        }
-                        catch
-                        {
-                            // Игнорируем ошибки открытия папки
-                        }
-                    }
+                    CurrentProjectInfo.Status = ProjectStatus.SuccessfullyCompleted;
+                    CurrentProjectInfo.PageCount =
+                        Project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
+                    await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
                 }
-                else
-                {
-                    ErrorMessage = "Ошибка при экспорте";
-                }
+
+                ErrorMessage = null;
+                await ShowExportSuccessAsync(outputFolder);
             }
             catch (Exception ex)
             {

@@ -1,0 +1,148 @@
+<Window x:Class="PhotoBookRenamer.Presentation.Dialogs.ExportDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Экспорт"
+        Width="560" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="Transparent"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        FontFamily="{StaticResource UiFont}">
+
+    <Border Background="{StaticResource Surface}" CornerRadius="16"
+            BorderBrush="{StaticResource BorderDefault}" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="50" ShadowDepth="12" Direction="270"
+                              Opacity="0.25" RenderingBias="Quality" Color="#000000" />
+        </Border.Effect>
+
+        <StackPanel Margin="24">
+            <!-- ============================================================== -->
+            <!--  Header                                                       -->
+            <!-- ============================================================== -->
+            <Grid Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="10"
+                        Background="{StaticResource Brand50}" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                               Foreground="{StaticResource Brand600}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+
+                <TextBlock Grid.Column="1" Text="Параметры экспорта готовых файлов"
+                           Style="{StaticResource TextH3}" Margin="12,0,0,0" VerticalAlignment="Center" />
+
+                <Button Grid.Column="2" Style="{StaticResource IconButton}" Click="OnCancelClick"
+                        AutomationProperties.Name="Закрыть" ToolTip="Закрыть" Content="&#xE711;"
+                        FontFamily="Segoe MDL2 Assets" FontSize="13" />
+            </Grid>
+
+            <!-- ============================================================== -->
+            <!--  Body                                                         -->
+            <!-- ============================================================== -->
+            <StackPanel>
+                <!-- Summary -->
+                <Border Background="{StaticResource Slate50}" BorderBrush="{StaticResource Slate200}"
+                        BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,0,16">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                       Foreground="{StaticResource Slate400}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding BookCount, StringFormat='Книг: {0}'}"
+                                       Style="{StaticResource TextCaption}" Margin="6,0,0,0" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8B9;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                       Foreground="{StaticResource Slate400}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding FileCount, StringFormat='Всего файлов: {0}'}"
+                                       Style="{StaticResource TextCaption}" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Naming format: fixed, shown read-only -->
+                <TextBlock Text="Формат нумерации обложки и разворотов" Style="{StaticResource TextBodyStrong}"
+                           Margin="0,0,0,6" />
+                <Border Background="{StaticResource Slate50}" BorderBrush="{StaticResource Slate200}"
+                        BorderThickness="1" CornerRadius="12" Padding="12,8" Margin="0,0,0,16">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                   Foreground="{StaticResource Emerald500}" VerticalAlignment="Center" />
+                        <TextBlock Text="01-00.jpg, 01-01.jpg, 01-02.jpg  (Стандарт Фабрика)"
+                                   Style="{StaticResource TextMono}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+                <TextBlock Style="{StaticResource TextMicro}" Foreground="{StaticResource TextFaint}"
+                           Margin="0,-10,0,16"
+                           Text="Формат фиксирован: сайт приёма загружает файлы по этому шаблону." />
+
+                <!-- Target folder -->
+                <TextBlock Text="Папка назначения" Style="{StaticResource TextBodyStrong}" Margin="0,0,0,6" />
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Background="{StaticResource Slate50}" BorderBrush="{StaticResource Slate200}"
+                            BorderThickness="1" CornerRadius="12" Padding="12,8">
+                        <TextBlock x:Name="FolderPathText" Text="{Binding TargetFolder}"
+                                   Style="{StaticResource TextBody}" TextTrimming="CharacterEllipsis"
+                                   Foreground="{StaticResource TextDefault}" ToolTip="{Binding TargetFolder}" />
+                    </Border>
+                    <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Click="OnBrowseClick"
+                            AutomationProperties.Name="Обзор" Margin="8,0,0,0" Padding="14,8"
+                            Content="Обзор" />
+                </Grid>
+
+                <!-- Per-book subfolders -->
+                <Border Background="{StaticResource Amber50}" BorderBrush="{StaticResource Amber200}"
+                        BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,0,16">
+                    <StackPanel>
+                        <CheckBox x:Name="SubfoldersCheck" IsChecked="{Binding PerBookSubfolders}"
+                                  Content="Создавать отдельную папку для каждого альбома" />
+                        <TextBlock Style="{StaticResource TextMicro}" Foreground="{StaticResource Amber700}"
+                                   TextWrapping="Wrap" Margin="26,6,0,0"
+                                   Text="По умолчанию выключено: все книги складываются в одну папку. Включайте, только если загрузка на сайт это допускает." />
+                    </StackPanel>
+                </Border>
+
+                <!-- Progress -->
+                <StackPanel Visibility="{Binding IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid Margin="0,0,0,8">
+                        <TextBlock Text="Копирование файлов..." Style="{StaticResource TextBodyStrong}" />
+                        <TextBlock Text="{Binding ProgressText}" Style="{StaticResource TextBodyStrong}"
+                                   Foreground="{StaticResource Brand600}" HorizontalAlignment="Right" />
+                    </Grid>
+                    <!-- Mode=OneWay is required: ProgressBar.Value is a TwoWay property by
+                         default and Progress has a private setter, so the default binding
+                         throws InvalidOperationException on attach. -->
+                    <ProgressBar Value="{Binding Progress, Mode=OneWay}" Maximum="100" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ============================================================== -->
+            <!--  Footer                                                       -->
+            <!-- ============================================================== -->
+            <Border Height="1" Background="{StaticResource Slate100}" Margin="0,18,0,18" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Style="{StaticResource SecondaryButton}" Click="OnCancelClick"
+                        AutomationProperties.Name="Отмена" Content="Отмена" Margin="0,0,8,0" />
+                <Button x:Name="ExportButton" Style="{StaticResource PrimaryButton}" Click="OnExportClick"
+                        AutomationProperties.Name="Начать экспорт" IsDefault="True"
+                        IsEnabled="{Binding CanStart}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="White" />
+                        <TextBlock Text="Начать экспорт" Margin="6,0,0,0" Foreground="White" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>
