@@ -82,6 +82,12 @@ namespace PhotoBookRenamer.Domain
             set => SetProperty(ref _fileName, value);
         }
 
+        /// <summary>
+        /// Nudges the view to re-read ThumbnailPath after a background thumbnail pass
+        /// finishes, so newly generated previews appear without rebuilding the whole view.
+        /// </summary>
+        public void RaiseThumbnailChanged() => OnPropertyChanged(nameof(ThumbnailPath));
+
         public Page Clone()
         {
             return new Page

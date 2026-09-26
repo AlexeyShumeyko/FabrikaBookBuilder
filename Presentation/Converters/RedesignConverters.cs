@@ -343,4 +343,78 @@ namespace PhotoBookRenamer.Presentation.Converters
             return Enum.TryParse(name, ignoreCase: true, out AppMode target) ? target : (object?)Binding.DoNothing;
         }
     }
+
+    /// <summary>Inverse of <see cref="HasValueConverter"/>.</summary>
+    public class InverseHasValueConverter : IValueConverter
+    {
+        private static readonly HasValueConverter Inner = new HasValueConverter();
+
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            bool result = (bool)Inner.Convert(value, typeof(bool), parameter, culture);
+            return targetType == typeof(Visibility)
+                ? (result ? Visibility.Collapsed : Visibility.Visible)
+                : !result;
+        }
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => Binding.DoNothing;
+    }
+
+    /// <summary>
+    /// Marks a pool photo as already used by a slot of the selected book.
+    ///
+    /// This must be an <see cref="IMultiValueConverter"/>: the obvious
+    /// <c>Binding="{Binding VM, Converter=..., ConverterParameter={Binding}}"</c> form
+    /// throws at runtime ("Binding cannot be set on the property Binding of type
+    /// Binding") because a nested Binding is not allowed there. A MultiBinding passes the
+    /// two values as an array instead.
+    ///
+    /// values[0] = the ViewModel, values[1] = the file path of this pool tile.
+    /// </summary>
+    public class PoolItemUsageConverter : IMultiValueConverter
+    {
+        public object Convert(object?[]? values, Type targetType, object? parameter, CultureInfo culture)
+        {
+            bool used = false;
+
+            if (values != null && values.Length >= 2
+                && values[0] is Presentation.ViewModels.CombinedModeViewModel vm
+                && values[1] is string path && !string.IsNullOrEmpty(path))
+            {
+                var book = vm.SelectedBook;
+                if (book != null)
+                {
+                    if (book.Cover != null && PathsEqual(book.Cover.SourcePath, path)) used = true;
+                    if (!used)
+                    {
+                        foreach (var p in book.Pages)
+                        {
+                            if (p != null && !p.IsCover && PathsEqual(p.SourcePath, path)) { used = true; break; }
+                        }
+                    }
+                }
+            }
+
+            return targetType == typeof(Visibility)
+                ? (used ? Visibility.Visible : Visibility.Collapsed)
+                : used;
+        }
+
+        private static bool PathsEqual(string? a, string b)
+            => !string.IsNullOrEmpty(a) && string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+
+        public object?[] ConvertBack(object? value, Type[] targetTypes, object? parameter, CultureInfo culture)
+            => Array.Empty<object?>();
+    }
+
+    /// <summary>IsCover bool -&gt; "ОБЛОЖКА" / "Разворот" label for a slot header.</summary>
+    public class SlotRoleConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => (value is bool b && b) ? "ОБЛОЖКА" : "Разворот";
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => Binding.DoNothing;
+    }
 }

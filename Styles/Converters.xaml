@@ -84,4 +84,9 @@
     <!-- AppMode <-> bool, for the RadioButton tabs in the persistent header -->
     <utils:AppModeEqualsConverter              x:Key="AppModeEqualsConverter" />
 
+    <!-- Slot / pool state helpers for the Combined mode workspace -->
+    <utils:InverseHasValueConverter            x:Key="InverseHasValueConverter" />
+    <utils:PoolItemUsageConverter              x:Key="PoolItemUsageConverter" />
+    <utils:SlotRoleConverter                   x:Key="SlotRoleConverter" />
+
 </ResourceDictionary>

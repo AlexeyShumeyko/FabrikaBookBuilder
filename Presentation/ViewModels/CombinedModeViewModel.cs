@@ -86,19 +86,37 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     {
                         _project.PropertyChanged -= Project_PropertyChanged;
                     }
-                    
+
                     if (Project != null)
                     {
                         Project.PropertyChanged += Project_PropertyChanged;
                     }
-                    
+
+                    OnPropertyChanged(nameof(CanExport));
                     UpdateExportCommands();
                 }
             };
-            
+
+            // A growing ObservableCollection does not notify bindings, so counts and the
+            // readiness label are refreshed explicitly.
             Books.CollectionChanged += (s, e) =>
             {
+                OnPropertyChanged(nameof(BooksCount));
+                OnPropertyChanged(nameof(HasStructure));
+                OnPropertyChanged(nameof(CurrentBookProgress));
+                OnPropertyChanged(nameof(SelectedBookProgress));
+                // Keep the canvas pointed at something valid after add / remove / clear.
+                if (SelectedBook != null && !Books.Contains(SelectedBook))
+                    SelectedBook = Books.FirstOrDefault();
+                else if (SelectedBook == null)
+                    SelectedBook = Books.FirstOrDefault();
                 UpdateExportCommands();
+            };
+
+            AvailableFiles.CollectionChanged += (s, e) =>
+            {
+                OnPropertyChanged(nameof(AvailableFilesCount));
+                OnPropertyChanged(nameof(HasFiles));
             };
         }
         
@@ -144,6 +162,65 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         public ObservableCollection<string> AvailableFiles { get; }
         public ObservableCollection<Book> Books { get; }
 
+        /// <summary>
+        /// Counts for bindings. WPF does not re-evaluate a binding when an
+        /// ObservableCollection grows, so empty states and the chip strip bind here
+        /// rather than to the collections themselves.
+        /// </summary>
+        public int AvailableFilesCount => AvailableFiles.Count;
+        public int BooksCount => Books.Count;
+        public bool HasFiles => AvailableFiles.Count > 0;
+
+        public bool CanExport => Project?.IsValid ?? false;
+
+        /// <summary>
+        /// The book shown in the assembly canvas. The reference shows one book at a time
+        /// with a chip strip to switch, instead of every book stacked vertically.
+        /// Set by the ListBox's SelectedItem binding.
+        /// </summary>
+        public Book? SelectedBook
+        {
+            get => _selectedBook;
+            set
+            {
+                if (SetProperty(ref _selectedBook, value))
+                {
+                    OnPropertyChanged(nameof(HasStructure));
+                    OnPropertyChanged(nameof(SelectedBookProgress));
+                }
+            }
+        }
+
+        private Book? _selectedBook;
+
+        public bool HasStructure => Books.Count > 0;
+
+        public string SelectedBookProgress =>
+            SelectedBook != null
+                ? $"Готово {FilledSlots(SelectedBook)} из {TotalSlots(SelectedBook)}"
+                : "Книг пока нет";
+
+        /// <summary>"Готово 2 из 4" style readiness label for the first book.</summary>
+        public string CurrentBookProgress =>
+            Books.Count > 0 ? $"Готово {FilledSlots(Books[0])} из {TotalSlots(Books[0])}" : "Книг пока нет";
+
+        private static int FilledSlots(Book b)
+        {
+            int n = 0;
+            if (b.Cover != null && !b.Cover.IsEmpty) n++;
+            foreach (var p in b.Pages)
+                if (p != null && !p.IsCover && !p.IsEmpty) n++;
+            return n;
+        }
+
+        private static int TotalSlots(Book b)
+        {
+            int n = b.Cover != null ? 1 : 0;
+            foreach (var p in b.Pages)
+                if (p != null && !p.IsCover) n++;
+            return n;
+        }
+
         public ProjectInfo? CurrentProjectInfo
         {
             get => _currentProjectInfo;
@@ -162,8 +239,19 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         public string? ProjectName
         {
             get => _projectName;
-            set => SetProperty(ref _projectName, value);
+            set
+            {
+                if (SetProperty(ref _projectName, value))
+                {
+                    // FallbackValue in XAML only fires when a path fails to resolve, not
+                    // when the resolved value is null, so the placeholder lives here.
+                    OnPropertyChanged(nameof(DisplayProjectName));
+                }
+            }
         }
+
+        public string DisplayProjectName =>
+            string.IsNullOrWhiteSpace(ProjectName) ? "Новый проект" : ProjectName!;
 
         public async System.Threading.Tasks.Task SaveProjectNameOnlyAsync()
         {
@@ -1523,6 +1611,44 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             await SaveProjectSilentlyAsync();
             return true;
+        }
+
+        /// <summary>
+        /// Adds a single file that was dragged in from Windows Explorer.
+        /// Returns false for unsupported formats or duplicates.
+        ///
+        /// The original drop handler was empty, so dragging photos from Explorer did
+        /// nothing; the redesigned drop zone wires it up.
+        /// </summary>
+        public bool AddExternalFile(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return false;
+            if (AvailableFiles.Contains(filePath)) return false;
+            if (!_fileService.IsJpegFile(filePath)) return false;
+
+            AvailableFiles.Add(filePath);
+            return true;
+        }
+
+        /// <summary>Kicks off thumbnail generation for pool items added outside the picker.</summary>
+        public void LoadThumbnailsForNewFiles()
+        {
+            if (AvailableFiles.Count == 0) return;
+
+            var paths = AvailableFiles.ToList();
+            Task.Run(async () =>
+            {
+                await _imageService.LoadThumbnailsAsync(paths);
+                Presentation.Converters.PageSourceConverter.ClearCache();
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    foreach (var p in Books)
+                    {
+                        if (p.Cover != null) p.Cover.RaiseThumbnailChanged();
+                        foreach (var page in p.Pages) page.RaiseThumbnailChanged();
+                    }
+                });
+            });
         }
     }
 

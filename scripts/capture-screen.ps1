@@ -12,7 +12,9 @@ param(
     [string]$Tab = 'Мои проекты',
     [string]$Out = 'doc\shots\screen.png',
     [int]$TimeoutSeconds = 30,
-    [switch]$OpenProject
+    [switch]$OpenProject,
+    [int]$OpenIndex = 0,
+    [string]$ProjectName = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -84,23 +86,77 @@ try {
         Start-Sleep -Seconds 2
     }
 
-    # Optionally open the newest project so the editor screens show real data.
+    # Optionally open a project so the editor screens show real data.
     if ($OpenProject) {
         $el = [System.Windows.Automation.AutomationElement]::FromHandle($proc.MainWindowHandle)
-        $openBtn = Get-ByName $el 'Открыть проект' 'Button'
-        if ($null -eq $openBtn) {
-            Write-Host 'FAIL: "Открыть проект" button not found'
-            Stop-Process -Id $proc.Id -Force
-            exit 1
+        $target = $null
+
+        if ($ProjectName) {
+            # Walk up from the card's title text until a container holding an
+            # "Открыть проект" button is found. Index-based selection is fragile
+            # because the list is ordered by LastModified.
+            $textCond = New-Object System.Windows.Automation.PropertyCondition(
+                [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+                [System.Windows.Automation.ControlType]::Text)
+            $titleEl = $null
+            foreach ($t in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $textCond)) {
+                if ($t.Current.Name -like "*$ProjectName*") { $titleEl = $t; break }
+            }
+            if ($null -eq $titleEl) {
+                Write-Host "FAIL: no project titled '$ProjectName'"
+                Stop-Process -Id $proc.Id -Force
+                exit 1
+            }
+
+            $walker = [System.Windows.Automation.TreeWalker]::ControlViewWalker
+            $node = $walker.GetParent($titleEl)
+            for ($up = 0; $up -lt 10 -and $null -ne $node; $up++) {
+                $btnCond = New-Object System.Windows.Automation.PropertyCondition(
+                    [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+                    [System.Windows.Automation.ControlType]::Button)
+                foreach ($b in $node.FindAll([System.Windows.Automation.TreeScope]::Descendants, $btnCond)) {
+                    if ($b.Current.Name -like '*Открыть проект*') { $target = $b; break }
+                }
+                if ($null -ne $target) { break }
+                $node = $walker.GetParent($node)
+            }
+            if ($null -eq $target) {
+                Write-Host "FAIL: found the title '$ProjectName' but no Open button in its card"
+                Stop-Process -Id $proc.Id -Force
+                exit 1
+            }
         }
-        Invoke-Element $openBtn
+        else {
+            $cond = New-Object System.Windows.Automation.PropertyCondition(
+                [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+                [System.Windows.Automation.ControlType]::Button)
+            $openButtons = @($el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond) |
+                Where-Object { $_.Current.Name -like '*Открыть проект*' })
+            if ($OpenIndex -ge $openButtons.Count) {
+                Write-Host "FAIL: -OpenIndex $OpenIndex but only $($openButtons.Count) project cards exist"
+                Stop-Process -Id $proc.Id -Force
+                exit 1
+            }
+            $target = $openButtons[$OpenIndex]
+        }
+
+        Invoke-Element $target
         # Project loading is async (thumbnails, double BeginInvoke), so give it room.
-        Start-Sleep -Seconds 6
+        Start-Sleep -Seconds 7
     }
 
     $r = New-Object Win2+RECT
     [void][Win2]::GetWindowRect($proc.MainWindowHandle, [ref]$r)
     $w = $r.Right - $r.Left; $h = $r.Bottom - $r.Top
+
+    if ($w -le 0 -or $h -le 0) {
+        Write-Host "FAIL: window rect is ${w}x${h} - the app probably crashed while opening the project."
+        Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = (Get-Date).AddMinutes(-3) } -ErrorAction SilentlyContinue |
+            Where-Object { $_.ProviderName -in 'Application Error', '.NET Runtime' } |
+            Select-Object -First 2 | ForEach-Object { Write-Host $_.Message }
+        Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+        exit 1
+    }
 
     $bmp = New-Object System.Drawing.Bitmap $w, $h
     $g = [System.Drawing.Graphics]::FromImage($bmp)
