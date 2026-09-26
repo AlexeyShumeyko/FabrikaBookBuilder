@@ -38,20 +38,20 @@ namespace PhotoBookRenamer.Presentation.Views
         private void OnAssignPageNumberClick(object sender, RoutedEventArgs e)
             => RunPageCommand(sender, page => _viewModel.AssignPageNumberCommand.Execute(page));
 
-        /// <summary>Promotes the clicked spread to be the book's cover.</summary>
-        private void OnSetCoverClick(object sender, MouseButtonEventArgs e)
-        {
-            if (sender is FrameworkElement { Tag: Page page })
-                _viewModel.AssignCoverCommand.Execute(page);
-        }
-
         /// <summary>
-        /// "Заменить" on the cover. Reuses SelectCoverCommand, which opens a file picker
-        /// and assigns the chosen file to the owning book's cover.
+        /// Footer action on a spread card. The footer is a single TextBlock that swaps its
+        /// label on hover, so the click has to work out the intent from the page itself:
+        /// a spread gets promoted to cover, the cover opens a file picker to be replaced.
         /// </summary>
-        private void OnReplaceClick(object sender, MouseButtonEventArgs e)
+        private void OnFooterActionClick(object sender, MouseButtonEventArgs e)
         {
             if (sender is not FrameworkElement { Tag: Page page }) return;
+
+            if (!page.IsCover)
+            {
+                _viewModel.AssignCoverCommand.Execute(page);
+                return;
+            }
 
             var book = _viewModel.Books.FirstOrDefault(b => b.Cover == page);
             if (book != null)

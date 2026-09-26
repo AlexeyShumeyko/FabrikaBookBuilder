@@ -323,37 +323,32 @@
 
                                                             <Image Source="{Binding Converter={StaticResource PageSourceConverter}}"
                                                                    Stretch="UniformToFill" Tag="{Binding}"
-                                                                   MouseLeftButtonDown="OnPageImageDoubleClick" />
-
-                                                            <!-- bg-slate-900/40, hover -> 1 -->
-                                                            <Border Background="#66000000"
-                                                                    MouseLeftButtonDown="OnPageImageDoubleClick"
-                                                                    Cursor="Hand">
-                                                                <Border.Style>
-                                                                    <Style TargetType="Border">
-                                                                        <Setter Property="Opacity" Value="0" />
+                                                                   MouseLeftButtonDown="OnPageImageDoubleClick">
+                                                                <Image.Style>
+                                                                    <Style TargetType="Image">
+                                                                        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+                                                                        <Setter Property="RenderTransform">
+                                                                            <Setter.Value>
+                                                                                <ScaleTransform ScaleX="1" ScaleY="1" />
+                                                                            </Setter.Value>
+                                                                        </Setter>
                                                                         <Style.Triggers>
-                                                                            <DataTrigger Value="True"
-                                                                                         Binding="{Binding IsMouseOver, ElementName=FrameHost}">
-                                                                                <Setter Property="Opacity" Value="1" />
+                                                                            <!-- No overlay on hover: the photo just grows a little.
+                                                                                 The card's ClipToBounds trims what leaves the frame.
+                                                                                 The transform is swapped rather than animated on purpose:
+                                                                                 Storyboard.TargetName does not compile inside a
+                                                                                 DataTemplate trigger (MC4011). -->
+                                                                            <DataTrigger Value="True" Binding="{Binding IsMouseOver, ElementName=CardRoot}">
+                                                                                <Setter Property="RenderTransform">
+                                                                                    <Setter.Value>
+                                                                                        <ScaleTransform ScaleX="1.04" ScaleY="1.04" />
+                                                                                    </Setter.Value>
+                                                                                </Setter>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
-                                                                </Border.Style>
-                                                                <Button Style="{StaticResource GhostButton}"
-                                                                        Background="{StaticResource Surface}"
-                                                                        Foreground="{StaticResource Slate800}"
-                                                                        FontWeight="Medium" Padding="8"
-                                                                        IsHitTestVisible="False"
-                                                                        AutomationProperties.Name="Просмотр">
-                                                                    <StackPanel Orientation="Horizontal">
-                                                                        <TextBlock Text="&#xE71E;" FontFamily="{StaticResource IconFont}"
-                                                                                   FontSize="12" Foreground="{StaticResource Slate800}" />
-                                                                        <TextBlock Text="Просмотр" Style="{StaticResource TextXsMedium}"
-                                                                                   Foreground="{StaticResource Slate800}" Margin="6,0,0,0" />
-                                                                    </StackPanel>
-                                                                </Button>
-                                                            </Border>
+                                                                </Image.Style>
+                                                            </Image>
 
                                                             <!-- export file name on the photo; star + (Обложка) on the cover -->
                                                             <Border Style="{StaticResource PhotoNameBadge}"
@@ -386,76 +381,45 @@
                                                             </Grid.ColumnDefinitions>
 
                                                             <Grid Grid.Column="0">
-                                                                <TextBlock Text="Обложка" VerticalAlignment="Center">
-                                                                    <TextBlock.Style>
-                                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextXsSemibold}">
-                                                                            <Setter Property="Foreground" Value="{StaticResource Brand600}" />
-                                                                            <Style.Triggers>
-                                                                                <DataTrigger Binding="{Binding IsCover}" Value="False">
-                                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                                </DataTrigger>
-                                                                                <DataTrigger Value="True" Binding="{Binding IsMouseOver, ElementName=CardRoot}">
-                                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                                </DataTrigger>
-                                                                            </Style.Triggers>
-                                                                        </Style>
-                                                                    </TextBlock.Style>
-                                                                </TextBlock>
-
-                                                                <TextBlock Text="{Binding Index, StringFormat='Разворот {0}'}"
-                                                                           VerticalAlignment="Center">
+                                                                <!-- One element, four states. It was four overlapping TextBlocks before, and
+                                                                     the caption could not be hidden on hover, so the link was drawn on top of
+                                                                     "Разворот N". A single TextBlock cannot overlap itself. -->
+                                                                <TextBlock VerticalAlignment="Center" Tag="{Binding}"
+                                                                           MouseLeftButtonDown="OnFooterActionClick">
                                                                     <TextBlock.Style>
                                                                         <Style TargetType="TextBlock" BasedOn="{StaticResource TextXsSemibold}">
                                                                             <Setter Property="Foreground" Value="{StaticResource Slate500}" />
+                                                                            <Setter Property="Text">
+                                                                                <Setter.Value>
+                                                                                    <Binding Path="Index" StringFormat="Разворот {0}" />
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                            <Setter Property="AutomationProperties.Name" Value="Действие с разворотом" />
                                                                             <Style.Triggers>
                                                                                 <DataTrigger Binding="{Binding IsCover}" Value="True">
-                                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                                    <Setter Property="Text" Value="Обложка" />
+                                                                                    <Setter Property="Foreground" Value="{StaticResource Brand600}" />
                                                                                 </DataTrigger>
-                                                                                <DataTrigger Value="True" Binding="{Binding IsMouseOver, ElementName=CardRoot}">
-                                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                                </DataTrigger>
-                                                                            </Style.Triggers>
-                                                                        </Style>
-                                                                    </TextBlock.Style>
-                                                                </TextBlock>
-
-                                                                <!-- "Заменить" on the cover, takes the caption's slot on hover -->
-                                                                <TextBlock Text="Заменить" VerticalAlignment="Center"
-                                                                           Cursor="Hand" Tag="{Binding}"
-                                                                           MouseLeftButtonDown="OnReplaceClick"
-                                                                           AutomationProperties.Name="Заменить обложку">
-                                                                    <TextBlock.Style>
-                                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextXsSemibold}">
-                                                                            <Setter Property="Foreground" Value="{StaticResource Brand600}" />
-                                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                                            <Style.Triggers>
-                                                                                <DataTrigger Binding="{Binding IsCover}" Value="False">
-                                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                                </DataTrigger>
-                                                                                <DataTrigger Value="True" Binding="{Binding IsMouseOver, ElementName=CardRoot}">
-                                                                                    <Setter Property="Visibility" Value="Visible" />
-                                                                                </DataTrigger>
-                                                                            </Style.Triggers>
-                                                                        </Style>
-                                                                    </TextBlock.Style>
-                                                                </TextBlock>
-
-                                                                <!-- "Назначить обложкой" on a spread, same slot -->
-                                                                <TextBlock Text="Назначить обложкой" VerticalAlignment="Center"
-                                                                           Cursor="Hand" Tag="{Binding}"
-                                                                           MouseLeftButtonDown="OnSetCoverClick"
-                                                                           AutomationProperties.Name="Назначить обложкой">
-                                                                    <TextBlock.Style>
-                                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource LinkText}">
-                                                                            <Setter Property="Foreground" Value="{StaticResource Emerald600}" />
-                                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                                            <Style.Triggers>
-                                                                                <DataTrigger Binding="{Binding IsCover}" Value="True">
-                                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                                </DataTrigger>
-                                                                                <DataTrigger Value="True" Binding="{Binding IsMouseOver, ElementName=CardRoot}">
-                                                                                    <Setter Property="Visibility" Value="Visible" />
-                                                                                </DataTrigger>
+                                                                                <MultiDataTrigger>
+                                                                                    <MultiDataTrigger.Conditions>
+                                                                                        <Condition Binding="{Binding IsCover}" Value="True" />
+                                                                                        <Condition Binding="{Binding IsMouseOver, ElementName=CardRoot}" Value="True" />
+                                                                                    </MultiDataTrigger.Conditions>
+                                                                                    <Setter Property="Text" Value="Заменить" />
+                                                                                    <Setter Property="Foreground" Value="{StaticResource Brand600}" />
+                                                                                    <Setter Property="Cursor" Value="Hand" />
+                                                                                    <Setter Property="AutomationProperties.Name" Value="Заменить обложку" />
+                                                                                </MultiDataTrigger>
+                                                                                <MultiDataTrigger>
+                                                                                    <MultiDataTrigger.Conditions>
+                                                                                        <Condition Binding="{Binding IsCover}" Value="False" />
+                                                                                        <Condition Binding="{Binding IsMouseOver, ElementName=CardRoot}" Value="True" />
+                                                                                    </MultiDataTrigger.Conditions>
+                                                                                    <Setter Property="Text" Value="Назначить обложкой" />
+                                                                                    <Setter Property="Foreground" Value="{StaticResource Emerald600}" />
+                                                                                    <Setter Property="Cursor" Value="Hand" />
+                                                                                    <Setter Property="AutomationProperties.Name" Value="Назначить обложкой" />
+                                                                                </MultiDataTrigger>
                                                                             </Style.Triggers>
                                                                         </Style>
                                                                     </TextBlock.Style>
