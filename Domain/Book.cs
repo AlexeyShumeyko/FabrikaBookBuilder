@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
@@ -72,14 +74,14 @@ namespace PhotoBookRenamer.Domain
             var pagesWithoutCover = Pages.Where(p => !p.IsCover).ToList();
             // Создаем слоты для разворотов (Pages - это развороты)
             var newSlots = Enumerable.Range(1, pagesWithoutCover.Count).ToList();
-            
+
             // Обновляем коллекцию слотов страниц
             _pageSlots.Clear();
             foreach (var slot in newSlots)
             {
                 _pageSlots.Add(slot);
             }
-            
+
             // Обновляем коллекцию всех слотов (обложка + развороты)
             _allSlots.Clear();
             _allSlots.Add(0); // Обложка
@@ -87,7 +89,7 @@ namespace PhotoBookRenamer.Domain
             {
                 _allSlots.Add(slot);
             }
-            
+
             _allSlotsPages.Clear();
             if (Cover != null)
             {
@@ -103,9 +105,74 @@ namespace PhotoBookRenamer.Domain
             // the owning Book to work out which book a Page belongs to.
             RefreshExportFileNames();
 
+            // The frame is shaped last: it needs the slots above to be in place so the
+            // cover and the spreads are all known.
+            UpdateFrameAspect();
+
             OnPropertyChanged(nameof(PageSlots));
             OnPropertyChanged(nameof(AllSlots));
             OnPropertyChanged(nameof(AllSlotsPages));
+        }
+
+        // ------------------------------------------------------------------
+        //  Card frame ratio - the whole policy lives in these four constants
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Width / height used when nothing is known about the photos, and the value the
+        /// mockup uses (aspect-[16/10]).
+        /// </summary>
+        private const double DefaultFrameAspect = 1.6;
+
+        /// <summary>
+        /// Portrait limit. The most extreme real format is 0.67 (20x30, 10x15 and the
+        /// 2457x3602 post-prints), so 0.60 leaves those uncropped.
+        /// </summary>
+        private const double FrameAspectMin = 0.60;
+
+        /// <summary>
+        /// Landscape limit. 20x20 / 25x25 / 30x30 spreads measure 1.9 and are the widest
+        /// format that appears more than once, so they stay uncropped too. A 2.1 folder
+        /// loses 5% and a 3.0 panorama keeps a 37% cut - a panorama shown as a letterbox
+        /// strip was judged worse than showing its middle.
+        /// </summary>
+        private const double FrameAspectMax = 1.90;
+
+        /// <summary>
+        /// The frame shape for this book, pushed onto every page so the card template can
+        /// bind it. Median, not mean: in every mixed folder the odd photo out is the
+        /// single cover, and the median keeps the frame on the format the 24-48 spreads
+        /// actually share.
+        ///
+        /// One frame per book, not per project. A project-wide frame cannot satisfy "no
+        /// empty space and at most 5-10% cropped" - 0.67 and 1.9 in one frame cuts ~30%
+        /// off one of them. Within a book every card is still identical, so the grid does
+        /// not go ragged. To try a project-wide frame instead, compare against
+        /// <see cref="AllBooks"/>-level data in the callers of this method.
+        /// </summary>
+        private void UpdateFrameAspect()
+        {
+            var ratios = new List<double>();
+            if (Cover != null && Cover.HasDimensions) ratios.Add(Cover.AspectRatio);
+            foreach (var p in Pages)
+                if (p != null && !p.IsCover && p.HasDimensions)
+                    ratios.Add(p.AspectRatio);
+
+            double aspect = ratios.Count > 0 ? Median(ratios) : DefaultFrameAspect;
+            aspect = Math.Clamp(aspect, FrameAspectMin, FrameAspectMax);
+
+            if (Cover != null) Cover.FrameAspect = aspect;
+            foreach (var p in Pages)
+                if (p != null) p.FrameAspect = aspect;
+
+            FrameAspect = aspect;
+        }
+
+        private static double Median(List<double> values)
+        {
+            values.Sort();
+            int mid = values.Count / 2;
+            return values.Count % 2 == 1 ? values[mid] : (values[mid - 1] + values[mid]) / 2d;
         }
 
         /// <summary>
@@ -173,6 +240,13 @@ namespace PhotoBookRenamer.Domain
         }
 
         public ObservableCollection<Page> Pages { get; }
+
+        /// <summary>
+        /// Width / height of this book's card frames. Same value on every page of the
+        /// book - see <see cref="UpdateFrameAspect"/> for why it is per book and how it is
+        /// clamped.
+        /// </summary>
+        public double FrameAspect { get; private set; } = 1.6;
         
         public ObservableCollection<int> PageSlots => _pageSlots;
         

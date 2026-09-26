@@ -92,6 +92,9 @@
     <!-- Tailwind aspect-[16/10] photo frames: height derived from the measured width -->
     <utils:AspectHeightConverter              x:Key="AspectHeightConverter" />
 
+    <!-- Rounded clip for card content: Border.ClipToBounds clips to a rectangle only -->
+    <utils:RoundedClipGeometryConverter       x:Key="RoundedClipGeometryConverter" />
+
     <!-- Mode chip on a saved project's card: label, or the tab glyph with "icon" -->
     <utils:AppModeToLabelConverter             x:Key="AppModeToLabelConverter" />
 

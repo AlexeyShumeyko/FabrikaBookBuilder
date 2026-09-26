@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace PhotoBookRenamer.Domain
 {
@@ -12,6 +13,9 @@ namespace PhotoBookRenamer.Domain
         private bool _isLocked;
         private string? _fileName;
         private string? _exportFileName;
+        private int _imageWidth;
+        private int _imageHeight;
+        private double _frameAspect;
 
         public string? SourcePath
         {
@@ -59,6 +63,45 @@ namespace PhotoBookRenamer.Domain
         public bool IsEmpty => string.IsNullOrEmpty(SourcePath);
 
         /// <summary>
+        /// Pixel size of the source file, filled once from disk and then kept in the
+        /// project file.
+        ///
+        /// The card frame is shaped from these numbers instead of a fixed ratio: the real
+        /// formats in one folder differ far too much for one frame (measured 0.67 for
+        /// post-prints, 1.0 square, 1.4 for 21x30, 1.9 for 20x20/25x25/30x30 spreads,
+        /// 2.7-3.0 for panoramas). Persisting the size means the frame does not depend on
+        /// re-reading every file on each open, and it survives the photos being moved.
+        /// </summary>
+        public int ImageWidth
+        {
+            get => _imageWidth;
+            set => SetProperty(ref _imageWidth, value);
+        }
+
+        public int ImageHeight
+        {
+            get => _imageHeight;
+            set => SetProperty(ref _imageHeight, value);
+        }
+
+        public bool HasDimensions => _imageWidth > 0 && _imageHeight > 0;
+
+        public double AspectRatio => HasDimensions ? (double)_imageWidth / _imageHeight : 0d;
+
+        /// <summary>
+        /// Ratio of the frame this page's card should use, decided by its book and pushed
+        /// onto the page so the card template can bind it without reaching for the book.
+        /// Derived, so it is not persisted - <see cref="ImageWidth"/> and
+        /// <see cref="ImageHeight"/> are the source of truth.
+        /// </summary>
+        [JsonIgnore]
+        public double FrameAspect
+        {
+            get => _frameAspect;
+            set => SetProperty(ref _frameAspect, value);
+        }
+
+        /// <summary>
         /// The file name this slot will be exported as, e.g. "001-02.jpg".
         ///
         /// Maintained by <see cref="Book.UpdatePageSlots"/> rather than computed in the
@@ -99,7 +142,9 @@ namespace PhotoBookRenamer.Domain
                 DisplayIndex = DisplayIndex,
                 IsLocked = IsLocked,
                 FileName = FileName,
-                ExportFileName = ExportFileName
+                ExportFileName = ExportFileName,
+                ImageWidth = ImageWidth,
+                ImageHeight = ImageHeight
             };
         }
     }

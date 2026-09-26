@@ -343,13 +343,37 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
-                                                    <Grid>
+                                                    <!--
+                                                        One rounded clip for the whole card
+                                                        content. Border.ClipToBounds clips
+                                                        to a plain rectangle, so without
+                                                        this the photo's square corners
+                                                        paint over the card's rounded border
+                                                        - and the hover zoom would escape
+                                                        the frame as well.
+                                                    -->
+                                                    <Grid x:Name="CardContent">
+                                                        <Grid.Clip>
+                                                            <MultiBinding Converter="{StaticResource RoundedClipGeometryConverter}" ConverterParameter="12">
+                                                                <Binding Path="ActualWidth" ElementName="CardContent" />
+                                                                <Binding Path="ActualHeight" ElementName="CardContent" />
+                                                            </MultiBinding>
+                                                        </Grid.Clip>
                                                         <Grid.RowDefinitions>
                                                             <RowDefinition Height="Auto" />
                                                             <RowDefinition Height="Auto" />
                                                         </Grid.RowDefinitions>
 
-                                                        <!-- Photo: 16/10, clipped by the card's own corner radius -->
+                                                        <!--
+                                                            Photo frame. Its height comes from
+                                                            the book's own format
+                                                            (Page.FrameAspect, the median of the
+                                                            photos in that folder) - a 16/10 box
+                                                            cut a post-print in half. The
+                                                            ConverterParameter is only the
+                                                            fallback for pages with no known
+                                                            size.
+                                                        -->
                                                         <Grid Grid.Row="0" x:Name="FrameHost"
                                                               Background="{StaticResource Slate100}">
                                                             <Grid.Height>
