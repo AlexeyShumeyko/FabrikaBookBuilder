@@ -115,6 +115,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 OnPropertyChanged(nameof(CurrentBookProgress));
                 OnPropertyChanged(nameof(SelectedBookProgress));
                 OnPropertyChanged(nameof(StructureProgress));
+                OnPropertyChanged(nameof(StructureButtonText));
+                OnPropertyChanged(nameof(StructureIsComplete));
                 // Keep the canvas pointed at something valid after add / remove / clear.
                 if (SelectedBook != null && !Books.Contains(SelectedBook))
                     SelectedBook = Books.FirstOrDefault();
@@ -225,6 +227,18 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             ? "Книг пока нет"
             : $"Готово {Books.Count(b => b.IsFilled)} из {Books.Count}";
 
+        /// <summary>
+        /// The one structure button. Same control either way, only the wording changes -
+        /// the panel must not reshape itself when the first book appears.
+        /// </summary>
+        public string StructureButtonText => Books.Count == 0 ? "Добавить структуру" : "Обновить структуру";
+
+        /// <summary>
+        /// Every book of the run has every slot filled. Drives the readiness badge colour:
+        /// grey while there is work left, green when the run is done.
+        /// </summary>
+        public bool StructureIsComplete => Books.Count > 0 && Books.All(b => b.IsFilled);
+
         // ------------------------------------------------------------------
         //  The file list, as the narrow left column shows it
         // ------------------------------------------------------------------
@@ -321,31 +335,64 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// Counts how many slots hold each photo and pushes the counts into the list.
         /// "Общий" is therefore a fact about the run, not a flag anyone has to maintain:
         /// applying a photo to the same position of every book is all it takes.
+        ///
+        /// Two counts, because the file list and the slot mean different things by shared:
+        /// the list counts SLOTS (a photo used twice anywhere is not free any more), while
+        /// a slot is "shared" only when another BOOK holds the same photo. The same file
+        /// twice inside one book is a duplicate, not a run-wide spread.
         /// </summary>
         private void RefreshPhotoUsage()
         {
-            var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var slotCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var bookCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var book in Books)
             {
+                // Counted per book, so one photo used in three books adds 3 to both
+                // dictionaries no matter how many slots of that book hold it.
+                var inThisBook = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
                 if (book.Cover != null && !book.Cover.IsEmpty && !string.IsNullOrEmpty(book.Cover.SourcePath))
-                    CountOne(counts, book.Cover.SourcePath);
+                    inThisBook.Add(book.Cover.SourcePath);
 
                 foreach (var page in book.Pages)
                 {
-                    if (page != null && !page.IsEmpty && !string.IsNullOrEmpty(page.SourcePath))
-                        CountOne(counts, page.SourcePath);
+                    if (page == null || page.IsEmpty || string.IsNullOrEmpty(page.SourcePath)) continue;
+                    inThisBook.Add(page.SourcePath);
+                    slotCounts.TryGetValue(page.SourcePath, out int n);
+                    slotCounts[page.SourcePath] = n + 1;
+                }
+
+                if (book.Cover != null && !book.Cover.IsEmpty && !string.IsNullOrEmpty(book.Cover.SourcePath))
+                {
+                    slotCounts.TryGetValue(book.Cover.SourcePath, out int c);
+                    slotCounts[book.Cover.SourcePath] = c + 1;
+                }
+
+                foreach (var path in inThisBook)
+                {
+                    bookCounts.TryGetValue(path, out int n);
+                    bookCounts[path] = n + 1;
                 }
             }
 
             foreach (var file in PhotoFiles)
-                file.SetUsage(counts.TryGetValue(file.Path, out int n) ? n : 0);
-        }
+                file.SetUsage(slotCounts.TryGetValue(file.Path, out int n) ? n : 0);
 
-        private static void CountOne(Dictionary<string, int> counts, string path)
-        {
-            counts.TryGetValue(path, out int n);
-            counts[path] = n + 1;
+            foreach (var book in Books)
+            {
+                if (book.Cover != null)
+                    book.Cover.IsShared = IsShared(book.Cover);
+
+                foreach (var page in book.Pages)
+                {
+                    if (page != null) page.IsShared = IsShared(page);
+                }
+            }
+
+            bool IsShared(Domain.Page page) =>
+                !string.IsNullOrEmpty(page.SourcePath) &&
+                bookCounts.TryGetValue(page.SourcePath, out int books) && books >= 2;
         }
 
         public bool CanExport => Project?.IsValid ?? false;
@@ -682,6 +729,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
 
                 OnPropertyChanged(nameof(StructureProgress));
+                OnPropertyChanged(nameof(StructureIsComplete));
             }
 
             if (Project == null)

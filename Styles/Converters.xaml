@@ -98,6 +98,9 @@
     <!-- Card size from the book's format and the room left in the row -->
     <utils:AdaptiveCardSizeConverter            x:Key="AdaptiveCardSizeConverter" />
 
+    <!-- Free / assigned / shared badge colours for the file list -->
+    <utils:PhotoUsageToBrushConverter           x:Key="PhotoUsageToBrushConverter" />
+
     <!-- Mode chip on a saved project's card: label, or the tab glyph with "icon" -->
     <utils:AppModeToLabelConverter             x:Key="AppModeToLabelConverter" />
 

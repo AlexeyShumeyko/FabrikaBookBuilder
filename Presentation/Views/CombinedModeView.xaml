@@ -8,79 +8,51 @@
              PreviewMouseLeftButtonDown="OnGridPreviewMouseDown">
 
     <UserControl.Resources>
-        <!-- px-3 py-1.5 rounded-xl; brand-600 when selected, else slate-100 + border -->
-        <Style x:Key="BookChip" TargetType="ListBoxItem">
-            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Foreground" Value="{StaticResource Slate700}" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Margin" Value="0,0,8,0" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="bd" Background="{StaticResource Slate100}"
-                                BorderBrush="{StaticResource Slate200}" BorderThickness="1"
-                                CornerRadius="12" Padding="12,6" SnapsToDevicePixels="True">
-                            <ContentPresenter VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="{StaticResource Slate200}" />
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="{StaticResource Brand600}" />
-                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Brand600}" />
-                                <Setter TargetName="bd" Property="Effect" Value="{StaticResource ShadowSm}" />
-                                <Setter Property="Foreground" Value="White" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- aspect-square rounded-xl border-slate-200 -->
-        <Style x:Key="PoolTile" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource Slate100}" />
-            <Setter Property="BorderBrush" Value="{StaticResource Slate200}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="SnapsToDevicePixels" Value="True" />
-            <Setter Property="ClipToBounds" Value="True" />
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="{StaticResource Brand500}" />
-                    <Setter Property="Effect" Value="{StaticResource ShadowSubtle}" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- min-h-[190px] rounded-2xl (16) p-3 (12); variant set per slot state -->
+        <!--
+          Slot card. rounded-xl (12) with a 1px slate-200 border; the cover gets a 2px
+          emerald border, as in the mockup. The corner radius is applied to the CONTENT
+          through a rounded Clip, not just to the Border: ClipToBounds clips to the
+          bounding rectangle, so a photo flush with the card would paint its square
+          corners straight over the rounding.
+        -->
         <Style x:Key="Slot" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource Surface}" />
             <Setter Property="BorderBrush" Value="{StaticResource Slate200}" />
-            <Setter Property="BorderThickness" Value="2" />
-            <Setter Property="CornerRadius" Value="16" />
-            <Setter Property="Padding" Value="12" />
-            <Setter Property="MinHeight" Value="190" />
-            <Setter Property="Effect" Value="{StaticResource ShadowSm}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Margin" Value="0,0,16,16" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsCover}" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource Emerald500}" />
+                    <Setter Property="BorderThickness" Value="2" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
-        <!-- text-[10px] font-bold px-2 py-0.5 rounded-md (6) -->
-        <Style x:Key="SlotNameChip" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource Slate200}" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="8,2" />
-        </Style>
-
-        <!-- hover-revealed action strip over the photo frame -->
+        <!--
+          The action buttons sit ON the photo rather than in a header row, because the
+          frame is as narrow as 120px for a very portrait book and a header with a file
+          name plus buttons would not fit at any width.
+        -->
         <Style x:Key="SlotAction" TargetType="Button" BasedOn="{StaticResource GhostButton}">
             <Setter Property="Width" Value="22" />
             <Setter Property="Height" Value="22" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Foreground" Value="{StaticResource Slate600}" />
-            <Setter Property="Margin" Value="2,0,0,0" />
+        </Style>
+
+        <!-- One row of the file list: small thumb, name, pixel size, status -->
+        <Style x:Key="FileRow" TargetType="Border">
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource Slate50}" />
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </UserControl.Resources>
 
@@ -100,138 +72,145 @@
         </Border>
 
         <!-- ============================================================== -->
-        <!--  Block 1: p-4 (16), book chips for the print run               -->
+        <!--  Control panel. One shape, always: the name, the run           -->
+        <!--  parameters, the structure button, readiness, save and export. -->
+        <!--  Nothing here appears or disappears when books are created.    -->
         <!-- ============================================================== -->
-        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="16" Margin="0,0,0,24"
+        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="16" Margin="0,0,0,16"
                 Effect="{StaticResource ShadowSubtle}">
             <StackPanel>
 
-                <!-- Project name (click to rename) -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                    <TextBlock Text="Проект:" Style="{StaticResource TextXsMedium}"
-                               Foreground="{StaticResource Slate500}" VerticalAlignment="Center" />
-                    <TextBlock x:Name="ProjectNameTextBlock" Text="{Binding DisplayProjectName}"
-                               Style="{StaticResource TextSmBold}" Margin="6,0,0,0" VerticalAlignment="Center"
-                               MaxWidth="360" TextTrimming="CharacterEllipsis" Cursor="Hand"
-                               MouseLeftButtonDown="OnProjectNameClick" />
-                    <TextBox x:Name="ProjectNameTextBox" Visibility="Collapsed" Width="300"
-                             Margin="6,0,0,0" VerticalAlignment="Center" FontSize="13"
-                             LostFocus="OnProjectNameLostFocus" KeyDown="OnProjectNameKeyDown" />
-                </StackPanel>
+                <!-- Line 1: project name on the left, readiness on the right -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                <!-- Book selection strip -->
-                <Grid Visibility="{Binding HasStructure, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Проект:" Style="{StaticResource TextXsMedium}"
+                                   Foreground="{StaticResource Slate500}" VerticalAlignment="Center" />
+                        <TextBlock x:Name="ProjectNameTextBlock" Text="{Binding DisplayProjectName}"
+                                   Style="{StaticResource TextSmBold}" Margin="6,0,0,0" VerticalAlignment="Center"
+                                   MaxWidth="360" TextTrimming="CharacterEllipsis" Cursor="Hand"
+                                   MouseLeftButtonDown="OnProjectNameClick" />
+                        <TextBlock Text="&#xE70F;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                   Margin="6,0,0,0" VerticalAlignment="Center" Cursor="Hand"
+                                   Foreground="{StaticResource Slate400}"
+                                   ToolTip="Переименовать" MouseLeftButtonDown="OnProjectNameClick" />
+                        <TextBox x:Name="ProjectNameTextBox" Visibility="Collapsed" Width="300"
+                                 Margin="6,0,0,0" VerticalAlignment="Center" FontSize="13"
+                                 LostFocus="OnProjectNameLostFocus" KeyDown="OnProjectNameKeyDown" />
+                    </StackPanel>
+
+                    <!-- px-3 py-1 rounded-xl (12), text-xs semibold. Green when the whole
+                         run is filled, grey while there is still work to do. -->
+                    <Border Grid.Column="1" CornerRadius="12" Padding="12,4" VerticalAlignment="Center">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{StaticResource Slate100}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding StructureIsComplete}" Value="True">
+                                        <Setter Property="Background" Value="{StaticResource Emerald50}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding HasStructure, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{StaticResource Slate400}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding StructureIsComplete}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource Emerald500}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding StructureProgress}" Margin="4,0,0,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource TextXsSemibold}">
+                                        <Setter Property="Foreground" Value="{StaticResource Slate600}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding StructureIsComplete}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource Emerald700}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Line 2: the run parameters, the structure button, then save/export -->
+                <Grid Margin="0,16,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
-                        <!-- p-2.5 (10) indigo-50 rounded-xl border-indigo-100, icon 16 -->
-                        <Border Width="40" Height="40" CornerRadius="12" VerticalAlignment="Center"
-                                Background="{StaticResource Indigo50}" BorderBrush="{StaticResource Indigo100}"
-                                BorderThickness="1">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="4" ShadowDepth="1" Direction="270"
-                                                  Opacity="0.05" RenderingBias="Quality" Color="#0F172A" />
-                            </Border.Effect>
-                            <TextBlock Text="&#xE8F1;" FontFamily="{StaticResource IconFont}" FontSize="16"
-                                       Foreground="{StaticResource Indigo600}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="Выбор книги в тираже" Style="{StaticResource TextSmBold}" />
-                            <TextBlock Style="{StaticResource TextXs}" Margin="0,2,0,0"
-                                       Foreground="{StaticResource Slate500}">
-                                <Run Text="Всего в тираже: " />
-                                <Run Text="{Binding BooksCount, Mode=OneWay}" FontWeight="SemiBold"
-                                     Foreground="{StaticResource Slate700}" />
-                            </TextBlock>
-                        </StackPanel>
-                    </StackPanel>
-
-                    <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto"
-                                  VerticalScrollBarVisibility="Disabled">
-                        <StackPanel Orientation="Horizontal">
-                            <ListBox ItemsSource="{Binding Books}"
-                                     SelectedItem="{Binding SelectedBook, Mode=TwoWay}"
-                                     Background="Transparent" BorderThickness="0"
-                                     HorizontalContentAlignment="Stretch" Padding="0"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                     ItemContainerStyle="{StaticResource BookChip}">
-                                <ListBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ListBox.ItemsPanel>
-                                <!-- Without this the chips render Book.ToString(). -->
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type models:Book}">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="&#xE8D7;" FontFamily="{StaticResource IconFont}" FontSize="12"
-                                                       Margin="0,0,6,0"
-                                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" />
-                                            <TextBlock FontSize="12" FontWeight="SemiBold"
-                                                       Text="{Binding BookIndex, StringFormat='{}{0:00}'}" />
-                                            <TextBlock FontSize="12" Margin="6,0,0,0" Text="{Binding Name}"
-                                                       TextTrimming="CharacterEllipsis" MaxWidth="150" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-
-                            <Button Style="{StaticResource DashedButton}"
-                                    AutomationProperties.Name="Добавить книгу"
-                                    Command="{Binding AddBookCommand}"
-                                    VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}" FontSize="12"
-                                               Foreground="{StaticResource Brand600}" />
-                                    <TextBlock Text="Добавить книгу" Margin="4,0,0,0"
-                                               Foreground="{StaticResource Brand600}" FontWeight="Bold" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-
-                <!-- Structure setup: not in the mockup, required to create a print run -->
-                <StackPanel Visibility="{Binding HasStructure, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                    <TextBlock Text="Структура тиража" Style="{StaticResource TextSmBold}" />
-                    <TextBlock Style="{StaticResource TextXs}" Margin="0,3,0,0"
-                               Foreground="{StaticResource Slate500}"
-                               Text="Сколько книг и разворотов в каждой. Потом можно будет добавлять и удалять." />
-                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <StackPanel Margin="0,0,12,0">
                             <TextBlock Text="Книг" Style="{StaticResource TextXs}" Margin="0,0,0,4" />
-                            <TextBox Width="90" Text="{Binding NumberOfBooks, UpdateSourceTrigger=LostFocus}"
+                            <TextBox Width="80" Text="{Binding NumberOfBooks, UpdateSourceTrigger=LostFocus}"
                                      PreviewTextInput="NumberValidationTextBox" />
                         </StackPanel>
-                        <StackPanel Margin="0,0,12,0">
+                        <StackPanel Margin="0,0,16,0">
                             <TextBlock Text="Разворотов в книге" Style="{StaticResource TextXs}" Margin="0,0,0,4" />
-                            <TextBox Width="90" Text="{Binding SpreadsPerBook, UpdateSourceTrigger=LostFocus}"
+                            <TextBox Width="80" Text="{Binding SpreadsPerBook, UpdateSourceTrigger=LostFocus}"
                                      PreviewTextInput="NumberValidationTextBox" />
                         </StackPanel>
-                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding ConfirmStructureCommand}"
-                                AutomationProperties.Name="Создать структуру" VerticalAlignment="Bottom" Padding="14,10">
+                        <!--
+                          One button, two labels. A second button that appears with the
+                          first book is exactly what used to reshape this panel.
+                        -->
+                        <Button Style="{StaticResource PrimaryButton}" VerticalAlignment="Bottom"
+                                Command="{Binding ConfirmStructureCommand}"
+                                AutomationProperties.Name="Добавить структуру" Padding="14,10">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
-                                <TextBlock Text="Создать" Margin="6,0,0,0" Foreground="White" />
+                                <TextBlock Text="{Binding StructureButtonText}" Margin="6,0,0,0" Foreground="White" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
-                </StackPanel>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom">
+                        <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"
+                                Command="{Binding SaveProjectCommand}"
+                                AutomationProperties.Name="Сохранить проект">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8E7;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                           Foreground="{StaticResource Slate400}" />
+                                <TextBlock Text="Сохранить проект" Margin="6,0,0,0" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource PrimaryButton}"
+                                Command="{Binding ExportCommand}"
+                                AutomationProperties.Name="Экспортировать все книги">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE898;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
+                                <TextBlock Text="Экспортировать все книги" Margin="6,0,0,0" Foreground="White" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
             </StackPanel>
         </Border>
 
         <!-- ============================================================== -->
-        <!--  Grid: col-span-4 pool / col-span-8 canvas, gap-6 (24)         -->
+        <!--  Two areas of equal height: a narrow file list and the books.  -->
         <!-- ============================================================== -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" MinWidth="260" />
+                <ColumnDefinition Width="320" MinWidth="280" MaxWidth="360" />
                 <ColumnDefinition Width="24" />
-                <ColumnDefinition Width="2*" MinWidth="420" />
+                <ColumnDefinition Width="*" MinWidth="420" />
             </Grid.ColumnDefinitions>
 
             <!-- Loading -->
@@ -241,79 +220,42 @@
                            Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
 
-            <!-- ============ Block 2: source photo pool ============ -->
-            <Border Grid.Column="0" Style="{StaticResource Card}" Padding="20"
+            <!-- ============ The file list ============ -->
+            <Border Grid.Column="0" Style="{StaticResource Card}" Padding="16"
                     Effect="{StaticResource ShadowSubtle}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <!-- Header: pb-3 (12) border-b slate-100 -->
-                    <Grid Grid.Row="0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="12" />
-                        </Grid.RowDefinitions>
-                        <Grid Grid.Row="0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Загруженные фото" Style="{StaticResource TextSmBold}" />
-                                <TextBlock Style="{StaticResource TextXs}" Margin="0,2,0,0"
-                                           Foreground="{StaticResource Slate500}">
-                                    <Run Text="Доступно: " />
-                                    <Run Text="{Binding AvailableFilesCount, Mode=OneWay}" FontWeight="SemiBold"
-                                         Foreground="{StaticResource Slate700}" />
-                                </TextBlock>
-                            </StackPanel>
-                            <!-- px-3 py-1.5 brand-50 / brand-100 -->
-                            <Button Grid.Column="1" VerticalAlignment="Top"
-                                    AutomationProperties.Name="Загрузить фото"
-                                    Command="{Binding LoadFilesCommand}" Padding="12,6"
-                                    Background="{StaticResource Brand50}"
-                                    BorderBrush="{StaticResource Brand100}" BorderThickness="1"
-                                    Foreground="{StaticResource Brand600}" FontWeight="SemiBold">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border x:Name="bd" CornerRadius="12" SnapsToDevicePixels="True"
-                                                Background="{TemplateBinding Background}"
-                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                BorderThickness="{TemplateBinding BorderThickness}">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                              Margin="{TemplateBinding Padding}"
-                                                              TextElement.Foreground="{TemplateBinding Foreground}"
-                                                              TextElement.FontSize="{TemplateBinding FontSize}"
-                                                              TextElement.FontWeight="{TemplateBinding FontWeight}"
-                                                              TextElement.FontFamily="{TemplateBinding FontFamily}" />
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="bd" Property="Background" Value="{StaticResource Brand100}" />
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Button.Template>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}" FontSize="12"
-                                               Foreground="{StaticResource Brand600}" />
-                                    <TextBlock Text="Загрузить" Margin="4,0,0,0"
-                                               Foreground="{StaticResource Brand600}" FontWeight="SemiBold" />
-                                </StackPanel>
-                            </Button>
-                        </Grid>
-                        <Border Grid.Row="1" Height="1" Background="{StaticResource Slate100}"
-                                VerticalAlignment="Bottom" />
-                    </Grid>
+                    <!-- Header: title, count, load button -->
+                    <StackPanel Grid.Row="0">
+                        <TextBlock Text="Загруженные фото" Style="{StaticResource TextSmBold}" />
+                        <TextBlock Style="{StaticResource TextXs}" Margin="0,2,0,0"
+                                   Foreground="{StaticResource Slate500}">
+                            <Run Text="Доступно: " />
+                            <Run Text="{Binding AvailableFilesCount, Mode=OneWay}" FontWeight="SemiBold"
+                                 Foreground="{StaticResource Slate700}" />
+                        </TextBlock>
+                    </StackPanel>
 
-                    <!-- Dropzone: border-2 dashed rounded-xl p-4 (16).
-                         The padding lives on the content, not the Border, so the dashed
-                         outline sits on the element edge like border-2 does in the mockup. -->
-                    <Border x:Name="DropZone" Grid.Row="1" Margin="0,16,0,0" Cursor="Hand"
+                    <!-- Load button, full width of the narrow column -->
+                    <Button Grid.Row="1" Margin="0,12,0,0"
+                            Style="{StaticResource SecondaryButton}"
+                            AutomationProperties.Name="Загрузить фото"
+                            Command="{Binding LoadFilesCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                       Foreground="{StaticResource Slate400}" />
+                            <TextBlock Text="Загрузить фото" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Compact dropzone: one line, the list is the main event here -->
+                    <Border x:Name="DropZone" Grid.Row="2" Margin="0,8,0,0" Cursor="Hand"
                             Background="{StaticResource Slate50}"
                             AllowDrop="True" Drop="OnUploadAreaDrop"
                             MouseLeftButtonDown="OnUploadAreaClick">
@@ -330,75 +272,85 @@
                                     </Style>
                                 </Rectangle.Style>
                             </Rectangle>
-                            <StackPanel Margin="16">
-                                <!-- fa-cloud-arrow-up text-brand-500 text-2xl (24) mb-1 (4) -->
-                                <TextBlock Text="&#xE898;" FontFamily="{StaticResource IconFont}" FontSize="24"
-                                           Foreground="{StaticResource Brand500}" HorizontalAlignment="Center" />
-                                <TextBlock Text="Перетащите снимки сюда" Style="{StaticResource TextXsSemibold}"
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                        VerticalAlignment="Center" Margin="10">
+                                <TextBlock Text="&#xE898;" FontFamily="{StaticResource IconFont}" FontSize="14"
+                                           Foreground="{StaticResource Brand500}" VerticalAlignment="Center" />
+                                <TextBlock Text="Перетащите фото" Style="{StaticResource TextXsSemibold}"
                                            Foreground="{StaticResource Slate700}"
-                                           HorizontalAlignment="Center" Margin="0,4,0,0" />
-                                <TextBlock Text="JPG, PNG до 50MB" Style="{StaticResource TextBadge}" FontSize="10"
-                                           Foreground="{StaticResource Slate400}"
-                                           HorizontalAlignment="Center" Margin="0,2,0,0" />
+                                           VerticalAlignment="Center" Margin="6,0,0,0" />
                             </StackPanel>
                         </Grid>
                     </Border>
 
-                    <!-- Tiles: grid-cols-3 gap-2.5 (10) max-h-[520px] -->
-                    <ScrollViewer Grid.Row="2" Margin="0,16,0,0" MaxHeight="520"
-                                  VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding AvailableFiles}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <UniformGrid Columns="3" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border x:Name="Tile" Style="{StaticResource PoolTile}" Margin="0,0,10,10"
-                                            PreviewMouseLeftButtonDown="OnFileItemMouseDown"
-                                            ToolTip="{Binding}">
-                                        <Border.Height>
-                                            <MultiBinding Converter="{StaticResource AspectHeightConverter}"
-                                                          ConverterParameter="1,1">
-                                                <Binding Path="ActualWidth" ElementName="Tile" />
-                                                <Binding />
-                                            </MultiBinding>
-                                        </Border.Height>
-                                        <Grid>
-                                            <Image Source="{Binding Converter={StaticResource FilePathToThumbnailConverter}}"
-                                                   Stretch="UniformToFill" />
-                                            <!-- "Использовано": top-1 left-1, text-[9px], rounded-md -->
-                                            <Border Background="{StaticResource Emerald500}" CornerRadius="6"
-                                                    Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Top"
-                                                    Margin="4">
-                                                <Border.Visibility>
-                                                    <!-- Needs the ViewModel and this tile's file path. A
-                                                         nested {Binding} as ConverterParameter is not legal XAML,
-                                                         so the usage converter is a MultiBinding. -->
-                                                    <MultiBinding Converter="{StaticResource PoolItemUsageConverter}">
-                                                        <Binding Path="DataContext" RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
-                                                        <Binding />
-                                                    </MultiBinding>
-                                                </Border.Visibility>
-                                                <TextBlock Text="Использовано" Style="{StaticResource TextMicro}"
-                                                           FontSize="9" Foreground="White" />
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                    <!-- Search, then the rows -->
+                    <Grid Grid.Row="3" Margin="0,12,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Search. The hint is a TextBlock behind the box rather than a
+                             watermark property, because the project has no such style and
+                             this is the only field that needs one. -->
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <TextBox Padding="8,6"
+                                     Text="{Binding PhotoSearch, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Поиск по имени файла" />
+                            <TextBlock Text="Поиск по имени файла" IsHitTestVisible="False"
+                                       Margin="10,0,0,0" VerticalAlignment="Center"
+                                       Style="{StaticResource TextXs}"
+                                       Foreground="{StaticResource Slate400}"
+                                       Visibility="{Binding PhotoSearch, Converter={StaticResource InverseStringToVisibilityConverter}}" />
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding FilteredPhotoFiles}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:PhotoFileInfo}">
+                                        <Border Style="{StaticResource FileRow}" Margin="0,0,0,2"
+                                                PreviewMouseLeftButtonDown="OnFileItemMouseDown"
+                                                ToolTip="{Binding Path}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Small square thumb -->
+                                                <Border Grid.Column="0" Width="44" Height="44" CornerRadius="8"
+                                                        Background="{StaticResource Slate100}" ClipToBounds="True">
+                                                    <Image Source="{Binding Path, Converter={StaticResource FilePathToThumbnailConverter}}"
+                                                           Stretch="UniformToFill" />
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" Style="{StaticResource TextXsMedium}"
+                                                               Foreground="{StaticResource Slate700}"
+                                                               TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
+                                                    <TextBlock Text="{Binding DimensionsText}"
+                                                               Style="{StaticResource TextTiny}"
+                                                               Foreground="{StaticResource Slate400}" />
+                                                </StackPanel>
+
+                                                <!-- Free / assigned / shared -->
+                                                <Border Grid.Column="1" HorizontalAlignment="Right"
+                                                        VerticalAlignment="Center" CornerRadius="6" Padding="6,2"
+                                                        Background="{Binding Usage, Converter={StaticResource PhotoUsageToBrushConverter}}">
+                                                    <TextBlock Text="{Binding UsageText}" FontSize="10" FontWeight="Bold"
+                                                               Foreground="{Binding Usage, Converter={StaticResource PhotoUsageToBrushConverter}, ConverterParameter=text}" />
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
                 </Grid>
             </Border>
 
-            <!-- Splitter (keeps the 4:8 default, stays resizable) -->
-            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center"
-                          Background="Transparent" ResizeBehavior="PreviousAndNext"
-                          ResizeDirection="Columns" ShowsPreview="True" />
-
-            <!-- ============ Block 3: book assembly canvas ============ -->
+            <!-- ============ The books, one after another ============ -->
             <Border Grid.Column="2" Style="{StaticResource Card}" Padding="20"
                     Effect="{StaticResource ShadowSubtle}">
                 <Grid>
@@ -407,59 +359,15 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <!-- Header: pb-3 (12) border-b slate-100 -->
-                    <Grid Grid.Row="0" Visibility="{Binding HasStructure, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="12" />
-                        </Grid.RowDefinitions>
-                        <Grid Grid.Row="0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Style="{StaticResource TextBaseBold}">
-                                    <Run Text="Макет книги: " Foreground="{StaticResource TextStrong}" />
-                                    <Run Text="{Binding SelectedBook.Name, Mode=OneWay}"
-                                         Foreground="{StaticResource Brand600}" />
-                                </TextBlock>
-                                <TextBlock Text="Назначьте обложку и развороты для каждой фоторамки"
-                                           Style="{StaticResource TextXs}" Margin="0,3,0,0"
-                                           Foreground="{StaticResource Slate500}" />
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                <!-- px-3 py-1 rounded-xl emerald-50 / emerald-200, text-xs font-semibold -->
-                                <Border Background="{StaticResource Emerald50}" BorderBrush="{StaticResource Emerald200}"
-                                        BorderThickness="1" CornerRadius="12" Padding="12,4"
-                                        VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" FontSize="12"
-                                                   Foreground="{StaticResource Emerald500}" VerticalAlignment="Center" />
-                                        <TextBlock Text="{Binding SelectedBookProgress}"
-                                                   Style="{StaticResource TextXsSemibold}"
-                                                   Foreground="{StaticResource Emerald700}" Margin="4,0,0,0" />
-                                    </StackPanel>
-                                </Border>
-
-                                <Button Style="{StaticResource IconButton}" Margin="8,0,0,0"
-                                        Command="{Binding DuplicateBookCommand}"
-                                        CommandParameter="{Binding SelectedBook}"
-                                        ToolTip="Дублировать книгу">
-                                    <TextBlock Text="&#xE8C8;" FontFamily="{StaticResource IconFont}" FontSize="13" />
-                                </Button>
-                                <Button Style="{StaticResource DangerGhostButton}" Margin="4,0,0,0"
-                                        Command="{Binding DeleteBookCommand}"
-                                        CommandParameter="{Binding SelectedBook}"
-                                        ToolTip="Удалить книгу">
-                                    <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" FontSize="13" />
-                                </Button>
-                            </StackPanel>
-                        </Grid>
-                        <Border Grid.Row="1" Height="1" Background="{StaticResource Slate100}"
-                                VerticalAlignment="Bottom" />
-                    </Grid>
+                    <StackPanel Grid.Row="0" Margin="0,0,0,12"
+                                Visibility="{Binding HasStructure, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Style="{StaticResource TextBaseBold}">
+                            <Run Text="Книги тиража" Foreground="{StaticResource TextStrong}" />
+                        </TextBlock>
+                        <TextBlock Text="Каждая книга идёт следующей. Обложка и развороты — перетащите фото из списка."
+                                   Style="{StaticResource TextXs}" Margin="0,3,0,0"
+                                   Foreground="{StaticResource Slate500}" TextWrapping="Wrap" />
+                    </StackPanel>
 
                     <!-- Empty state: no structure yet -->
                     <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -475,209 +383,277 @@
                         <TextBlock Style="{StaticResource TextXs}" TextAlignment="Center" TextWrapping="Wrap"
                                    MaxWidth="420" HorizontalAlignment="Center" Margin="0,8,0,0"
                                    Foreground="{StaticResource Slate500}"
-                                   Text="Укажите количество книг и разворотов выше, затем загрузите фотографии и перетащите их в слоты." />
+                                   Text="Укажите количество книг и разворотов в панели выше, затем загрузите фотографии и перетащите их в слоты." />
                     </StackPanel>
 
-                    <!-- Slots: 4 columns, gap-4 (16) -->
-                    <ScrollViewer Grid.Row="1" Margin="0,24,0,0" VerticalScrollBarVisibility="Auto"
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
                                   Visibility="{Binding HasStructure, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <ItemsControl ItemsSource="{Binding SelectedBook.AllSlotsPages}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <UniformGrid Columns="4" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
+                        <ItemsControl ItemsSource="{Binding Books}">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type models:Page}">
-                                    <Grid x:Name="SlotRoot" Margin="0,0,16,16">
-                                        <!--
-                                          VerticalAlignment=Top + Height=Auto is what keeps the
-                                          card at the mockup's min-h-[190px]. Without it the
-                                          UniformGrid stretches every cell to the full row height
-                                          and the slots come out roughly 2.5x too tall.
-                                        -->
-                                        <Border Tag="{Binding}"
-                                                VerticalAlignment="Top"
-                                                AllowDrop="True" Drop="OnSlotDrop" DragOver="OnSlotDragOver"
-                                                MouseLeftButtonDown="OnSlotClick">
-                                            <Border.Style>
-                                                <Style TargetType="Border" BasedOn="{StaticResource Slot}">
-                                                    <Style.Triggers>
-                                                        <!-- cover: border-emerald-500 bg-emerald-50/20 -->
-                                                        <DataTrigger Binding="{Binding IsCover}" Value="True">
-                                                            <Setter Property="BorderBrush" Value="{StaticResource Emerald500}" />
-                                                            <Setter Property="Background" Value="#F4FCF9" />
-                                                        </DataTrigger>
-                                                        <!-- filled spread: bg-slate-50/50 -->
-                                                        <DataTrigger Binding="{Binding SourcePath, Converter={StaticResource HasValueConverter}}" Value="True">
-                                                            <Setter Property="Background" Value="#FBFCFD" />
-                                                        </DataTrigger>
-                                                        <!-- empty: bg-slate-50/50, dashed border -->
-                                                        <DataTrigger Binding="{Binding SourcePath, Converter={StaticResource HasValueConverter}}" Value="False">
-                                                            <Setter Property="Background" Value="#FAFBFC" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <Grid>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                </Grid.RowDefinitions>
+                                <DataTemplate DataType="{x:Type models:Book}">
+                                    <StackPanel Margin="0,0,0,24">
+                                        <!-- Book header: number, name, readiness, whole-book actions -->
+                                        <Grid Margin="0,0,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
 
-                                                <!-- Row 0: export name + role, mb-2 (8) -->
-                                                <Grid Grid.Row="0" Margin="0,0,0,8">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Border Grid.Column="0">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border" BasedOn="{StaticResource SlotNameChip}">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsCover}" Value="True">
-                                                                        <Setter Property="Background" Value="{StaticResource Emerald500}" />
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock Text="{Binding ExportFileName}" FontSize="10"
-                                                                   FontFamily="{StaticResource MonoFont}" FontWeight="Bold"
-                                                                   Foreground="{StaticResource Slate700}" />
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Background="{StaticResource Brand50}" CornerRadius="8"
+                                                        Padding="8,2" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding BookIndex, StringFormat='Книга {0}'}"
+                                                               Style="{StaticResource TextXsSemibold}"
+                                                               Foreground="{StaticResource Brand600}" />
+                                                </Border>
+                                                <TextBlock Text="{Binding ProgressText}"
+                                                           Style="{StaticResource TextXs}"
+                                                           Foreground="{StaticResource Slate500}"
+                                                           Margin="10,0,0,0" VerticalAlignment="Center" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource IconButton}"
+                                                        Command="{Binding DataContext.DuplicateBookCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        AutomationProperties.Name="Дублировать книгу"
+                                                        ToolTip="Дублировать книгу">
+                                                    <TextBlock Text="&#xE8C8;" FontFamily="{StaticResource IconFont}" FontSize="13" />
+                                                </Button>
+                                                <Button Style="{StaticResource DangerGhostButton}" Margin="4,0,0,0"
+                                                        Command="{Binding DataContext.DeleteBookCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        AutomationProperties.Name="Удалить книгу"
+                                                        ToolTip="Удалить книгу">
+                                                    <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" FontSize="13" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Slots: adaptive width, so a WrapPanel, not columns -->
+                                        <ItemsControl ItemsSource="{Binding AllSlotsPages}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type models:Page}">
+                                                    <Border Style="{StaticResource Slot}"
+                                                            Tag="{Binding}"
+                                                            AllowDrop="True" Drop="OnSlotDrop" DragOver="OnSlotDragOver"
+                                                            MouseLeftButtonDown="OnSlotClick">
+                                                        <Grid>
+                                                            <Grid.Clip>
+                                                                <!-- Rounded, so the photo cannot paint
+                                                                     square corners over the border. -->
+                                                                <MultiBinding Converter="{StaticResource RoundedClipGeometryConverter}" ConverterParameter="12">
+                                                                    <Binding Path="ActualWidth" ElementName="SlotContent" />
+                                                                    <Binding Path="ActualHeight" ElementName="SlotContent" />
+                                                                </MultiBinding>
+                                                            </Grid.Clip>
+
+                                                            <Grid x:Name="SlotContent">
+                                                                <Grid.RowDefinitions>
+                                                                    <RowDefinition Height="Auto" />
+                                                                    <RowDefinition Height="Auto" />
+                                                                </Grid.RowDefinitions>
+
+                                                                <!-- The frame: natural 190px tall by the
+                                                                     book's own format, both sides scaled
+                                                                     together when a whole extra card per row
+                                                                     is within reach. -->
+                                                                <Grid Grid.Row="0" Background="{StaticResource Slate100}">
+                                                                    <Grid.Width>
+                                                                        <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="width">
+                                                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
+                                                                            <Binding />
+                                                                        </MultiBinding>
+                                                                    </Grid.Width>
+                                                                    <Grid.Height>
+                                                                        <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="height">
+                                                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
+                                                                            <Binding />
+                                                                        </MultiBinding>
+                                                                    </Grid.Height>
+
+                                                                    <Image Source="{Binding Converter={StaticResource PageSourceConverter}}"
+                                                                           Stretch="UniformToFill" Tag="{Binding}"
+                                                                           MouseLeftButtonDown="OnImageDoubleClick"
+                                                                           Visibility="{Binding SourcePath, Converter={StaticResource HasValueConverter}}">
+                                                                        <Image.RenderTransform>
+                                                                            <ScaleTransform x:Name="PhotoZoom" CenterX="0.5" CenterY="0.5" ScaleX="1" ScaleY="1" />
+                                                                        </Image.RenderTransform>
+                                                                    </Image>
+
+                                                                    <!-- Empty: dashed frame and a hint -->
+                                                                    <Rectangle Style="{StaticResource DashedFrame}" RadiusX="7" RadiusY="7"
+                                                                               Visibility="{Binding SourcePath, Converter={StaticResource InverseHasValueConverter}}" />
+                                                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                                                Visibility="{Binding SourcePath, Converter={StaticResource InverseHasValueConverter}}">
+                                                                        <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}"
+                                                                                   FontSize="20" Foreground="{StaticResource Slate400}"
+                                                                                   HorizontalAlignment="Center" />
+                                                                        <TextBlock Text="Перетащите фото" Style="{StaticResource TextTiny}"
+                                                                                   Foreground="{StaticResource Slate400}"
+                                                                                   HorizontalAlignment="Center" Margin="0,4,0,0" />
+                                                                    </StackPanel>
+
+                                                                    <!-- Export name, top-left, like the unique mode -->
+                                                                    <Border VerticalAlignment="Top" HorizontalAlignment="Left"
+                                                                            Margin="10" CornerRadius="6" Padding="8,2"
+                                                                            Background="#D90F172A"
+                                                                            Visibility="{Binding SourcePath, Converter={StaticResource HasValueConverter}}">
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <TextBlock Text="&#xE735;" FontFamily="{StaticResource IconFont}" FontSize="10"
+                                                                                       Foreground="White" VerticalAlignment="Center"
+                                                                                       Visibility="{Binding IsCover, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                                            <TextBlock Text="{Binding ExportFileName}" FontSize="10"
+                                                                                       FontFamily="{StaticResource MonoFont}" FontWeight="Bold"
+                                                                                       Foreground="White" VerticalAlignment="Center" />
+                                                                        </StackPanel>
+                                                                    </Border>
+
+                                                                    <!--
+                                                                      Slot actions, always visible while the slot
+                                                                      holds a photo: apply this position to every
+                                                                      book, or clear the slot. They live on the
+                                                                      photo because the frame can be 120px wide.
+                                                                    -->
+                                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Top"
+                                                                                HorizontalAlignment="Right" Margin="6"
+                                                                                Visibility="{Binding SourcePath, Converter={StaticResource HasValueConverter}}">
+                                                                        <Border Background="#E6FFFFFF" CornerRadius="8" Padding="3">
+                                                                            <StackPanel Orientation="Horizontal">
+                                                                                <Button Style="{StaticResource SlotAction}" Tag="{Binding}"
+                                                                                        Click="OnDuplicateToAllClick"
+                                                                                        AutomationProperties.Name="Применить ко всем книгам"
+                                                                                        ToolTip="Во все книги: поставить это фото в ту же позицию всех книг">
+                                                                                    <TextBlock Text="&#xE8AB;" FontFamily="{StaticResource IconFont}" FontSize="11" />
+                                                                                </Button>
+                                                                                <Button Style="{StaticResource SlotAction}" Tag="{Binding}"
+                                                                                        Click="OnDeletePageClick"
+                                                                                        AutomationProperties.Name="Очистить слот"
+                                                                                        ToolTip="Убрать фото из слота">
+                                                                                    <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" FontSize="11"
+                                                                                               Foreground="{StaticResource Red500}" />
+                                                                                </Button>
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                    </StackPanel>
+
+                                                                    <!-- Reorder stays on hover: it is rare, and
+                                                                         four permanent buttons would crowd a
+                                                                         narrow frame. -->
+                                                                    <Border VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                                                                            Margin="6" CornerRadius="8" Padding="3"
+                                                                            Background="#E6FFFFFF">
+                                                                        <Border.Style>
+                                                                            <Style TargetType="Border">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Border.Style>
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <Button Style="{StaticResource SlotAction}" Tag="{Binding}"
+                                                                                    Click="OnMovePageLeftClick" ToolTip="Левее">
+                                                                                <TextBlock Text="&#xE72B;" FontFamily="{StaticResource IconFont}" FontSize="10" />
+                                                                            </Button>
+                                                                            <Button Style="{StaticResource SlotAction}" Tag="{Binding}"
+                                                                                    Click="OnMovePageRightClick" ToolTip="Правее">
+                                                                                <TextBlock Text="&#xE72A;" FontFamily="{StaticResource IconFont}" FontSize="10" />
+                                                                            </Button>
+                                                                        </StackPanel>
+                                                                    </Border>
+
+                                                                    <!-- Triggers -->
+                                                                    <Grid.Triggers>
+                                                                        <EventTrigger RoutedEvent="MouseEnter">
+                                                                            <BeginStoryboard>
+                                                                                <Storyboard>
+                                                                                    <DoubleAnimation Storyboard.TargetName="PhotoZoom"
+                                                                                                     Storyboard.TargetProperty="ScaleX" To="1.04" Duration="0:0:0" />
+                                                                                    <DoubleAnimation Storyboard.TargetName="PhotoZoom"
+                                                                                                     Storyboard.TargetProperty="ScaleY" To="1.04" Duration="0:0:0" />
+                                                                                </Storyboard>
+                                                                            </BeginStoryboard>
+                                                                        </EventTrigger>
+                                                                        <EventTrigger RoutedEvent="MouseLeave">
+                                                                            <BeginStoryboard>
+                                                                                <Storyboard>
+                                                                                    <DoubleAnimation Storyboard.TargetName="PhotoZoom"
+                                                                                                     Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0" />
+                                                                                    <DoubleAnimation Storyboard.TargetName="PhotoZoom"
+                                                                                                     Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0" />
+                                                                                </Storyboard>
+                                                                            </BeginStoryboard>
+                                                                        </EventTrigger>
+                                                                    </Grid.Triggers>
+                                                                </Grid>
+
+                                                                <!-- Footer: name, shared mark, replace -->
+                                                                <Grid Grid.Row="1" Margin="10,8,10,10">
+                                                                    <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="Auto" />
+                                                                        <RowDefinition Height="Auto" />
+                                                                    </Grid.RowDefinitions>
+                                                                    <Border Grid.Row="0" Height="1" Margin="0,0,0,8"
+                                                                            Background="{StaticResource Slate200}" />
+
+                                                                    <Grid Grid.Row="1">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="*" />
+                                                                            <ColumnDefinition Width="Auto" />
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Grid.Column="0" Text="{Binding FileName}"
+                                                                                   Style="{StaticResource TextTiny}"
+                                                                                   Foreground="{StaticResource Slate600}"
+                                                                                   VerticalAlignment="Center"
+                                                                                   TextTrimming="CharacterEllipsis"
+                                                                                   ToolTip="{Binding SourcePath}"
+                                                                                   Visibility="{Binding SourcePath, Converter={StaticResource HasValueConverter}}" />
+                                                                        <TextBlock Grid.Column="1" Text="Заменить"
+                                                                                   Style="{StaticResource TextTiny}"
+                                                                                   FontWeight="Bold" Foreground="{StaticResource Brand600}"
+                                                                                   Cursor="Hand" Tag="{Binding}"
+                                                                                   MouseLeftButtonDown="OnImageDoubleClick"
+                                                                                   VerticalAlignment="Center" Margin="6,0,0,0"
+                                                                                   Visibility="{Binding SourcePath, Converter={StaticResource HasValueConverter}}" />
+                                                                    </Grid>
+
+                                                                    <!-- "Shared": brand colour, so it reads as
+                                                                         different from an ordinary assignment -->
+                                                                    <Border Grid.Row="1" CornerRadius="6" Padding="8,2"
+                                                                            Background="{StaticResource Brand50}"
+                                                                            HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                                                            Margin="0,8,0,0"
+                                                                            Visibility="{Binding IsShared, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                                        <TextBlock FontSize="10" FontWeight="Bold"
+                                                                                   Foreground="{StaticResource Brand600}">
+                                                                            <TextBlock.Style>
+                                                                                <Style TargetType="TextBlock">
+                                                                                    <Setter Property="Text" Value="Общий разворот" />
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding IsCover}" Value="True">
+                                                                                            <Setter Property="Text" Value="Общая обложка" />
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBlock.Style>
+                                                                        </TextBlock>
+                                                                    </Border>
+                                                                </Grid>
+                                                            </Grid>
+                                                        </Grid>
                                                     </Border>
-                                                    <TextBlock Grid.Column="1"
-                                                               HorizontalAlignment="Right" VerticalAlignment="Center">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource TextBadge}">
-                                                                <Setter Property="FontSize" Value="10" />
-                                                                <Setter Property="FontWeight" Value="Bold" />
-                                                                <Setter Property="Foreground" Value="{StaticResource Slate400}" />
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsCover}" Value="True">
-                                                                        <Setter Property="Foreground" Value="{StaticResource Emerald700}" />
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding SourcePath, Converter={StaticResource HasValueConverter}}" Value="True">
-                                                                        <Setter Property="Foreground" Value="{StaticResource Slate500}" />
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                        <Run Text="{Binding Path=., Converter={StaticResource SlotRoleConverter}}" />
-                                                    </TextBlock>
-                                                </Grid>
-
-                                                <!-- Row 1: 16/10 frame, vertically centred (my-auto) -->
-                                                <Grid Grid.Row="1" x:Name="SlotFrame" VerticalAlignment="Center">
-                                                    <Grid.Height>
-                                                        <MultiBinding Converter="{StaticResource AspectHeightConverter}">
-                                                            <Binding Path="ActualWidth" ElementName="SlotFrame" />
-                                                            <Binding />
-                                                        </MultiBinding>
-                                                    </Grid.Height>
-                                                    <Grid>
-                                                        <Image Source="{Binding Converter={StaticResource PageSourceConverter}}"
-                                                               Stretch="UniformToFill" Tag="{Binding}"
-                                                               MouseLeftButtonDown="OnImageDoubleClick"
-                                                               Visibility="{Binding SourcePath, Converter={StaticResource HasValueConverter}}" />
-
-                                                        <!-- dashed overlay only while the slot is empty -->
-                                                        <Rectangle Style="{StaticResource DashedFrame}" Margin="-1"
-                                                                   RadiusX="7" RadiusY="7"
-                                                                   Visibility="{Binding SourcePath, Converter={StaticResource InverseHasValueConverter}}" />
-
-                                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
-                                                                    Visibility="{Binding SourcePath, Converter={StaticResource InverseHasValueConverter}}">
-                                                            <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}"
-                                                                       FontSize="24" Foreground="{StaticResource Slate400}"
-                                                                       HorizontalAlignment="Center" />
-                                                            <TextBlock Text="Перетащите фото" Style="{StaticResource TextXsMedium}"
-                                                                       Foreground="{StaticResource Slate400}"
-                                                                       HorizontalAlignment="Center" Margin="0,4,0,0" />
-                                                        </StackPanel>
-
-                                                        <!--
-                                                          Extra slot actions live in a hover strip over the
-                                                          frame. The mockup's resting state shows only
-                                                          filename + "Заменить", but move / apply-to-all /
-                                                          clear cannot be dropped, so they are revealed on
-                                                          hover instead of being deleted.
-                                                        -->
-                                                        <Border VerticalAlignment="Bottom" Margin="4"
-                                                                CornerRadius="8" Padding="3"
-                                                                Background="#E6FFFFFF">
-                                                            <Border.Style>
-                                                                <Style TargetType="Border">
-                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsMouseOver, ElementName=SlotRoot}" Value="True">
-                                                                            <Setter Property="Visibility" Value="Visible" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Border.Style>
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <Button Style="{StaticResource SlotAction}" Tag="{Binding}"
-                                                                        Click="OnMovePageLeftClick" ToolTip="Левее">
-                                                                    <TextBlock Text="&#xE72B;" FontFamily="{StaticResource IconFont}" FontSize="10" />
-                                                                </Button>
-                                                                <Button Style="{StaticResource SlotAction}" Tag="{Binding}"
-                                                                        Click="OnMovePageRightClick" ToolTip="Правее">
-                                                                    <TextBlock Text="&#xE72A;" FontFamily="{StaticResource IconFont}" FontSize="10" />
-                                                                </Button>
-                                                                <Button Style="{StaticResource SlotAction}" Tag="{Binding}"
-                                                                        Click="OnDuplicateToAllClick" ToolTip="Применить ко всем книгам">
-                                                                    <TextBlock Text="&#xE8AB;" FontFamily="{StaticResource IconFont}" FontSize="10" />
-                                                                </Button>
-                                                                <Button Style="{StaticResource SlotAction}" Tag="{Binding}"
-                                                                        Click="OnDeletePageClick" ToolTip="Очистить слот">
-                                                                    <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" FontSize="10"
-                                                                               Foreground="{StaticResource Red500}" />
-                                                                </Button>
-                                                            </StackPanel>
-                                                        </Border>
-                                                    </Grid>
-                                                </Grid>
-
-                                                <!-- Row 2: footer, mt-2 pt-2 (8/8) border-t, text-[11px] -->
-                                                <Grid Grid.Row="2" Margin="0,8,0,0">
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                    </Grid.RowDefinitions>
-                                                    <Border Grid.Row="0" Height="1" Margin="0,0,0,8"
-                                                            Background="{StaticResource Slate200}" />
-
-                                                    <StackPanel Grid.Row="1" Orientation="Horizontal">
-                                                        <TextBlock Text="{Binding FileName}"
-                                                                   Style="{StaticResource TextTiny}"
-                                                                   Foreground="{StaticResource Slate600}"
-                                                                   FontWeight="Medium"
-                                                                   VerticalAlignment="Center" MaxWidth="96"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                   ToolTip="{Binding SourcePath}"
-                                                                   Visibility="{Binding SourcePath, Converter={StaticResource HasValueConverter}}" />
-                                                        <TextBlock Text="Заменить" Style="{StaticResource TextTiny}"
-                                                                   FontWeight="Bold" Foreground="{StaticResource Brand600}"
-                                                                   Cursor="Hand" Tag="{Binding}"
-                                                                   MouseLeftButtonDown="OnImageDoubleClick"
-                                                                   VerticalAlignment="Center" Margin="6,0,0,0"
-                                                                   Visibility="{Binding SourcePath, Converter={StaticResource HasValueConverter}}" />
-                                                    </StackPanel>
-
-                                                    <TextBlock Grid.Row="1" Text="Слот пуст"
-                                                               Style="{StaticResource TextBadge}" FontSize="10"
-                                                               TextAlignment="Center"
-                                                               Foreground="{StaticResource Slate400}"
-                                                               Visibility="{Binding SourcePath, Converter={StaticResource InverseHasValueConverter}}" />
-                                                </Grid>
-                                            </Grid>
-                                        </Border>
-
-                                        <!-- dashed outline for the empty slot, on top of everything -->
-                                        <Rectangle Style="{StaticResource DashedFrame}"
-                                                   Visibility="{Binding SourcePath, Converter={StaticResource InverseHasValueConverter}}" />
-                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>

@@ -531,6 +531,39 @@ namespace PhotoBookRenamer.Presentation.Converters
     }
 
     /// <summary>
+    /// Badge colours for a photo's state in the file list.
+    ///
+    /// Usage: ConverterParameter="background" or "text". Free is grey because it needs no
+    /// attention, assigned is the calm green of "done", and shared is the brand colour -
+    /// the one state the photographer has to notice, since the same picture is going into
+    /// several books.
+    /// </summary>
+    public class PhotoUsageToBrushConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            var usage = value is PhotoFileInfo file ? file.Usage : PhotoUsage.Free;
+            bool text = string.Equals(parameter as string, "text", StringComparison.OrdinalIgnoreCase);
+
+            return usage switch
+            {
+                PhotoUsage.Assigned => text
+                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x05, 0x6F, 0x5B))
+                    : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xEC, 0xFD, 0xF5)),
+                PhotoUsage.Shared => text
+                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x4F, 0x46, 0xE5))
+                    : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xEE, 0xF2, 0xFF)),
+                _ => text
+                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x64, 0x74, 0x8B))
+                    : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xF1, 0xF5, 0xF9))
+            };
+        }
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => Binding.DoNothing;
+    }
+
+    /// <summary>
     /// Card size for a spread card: the photo frame's width and height, adapted to how
     /// much room the book block actually has.
     ///

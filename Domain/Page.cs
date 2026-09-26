@@ -16,6 +16,7 @@ namespace PhotoBookRenamer.Domain
         private int _imageWidth;
         private int _imageHeight;
         private double _frameAspect;
+        private bool _isShared;
 
         public string? SourcePath
         {
@@ -123,6 +124,22 @@ namespace PhotoBookRenamer.Domain
                 return System.IO.Path.GetFileName(SourcePath);
             }
             set => SetProperty(ref _fileName, value);
+        }
+
+        /// <summary>
+        /// True when this same photo stands in a slot of ANOTHER book, which the slot
+        /// shows as "Общий разворот" / "Общая обложка".
+        ///
+        /// Stamped by the editor rather than computed here: a Page does not know the other
+        /// books, and the count has to be refreshed whenever any of them changes. Two slots
+        /// of the same book holding one photo do NOT count - that is a duplicate, not a
+        /// shared spread.
+        /// </summary>
+        [JsonIgnore]
+        public bool IsShared
+        {
+            get => _isShared;
+            set => SetProperty(ref _isShared, value);
         }
 
         /// <summary>

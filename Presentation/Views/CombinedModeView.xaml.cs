@@ -63,10 +63,12 @@ namespace PhotoBookRenamer.Presentation.Views
         private void OnFileItemMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (sender is not FrameworkElement element) return;
-            if (element.DataContext is not string filePath) return;
-            if (!File.Exists(filePath)) return;
+            // The row is bound to a file entry, not to a bare path: the name, the pixel
+            // size and the status are all shown from the same object.
+            if (element.DataContext is not Domain.PhotoFileInfo file) return;
+            if (!File.Exists(file.Path)) return;
 
-            DragDrop.DoDragDrop(element, filePath, DragDropEffects.Copy);
+            DragDrop.DoDragDrop(element, file.Path, DragDropEffects.Copy);
         }
 
         // ------------------------------------------------------------------

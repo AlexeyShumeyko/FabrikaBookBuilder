@@ -247,7 +247,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// Folders has the same action in its project panel, so the header copy was a
         /// duplicate.
         /// </summary>
-        public bool ShowSourcePicker => _currentMode == AppMode.Combined;
+        /// <summary>
+        /// The top bar keeps only navigation and undo. Loading photos lives in the file
+        /// list, saving and exporting in the project panel - the same split the unique
+        /// mode uses, so the two screens do not teach the user two different habits.
+        /// </summary>
+        public bool ShowSourcePicker => false;
 
         /// <summary>Context label: Unique Folders picks folders, Combined picks photos.</summary>
         public string SourcePickerLabel => _currentMode == AppMode.Combined ? "Загрузить фото" : "Выбор папок";
@@ -271,7 +276,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// Folders both moved into the project panel, which is now the one place a user
         /// looks for them.
         /// </summary>
-        public bool ShowProjectActions => _currentMode == AppMode.Combined;
+        public bool ShowProjectActions => false;
 
         /// <summary>
         /// The two mode tabs stay in the header but are only clickable while their

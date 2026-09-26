@@ -100,7 +100,6 @@ namespace PhotoBookRenamer.Domain
             PhotoUsage.Assigned => "Назначен",
             _ => "Общий"
         };
-
         /// <summary>"3500 × 2333 px". Placeholder until the file has been measured.</summary>
         public string DimensionsText => HasDimensions ? $"{ImageWidth} × {ImageHeight} px" : "…";
 
