@@ -158,14 +158,28 @@ namespace PhotoBookRenamer.Domain
                 if (p != null && !p.IsCover && p.HasDimensions)
                     ratios.Add(p.AspectRatio);
 
-            double aspect = ratios.Count > 0 ? Median(ratios) : DefaultFrameAspect;
-            aspect = Math.Clamp(aspect, FrameAspectMin, FrameAspectMax);
+            ApplyFrameAspect(ratios.Count > 0 ? Median(ratios) : DefaultFrameAspect);
+        }
 
-            if (Cover != null) Cover.FrameAspect = aspect;
+        /// <summary>
+        /// Forces one frame shape onto every slot of this book.
+        ///
+        /// The combined run uses it: a print run is all one format, so the run decides a
+        /// single shape and stamps it on each book. Without this a photo dropped into
+        /// book 1 reshaped only book 1 and the rest of the run kept the default. The
+        /// unique mode never calls it - there every book is its own folder and keeps its
+        /// own median.
+        /// </summary>
+        public void ApplyFrameAspect(double aspect)
+        {
+            double clamped = Math.Clamp(aspect, FrameAspectMin, FrameAspectMax);
+
+            if (Cover != null) Cover.FrameAspect = clamped;
             foreach (var p in Pages)
-                if (p != null) p.FrameAspect = aspect;
+                if (p != null) p.FrameAspect = clamped;
 
-            FrameAspect = aspect;
+            FrameAspect = clamped;
+            OnPropertyChanged(nameof(FrameAspect));
         }
 
         private static double Median(List<double> values)

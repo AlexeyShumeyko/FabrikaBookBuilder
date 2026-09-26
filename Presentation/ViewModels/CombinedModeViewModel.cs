@@ -110,6 +110,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 if (e.OldItems != null)
                     foreach (var b in e.OldItems.OfType<Book>()) UnwatchBook(b);
 
+                UpdateRunFrameAspect();
+                RefreshPhotoUsage();
+
                 OnPropertyChanged(nameof(BooksCount));
                 OnPropertyChanged(nameof(HasStructure));
                 OnPropertyChanged(nameof(CurrentBookProgress));
@@ -123,7 +126,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 else if (SelectedBook == null)
                     SelectedBook = Books.FirstOrDefault();
                 UpdateExportCommands();
-                RefreshPhotoUsage();
             };
 
             AvailableFiles.CollectionChanged += (s, e) =>
@@ -150,6 +152,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                                  or nameof(Book.Pages)
                                  or nameof(Book.AllSlotsPages))
                 {
+                    UpdateRunFrameAspect();
                     RefreshPhotoUsage();
                 }
             };
@@ -219,13 +222,13 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         public bool HasFiles => AvailableFiles.Count > 0;
 
         /// <summary>
-        /// "Готово 2 из 4" for the structure as a whole: books with every slot filled.
-        /// The same label appears per book in the book's own header, so the panel answers
-        /// "how far along is the run" and the book answers "how far along am I".
+        /// "Готово 2 из 4 книг" for the structure as a whole: books with every slot
+        /// filled. It sits under the project name where the unique mode puts "1 обложка
+        /// • 4 разворота", so both screens answer "how far along am I" the same way.
         /// </summary>
         public string StructureProgress => Books.Count == 0
-            ? "Книг пока нет"
-            : $"Готово {Books.Count(b => b.IsFilled)} из {Books.Count}";
+            ? "Готово 0 книг"
+            : $"Готово {Books.Count(b => b.IsFilled)} из {Books.Count} книг";
 
         /// <summary>
         /// The one structure button. Same control either way, only the wording changes -
@@ -329,6 +332,83 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     // frame, so this caption is not worth failing over.
                 }
             }
+        }
+
+        // ------------------------------------------------------------------
+        //  One frame shape for the whole run
+        // ------------------------------------------------------------------
+
+        private double? _runFrameAspect;
+        private bool _runFrameAspectFrozen;
+
+        /// <summary>
+        /// Decides the frame shape for every book of the run, following the owner's rule:
+        /// the cover may arrive first and sets the shape, the first SPREAD then replaces
+        /// it (a run is aligned by its spreads), and after that it is frozen.
+        ///
+        /// A per-book median did neither half of that. It reshaped only the book a photo
+        /// landed in, and it moved again with every new photo, because the median of one
+        /// value is that value - so a photographer loading a run photo by photo watched
+        /// the cards jump twice per photo.
+        /// </summary>
+        private void UpdateRunFrameAspect()
+        {
+            if (_runFrameAspectFrozen && _runFrameAspect is double frozen)
+            {
+                StampRunAspect(frozen);
+                return;
+            }
+
+            // First spread in reading order. The cover, whatever shape it is, never sets
+            // the final answer - it only holds the fort until a spread shows up.
+            foreach (var book in Books)
+            {
+                foreach (var page in book.Pages)
+                {
+                    if (page == null || page.IsCover || page.IsEmpty || !page.HasDimensions) continue;
+
+                    _runFrameAspect = page.AspectRatio;
+                    _runFrameAspectFrozen = true;
+                    StampRunAspect(_runFrameAspect.Value);
+                    return;
+                }
+            }
+
+            if (_runFrameAspect is double current)
+            {
+                StampRunAspect(current);   // still provisional, a spread may arrive later
+                return;
+            }
+
+            foreach (var book in Books)
+            {
+                if (book.Cover != null && !book.Cover.IsEmpty && book.Cover.HasDimensions)
+                {
+                    _runFrameAspect = book.Cover.AspectRatio;
+                    StampRunAspect(_runFrameAspect.Value);
+                    return;
+                }
+            }
+
+            // Nothing measured yet: the default shape, stamped so a new book matches.
+            StampRunAspect(1.6);
+        }
+
+        private void StampRunAspect(double aspect)
+        {
+            foreach (var book in Books)
+                book.ApplyFrameAspect(aspect);
+        }
+
+        /// <summary>
+        /// Forgets the run's shape so the next photo decides it again. Called when the
+        /// project is emptied or reloaded - otherwise reopening a project would keep the
+        /// shape from the session before it.
+        /// </summary>
+        private void ResetRunFrameAspect()
+        {
+            _runFrameAspect = null;
+            _runFrameAspectFrozen = false;
         }
 
         /// <summary>
@@ -1151,6 +1231,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             Books.Clear();
             Project = null;
             AvailableFiles.Clear();
+            // A new project re-decides its own frame shape: the frozen value belongs to the
+            // run that was open before, not to this one.
+            ResetRunFrameAspect();
             IsStructureConfirmed = false;
             ErrorMessage = null;
             Presentation.Converters.PageSourceConverter.ClearCache();
@@ -1212,6 +1295,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     IsStructureConfirmed = true;
                     
                     Books.Clear();
+                    // Re-decide from what is on disk: the first spread of the saved run
+                    // sets the shape again, so a reopened project looks exactly like it did
+                    // when it was closed.
+                    ResetRunFrameAspect();
                     foreach (var book in project.Books)
                     {
                         Books.Add(book);
@@ -1672,6 +1759,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             Project = null;
             Books.Clear();
             AvailableFiles.Clear();
+            ResetRunFrameAspect();
             ErrorMessage = null;
             IsStructureConfirmed = false;
             CurrentProjectInfo = null;

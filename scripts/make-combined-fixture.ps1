@@ -5,7 +5,12 @@
 # Usage: make-combined-fixture.ps1          (app must be closed)
 #        remove-combined-fixture.ps1 <id>
 
-param([string]$RemoveId = '')
+param(
+    [string]$RemoveId = '',
+    [int]$Books = 2,
+    [int]$Spreads = 3,
+    [switch]$EmptyLastBook
+)
 
 $ErrorActionPreference = 'Stop'
 $dir = Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\Projects'
@@ -44,31 +49,41 @@ $photos = @($src.books[0].pages | Where-Object { $_.sourcePath } | ForEach-Objec
 if ($photos.Count -lt 4) { throw "only $($photos.Count) photos with sizes in the source project" }
 
 $id = [guid]::NewGuid().ToString()
-$books = @()
-for ($b = 1; $b -le 2; $b++) {
+$bookList = @()
+for ($b = 1; $b -le $Books; $b++) {
+    # -EmptyLastBook leaves the final book without photos. That is the check for the
+    # owner's rule: a run has ONE frame shape, so the empty book must end up the same
+    # size as the filled one instead of falling back to the default 16:10.
+    $fill = -not ($EmptyLastBook -and $b -eq $Books)
     $pages = @()
-    for ($s = 1; $s -le 3; $s++) {
+    for ($s = 1; $s -le $Spreads; $s++) {
         # Spread 2 of every book gets the SAME photo on purpose: that is the run-wide
         # spread the owner asked to see labelled.
-        $pick = if ($s -eq 2) { $photos[1] } else { $photos[(($b - 1) * 3 + $s - 1) % $photos.Count] }
+        $pick = if (-not $fill) { $null }
+                elseif ($s -eq 2) { $photos[1] }
+                else { $photos[(($b - 1) * 3 + $s - 1) % $photos.Count] }
         $pages += [ordered]@{
             isCover = $false; index = $s; displayIndex = $s
-            sourcePath = $pick.path; thumbnailPath = $pick.thumb
+            sourcePath = if ($pick) { $pick.path } else { $null }
+            thumbnailPath = if ($pick) { $pick.thumb } else { $null }
             isLocked = $false
             exportFileName = ('{0:D3}-{1:D2}.jpg' -f $b, $s)
-            imageWidth = $pick.w; imageHeight = $pick.h
+            imageWidth = if ($pick) { $pick.w } else { 0 }
+            imageHeight = if ($pick) { $pick.h } else { 0 }
         }
     }
-    $cover = $photos[0]
-    $books += [ordered]@{
+    $cover = if ($fill) { $photos[0] } else { $null }
+    $bookList += [ordered]@{
         folderPath = $null
         name = "Book $b"
         bookIndex = $b
         cover = [ordered]@{
             isCover = $true; index = 0; displayIndex = 0
-            sourcePath = $cover.path; thumbnailPath = $cover.thumb
+            sourcePath = if ($cover) { $cover.path } else { $null }
+            thumbnailPath = if ($cover) { $cover.thumb } else { $null }
             isLocked = $false; exportFileName = ('{0:D3}-{1:D2}.jpg' -f $b, 0)
-            imageWidth = $cover.w; imageHeight = $cover.h
+            imageWidth = if ($cover) { $cover.w } else { 0 }
+            imageHeight = if ($cover) { $cover.h } else { 0 }
         }
         pages = $pages
     }
@@ -77,7 +92,7 @@ for ($b = 1; $b -le 2; $b++) {
 $proj = [ordered]@{
     mode = 3
     outputFolder = $null
-    books = $books
+    books = $bookList
     availableFiles = @($photos | ForEach-Object { $_.path })
 }
 
@@ -100,4 +115,4 @@ $all = @($index) + @($new)
 Write-Json $indexPath $all
 
 $check = Read-Json $indexPath
-"created combined fixture id=$id books=2 spreads=3 photos=$($photos.Count); index now $(@($check).Count) entries, parses OK"
+"created combined fixture id=$id books=$Books spreads=$Spreads photos=$($photos.Count); index now $(@($check).Count) entries, parses OK"

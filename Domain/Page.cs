@@ -27,6 +27,8 @@ namespace PhotoBookRenamer.Domain
                 {
                     // Уведомляем об изменении IsEmpty при изменении SourcePath
                     OnPropertyChanged(nameof(IsEmpty));
+                    OnPropertyChanged(nameof(SlotLabel));
+                    OnPropertyChanged(nameof(IsSlotLabelAccent));
                 }
             }
         }
@@ -40,13 +42,24 @@ namespace PhotoBookRenamer.Domain
         public bool IsCover
         {
             get => _isCover;
-            set => SetProperty(ref _isCover, value);
+            set
+            {
+                if (SetProperty(ref _isCover, value))
+                {
+                    OnPropertyChanged(nameof(SlotLabel));
+                    OnPropertyChanged(nameof(IsSlotLabelAccent));
+                }
+            }
         }
 
         public int Index
         {
             get => _index;
-            set => SetProperty(ref _index, value);
+            set
+            {
+                if (SetProperty(ref _index, value))
+                    OnPropertyChanged(nameof(SlotLabel));
+            }
         }
 
         public int DisplayIndex
@@ -139,7 +152,14 @@ namespace PhotoBookRenamer.Domain
         public bool IsShared
         {
             get => _isShared;
-            set => SetProperty(ref _isShared, value);
+            set
+            {
+                if (SetProperty(ref _isShared, value))
+                {
+                    OnPropertyChanged(nameof(SlotLabel));
+                    OnPropertyChanged(nameof(IsSlotLabelAccent));
+                }
+            }
         }
 
         /// <summary>
@@ -147,6 +167,30 @@ namespace PhotoBookRenamer.Domain
         /// finishes, so newly generated previews appear without rebuilding the whole view.
         /// </summary>
         public void RaiseThumbnailChanged() => OnPropertyChanged(nameof(ThumbnailPath));
+
+        /// <summary>
+        /// What the slot's footer says: "Обложка", "Разворот 2", "Разворот 2 (Сквозной)"
+        /// or "Пустой слот".
+        ///
+        /// Assembled here rather than in the view: the shared case is three conditions in
+        /// one string, and XAML style triggers cannot say "the last match wins" without a
+        /// pile of MultiTriggers that nobody can read afterwards.
+        /// </summary>
+        public string SlotLabel
+        {
+            get
+            {
+                if (IsEmpty) return "Пустой слот";
+                if (IsShared) return IsCover ? "Общая обложка" : $"Разворот {Index} (Сквозной)";
+                return IsCover ? "Обложка" : $"Разворот {Index}";
+            }
+        }
+
+        /// <summary>
+        /// The footer label is the brand colour for the cover and for a run-wide spread,
+        /// grey otherwise - the same distinction the photo badge makes.
+        /// </summary>
+        public bool IsSlotLabelAccent => !IsEmpty && (IsCover || IsShared);
 
         public Page Clone()
         {
