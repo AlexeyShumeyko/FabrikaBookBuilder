@@ -115,15 +115,14 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (System.Windows.Application.Current.MainWindow is MainWindow mainWindow)
+                    // MainViewModel is a singleton and is already the MainWindow's
+                    // DataContext, so flipping the mode is enough. Re-assigning
+                    // DataContext here used to rebuild the persistent header.
+                    var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
+                    var mainVm = serviceProvider?.GetRequiredService<MainViewModel>();
+                    if (mainVm != null)
                     {
-                        var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                        if (serviceProvider != null)
-                        {
-                            var mainVm = serviceProvider.GetRequiredService<MainViewModel>();
-                            mainVm.CurrentMode = value;
-                            mainWindow.DataContext = mainVm;
-                        }
+                        mainVm.CurrentMode = value;
                     }
                 });
             }
@@ -594,6 +593,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
 
                 IsLoading = true;
+
+                // Первое действие с данными создаёт запись проекта — до этого момента
+                // вкладка могла быть открыта без какого-либо проекта вообще.
+                await EnsureProjectInfoAsync();
 
                 // Если проект уже существует
                 if (Project != null && existingFolders.Count > 0)
@@ -1086,16 +1089,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                if (System.Windows.Application.Current.MainWindow is MainWindow mainWindow)
-                {
-                    var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                    if (serviceProvider != null)
-                    {
-                        var mainVm = serviceProvider.GetRequiredService<MainViewModel>();
-                        mainVm.OpenHelp(HelpSection.UniqueFolders);
-                        mainWindow.DataContext = mainVm;
-                    }
-                }
+                var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
+                serviceProvider?.GetRequiredService<MainViewModel>()
+                    .OpenHelp(HelpSection.UniqueFolders);
             });
         }
         
@@ -1155,6 +1151,49 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 _loggingService.LogError("Ошибка автоматического сохранения проекта", ex);
                 // Не показываем ошибку пользователю при автоматическом сохранении
             }
+        }
+
+        /// <summary>
+        /// Creates the ProjectInfo record on demand. With direct tab navigation a user can
+        /// land in this mode without ever having created a project, so the record is only
+        /// written once there is something worth keeping.
+        /// </summary>
+        private async Task<ProjectInfo?> EnsureProjectInfoAsync()
+        {
+            if (CurrentProjectInfo != null)
+                return CurrentProjectInfo;
+
+            var name = string.IsNullOrWhiteSpace(ProjectName)
+                ? $"Новый проект {DateTime.Now:yyyy-MM-dd HH:mm}"
+                : ProjectName!;
+
+            var info = await _projectListService.CreateProjectAsync(AppMode.UniqueFolders, name);
+            if (info == null) return null;
+
+            CurrentProjectInfo = info;
+            OnPropertyChanged(nameof(CurrentProjectInfo));
+            return info;
+        }
+
+        /// <summary>
+        /// Silent save used by the header "Сохранить" button. Unlike SaveProjectAsync it
+        /// does not navigate away, and unlike SaveProjectSilentlyAsync it creates the
+        /// project record if none exists yet and surfaces failures to the user.
+        /// </summary>
+        public async Task<bool> QuickSaveAsync()
+        {
+            if (Project == null || Project.Books == null || Project.Books.Count == 0)
+                return false;
+
+            if (await EnsureProjectInfoAsync() == null)
+            {
+                ErrorMessage = "Не удалось создать запись проекта.";
+                OnPropertyChanged(nameof(ErrorMessage));
+                return false;
+            }
+
+            await SaveProjectSilentlyAsync();
+            return true;
         }
     }
 }

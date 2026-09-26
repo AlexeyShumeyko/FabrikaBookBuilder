@@ -75,15 +75,14 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (System.Windows.Application.Current.MainWindow is MainWindow mainWindow)
+                    // MainViewModel is a singleton and is already the MainWindow's
+                    // DataContext, so flipping the mode is enough. Re-assigning
+                    // DataContext here used to rebuild the persistent header.
+                    var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
+                    var mainVm = serviceProvider?.GetRequiredService<MainViewModel>();
+                    if (mainVm != null)
                     {
-                        var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                        if (serviceProvider != null)
-                        {
-                            var mainVm = serviceProvider.GetRequiredService<MainViewModel>();
-                            mainVm.CurrentMode = value;
-                            mainWindow.DataContext = mainVm;
-                        }
+                        mainVm.CurrentMode = value;
                     }
                 });
             }

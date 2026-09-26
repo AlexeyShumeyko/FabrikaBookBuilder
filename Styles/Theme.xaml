@@ -604,7 +604,9 @@
     <DropShadowEffect x:Key="Shadow1" BlurRadius="8"  ShadowDepth="2" Direction="270" Opacity="0.05" RenderingBias="Quality" Color="#0F172A" />
     <DropShadowEffect x:Key="Shadow2" BlurRadius="25" ShadowDepth="5" Direction="270" Opacity="0.10" RenderingBias="Quality" Color="#0F172A" />
     <DropShadowEffect x:Key="Shadow3" BlurRadius="25" ShadowDepth="5" Direction="270" Opacity="0.08" RenderingBias="Quality" Color="#0F172A" />
-    <DropShadowEffect x:Key="ShadowCard" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.05" RenderingBias="Quality" Color="#0F172A" />
+    <!-- 'ShadowCard' is the design token declared in the shadow section above.
+         It must NOT be aliased again here: ResourceDictionary keys are unique. -->
+
 
     <Style x:Key="ModernPrimaryButton"   TargetType="Button" BasedOn="{StaticResource PrimaryButton}" />
     <Style x:Key="ModernSecondaryButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}" />

@@ -81,4 +81,7 @@
     <!-- Booleans OR-ed together (multi-flag) -->
     <utils:AnyTrueConverter                    x:Key="AnyTrueConverter" />
 
+    <!-- AppMode <-> bool, for the RadioButton tabs in the persistent header -->
+    <utils:AppModeEqualsConverter              x:Key="AppModeEqualsConverter" />
+
 </ResourceDictionary>

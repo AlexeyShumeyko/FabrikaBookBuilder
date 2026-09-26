@@ -79,7 +79,10 @@ namespace PhotoBookRenamer
             services.AddSingleton<IProjectListService, ProjectListService>();
 
             // ViewModels
-            services.AddTransient<MainViewModel>();
+            // MainViewModel MUST be a singleton: it owns the persistent top bar and is
+            // resolved by the child ViewModels to switch screens. As a transient it was
+            // re-created on every navigation, which tore the header down each time.
+            services.AddSingleton<MainViewModel>();
             services.AddSingleton<UniqueFoldersViewModel>();
             services.AddSingleton<CombinedModeViewModel>();
 

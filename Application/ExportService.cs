@@ -23,7 +23,15 @@ namespace PhotoBookRenamer.Application
         }
 
         public async Task<bool> ExportProjectAsync(Project project, string outputFolder)
+            => await ExportProjectAsync(project, outputFolder, new ExportOptions());
+
+        public async Task<bool> ExportProjectAsync(Project project, string outputFolder, ExportOptions options)
         {
+            if (project == null || string.IsNullOrWhiteSpace(outputFolder))
+                return false;
+
+            options ??= new ExportOptions();
+
             try
             {
                 if (!Directory.Exists(outputFolder))
@@ -31,38 +39,84 @@ namespace PhotoBookRenamer.Application
                     Directory.CreateDirectory(outputFolder);
                 }
 
-                var tasks = new List<Task>();
+                // Build the full work list first so progress can be reported by file count
+                // instead of jumping in uneven steps while the copies run in parallel.
+                var work = new List<(string Source, string Destination)>();
+                var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var book in project.Books)
                 {
                     var bookIndex = book.BookIndex;
+                    var bookFolder = options.PerBookSubfolders
+                        ? Path.Combine(outputFolder, SanitizeFolderName($"{bookIndex:D3} {book.Name}"))
+                        : outputFolder;
 
                     // Копируем обложку
                     if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
                     {
-                        var coverFileName = GenerateFileName(bookIndex, 0);
-                        var coverDest = Path.Combine(outputFolder, coverFileName);
-                        tasks.Add(_fileService.CopyFileAsync(book.Cover.SourcePath, coverDest));
+                        work.Add((book.Cover.SourcePath,
+                                  Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, 0), usedNames))));
                     }
 
                     // Копируем страницы (сортируем по индексу для правильного порядка)
                     var pageIndex = 1;
                     foreach (var page in book.Pages.Where(p => !p.IsEmpty).OrderBy(p => p.Index))
                     {
-                        var pageFileName = GenerateFileName(bookIndex, pageIndex);
-                        var pageDest = Path.Combine(outputFolder, pageFileName);
-                        tasks.Add(_fileService.CopyFileAsync(page.SourcePath!, pageDest));
+                        work.Add((page.SourcePath!,
+                                  Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, pageIndex), usedNames))));
                         pageIndex++;
                     }
                 }
 
-                await Task.WhenAll(tasks);
+                if (work.Count == 0)
+                    return true;
+
+                var completed = 0;
+                var gate = new object();
+
+                await Task.WhenAll(work.Select(async item =>
+                {
+                    await _fileService.CopyFileAsync(item.Source, item.Destination);
+                    lock (gate)
+                    {
+                        completed++;
+                        options.Progress?.Report((double)completed / work.Count);
+                    }
+                }));
+
                 return true;
             }
             catch
             {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Guards against two books resolving to the same file name, which would silently
+        /// overwrite one of them once per-book subfolders are switched on.
+        /// </summary>
+        private static string UniqueName(string fileName, HashSet<string> used)
+        {
+            if (used.Add(fileName)) return fileName;
+
+            var dir = Path.GetDirectoryName(fileName) ?? string.Empty;
+            var stem = Path.GetFileNameWithoutExtension(fileName);
+            var ext = Path.GetExtension(fileName);
+
+            for (int i = 2; i < 10_000; i++)
+            {
+                var candidate = Path.Combine(dir, $"{stem}-{i}{ext}");
+                if (used.Add(candidate)) return candidate;
+            }
+            return fileName;
+        }
+
+        private static string SanitizeFolderName(string name)
+        {
+            var invalid = Path.GetInvalidFileNameChars();
+            var cleaned = new string(name.Select(c => invalid.Contains(c) ? '_' : c).ToArray()).Trim();
+            return string.IsNullOrWhiteSpace(cleaned) ? "Book" : cleaned;
         }
     }
 }
