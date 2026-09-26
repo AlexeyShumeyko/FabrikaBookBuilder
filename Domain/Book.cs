@@ -273,7 +273,50 @@ namespace PhotoBookRenamer.Domain
                 _isValid = newValue;
                 OnPropertyChanged(nameof(IsValid));
             }
+
+            // The counter names are raised unconditionally: filling the second of five
+            // spreads changes them while IsValid stays false, and a change-gated raise
+            // would leave the label stuck on "0 из 5".
+            OnPropertyChanged(nameof(FilledSlotCount));
+            OnPropertyChanged(nameof(TotalSlotCount));
+            OnPropertyChanged(nameof(ProgressText));
+            OnPropertyChanged(nameof(IsFilled));
         }
+
+        /// <summary>
+        /// Slots holding a photo, cover included. Feeds the "Готово 2 из 4" label - the
+        /// same wording the unique mode uses, so both screens read identically.
+        /// </summary>
+        public int FilledSlotCount
+        {
+            get
+            {
+                int n = Cover != null && !Cover.IsEmpty ? 1 : 0;
+                foreach (var p in Pages)
+                    if (p != null && !p.IsCover && !p.IsEmpty) n++;
+                return n;
+            }
+        }
+
+        /// <summary>Slots in this book, cover included.</summary>
+        public int TotalSlotCount
+        {
+            get
+            {
+                int n = Cover != null ? 1 : 0;
+                foreach (var p in Pages)
+                    if (p != null && !p.IsCover) n++;
+                return n;
+            }
+        }
+
+        public string ProgressText => $"Готово {FilledSlotCount} из {TotalSlotCount}";
+
+        /// <summary>
+        /// Every slot has a photo. An empty book is never "filled", so a structure with
+        /// no books cannot report itself as complete.
+        /// </summary>
+        public bool IsFilled => TotalSlotCount > 0 && FilledSlotCount == TotalSlotCount;
 
         public Book Clone()
         {

@@ -52,6 +52,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             AvailableFiles = new ObservableCollection<string>();
             Books = new ObservableCollection<Book>();
+            PhotoFiles = new ObservableCollection<PhotoFileInfo>();
             
             LoadFilesCommand = new AsyncRelayCommand(LoadFilesAsync);
             ClearFilesCommand = new RelayCommand(ClearFiles);
@@ -100,23 +101,68 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             // readiness label are refreshed explicitly.
             Books.CollectionChanged += (s, e) =>
             {
+                // A new book has to start reporting its own "Готово N из M", and a removed
+                // one has to stop. Book raises its counters for cover swaps, page
+                // assignments and page add/remove, so watching the book is enough - there
+                // is no need to touch every command that assigns a photo.
+                if (e.NewItems != null)
+                    foreach (var b in e.NewItems.OfType<Book>()) WatchBook(b);
+                if (e.OldItems != null)
+                    foreach (var b in e.OldItems.OfType<Book>()) UnwatchBook(b);
+
                 OnPropertyChanged(nameof(BooksCount));
                 OnPropertyChanged(nameof(HasStructure));
                 OnPropertyChanged(nameof(CurrentBookProgress));
                 OnPropertyChanged(nameof(SelectedBookProgress));
+                OnPropertyChanged(nameof(StructureProgress));
                 // Keep the canvas pointed at something valid after add / remove / clear.
                 if (SelectedBook != null && !Books.Contains(SelectedBook))
                     SelectedBook = Books.FirstOrDefault();
                 else if (SelectedBook == null)
                     SelectedBook = Books.FirstOrDefault();
                 UpdateExportCommands();
+                RefreshPhotoUsage();
             };
 
             AvailableFiles.CollectionChanged += (s, e) =>
             {
                 OnPropertyChanged(nameof(AvailableFilesCount));
                 OnPropertyChanged(nameof(HasFiles));
+                SyncPhotoFiles();
             };
+        }
+
+        private readonly Dictionary<Book, System.ComponentModel.PropertyChangedEventHandler> _bookWatchers = new();
+
+        /// <summary>
+        /// Starts listening to a book's slots so the file list can tell free photos from
+        /// assigned ones without every assignment command remembering to refresh it.
+        /// </summary>
+        private void WatchBook(Book book)
+        {
+            if (_bookWatchers.ContainsKey(book)) return;
+
+            System.ComponentModel.PropertyChangedEventHandler handler = (s, e) =>
+            {
+                if (e.PropertyName is nameof(Book.Cover)
+                                 or nameof(Book.Pages)
+                                 or nameof(Book.AllSlotsPages))
+                {
+                    RefreshPhotoUsage();
+                }
+            };
+
+            _bookWatchers[book] = handler;
+            book.PropertyChanged += handler;
+        }
+
+        private void UnwatchBook(Book book)
+        {
+            if (_bookWatchers.TryGetValue(book, out var handler))
+            {
+                book.PropertyChanged -= handler;
+                _bookWatchers.Remove(book);
+            }
         }
         
         private void Project_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -169,6 +215,138 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         public int AvailableFilesCount => AvailableFiles.Count;
         public int BooksCount => Books.Count;
         public bool HasFiles => AvailableFiles.Count > 0;
+
+        /// <summary>
+        /// "Готово 2 из 4" for the structure as a whole: books with every slot filled.
+        /// The same label appears per book in the book's own header, so the panel answers
+        /// "how far along is the run" and the book answers "how far along am I".
+        /// </summary>
+        public string StructureProgress => Books.Count == 0
+            ? "Книг пока нет"
+            : $"Готово {Books.Count(b => b.IsFilled)} из {Books.Count}";
+
+        // ------------------------------------------------------------------
+        //  The file list, as the narrow left column shows it
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// The loaded photos with a name, a pixel size and a free/assigned/shared state.
+        ///
+        /// Derived from <see cref="AvailableFiles"/> and the books rather than stored: the
+        /// project file keeps its plain path list, so old projects open untouched and a
+        /// photo that turns out to be shared needs no flag on disk.
+        /// </summary>
+        public ObservableCollection<PhotoFileInfo> PhotoFiles { get; }
+
+        private string _photoSearch = string.Empty;
+
+        /// <summary>Filters the list by file name; empty shows everything.</summary>
+        public string PhotoSearch
+        {
+            get => _photoSearch;
+            set
+            {
+                if (SetProperty(ref _photoSearch, value ?? string.Empty))
+                    OnPropertyChanged(nameof(FilteredPhotoFiles));
+            }
+        }
+
+        public IEnumerable<PhotoFileInfo> FilteredPhotoFiles
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(_photoSearch)) return PhotoFiles;
+                return PhotoFiles.Where(f =>
+                    f.Name.IndexOf(_photoSearch, StringComparison.CurrentCultureIgnoreCase) >= 0);
+            }
+        }
+
+        /// <summary>
+        /// Mirrors AvailableFiles into <see cref="PhotoFiles"/>. Entries that survive keep
+        /// the size already read for them, so re-syncing after a drop does not re-measure
+        /// hundreds of files; only the new ones are measured, off the UI thread.
+        /// </summary>
+        private void SyncPhotoFiles()
+        {
+            var wanted = AvailableFiles
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var present = new HashSet<string>(wanted, StringComparer.OrdinalIgnoreCase);
+            for (int i = PhotoFiles.Count - 1; i >= 0; i--)
+            {
+                if (!present.Contains(PhotoFiles[i].Path))
+                    PhotoFiles.RemoveAt(i);
+            }
+
+            var toMeasure = new List<PhotoFileInfo>();
+            foreach (var path in wanted)
+            {
+                bool exists = PhotoFiles.Any(f => string.Equals(f.Path, path, StringComparison.OrdinalIgnoreCase));
+                if (exists) continue;
+
+                var info = new PhotoFileInfo(path);
+                PhotoFiles.Add(info);
+                toMeasure.Add(info);
+            }
+
+            OnPropertyChanged(nameof(FilteredPhotoFiles));
+            RefreshPhotoUsage();
+
+            if (toMeasure.Count > 0)
+                _ = MeasurePhotoFilesAsync(toMeasure);
+        }
+
+        /// <summary>Reads each new file's pixel size for the caption in the list.</summary>
+        private async Task MeasurePhotoFilesAsync(List<PhotoFileInfo> files)
+        {
+            foreach (var file in files)
+            {
+                try
+                {
+                    var (width, height) = await _imageService.GetImageDimensionsAsync(file.Path);
+                    file.SetDimensions(width, height);
+                }
+                catch
+                {
+                    // A file that cannot be measured keeps the "…" placeholder; the photo
+                    // itself still loads in a slot, and the page's own size decides the
+                    // frame, so this caption is not worth failing over.
+                }
+            }
+        }
+
+        /// <summary>
+        /// Counts how many slots hold each photo and pushes the counts into the list.
+        /// "Общий" is therefore a fact about the run, not a flag anyone has to maintain:
+        /// applying a photo to the same position of every book is all it takes.
+        /// </summary>
+        private void RefreshPhotoUsage()
+        {
+            var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var book in Books)
+            {
+                if (book.Cover != null && !book.Cover.IsEmpty && !string.IsNullOrEmpty(book.Cover.SourcePath))
+                    CountOne(counts, book.Cover.SourcePath);
+
+                foreach (var page in book.Pages)
+                {
+                    if (page != null && !page.IsEmpty && !string.IsNullOrEmpty(page.SourcePath))
+                        CountOne(counts, page.SourcePath);
+                }
+            }
+
+            foreach (var file in PhotoFiles)
+                file.SetUsage(counts.TryGetValue(file.Path, out int n) ? n : 0);
+        }
+
+        private static void CountOne(Dictionary<string, int> counts, string path)
+        {
+            counts.TryGetValue(path, out int n);
+            counts[path] = n + 1;
+        }
 
         public bool CanExport => Project?.IsValid ?? false;
 
@@ -456,7 +634,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             else
             {
                 var currentCount = Books.Count;
-                
+
+                // Growing the run is silent, shrinking it is not. Checked before anything
+                // is touched, so cancelling leaves the structure exactly as it was.
+                if (!ConfirmStructureChange(NumberOfBooks, SpreadsPerBook))
+                    return;
+
                 if (NumberOfBooks > currentCount)
                 {
                     for (int i = currentCount; i < NumberOfBooks; i++)
@@ -468,8 +651,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                             Cover = new Page { IsCover = true, Index = 0 }
                         };
 
-                        var spreadsCount = Books.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? SpreadsPerBook;
-                        for (int j = 0; j < spreadsCount; j++)
+                        // Straight from the requested count, not from the first book: every
+                        // book of a run has the same number of spreads, and that is the
+                        // whole point of the structure.
+                        for (int j = 0; j < SpreadsPerBook; j++)
                         {
                             book.Pages.Add(new Page { IsCover = false, Index = j + 1, DisplayIndex = j + 1 });
                         }
@@ -480,6 +665,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
                 else if (NumberOfBooks < currentCount)
                 {
+                    // From the end: the last books go, so the numbering of the ones that
+                    // stay does not shift under the photographer.
                     while (Books.Count > NumberOfBooks)
                     {
                         Books.RemoveAt(Books.Count - 1);
@@ -493,6 +680,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     Books[i].BookIndex = i + 1;
                     Books[i].Name = $"Книга {i + 1}";
                 }
+
+                OnPropertyChanged(nameof(StructureProgress));
             }
 
             if (Project == null)
@@ -512,6 +701,68 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             UpdateExportCommands();
         }
         
+        /// <summary>
+        /// Asks before the structure gets SMALLER; growing it needs no question.
+        ///
+        /// The message says how many photos are about to disappear, because the numbers in
+        /// the two fields look harmless until the last spread of a book turns out to be
+        /// filled. Removal always happens from the end: the last books, the last spreads.
+        /// </summary>
+        private bool ConfirmStructureChange(int targetBooks, int targetSpreads)
+        {
+            int booksLost = Books.Count - targetBooks;
+            int spreadsLost = Books.Count == 0
+                ? 0
+                : Math.Max(0, Books.Max(b => b.Pages.Count(p => !p.IsCover)) - targetSpreads);
+
+            if (booksLost <= 0 && spreadsLost <= 0) return true;
+
+            int photosLost = 0;
+            for (int i = 0; i < Books.Count; i++)
+            {
+                var book = Books[i];
+
+                if (i >= targetBooks)
+                {
+                    // This whole book goes away, with everything already put in it.
+                    photosLost += book.FilledSlotCount;
+                    continue;
+                }
+
+                foreach (var page in book.Pages.Where(p => !p.IsCover && p.Index > targetSpreads))
+                {
+                    if (!page.IsEmpty) photosLost++;
+                }
+            }
+
+            var parts = new List<string>();
+            if (booksLost > 0)
+                parts.Add($"книг: {booksLost}");
+
+            if (spreadsLost > 0)
+            {
+                parts.Add($"разворотов в книге: {spreadsLost}");
+                // Say the position that disappears, since that is what the user counts in.
+                var firstLost = targetSpreads + 1;
+                parts.Add($"последние развороты начиная с {firstLost}");
+            }
+
+            string photoLine = photosLost > 0
+                ? $"\n\nВ них уже стоят фото — они будут удалены: {photosLost}."
+                : "\n\nПустых слотов в удаляемом нет.";
+
+            string message =
+                $"Уменьшить структуру до {targetBooks} книг по {targetSpreads} разворотов?" +
+                $"\n\nБудет удалено с конца — {string.Join("; ", parts)}.{photoLine}" +
+                "\n\nОтменить изменение?";
+
+            return System.Windows.MessageBox.Show(
+                       message,
+                       "Подтверждение изменения структуры",
+                       System.Windows.MessageBoxButton.YesNo,
+                       System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes;
+        }
+
         private void SynchronizeSpreadsInAllBooks()
         {
             if (Books.Count == 0) return;
@@ -577,6 +828,52 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             }
         }
 
+        /// <summary>
+        /// Copies a measured size from one slot to another showing the same file. Cheaper
+        /// and safer than re-reading the file, and it is how a run of shared spreads gets
+        /// the right frame in every book at once.
+        /// </summary>
+        private static void CopyDimensions(Domain.Page from, Domain.Page to)
+        {
+            if (!from.HasDimensions || to.HasDimensions) return;
+            if (!string.Equals(from.SourcePath, to.SourcePath, StringComparison.OrdinalIgnoreCase)) return;
+
+            to.ImageWidth = from.ImageWidth;
+            to.ImageHeight = from.ImageHeight;
+        }
+
+        /// <summary>
+        /// Fills a slot's pixel size once a photo lands in it, then re-shapes the book.
+        ///
+        /// The frame ratio is the median of a book's own photo sizes, so a photo dropped
+        /// into a slot without its size left the whole book on the default 16:10 - that is
+        /// the "frames did not adapt" symptom. Fire-and-forget, exactly like the thumbnail
+        /// load beside it: the photo appears at once and the frame follows a moment later.
+        /// </summary>
+        private async Task FillSlotDimensionsAsync(Domain.Page? page)
+        {
+            if (page == null || page.HasDimensions || string.IsNullOrEmpty(page.SourcePath)) return;
+
+            try
+            {
+                var (width, height) = await _imageService.GetImageDimensionsAsync(page.SourcePath);
+                if (width <= 0 || height <= 0) return;
+
+                page.ImageWidth = width;
+                page.ImageHeight = height;
+
+                var book = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
+                book?.UpdatePageSlots();
+
+                OnPropertyChanged(nameof(Books));
+            }
+            catch (Exception ex)
+            {
+                // The photo itself still shows; only the frame stays on the default ratio.
+                _loggingService.LogError("Не удалось прочитать размер фото для слота", ex);
+            }
+        }
+
         public void DropFileOnSlot(Domain.Page page, string filePath, DropAction action, List<Book>? selectedBooks = null)
         {
             if (page == null || string.IsNullOrEmpty(filePath))
@@ -604,6 +901,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 
                 OnPropertyChanged(nameof(Books));
                 LoadThumbnailForPage(page);
+                _ = FillSlotDimensionsAsync(page);
                 UpdateExportCommands();
             }
             else if (action == DropAction.AllBooks)
@@ -625,9 +923,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         targetPage.SourcePath = filePath;
                         targetPage.IsLocked = true;
                         LoadThumbnailForPage(targetPage);
+                        CopyDimensions(page, targetPage);
                     }
                 }
                 
+                _ = FillSlotDimensionsAsync(page);
                 UpdateExportCommands();
             }
             else if (action == DropAction.SelectedBooks && selectedBooks != null)
@@ -648,9 +948,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     {
                         targetPage.SourcePath = filePath;
                         LoadThumbnailForPage(targetPage);
+                        CopyDimensions(page, targetPage);
                     }
                 }
                 
+                _ = FillSlotDimensionsAsync(page);
                 UpdateExportCommands();
             }
         }
@@ -1166,7 +1468,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     IsCover = true,
                     Index = 0,
                     SourcePath = book.Cover?.SourcePath,
-                    ThumbnailPath = book.Cover?.ThumbnailPath
+                    ThumbnailPath = book.Cover?.ThumbnailPath,
+                    // The copy shows the same file, so it carries the same size: a
+                    // duplicated book keeps its frame instead of dropping to the default.
+                    ImageWidth = book.Cover?.ImageWidth ?? 0,
+                    ImageHeight = book.Cover?.ImageHeight ?? 0
                 }
             };
             
@@ -1178,7 +1484,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     Index = page.Index,
                     DisplayIndex = page.DisplayIndex,
                     SourcePath = page.SourcePath,
-                    ThumbnailPath = page.ThumbnailPath
+                    ThumbnailPath = page.ThumbnailPath,
+                    ImageWidth = page.ImageWidth,
+                    ImageHeight = page.ImageHeight
                 });
             }
             
@@ -1253,6 +1561,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     {
                         book.UpdatePageSlots();
                     }
+
+                    // Size first, then the frame: UpdatePageSlots is what re-shapes the
+                    // book, so it has to run after the size is known.
+                    await FillSlotDimensionsAsync(page);
                     
                     await LoadThumbnailForPage(page);
                     OnPropertyChanged(nameof(Books));
@@ -1296,6 +1608,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     }
                     
                     targetPage.SourcePath = page.SourcePath;
+                    CopyDimensions(page, targetPage);
                     book.UpdatePageSlots();
                     tasks.Add(LoadThumbnailForPage(targetPage));
                 }
