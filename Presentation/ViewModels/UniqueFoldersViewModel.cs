@@ -29,6 +29,35 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private string? _errorMessage;
         private Book? _selectedBook;
         
+        /// <summary>
+        /// Count for bindings. See the CollectionChanged subscription in the constructor:
+        /// binding straight to <see cref="Books"/> would not update when books are added.
+        /// </summary>
+        public int BooksCount => Books.Count;
+
+        public bool CanExport => Project?.IsValid ?? false;
+
+        /// <summary>"1 обложка + 5 разворотов" style summary of the whole project.</summary>
+        public string BooksSummary
+        {
+            get
+            {
+                if (Books.Count == 0) return "ничего не загружено";
+
+                int covers = 0, spreads = 0;
+                foreach (var b in Books)
+                {
+                    if (b.Cover != null && !b.Cover.IsEmpty) covers++;
+                    if (b.Pages != null)
+                        foreach (var p in b.Pages)
+                            if (p != null && !p.IsCover && !p.IsEmpty) spreads++;
+                }
+
+                if (spreads == 0) return $"{covers} обложек";
+                return $"{covers} обложек · {spreads} разворотов";
+            }
+        }
+
         public ProjectInfo? CurrentProjectInfo
         {
             get => _currentProjectInfo;
@@ -93,14 +122,30 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             MovePageUpCommand = new RelayCommand<Page>(MovePageUp);
             MovePageDownCommand = new RelayCommand<Page>(MovePageDown);
             AssignPageNumberCommand = new RelayCommand<Page>(AssignPageNumber);
+            AssignCoverCommand = new RelayCommand<Page>(AssignCover);
+            ResetOrderCommand = new RelayCommand(ResetOrder);
             OpenHelpCommand = new RelayCommand(OpenHelp);
-            
+
+            // WPF only re-evaluates a binding when the SOURCE raises PropertyChanged.
+            // An ObservableCollection growing is not enough, so counts are surfaced
+            // explicitly for the empty state and the toolbar summary.
+            Books.CollectionChanged += (_, _) =>
+            {
+                OnPropertyChanged(nameof(BooksCount));
+                OnPropertyChanged(nameof(BooksSummary));
+            };
+
             // Обновляем команды при изменении проекта
             PropertyChanged += (s, e) =>
             {
-                if (e.PropertyName == nameof(Project) && ExportCommand is AsyncRelayCommand exportCmd)
+                if (e.PropertyName == nameof(Project))
                 {
-                    exportCmd.NotifyCanExecuteChanged();
+                    OnPropertyChanged(nameof(CanExport));
+                    OnPropertyChanged(nameof(BooksSummary));
+                    if (ExportCommand is AsyncRelayCommand exportCmd)
+                        exportCmd.NotifyCanExecuteChanged();
+                    if (ExportWithFolderCommand is AsyncRelayCommand exportFolderCmd)
+                        exportFolderCmd.NotifyCanExecuteChanged();
                 }
                 if (e.PropertyName == nameof(CurrentProjectInfo) && SaveProjectCommand is AsyncRelayCommand saveCmd)
                 {
@@ -135,12 +180,22 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             get => _projectName;
             set
             {
-                if (SetProperty(ref _projectName, value) && CurrentProjectInfo != null)
+                if (SetProperty(ref _projectName, value))
                 {
-                    CurrentProjectInfo.Name = value ?? string.Empty;
+                    // FallbackValue in XAML only fires when a path fails to resolve, not
+                    // when the resolved value is null, so the placeholder lives here.
+                    OnPropertyChanged(nameof(DisplayProjectName));
+
+                    if (CurrentProjectInfo != null)
+                    {
+                        CurrentProjectInfo.Name = value ?? string.Empty;
+                    }
                 }
             }
         }
+
+        public string DisplayProjectName =>
+            string.IsNullOrWhiteSpace(ProjectName) ? "Новый проект" : ProjectName!;
         
         public async void SetProject(Project? project, ProjectInfo projectInfo)
         {
@@ -529,6 +584,16 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         public ICommand MovePageUpCommand { get; }
         public ICommand MovePageDownCommand { get; }
         public ICommand AssignPageNumberCommand { get; }
+
+        /// <summary>Promotes a spread to be the book's cover, keeping the file it points at.</summary>
+        public ICommand AssignCoverCommand { get; }
+
+        /// <summary>
+        /// Restores the original folder order of spreads (alphabetical by file name).
+        /// Distinct from <see cref="ResetProjectCommand"/>, which wipes the project.
+        /// </summary>
+        public ICommand ResetOrderCommand { get; }
+
         public ICommand OpenHelpCommand { get; }
         
 
@@ -1045,6 +1110,88 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 p.DisplayIndex = displayIndex;
                 p.Index = displayIndex;
                 displayIndex++;
+            }
+        }
+
+        /// <summary>
+        /// Makes <paramref name="page"/> the cover of its book, keeping the file it already
+        /// points at. The spread it used to be does not become a duplicate: the slot is
+        /// simply given up, and the remaining spreads are renumbered.
+        /// </summary>
+        private void AssignCover(Page? page)
+        {
+            if (page == null || page.IsCover) return;
+            if (Project == null) return;
+
+            var book = Books.FirstOrDefault(b => b.Pages.Contains(page));
+            if (book == null) return;
+
+            var oldCover = book.Cover;
+
+            _projectService.SaveState(Project);
+
+            // The promoted page leaves the spread list and becomes the cover.
+            book.Pages.Remove(page);
+            page.IsCover = true;
+            page.Index = 0;
+            page.DisplayIndex = 0;
+
+            book.Cover = new Page
+            {
+                SourcePath = page.SourcePath,
+                ThumbnailPath = page.ThumbnailPath,
+                FileName = page.FileName,
+                IsLocked = page.IsLocked,
+                IsCover = true,
+                Index = 0,
+                DisplayIndex = 0
+            };
+
+            // The previous cover becomes a normal first spread instead of being lost.
+            if (oldCover != null && !string.IsNullOrEmpty(oldCover.SourcePath))
+            {
+                oldCover.IsCover = false;
+                book.Pages.Insert(0, oldCover);
+            }
+
+            UpdatePageDisplayIndices(book);
+            book.UpdatePageSlots();
+            OnPropertyChanged(nameof(Books));
+            OnPropertyChanged(nameof(BooksSummary));
+        }
+
+        /// <summary>
+        /// Restores spreads to the order they had when the folders were first read
+        /// (alphabetical by file name). Does not touch covers or project metadata.
+        /// </summary>
+        private void ResetOrder()
+        {
+            if (Project == null || Books.Count == 0) return;
+
+            bool changed = false;
+            foreach (var book in Books)
+            {
+                var current = book.Pages.Where(p => !p.IsCover).ToList();
+                var sorted = current
+                    .OrderBy(p => p.SourcePath, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (current.SequenceEqual(sorted)) continue;
+
+                _projectService.SaveState(Project);
+
+                foreach (var p in current) book.Pages.Remove(p);
+                foreach (var p in sorted) book.Pages.Add(p);
+
+                UpdatePageDisplayIndices(book);
+                book.UpdatePageSlots();
+                changed = true;
+            }
+
+            if (changed)
+            {
+                OnPropertyChanged(nameof(Books));
+                OnPropertyChanged(nameof(BooksSummary));
             }
         }
 

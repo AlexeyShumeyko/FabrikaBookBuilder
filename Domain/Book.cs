@@ -97,10 +97,29 @@ namespace PhotoBookRenamer.Domain
             {
                 _allSlotsPages.Add(page);
             }
-            
+
+            // Publish the export name for every slot so the UI can show the numbering the
+            // batch uploader will see. Kept in sync here so no view has to reach back up to
+            // the owning Book to work out which book a Page belongs to.
+            RefreshExportFileNames();
+
             OnPropertyChanged(nameof(PageSlots));
             OnPropertyChanged(nameof(AllSlots));
             OnPropertyChanged(nameof(AllSlotsPages));
+        }
+
+        /// <summary>
+        /// Writes the export file name (KKK-FF.jpg) onto every slot of this book.
+        /// Must mirror <c>ExportService.GenerateFileName</c>; that method is the single
+        /// source of truth for what actually lands on disk.
+        /// </summary>
+        private void RefreshExportFileNames()
+        {
+            if (Cover != null)
+                Cover.ExportFileName = $"{BookIndex:D3}-{0:D2}.jpg";
+
+            foreach (var page in Pages.Where(p => !p.IsCover))
+                page.ExportFileName = $"{BookIndex:D3}-{page.Index:D2}.jpg";
         }
 
         public string? FolderPath
@@ -142,7 +161,15 @@ namespace PhotoBookRenamer.Domain
         public int BookIndex
         {
             get => _bookIndex;
-            set => SetProperty(ref _bookIndex, value);
+            set
+            {
+                if (SetProperty(ref _bookIndex, value))
+                {
+                    // The export file name is prefixed with the book index, so renumbering
+                    // a book has to refresh every slot's name.
+                    RefreshExportFileNames();
+                }
+            }
         }
 
         public ObservableCollection<Page> Pages { get; }

@@ -11,6 +11,7 @@ namespace PhotoBookRenamer.Domain
         private int _displayIndex;
         private bool _isLocked;
         private string? _fileName;
+        private string? _exportFileName;
 
         public string? SourcePath
         {
@@ -57,6 +58,19 @@ namespace PhotoBookRenamer.Domain
 
         public bool IsEmpty => string.IsNullOrEmpty(SourcePath);
 
+        /// <summary>
+        /// The file name this slot will be exported as, e.g. "001-02.jpg".
+        ///
+        /// Maintained by <see cref="Book.UpdatePageSlots"/> rather than computed in the
+        /// view, because a Page does not know which book owns it. The UI shows this so
+        /// the photographer can see the numbering the batch uploader will see.
+        /// </summary>
+        public string? ExportFileName
+        {
+            get => _exportFileName;
+            set => SetProperty(ref _exportFileName, value);
+        }
+
         public string? FileName
         {
             get
@@ -78,7 +92,8 @@ namespace PhotoBookRenamer.Domain
                 Index = Index,
                 DisplayIndex = DisplayIndex,
                 IsLocked = IsLocked,
-                FileName = FileName
+                FileName = FileName,
+                ExportFileName = ExportFileName
             };
         }
     }

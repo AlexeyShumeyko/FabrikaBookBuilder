@@ -11,7 +11,8 @@
 param(
     [string]$Tab = 'Мои проекты',
     [string]$Out = 'doc\shots\screen.png',
-    [int]$TimeoutSeconds = 30
+    [int]$TimeoutSeconds = 30,
+    [switch]$OpenProject
 )
 
 $ErrorActionPreference = 'Stop'
@@ -32,15 +33,21 @@ public class Win2 {
 }
 "@
 
-function Get-TabElement($rootEl, [string]$label) {
+function Get-ByName($rootEl, [string]$label, [string]$typeName) {
+    $ct = [System.Windows.Automation.ControlType]::$typeName
     $cond = New-Object System.Windows.Automation.PropertyCondition(
-        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-        [System.Windows.Automation.ControlType]::RadioButton)
-    $buttons = $rootEl.FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond)
-    foreach ($b in $buttons) {
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty, $ct)
+    foreach ($b in $rootEl.FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond)) {
         if ($b.Current.Name -like "*$label*") { return $b }
     }
     return $null
+}
+
+function Get-TabElement($rootEl, [string]$label) { Get-ByName $rootEl $label 'RadioButton' }
+
+function Invoke-Element($el) {
+    $p = $el.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
+    $p.Invoke()
 }
 
 try {
@@ -75,6 +82,20 @@ try {
         $sel = $tabEl.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
         $sel.Select()
         Start-Sleep -Seconds 2
+    }
+
+    # Optionally open the newest project so the editor screens show real data.
+    if ($OpenProject) {
+        $el = [System.Windows.Automation.AutomationElement]::FromHandle($proc.MainWindowHandle)
+        $openBtn = Get-ByName $el 'Открыть проект' 'Button'
+        if ($null -eq $openBtn) {
+            Write-Host 'FAIL: "Открыть проект" button not found'
+            Stop-Process -Id $proc.Id -Force
+            exit 1
+        }
+        Invoke-Element $openBtn
+        # Project loading is async (thumbnails, double BeginInvoke), so give it room.
+        Start-Sleep -Seconds 6
     }
 
     $r = New-Object Win2+RECT

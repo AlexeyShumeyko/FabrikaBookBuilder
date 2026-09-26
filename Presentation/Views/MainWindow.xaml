@@ -141,9 +141,13 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0"
                                 Visibility="{Binding ShowUndoRedo, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button Style="{StaticResource IconButton}" Command="{Binding ActiveEditor.UndoCommand}"
-                                AutomationProperties.Name="Отменить" ToolTip="Отменить (Ctrl+Z)" Content="&#xE7A7;" />
+                                AutomationProperties.Name="Отменить" ToolTip="Отменить (Ctrl+Z)">
+                            <TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="13" />
+                        </Button>
                         <Button Style="{StaticResource IconButton}" Command="{Binding ActiveEditor.RedoCommand}"
-                                AutomationProperties.Name="Вернуть" ToolTip="Вернуть (Ctrl+Y)" Content="&#xE72A;" Margin="4,0,0,0" />
+                                AutomationProperties.Name="Вернуть" ToolTip="Вернуть (Ctrl+Y)" Margin="4,0,0,0">
+                            <TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="13" />
+                        </Button>
                     </StackPanel>
 
                     <Button Style="{StaticResource SecondaryButton}" Click="OnChooseSourceClick"
