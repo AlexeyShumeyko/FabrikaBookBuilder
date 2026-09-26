@@ -150,14 +150,23 @@
                                                 <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
 
-                                            <Border Grid.Column="0" CornerRadius="999" Padding="10,4"
-                                                    Background="{Binding Status, Converter={StaticResource StatusToBrushConverter}}">
+                                            <!--
+                                                Status chip. The mockup's markup says
+                                                rounded-full, but the requested look is a
+                                                rounded rectangle, so this is rounded-md (6)
+                                                with the 1px border the mockup also has.
+                                                Colours come from StatusToBrushConverter by role.
+                                            -->
+                                            <Border Grid.Column="0" CornerRadius="6" Padding="10,4"
+                                                    BorderThickness="1"
+                                                    Background="{Binding Status, Converter={StaticResource StatusToBrushConverter}, ConverterParameter=bg}"
+                                                    BorderBrush="{Binding Status, Converter={StaticResource StatusToBrushConverter}, ConverterParameter=border}">
                                                 <StackPanel Orientation="Horizontal">
                                                     <Ellipse Width="6" Height="6" VerticalAlignment="Center"
                                                              Fill="{Binding Status, Converter={StaticResource StatusToLabelConverter}, ConverterParameter=dot}" />
                                                     <TextBlock Text="{Binding Status, Converter={StaticResource StatusToLabelConverter}}"
                                                                Style="{StaticResource TextXsSemibold}" Margin="6,0,0,0"
-                                                               Foreground="{StaticResource Slate700}" />
+                                                               Foreground="{Binding Status, Converter={StaticResource StatusToBrushConverter}, ConverterParameter=text}" />
                                                 </StackPanel>
                                             </Border>
 
@@ -167,9 +176,50 @@
                                                        Text="{Binding LastModified, Converter={StaticResource LastModifiedTextConverter}, ConverterParameter=prefix}" />
                                         </Grid>
 
-                                        <!-- Title text-base bold, mt-3 -->
+                                        <!-- Title text-base bold, then the preview strip (mt-4) -->
                                         <TextBlock Text="{Binding Name}" Style="{StaticResource TextBaseBold}"
                                                    Margin="0,12,0,0" TextTrimming="CharacterEllipsis" />
+
+                                        <!--
+                                            Preview Photos Mini Strip. Three 48x48 tiles
+                                            (w-12 h-12 rounded-lg, 1px slate-200 border) plus a
+                                            "+N" tile for the remainder. Hidden entirely for a
+                                            project with no photos.
+                                        -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,16,0,0"
+                                                    Visibility="{Binding HasPreviewPhotos, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <ItemsControl ItemsSource="{Binding PreviewPhotos}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Width="48" Height="48" CornerRadius="8"
+                                                                Margin="0,0,8,0" ClipToBounds="True"
+                                                                BorderBrush="{StaticResource Slate200}"
+                                                                BorderThickness="1"
+                                                                Background="{StaticResource Slate100}"
+                                                                ToolTip="{Binding}">
+                                                            <Image Source="{Binding Converter={StaticResource FilePathToThumbnailConverter}, ConverterParameter=96}"
+                                                                   Stretch="UniformToFill" />
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <!-- +N: only when photos are actually left over -->
+                                            <Border Width="48" Height="48" CornerRadius="8"
+                                                    BorderBrush="{StaticResource Slate200}" BorderThickness="1"
+                                                    Background="{StaticResource Slate100}"
+                                                    Visibility="{Binding RemainingPhotoCount, Converter={StaticResource CountToBoolConverter}}">
+                                                <TextBlock Text="{Binding RemainingPhotoCount, StringFormat='+{0}'}"
+                                                           Style="{StaticResource TextXsSemibold}"
+                                                           Foreground="{StaticResource Slate500}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </StackPanel>
 
                                         <!-- Stats: mt-4 pt-3 (16/12), border-t spans the full card -->
                                         <Border Height="1" Background="{StaticResource Slate100}" Margin="0,16,0,0" />
@@ -179,21 +229,38 @@
                                                 <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
 
+                                            <!--
+                                                Stats. The mockup bolds only the number
+                                                ("Книг: <strong>28 шт.</strong>"), so the label
+                                                and the value are separate Runs.
+                                                fa-book is E82D - a book. E8D7 was used before
+                                                and is a KEY.
+                                            -->
                                             <StackPanel Grid.Column="0" Orientation="Horizontal"
                                                         VerticalAlignment="Center">
-                                                <TextBlock Text="&#xE8D7;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                                <TextBlock Text="&#xE82D;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                                            Foreground="{StaticResource Slate400}" VerticalAlignment="Center" />
-                                                <TextBlock Text="{Binding BookCount, StringFormat='Книг: {0} шт.'}"
-                                                           Style="{StaticResource TextXs}" Foreground="{StaticResource Slate600}"
-                                                           Margin="6,0,0,0" VerticalAlignment="Center" />
+                                                <TextBlock Style="{StaticResource TextXs}"
+                                                           Foreground="{StaticResource Slate600}"
+                                                           Margin="6,0,0,0" VerticalAlignment="Center">
+                                                    <Run Text="Книг: " />
+                                                    <Run Text="{Binding BookCount, Mode=OneWay}" FontWeight="Bold"
+                                                         Foreground="{StaticResource Slate800}" />
+                                                    <Run Text=" шт." />
+                                                </TextBlock>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                         VerticalAlignment="Center">
                                                 <TextBlock Text="&#xE8B9;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                                            Foreground="{StaticResource Slate400}" VerticalAlignment="Center" />
-                                                <TextBlock Text="{Binding PageCount, StringFormat='Разворотов: {0} стр.'}"
-                                                           Style="{StaticResource TextXs}" Foreground="{StaticResource Slate600}"
-                                                           Margin="6,0,0,0" VerticalAlignment="Center" />
+                                                <TextBlock Style="{StaticResource TextXs}"
+                                                           Foreground="{StaticResource Slate600}"
+                                                           Margin="6,0,0,0" VerticalAlignment="Center">
+                                                    <Run Text="Разворотов: " />
+                                                    <Run Text="{Binding PageCount, Mode=OneWay}" FontWeight="Bold"
+                                                         Foreground="{StaticResource Slate800}" />
+                                                    <Run Text=" стр." />
+                                                </TextBlock>
                                             </StackPanel>
                                         </Grid>
 

@@ -137,6 +137,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     // Загружаем проект из файла и пересчитываем PageCount
                     int actualPageCount = project.PageCount;
                     int actualBookCount = project.BookCount;
+                    Project? previewSource = null;
                     
                     if (!string.IsNullOrEmpty(project.FilePath) && File.Exists(project.FilePath))
                     {
@@ -149,6 +150,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                                 // Во всех книгах должно быть одинаковое количество разворотов
                                 actualPageCount = loadedProject.Books.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
                                 actualBookCount = loadedProject.Books.Count;
+
+                                // The mockup's project card leads with a strip of three
+                                // 48x48 photos plus a "+N" tile. The project is already
+                                // fully loaded here, so the paths are simply read off it
+                                // rather than re-opened per card.
+                                previewSource = loadedProject;
                                 
                                 // Обновляем PageCount в сохранённом ProjectInfo, если он изменился
                                 if (actualPageCount != project.PageCount || actualBookCount != project.BookCount)
@@ -182,6 +189,14 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         CreatedDate = project.CreatedDate,
                         LastModified = project.LastModified
                     };
+
+                    // Preview strip: 3 photos + "+N". Filled before the card is added to
+                    // Projects so the template's first layout pass already has the data.
+                    if (previewSource != null)
+                    {
+                        FillPreviewPhotos(previewSource, projectCopy);
+                    }
+
                     Projects.Add(projectCopy);
                 }
             }
@@ -193,6 +208,54 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        /// <summary>
+        /// How many photos the card shows as thumbnails. The mockup uses three, then
+        /// puts the remainder in a "+N" tile.
+        /// </summary>
+        private const int PreviewPhotoLimit = 3;
+
+        /// <summary>
+        /// Fills a project card's preview strip from an already-loaded project.
+        ///
+        /// Covers come first, then spreads, book by book, because that is the order the
+        /// photos appear in the finished book. Only paths that still exist on disk are
+        /// taken: a project can outlive a moved or deleted photo, and a broken image in
+        /// the strip would be worse than one tile fewer.
+        /// </summary>
+        private static void FillPreviewPhotos(Project project, ProjectInfo target)
+        {
+            if (project?.Books == null) return;
+
+            int total = 0;
+
+            foreach (var book in project.Books)
+            {
+                if (book == null) continue;
+
+                // The cover is a separate object from Pages, and it is the first thing
+                // the reader sees, so it leads the strip.
+                if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
+                {
+                    total++;
+                    if (target.PreviewPhotos.Count < PreviewPhotoLimit && File.Exists(book.Cover.SourcePath))
+                        target.PreviewPhotos.Add(book.Cover.SourcePath);
+                }
+
+                if (book.Pages == null) continue;
+
+                foreach (var page in book.Pages)
+                {
+                    if (page == null || string.IsNullOrEmpty(page.SourcePath)) continue;
+
+                    total++;
+                    if (target.PreviewPhotos.Count < PreviewPhotoLimit && File.Exists(page.SourcePath))
+                        target.PreviewPhotos.Add(page.SourcePath);
+                }
+            }
+
+            target.TotalPhotoCount = total;
         }
 
         private void CreateProject()

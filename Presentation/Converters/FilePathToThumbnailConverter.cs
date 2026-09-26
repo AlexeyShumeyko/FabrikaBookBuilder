@@ -55,11 +55,18 @@ namespace PhotoBookRenamer.Presentation.Converters
                 {
                     try
                     {
+                        // DecodePixelWidth/Height задают размер декодирования: полноразмерный
+                        // JPEG на 48x48 превью — это лишняя память на каждую плитку.
+                        // ConverterParameter задаёт сторону в пикселях (по умолчанию 200).
+                        int decode = 200;
+                        if (parameter is string spec && int.TryParse(spec, out int requested) && requested > 0)
+                            decode = requested;
+
                         var bitmap = new System.Windows.Media.Imaging.BitmapImage();
                         bitmap.BeginInit();
                         bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                        bitmap.DecodePixelWidth = 200; // Ограничиваем размер для производительности
-                        bitmap.DecodePixelHeight = 200;
+                        bitmap.DecodePixelWidth = decode;
+                        bitmap.DecodePixelHeight = decode;
                         bitmap.UriSource = new Uri(filePath, UriKind.Absolute);
                         bitmap.EndInit();
                         bitmap.Freeze();
