@@ -324,10 +324,19 @@
                                             </StackPanel>
                                         </Grid>
 
+                                    <!--
+                                        UniformGrid Columns="4" forced one cell width on
+                                        every book, which is exactly what a frame that
+                                        follows the format could not survive: a 1.9
+                                        format needs a wider card and a 0.68 post-print
+                                        a narrower one. Cards now carry their own
+                                        width, so they flow and wrap. Inside a book all
+                                        widths are equal, so the rows still line up.
+                                    -->
                                     <ItemsControl ItemsSource="{Binding AllSlotsPages}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
-                                                <UniformGrid Columns="4" />
+                                                <WrapPanel />
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
@@ -365,23 +374,26 @@
                                                         </Grid.RowDefinitions>
 
                                                         <!--
-                                                            Photo frame. Its height comes from
-                                                            the book's own format
-                                                            (Page.FrameAspect, the median of the
-                                                            photos in that folder) - a 16/10 box
-                                                            cut a post-print in half. The
-                                                            ConverterParameter is only the
-                                                            fallback for pages with no known
-                                                            size.
+                                                            Photo frame. The HEIGHT is the
+                                                            mockup's compact value and stays
+                                                            fixed; the width follows the
+                                                            book's own format
+                                                            (Page.FrameAspect = median of
+                                                            its photos), so every row is the
+                                                            same height and a 21x30 book does
+                                                            not get a portrait box. 190 here
+                                                            and in the converter parameter
+                                                            below are the same number on
+                                                            purpose - change both together.
                                                         -->
                                                         <Grid Grid.Row="0" x:Name="FrameHost"
+                                                              Height="190"
                                                               Background="{StaticResource Slate100}">
-                                                            <Grid.Height>
-                                                                <MultiBinding Converter="{StaticResource AspectHeightConverter}">
-                                                                    <Binding Path="ActualWidth" ElementName="FrameHost" />
+                                                            <Grid.Width>
+                                                                <MultiBinding Converter="{StaticResource FrameWidthConverter}" ConverterParameter="190,150,480">
                                                                     <Binding />
                                                                 </MultiBinding>
-                                                            </Grid.Height>
+                                                            </Grid.Width>
 
                                                             <Image Source="{Binding Converter={StaticResource PageSourceConverter}}"
                                                                    Stretch="UniformToFill" Tag="{Binding}"

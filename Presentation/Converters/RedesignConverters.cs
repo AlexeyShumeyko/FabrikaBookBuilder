@@ -496,24 +496,10 @@ namespace PhotoBookRenamer.Presentation.Converters
             double width = values != null && values.Length > 0 ? ToDouble(values[0]) : 0d;
             if (width <= 0d) return double.NaN;   // fall back to whatever the layout gives
 
-            (double w, double h) = ResolveRatio(values, parameter);
+            (double w, double h) = ParseRatio(parameter as string);
             if (w <= 0d) return double.NaN;
 
             return Math.Round(width * h / w, 2);
-        }
-
-        /// <summary>
-        /// A Page in the second slot carries the frame ratio its book decided
-        /// (<see cref="Page.FrameAspect"/>), which is how a card ends up shaped like its
-        /// own print format. Everything else - and any page without a known ratio, such
-        /// as the combined editor - falls back to the ConverterParameter.
-        /// </summary>
-        private static (double, double) ResolveRatio(object?[]? values, object? parameter)
-        {
-            if (values != null && values.Length > 1 && values[1] is Page page && page.FrameAspect > 0d)
-                return (1d, page.FrameAspect);
-
-            return ParseRatio(parameter as string);
         }
 
         /// <summary>Reads "16,10" (or "16/10") into a width:height pair; defaults to 16:10.</summary>
@@ -539,6 +525,61 @@ namespace PhotoBookRenamer.Presentation.Converters
             float f => f,
             _ => 0d
         };
+
+        public object?[] ConvertBack(object? value, Type[] targetTypes, object? parameter, CultureInfo culture)
+            => Array.Empty<object?>();
+    }
+
+    /// <summary>
+    /// Card width for a photo frame whose HEIGHT is fixed.
+    ///
+    /// The shape of a card is the one thing a photographer cannot work with, so the height
+    /// stays at the mockup's value and the width follows the book's own format
+    /// (<see cref="Page.FrameAspect"/>, the median of its photos). That keeps the cards
+    /// compact and every row the same height, while a 0.68 post-print still gets a frame
+    /// of its own shape instead of being cut in half by a 16:10 box.
+    ///
+    /// Usage: bind a frame's Width to a MultiBinding of its own DataContext with
+    /// ConverterParameter="height,minWidth,maxWidth".
+    /// </summary>
+    public class FrameWidthConverter : IMultiValueConverter
+    {
+        public object Convert(object?[]? values, Type targetType, object? parameter, CultureInfo culture)
+        {
+            (double height, double min, double max) = ParseSpec(parameter as string);
+
+            double aspect = values != null && values.Length > 0 && values[0] is Page page && page.FrameAspect > 0d
+                ? page.FrameAspect
+                : 1.6;   // the mockup's 16/10
+
+            double width = height * aspect;
+            width = Math.Clamp(width, min, max);
+
+            return Math.Round(width, 1);
+        }
+
+        /// <summary>Reads "190,150,480"; falls back to 190 tall, 150..480 wide.</summary>
+        private static (double, double, double) ParseSpec(string? spec)
+        {
+            double height = 190, min = 150, max = 480;
+
+            if (string.IsNullOrWhiteSpace(spec)) return (height, min, max);
+
+            var parts = spec.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0) return (height, min, max);
+
+            if (double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double h))
+                height = h;
+            if (parts.Length > 1 && double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double lo))
+                min = lo;
+            if (parts.Length > 2 && double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out double hi))
+                max = hi;
+
+            if (min <= 0) min = 1;
+            if (max < min) max = min;
+
+            return (height, min, max);
+        }
 
         public object?[] ConvertBack(object? value, Type[] targetTypes, object? parameter, CultureInfo culture)
             => Array.Empty<object?>();
