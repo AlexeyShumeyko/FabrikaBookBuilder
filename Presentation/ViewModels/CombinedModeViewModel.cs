@@ -435,24 +435,32 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// format.
         /// </summary>
         /// <summary>
-        /// Counts how many slots hold each photo and pushes the counts into the list.
-        /// "Общий" is therefore a fact about the run, not a flag anyone has to maintain:
-        /// applying a photo to the same position of every book is all it takes.
+        /// Works out what is "общий" - run-wide - and pushes it into both the slot labels
+        /// and the file list. It is a fact about the run, not a flag anyone has to
+        /// maintain: applying a photo to the same position of every book is all it takes.
         ///
-        /// Two counts, because the file list and the slot mean different things by shared:
-        /// the list counts SLOTS (a photo used twice anywhere is not free any more), while
-        /// a slot is "shared" only when another BOOK holds the same photo. The same file
-        /// twice inside one book is a duplicate, not a run-wide spread.
+        /// THE RULE, and the reason it is stated this precisely: a photo is run-wide at a
+        /// position only if EVERY other book has that same photo AT THAT SAME POSITION.
+        /// Counting "this file appears somewhere in two books" is not the same thing, and
+        /// the owner reported the difference as a bug: a photograph pasted into spread 4 of
+        /// one book, when another book happened to use it at spread 2, was labelled
+        /// "Разворот 4 (общий)" and lost its "Во все книги" action. Sharing is what that
+        /// button does; nothing else is.
+        ///
+        /// The same reasoning makes the file list's "Общий" mean the same thing: the file
+        /// is the run-wide photo for at least one position. Assigned = it is in at least one
+        /// book, free = in none. Five repeats inside one book stay "Назначен" - they are
+        /// five spreads the photographer means to keep separate.
         /// </summary>
         private void RefreshPhotoUsage()
         {
-            var slotCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             var bookCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            // Position -> the photo every book agrees on there. Key 0 is the cover.
+            var runWide = new Dictionary<int, string>();
 
             foreach (var book in Books)
             {
-                // Counted per book, so one photo used in three books adds 3 to both
-                // dictionaries no matter how many slots of that book hold it.
                 var inThisBook = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 if (book.Cover != null && !book.Cover.IsEmpty && !string.IsNullOrEmpty(book.Cover.SourcePath))
@@ -462,14 +470,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     if (page == null || page.IsEmpty || string.IsNullOrEmpty(page.SourcePath)) continue;
                     inThisBook.Add(page.SourcePath);
-                    slotCounts.TryGetValue(page.SourcePath, out int n);
-                    slotCounts[page.SourcePath] = n + 1;
-                }
-
-                if (book.Cover != null && !book.Cover.IsEmpty && !string.IsNullOrEmpty(book.Cover.SourcePath))
-                {
-                    slotCounts.TryGetValue(book.Cover.SourcePath, out int c);
-                    slotCounts[book.Cover.SourcePath] = c + 1;
                 }
 
                 foreach (var path in inThisBook)
@@ -479,32 +479,78 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
             }
 
+            // A position qualifies only when every book - the first one included - holds
+            // the same non-empty file there. A single empty slot makes the whole position
+            // per-book, which is the honest answer: it is not spread across the run.
+            foreach (var position in AllSlotPositions())
+            {
+                string? agreed = null;
+                bool complete = true;
+
+                foreach (var book in Books)
+                {
+                    var path = PathAt(book, position);
+                    if (string.IsNullOrEmpty(path)) { complete = false; break; }
+
+                    if (agreed == null) agreed = path;
+                    else if (!string.Equals(agreed, path, StringComparison.OrdinalIgnoreCase))
+                    {
+                        complete = false;
+                        break;
+                    }
+                }
+
+                if (complete && agreed != null && Books.Count >= 2)
+                    runWide[position] = agreed;
+            }
+
             foreach (var file in PhotoFiles)
             {
-                // Counted by BOOK, not by slot. The same photograph dropped into five spreads
-                // of ONE book is five separate spreads the photographer means to keep
-                // separate - the owner calls that out explicitly - so it must not read as
-                // "shared", and the slot's "Во все книги" has to stay available. Sharing is
-                // something the photographer does with one button, not something two drops
-                // into the same book achieve by accident.
-                file.SetUsage(bookCounts.TryGetValue(file.Path, out int n) ? n : 0);
+                // "Общий" = the file is the run-wide photo somewhere, NOT merely that two
+                // books use it somewhere. A photo used at different positions in different
+                // books is the photographer's own repetition, and calling it shared would
+                // hide the one button that makes it shared.
+                bool shared = runWide.Values.Any(p => string.Equals(p, file.Path, StringComparison.OrdinalIgnoreCase));
+                file.SetUsage(bookCounts.TryGetValue(file.Path, out int n) ? n : 0, shared);
             }
 
             foreach (var book in Books)
             {
                 if (book.Cover != null)
-                    book.Cover.IsShared = IsShared(book.Cover);
+                    book.Cover.IsShared = IsRunWide(book.Cover);
 
                 foreach (var page in book.Pages)
                 {
-                    if (page != null) page.IsShared = IsShared(page);
+                    if (page != null) page.IsShared = IsRunWide(page);
                 }
             }
 
-            bool IsShared(Domain.Page page) =>
-                !string.IsNullOrEmpty(page.SourcePath) &&
-                bookCounts.TryGetValue(page.SourcePath, out int books) && books >= 2;
+            bool IsRunWide(Domain.Page page)
+            {
+                if (string.IsNullOrEmpty(page.SourcePath)) return false;
+                return runWide.TryGetValue(page.Index, out string? path) &&
+                       string.Equals(path, page.SourcePath, StringComparison.OrdinalIgnoreCase);
+            }
         }
+
+        /// <summary>Every slot position of the run: 0 is the cover, then 1..N spreads.</summary>
+        private IEnumerable<int> AllSlotPositions()
+        {
+            int max = 0;
+            foreach (var book in Books)
+            {
+                if (book.Cover != null) max = Math.Max(max, 0);
+                foreach (var page in book.Pages)
+                    if (page != null && !page.IsCover) max = Math.Max(max, page.Index);
+            }
+
+            for (int i = 0; i <= max; i++) yield return i;
+        }
+
+        private static string? PathAt(Book book, int position)
+            => position == 0
+                ? (book.Cover is { IsEmpty: false } c ? c.SourcePath : null)
+                : book.Pages.FirstOrDefault(p => p is { IsCover: false } && p.Index == position)?.SourcePath;
 
         public bool CanExport => Project?.IsValid ?? false;
 

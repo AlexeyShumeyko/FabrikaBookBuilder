@@ -247,19 +247,30 @@
                     </StackPanel>
 
                     <!--
-                      ONE way in, not two. The button and the drop zone were the same
-                      action twice: the zone is clickable AND droppable, so the button only
-                      made the panel taller and gave the eye a second target.
+                      ONE way in, not two: the zone is clickable AND droppable, so a
+                      separate button was the same action twice.
+
+                      ONE outline, and it is the zone's own shape: the dashed line sits on
+                      the rounded corner (radius 13 inside a 14 corner) instead of floating
+                      in the middle of a square grey box, and the content has 20px of air
+                      around it. The first pass had a solid border AND an inset dashed
+                      rectangle AND the text almost touching the dashes - three frames for
+                      one control, which is what the owner called ugly.
                     -->
-                    <Border x:Name="DropZone" Grid.Row="1" Margin="0,12,0,0" Cursor="Hand"
+                    <Border x:Name="DropZone" Grid.Row="1" Margin="0,14,0,0" Cursor="Hand"
                             Background="{StaticResource Slate50}"
+                            CornerRadius="14"
                             AllowDrop="True" Drop="OnUploadAreaDrop"
                             MouseLeftButtonDown="OnUploadAreaClick"
                             AutomationProperties.Name="Загрузить фото">
-                        <Grid Margin="16">
-                            <Rectangle>
+                        <Grid Margin="2">
+                            <Rectangle RadiusX="13" RadiusY="13" StrokeThickness="1.5"
+                                       StrokeDashArray="5,4">
                                 <Rectangle.Style>
-                                    <Style TargetType="Rectangle" BasedOn="{StaticResource DashedFrameInset}">
+                                    <Style TargetType="Rectangle">
+                                        <Setter Property="Stroke" Value="{StaticResource Slate300}" />
+                                        <Setter Property="Fill" Value="Transparent" />
+                                        <Setter Property="IsHitTestVisible" Value="False" />
                                         <Style.Triggers>
                                             <DataTrigger Value="True"
                                                          Binding="{Binding IsMouseOver, ElementName=DropZone}">
@@ -269,16 +280,17 @@
                                     </Style>
                                 </Rectangle.Style>
                             </Rectangle>
-                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                <TextBlock Text="&#xE898;" FontFamily="{StaticResource IconFont}" FontSize="24"
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                        Margin="18,22">
+                                <TextBlock Text="&#xE898;" FontFamily="{StaticResource IconFont}" FontSize="26"
                                            Foreground="{StaticResource Brand500}" HorizontalAlignment="Center" />
                                 <TextBlock Text="Перетащите снимки сюда" Style="{StaticResource TextXsSemibold}"
                                            Foreground="{StaticResource Slate700}"
-                                           HorizontalAlignment="Center" Margin="0,6,0,0" />
+                                           HorizontalAlignment="Center" Margin="0,9,0,0" />
                                 <TextBlock Text="или нажмите, чтобы выбрать · JPG, PNG до 50MB"
                                            Style="{StaticResource TextMicro}"
                                            Foreground="{StaticResource Slate400}"
-                                           HorizontalAlignment="Center" Margin="0,2,0,0" />
+                                           HorizontalAlignment="Center" Margin="0,3,0,0" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -311,26 +323,14 @@
                                         <Border Margin="0,0,0,2"
                                                 PreviewMouseLeftButtonDown="OnFileItemMouseDown"
                                                 ToolTip="{Binding Path}">
-                                            <!-- The row is tinted by the state, not just the
-                                                 badge: scanning the list for what is still free
-                                                 has to work without reading a word. Assigned
-                                                 = the calm green of "already placed", shared =
-                                                 the brand colour, the one state that means
-                                                 the same picture goes into several books. -->
+                                            <!-- No tint on the row. The owner asked for the state to be
+                                                 read off the STATUS, and a coloured frame around it,
+                                                 not a wash over the whole 320px row: a wash is
+                                                 invisible at a glance, a frame is not. The row keeps
+                                                 the plain hover of the FileRow style. -->
                                             <Border.Style>
                                                 <Style TargetType="Border" BasedOn="{StaticResource FileRow}">
                                                     <Setter Property="Background" Value="Transparent" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Usage}" Value="Assigned">
-                                                            <Setter Property="Background" Value="#F2FBF7" />
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Usage}" Value="Shared">
-                                                            <Setter Property="Background" Value="#F4F4FE" />
-                                                        </DataTrigger>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="{StaticResource Slate50}" />
-                                                        </Trigger>
-                                                    </Style.Triggers>
                                                 </Style>
                                             </Border.Style>
                                             <Grid>
@@ -355,10 +355,14 @@
                                                                Foreground="{StaticResource Slate400}" />
                                                 </StackPanel>
 
-                                                <!-- Free / assigned / shared -->
+                                                <!-- Free / assigned / shared: a bright frame in the
+                                                     state's own colour, so the state is readable
+                                                     while scrolling, not only on close inspection. -->
                                                 <Border Grid.Column="1" HorizontalAlignment="Right"
-                                                        VerticalAlignment="Center" CornerRadius="6" Padding="6,2"
-                                                        Background="{Binding Usage, Converter={StaticResource PhotoUsageToBrushConverter}}">
+                                                        VerticalAlignment="Center" CornerRadius="7" Padding="7,3"
+                                                        BorderThickness="1.5"
+                                                        Background="{Binding Usage, Converter={StaticResource PhotoUsageToBrushConverter}}"
+                                                        BorderBrush="{Binding Usage, Converter={StaticResource PhotoUsageToBrushConverter}, ConverterParameter=border}">
                                                     <TextBlock Text="{Binding UsageText}" FontSize="10" FontWeight="Bold"
                                                                Foreground="{Binding Usage, Converter={StaticResource PhotoUsageToBrushConverter}, ConverterParameter=text}" />
                                                 </Border>
@@ -506,16 +510,22 @@
                                                                     "width,150" - the trailing number is the design
                                                                     height for this mode. The combined mode shares the
                                                                     window with the 320px file list, so its cards are
-                                                                    designed 150 tall instead of the mockup's 190: a wide
-                                                                    book format otherwise fit three per row and left a hole
-                                                                    on the right that the single allowed shrink could not
-                                                                    close. The unique-folder mode keeps 190 and is
-                                                                    unaffected.
+                                                                    designed 150 tall instead of the mockup's 190. The
+                                                                    unique-folder mode keeps 190 and is unaffected.
+
+                                                                    The width is the SLOTS' own ItemsControl - the row
+                                                                    area itself - rather than the ScrollViewer with a
+                                                                    reserve taken off it. Two reasons: a hand-picked
+                                                                    reserve was out by 10px, and 10px is a whole card
+                                                                    (the rule sized the cards for three per row, the row
+                                                                    then fitted two, and a fifth of the width sat empty);
+                                                                    and this ItemsControl's width comes down from the
+                                                                    viewport through a vertical stack, so the cards
+                                                                    cannot influence it and the two cannot argue.
                                                                 -->
                                                                 <Grid.Width>
                                                                     <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="width,150">
-                                                                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ScrollViewer}"
-                                                                                Converter="{StaticResource ReserveWidthConverter}" ConverterParameter="18,40" />
+                                                                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
                                                                         <Binding />
                                                                     </MultiBinding>
                                                                 </Grid.Width>
@@ -532,15 +542,13 @@
                                                                 <Grid Grid.Row="0" Background="{StaticResource Slate100}">
                                                                     <Grid.Width>
                                                                         <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="width,150">
-                                                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ScrollViewer}"
-                                                                                Converter="{StaticResource ReserveWidthConverter}" ConverterParameter="18,40" />
+                                                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
                                                                             <Binding />
                                                                         </MultiBinding>
                                                                     </Grid.Width>
                                                                     <Grid.Height>
                                                                         <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="height,150">
-                                                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ScrollViewer}"
-                                                                                Converter="{StaticResource ReserveWidthConverter}" ConverterParameter="18,40" />
+                                                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
                                                                             <Binding />
                                                                         </MultiBinding>
                                                                     </Grid.Height>
@@ -637,27 +645,46 @@
                                                                             <ColumnDefinition Width="Auto" />
                                                                         </Grid.ColumnDefinitions>
 
-                                                                        <!-- "Обложка" / "Разворот 2 (Сквозной)" / "Пустой слот" -->
-                                                                        <TextBlock Grid.Column="0" VerticalAlignment="Center"
-                                                                                   Text="{Binding SlotLabel}"
-                                                                                   TextTrimming="CharacterEllipsis"
-                                                                                   ToolTip="{Binding SourcePath}">
-                                                                            <TextBlock.Style>
-                                                                                <Style TargetType="TextBlock" BasedOn="{StaticResource TextTiny}">
-                                                                                    <Setter Property="Foreground" Value="{StaticResource Slate500}" />
-                                                                                    <Style.Triggers>
-                                                                                        <DataTrigger Binding="{Binding IsSlotLabelAccent}" Value="True">
-                                                                                            <Setter Property="Foreground" Value="{StaticResource Brand600}" />
-                                                                                            <Setter Property="FontWeight" Value="Bold" />
-                                                                                        </DataTrigger>
-                                                                                    </Style.Triggers>
-                                                                                </Style>
-                                                                            </TextBlock.Style>
-                                                                        </TextBlock>
+                                                                        <!--
+                                                                          The label and the "Во все книги" word share ONE
+                                                                          cell and replace each other. Side by side they
+                                                                          needed ~150px of footer, which is why the card
+                                                                          could not shrink below 180 - and a card that
+                                                                          cannot shrink leaves a hole in the row. On
+                                                                          hover the action takes the label's place, the
+                                                                          way the folders mode has always done it, and
+                                                                          130px holds both.
+                                                                        -->
+                                                                        <Grid Grid.Column="0" Margin="0,0,6,0">
+                                                                            <!-- "Обложка" / "Разворот 2 (общий)" / "Пустой слот" -->
+                                                                            <TextBlock Text="{Binding SlotLabel}"
+                                                                                       VerticalAlignment="Center"
+                                                                                       TextTrimming="CharacterEllipsis"
+                                                                                       ToolTip="{Binding SourcePath}">
+                                                                                <TextBlock.Style>
+                                                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource TextTiny}">
+                                                                                        <Setter Property="Foreground" Value="{StaticResource Slate500}" />
+                                                                                        <Style.Triggers>
+                                                                                            <DataTrigger Binding="{Binding IsSlotLabelAccent}" Value="True">
+                                                                                                <Setter Property="Foreground" Value="{StaticResource Brand600}" />
+                                                                                                <Setter Property="FontWeight" Value="Bold" />
+                                                                                            </DataTrigger>
+                                                                                            <!-- Yields to the hover word, and ONLY while that word is
+                                                                                                 actually there. Collapsing on "not shared" alone left
+                                                                                                 the footer of every unshared slot empty at rest. -->
+                                                                                            <MultiDataTrigger>
+                                                                                                <MultiDataTrigger.Conditions>
+                                                                                                    <Condition Binding="{Binding IsMouseOver, ElementName=SlotCard}" Value="True" />
+                                                                                                    <Condition Binding="{Binding SourcePath, Converter={StaticResource HasValueConverter}}" Value="True" />
+                                                                                                    <Condition Binding="{Binding IsShared}" Value="False" />
+                                                                                                </MultiDataTrigger.Conditions>
+                                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                                            </MultiDataTrigger>
+                                                                                        </Style.Triggers>
+                                                                                    </Style>
+                                                                                </TextBlock.Style>
+                                                                            </TextBlock>
 
-                                                                        <!-- Apply to every book (a word, on hover) and
-                                                                             clear the slot (always visible) -->
-                                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                                                             <!--
                                                                               A word, not an icon: applying a
                                                                               photo to the whole run is the one
@@ -672,7 +699,9 @@
                                                                                        ToolTip="Поставить это фото в ту же позицию всех книг"
                                                                                        Tag="{Binding}" MouseLeftButtonDown="OnDuplicateToAllClick">
                                                                                 <TextBlock.Style>
-                                                                                    <Style TargetType="TextBlock">
+                                                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource TextTiny}">
+                                                                                        <Setter Property="Foreground" Value="{StaticResource Brand600}" />
+                                                                                        <Setter Property="FontWeight" Value="Bold" />
                                                                                         <Setter Property="Visibility" Value="Collapsed" />
                                                                                         <Style.Triggers>
                                                                                             <!-- MultiDataTrigger, NOT MultiTrigger: a
@@ -685,7 +714,8 @@
                                                                                                     <Condition Binding="{Binding IsMouseOver, ElementName=SlotCard}" Value="True" />
                                                                                                     <Condition Binding="{Binding SourcePath, Converter={StaticResource HasValueConverter}}" Value="True" />
                                                                                                     <!-- Already run-wide: there is nothing left to
-                                                                                                         apply, so the action is hidden. -->
+                                                                                                         apply, so the action is hidden - and the
+                                                                                                         label stays. -->
                                                                                                     <Condition Binding="{Binding IsShared}" Value="False" />
                                                                                                 </MultiDataTrigger.Conditions>
                                                                                                 <Setter Property="Visibility" Value="Visible" />
@@ -694,16 +724,18 @@
                                                                                     </Style>
                                                                                 </TextBlock.Style>
                                                                             </TextBlock>
+                                                                        </Grid>
 
-                                                                            <Button Style="{StaticResource SlotAction}" Tag="{Binding}"
-                                                                                    Click="OnDeletePageClick"
-                                                                                    AutomationProperties.Name="Очистить слот"
-                                                                                    ToolTip="Убрать фото из слота"
-                                                                                    Visibility="{Binding SourcePath, Converter={StaticResource HasValueConverter}}">
-                                                                                <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" FontSize="12"
-                                                                                           Foreground="{StaticResource Red500}" />
-                                                                            </Button>
-                                                                        </StackPanel>
+                                                                        <!-- Clear the slot: always visible -->
+                                                                        <Button Grid.Column="1" Style="{StaticResource SlotAction}"
+                                                                                Tag="{Binding}"
+                                                                                Click="OnDeletePageClick"
+                                                                                AutomationProperties.Name="Очистить слот"
+                                                                                ToolTip="Убрать фото из слота"
+                                                                                Visibility="{Binding SourcePath, Converter={StaticResource HasValueConverter}}">
+                                                                            <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                                                                       Foreground="{StaticResource Red500}" />
+                                                                        </Button>
                                                                     </Grid>
                                                                 </Border>
                                                             </Grid>

@@ -176,5 +176,10 @@ try {
 }
 finally {
     if ($proc) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
+    # The fixture goes with the test. Leaving it behind put a "TR-test" card in the owner's
+    # real project list, which is exactly the kind of litter this project must not leave.
+    if ($fixtureId) {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'make-combined-fixture.ps1') -RemoveId $fixtureId | Out-Null
+    }
     Pop-Location
 }

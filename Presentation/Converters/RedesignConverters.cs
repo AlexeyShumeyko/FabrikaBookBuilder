@@ -531,86 +531,43 @@ namespace PhotoBookRenamer.Presentation.Converters
     }
 
     /// <summary>
-    /// Badge colours for a photo's state in the file list.
+    /// Colours for a photo's state badge in the file list.
     ///
-    /// Usage: ConverterParameter="background" or "text". Free is grey because it needs no
-    /// attention, assigned is the calm green of "done", and shared is the brand colour -
-    /// the one state the photographer has to notice, since the same picture is going into
-    /// several books.
+    /// Usage: ConverterParameter="background", "border" or "text". Free is grey because it
+    /// needs no attention, assigned is the green of "done", and shared is the brand colour
+    /// - the one state the photographer has to notice, since the same picture is going into
+    /// every book.
+    ///
+    /// The border is the loud one on purpose: the owner asked for a bright coloured frame
+    /// around the STATUS, not a tint over the whole row. A tint on a 320px-wide row is
+    /// almost invisible at a glance; a 1.5px frame of the state colour is read instantly
+    /// while scanning for what is still free.
     /// </summary>
     public class PhotoUsageToBrushConverter : IValueConverter
     {
         public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             var usage = value is PhotoFileInfo file ? file.Usage : PhotoUsage.Free;
-            bool text = string.Equals(parameter as string, "text", StringComparison.OrdinalIgnoreCase);
+            var role = (parameter as string)?.ToLowerInvariant() ?? "background";
 
-            return usage switch
+            return (usage, role) switch
             {
-                PhotoUsage.Assigned => text
-                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x05, 0x6F, 0x5B))
-                    : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xEC, 0xFD, 0xF5)),
-                PhotoUsage.Shared => text
-                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x4F, 0x46, 0xE5))
-                    : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xEE, 0xF2, 0xFF)),
-                _ => text
-                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x64, 0x74, 0x8B))
-                    : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xF1, 0xF5, 0xF9))
+                (PhotoUsage.Assigned, "border") => Brush(0x10, 0xB9, 0x81),   // emerald-500
+                (PhotoUsage.Assigned, "text")   => Brush(0x04, 0x78, 0x57),   // emerald-700
+                (PhotoUsage.Assigned, _)        => Brush(0xEC, 0xFD, 0xF5),   // emerald-50
+
+                (PhotoUsage.Shared, "border")   => Brush(0x63, 0x66, 0xF1),   // brand-500
+                (PhotoUsage.Shared, "text")     => Brush(0x43, 0x38, 0xCA),   // indigo-700
+                (PhotoUsage.Shared, _)          => Brush(0xEE, 0xF2, 0xFF),   // indigo-50
+
+                (_, "border")                   => Brush(0xCB, 0xD5, 0xE1),   // slate-300
+                (_, "text")                     => Brush(0x64, 0x74, 0x8B),   // slate-500
+                _                               => Brush(0xF1, 0xF5, 0xF9)    // slate-100
             };
         }
 
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-            => Binding.DoNothing;
-    }
-
-    /// <summary>
-    /// Takes the insets off a measured row width.
-    ///
-    /// The card size has to be decided from a width that does NOT depend on the scrollbar,
-    /// or the two argue with each other: the cards set the row count, the row count sets
-    /// the content height, the content height decides whether the scrollbar is showing,
-    /// and a scrollbar that comes and goes changes the very width the cards were sized
-    /// from. That loop made a run of books flicker between four cards per row and three,
-    /// for as long as the screen was watched.
-    ///
-    /// So a view that measures the ScrollViewer's OWN width - constant, but also the width
-    /// the scrollbar will take - runs its measurement through this first.
-    ///
-    /// The reserve MUST be everything between that width and the row of cards, not just
-    /// the scrollbar: forgetting the book card's own padding left the row one card short
-    /// of the edge with a hand's width of dead space, which looked exactly like the
-    /// adaptive sizing had stopped working.
-    ///
-    /// Usage: ConverterParameter = "scrollbar,inset" in pixels, or a single number.
-    /// Default 18,18.
-    /// </summary>
-    public class ReserveWidthConverter : IValueConverter
-    {
-        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            double width = value switch
-            {
-                double d => d,
-                int i => i,
-                _ => 0d
-            };
-
-            double scrollbar = 18d;
-            double inset = 18d;
-
-            var parts = (parameter as string)?.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        ?? Array.Empty<string>();
-
-            if (parts.Length > 0 &&
-                double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double a))
-                scrollbar = a;
-
-            if (parts.Length > 1 &&
-                double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double b))
-                inset = b;
-
-            return Math.Max(0d, width - scrollbar - inset);
-        }
+        private static System.Windows.Media.SolidColorBrush Brush(byte r, byte g, byte b)
+            => new(System.Windows.Media.Color.FromRgb(r, g, b));
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
             => Binding.DoNothing;
@@ -620,20 +577,22 @@ namespace PhotoBookRenamer.Presentation.Converters
     /// Card size for a spread card: the photo frame's width and height, adapted to how
     /// much room the book block actually has.
     ///
-    /// Natural size: <see cref="NaturalHeight"/> tall, and that times the book's own
-    /// format wide (<see cref="Page.FrameAspect"/>). The height is the mockup's value on
-    /// purpose - the card's shape is the one thing a photographer cannot work with, so the
-    /// format decides the width and never the height.
+    /// Natural size: <see cref="DefaultNaturalHeight"/> tall, and that times the book's
+    /// own format wide (<see cref="Page.FrameAspect"/>). The height is the mockup's value
+    /// on purpose - the card's shape is the one thing a photographer cannot work with, so
+    /// the format decides the width and never the height.
     ///
     /// Adaptation: if a whole extra card does not fit in the row but the leftover space is
-    /// enough that scaling everything down by a small factor would make it fit, the card is
-    /// scaled by exactly that factor, both sides together, so the format and the card's
-    /// proportions are preserved. The decision uses ONLY the available width, never the
-    /// number of items, so a half-empty last row cannot change the size.
+    /// worth spending, the card is scaled by exactly the factor that makes it fit, both
+    /// sides together, so the format and the card's proportions are preserved. The decision
+    /// uses ONLY the available width, never the number of items, so a half-empty last row
+    /// cannot change the size.
     ///
-    /// A scale below <see cref="MinScale"/>, or an absolute width below
-    /// <see cref="MinWidth"/>, is rejected: at that point the photos stop being big enough
-    /// to judge, and losing a card is better than losing the ability to see the photo.
+    /// The row is filled, always. There is no cap on how far a card may shrink: the only
+    /// limit is <see cref="MinWidth"/>. A leftover bigger than <see cref="MaxLeftover"/> is
+    /// a hole in the layout that the photographer reads as a bug - the owner reported
+    /// exactly that, twice: two cards in a row with a fifth of the width empty beside them.
+    /// The proportional cap that used to be here (20%) is what produced it.
     ///
     /// Usage: MultiBinding of the row area's width and the Page, with
     /// ConverterParameter="width" or "height". A second comma-separated number overrides
@@ -642,14 +601,15 @@ namespace PhotoBookRenamer.Presentation.Converters
     /// The override exists because the two modes do not have the same room. The
     /// unique-folder mode gives its cards the whole window, and 190px is the size the
     /// mockup was drawn at. The combined mode shares the window with a 320px file list,
-    /// so its design height is smaller - and without that, a wide book format landed on
-    /// three cards per row with the leftover wide enough to be a hole in the layout, yet
-    /// too small a step to justify the one shrink the rule allows. Only the size changes;
-    /// the frame still keeps the book's own format, both sides scaled together.
+    /// so its design height is smaller.
     ///
-    /// The width must be something the cards cannot influence: the enclosing
-    /// <c>ScrollViewer</c>'s own width, run through <see cref="ReserveWidthConverter"/>.
-    /// Measuring the viewport instead is what produced the endless row/scrollback loop.
+    /// The width must be EXACT, and it must be something the cards cannot influence. The
+    /// row area is the slots' own <c>ItemsControl</c> - a vertical stack under a
+    /// <c>ScrollViewer</c> hands its children a fixed width, so that width never depends on
+    /// how wide the cards came out, and the scrollbar is already subtracted from it.
+    /// Deriving it instead (ScrollViewer's own width minus a hand-picked reserve) was
+    /// wrong by 10px, and 10px is a whole card: the rule sized the cards for three per row
+    /// and the row then fitted two, leaving a fifth of the width empty.
     /// </summary>
     public class AdaptiveCardSizeConverter : IMultiValueConverter
     {
@@ -667,31 +627,24 @@ namespace PhotoBookRenamer.Presentation.Converters
         private const double CardChrome = 2d;
 
         /// <summary>
-        /// Held back from a measured width so a row never slides under a scrollbar.
-        ///
-        /// Only needed where the width comes from a ScrollViewer's OWN width: that width
-        /// is constant, but it is also the width the scrollbar will eat, and the cards
-        /// have to be sized before it appears. See <see cref="ReserveWidthConverter"/>.
+        /// How much dead space may be left on the right before the cards are scaled down
+        /// to win one more per row. A flat few pixels, not a share of a step: a fifth of a
+        /// step is a fifth of the row, and a hole that size is exactly what the owner
+        /// reported as "the row does not fill". The design size is kept only when the row
+        /// is already flush.
         /// </summary>
-
-        /// <summary>How far a card may be scaled down to win one more per row.</summary>
-        private const double MinScale = 0.8d;
+        private const double MaxLeftover = 12d;
 
         /// <summary>
-        /// How much dead space has to be on the right before shrinking is worth it, as a
-        /// share of one card's step. Below this the gap is barely noticeable and the
-        /// design size is kept - the "if it already fits, leave it alone" case.
+        /// Floor set by what the card has to SAY, not by taste: at rest the footer is one
+        /// line - "Разворот 1 (общий)" plus the bin - and on hover that label is REPLACED
+        /// by the "Во все книги" word rather than pushed aside, so 18px of padding, 22px of
+        /// bin and ~80px of word is the whole budget: 130px holds it. A very portrait
+        /// format - 0.67 post-prints - is 100px wide at the design height, so such a book
+        /// gets a LARGER frame rather than a clipped caption. The frame keeps the book's
+        /// aspect either way; only its size changes.
         /// </summary>
-        private const double LeftoverShare = 0.25d;
-
-        /// <summary>
-        /// Floor set by what the card has to SAY, not by taste: "Разворот 1", the
-        /// "Во все книги" word and the bin have to fit on one line at any scale. A very
-        /// portrait format - 0.67 post-prints - is naturally 127px wide, which is not
-        /// enough, so such a book gets a LARGER frame rather than a clipped caption. The
-        /// frame keeps the book's aspect either way; only its size changes.
-        /// </summary>
-        private const double MinWidth = 180d;
+        private const double MinWidth = 130d;
 
         /// <summary>Upper clamp, so an extreme panorama cannot become a banner.</summary>
         private const double MaxWidth = 480d;
@@ -725,7 +678,7 @@ namespace PhotoBookRenamer.Presentation.Converters
         /// <summary>
         /// The width to lay out with. <paramref name="naturalWidth"/> is the designed size;
         /// the answer is that size scaled down by the factor that fits one more card per
-        /// row, when such a factor exists inside the allowed range.
+        /// row, when such a factor exists without breaking anything.
         /// </summary>
         private static double FitWidth(double available, double naturalWidth)
         {
@@ -747,17 +700,17 @@ namespace PhotoBookRenamer.Presentation.Converters
             if (perRow < 1) perRow = 1;
 
             double leftover = available - perRow * step;
-            if (leftover < step * LeftoverShare) return natural;   // small gap, not worth shrinking
+            if (leftover <= MaxLeftover) return natural;   // already flush, leave it alone
 
             // Frame width that would fit one more card per row, with a pixel of slack so
             // floating point rounding cannot push the last item over the edge.
             double target = available / (perRow + 1) - CardChrome - CardMargin - 1d;
 
-            // The floor applies to the RESULT, not just to the starting size. Shrinking
-            // past it is how "Разворот 1", "Во все книги" and the bin stopped fitting -
-            // and the card width must never depend on whether the scrollbar is showing,
-            // or the two fight each other.
-            if (target >= MinWidth && target >= natural * MinScale && target < natural)
+            // The floor is the ONLY limit: below it the caption stops being readable, and
+            // above it the row is filled whatever that costs. A second, proportional limit
+            // used to sit here and it is what left two cards in a row with a fifth of the
+            // width empty - the exact hole the owner reported.
+            if (target >= MinWidth && target < natural)
                 return target;
 
             return natural;

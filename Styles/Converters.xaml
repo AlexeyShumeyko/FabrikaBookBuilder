@@ -101,9 +101,6 @@
     <!-- Free / assigned / shared badge colours for the file list -->
     <utils:PhotoUsageToBrushConverter           x:Key="PhotoUsageToBrushConverter" />
 
-    <!-- Scrollbar width held back before a row of cards is sized -->
-    <utils:ReserveWidthConverter                x:Key="ReserveWidthConverter" />
-
     <!-- Mode chip on a saved project's card: label, or the tab glyph with "icon" -->
     <utils:AppModeToLabelConverter             x:Key="AppModeToLabelConverter" />
 

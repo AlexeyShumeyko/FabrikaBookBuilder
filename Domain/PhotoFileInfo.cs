@@ -4,19 +4,24 @@ using System.IO;
 namespace PhotoBookRenamer.Domain
 {
     /// <summary>
-    /// How many slots across the whole project use a photo. Derived from the books, never
-    /// stored: a photo applied to spread 5 of every book is not "marked shared" anywhere,
-    /// it simply appears in five slots, and the label follows from counting them.
+    /// Where a photo stands in the run. Derived from the books, never stored: a photo
+    /// applied to the same spread of every book is not "marked shared" anywhere, it simply
+    /// stands at that position in every book, and the label follows from looking.
+    ///
+    /// "Shared" means run-wide and nothing looser. The same photograph in two DIFFERENT
+    /// positions, or twice inside one book, is the photographer's own repetition - the
+    /// owner calls that out explicitly - and calling it shared would hide the one button
+    /// ("Во все книги") that actually makes a spread shared.
     /// </summary>
     public enum PhotoUsage
     {
-        /// <summary>In no slot at all.</summary>
+        /// <summary>In no book at all.</summary>
         Free = 0,
 
-        /// <summary>In exactly one slot.</summary>
+        /// <summary>In at least one book, but not as the run-wide photo anywhere.</summary>
         Assigned = 1,
 
-        /// <summary>In two or more slots - a run shared between books.</summary>
+        /// <summary>The run-wide photo for at least one position - every book holds it there.</summary>
         Shared = 2
     }
 
@@ -35,6 +40,7 @@ namespace PhotoBookRenamer.Domain
         private int _imageWidth;
         private int _imageHeight;
         private int _usageCount;
+        private bool _isRunWide;
 
         public PhotoFileInfo(string path)
         {
@@ -75,7 +81,7 @@ namespace PhotoBookRenamer.Domain
 
         public bool HasDimensions => _imageWidth > 0 && _imageHeight > 0;
 
-        /// <summary>Slots across all books holding this photo.</summary>
+        /// <summary>Books holding this photo, at any position.</summary>
         public int UsageCount
         {
             get => _usageCount;
@@ -87,11 +93,23 @@ namespace PhotoBookRenamer.Domain
             }
         }
 
+        /// <summary>True when every book holds this photo at the same position.</summary>
+        public bool IsRunWide
+        {
+            get => _isRunWide;
+            private set
+            {
+                if (!SetProperty(ref _isRunWide, value)) return;
+                OnPropertyChanged(nameof(Usage));
+                OnPropertyChanged(nameof(UsageText));
+            }
+        }
+
         public PhotoUsage Usage => _usageCount switch
         {
             0 => PhotoUsage.Free,
             1 => PhotoUsage.Assigned,
-            _ => PhotoUsage.Shared
+            _ => _isRunWide ? PhotoUsage.Shared : PhotoUsage.Assigned
         };
 
         public string UsageText => Usage switch
@@ -117,7 +135,14 @@ namespace PhotoBookRenamer.Domain
             OnPropertyChanged(nameof(DimensionsText));
         }
 
-        /// <summary>Sets the slot count; raises nothing when it did not change.</summary>
-        public void SetUsage(int count) => UsageCount = count < 0 ? 0 : count;
+        /// <summary>
+        /// Sets how many books hold the photo and whether it is the run-wide one.
+        /// Raises nothing when neither changed.
+        /// </summary>
+        public void SetUsage(int bookCount, bool runWide)
+        {
+            UsageCount = bookCount < 0 ? 0 : bookCount;
+            IsRunWide = runWide;
+        }
     }
 }

@@ -26,6 +26,8 @@ param(
     [int]$HoverX = -1,
     [int]$HoverY = -1,
     [string]$HoverOut = '',
+    [int]$Width = 0,
+    [int]$Height = 0,
     [switch]$WithDialog
 )
 
@@ -53,6 +55,17 @@ public class Win2 {
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
     [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+    [DllImport("user32.dll")] public static extern bool MoveWindow(IntPtr h, int x, int y, int w, int ht, bool repaint);
+
+    /// <summary>
+    /// Sizes the window instead of maximizing it. The adaptive card sizing is a
+    /// function of the window width, and the whole point of it is what it does on a
+    /// SMALLER screen - which a maximized capture can never show.
+    /// </summary>
+    public static void Resize(IntPtr h, int w, int ht) {
+        ShowWindow(h, 1 /* SW_NORMAL */);
+        MoveWindow(h, 40, 40, w, ht, true);
+    }
 
     private delegate bool EnumProc(IntPtr h, IntPtr l);
     [DllImport("user32.dll")] private static extern bool EnumWindows(EnumProc cb, IntPtr l);
@@ -133,7 +146,6 @@ try {
     [void][Win2]::ShowWindow($hwnd, 3)
     [void][Win2]::SetForegroundWindow($hwnd)
     Start-Sleep -Seconds 2
-
     # The project is opened BEFORE the tab is switched: opening needs the project
     # list on screen, so switching first would hide the cards and leave nothing to
     # click. A fresh launch always starts on the projects screen.
@@ -228,6 +240,14 @@ try {
         }
         $sel = $tabEl.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
         $sel.Select()
+        Start-Sleep -Seconds 2
+    }
+
+    # Resizing happens LAST: a project has to be open and the tab switched before the
+    # width matters, and the cards re-measure on their own once the window is resized.
+    if ($Width -gt 0 -and $Height -gt 0) {
+        [Win2]::Resize($hwnd, $Width, $Height)
+        [void][Win2]::SetForegroundWindow($hwnd)
         Start-Sleep -Seconds 2
     }
 
