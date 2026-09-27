@@ -18,7 +18,9 @@ param(
     [int]$CoverH = 0,
     [string]$OutlierPhotoPath = '',
     [int]$OutlierW = 0,
-    [int]$OutlierH = 0
+    [int]$OutlierH = 0,
+    [switch]$AllEmpty,
+    [switch]$OnlyCover
 )
 
 $ErrorActionPreference = 'Stop'
@@ -73,12 +75,13 @@ for ($b = 1; $b -le $Books; $b++) {
     # -EmptyLastBook leaves the final book without photos. That is the check for the
     # owner's rule: a run has ONE frame shape, so the empty book must end up the same
     # size as the filled one instead of falling back to the default 16:10.
-    $fill = -not ($EmptyLastBook -and $b -eq $Books)
+    # -AllEmpty empties every book, -OnlyCover leaves a cover and no spreads at all.
+    $fill = -not ($EmptyLastBook -and $b -eq $Books) -and -not $AllEmpty
     $pages = @()
     for ($s = 1; $s -le $Spreads; $s++) {
         # Spread 2 of every book gets the SAME photo on purpose: that is the run-wide
         # spread the owner asked to see labelled.
-        $pick = if (-not $fill) { $null }
+        $pick = if (-not $fill -or $OnlyCover) { $null }
                 elseif ($s -eq 2) { $photos[1] }
                 else { $photos[(($b - 1) * 3 + $s - 1) % $photos.Count] }
         $pages += [ordered]@{

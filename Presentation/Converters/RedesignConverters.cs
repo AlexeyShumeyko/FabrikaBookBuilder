@@ -564,7 +564,7 @@ namespace PhotoBookRenamer.Presentation.Converters
     }
 
     /// <summary>
-    /// Takes a scrollbar's width off a measured row width.
+    /// Takes the insets off a measured row width.
     ///
     /// The card size has to be decided from a width that does NOT depend on the scrollbar,
     /// or the two argue with each other: the cards set the row count, the row count sets
@@ -573,11 +573,16 @@ namespace PhotoBookRenamer.Presentation.Converters
     /// from. That loop made a run of books flicker between four cards per row and three,
     /// for as long as the screen was watched.
     ///
-    /// A view that measures the ScrollViewer's OWN width - constant, but also the width
-    /// the scrollbar will take - runs its measurement through this first. A view that
-    /// measures the viewport must NOT: the scrollbar is already taken out there.
+    /// So a view that measures the ScrollViewer's OWN width - constant, but also the width
+    /// the scrollbar will take - runs its measurement through this first.
     ///
-    /// Usage: ConverterParameter = pixels to hold back, default 18.
+    /// The reserve MUST be everything between that width and the row of cards, not just
+    /// the scrollbar: forgetting the book card's own padding left the row one card short
+    /// of the edge with a hand's width of dead space, which looked exactly like the
+    /// adaptive sizing had stopped working.
+    ///
+    /// Usage: ConverterParameter = "scrollbar,inset" in pixels, or a single number.
+    /// Default 18,18.
     /// </summary>
     public class ReserveWidthConverter : IValueConverter
     {
@@ -590,11 +595,21 @@ namespace PhotoBookRenamer.Presentation.Converters
                 _ => 0d
             };
 
-            double reserve = 18d;
-            if (double.TryParse(parameter as string, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
-                reserve = parsed;
+            double scrollbar = 18d;
+            double inset = 18d;
 
-            return Math.Max(0d, width - reserve);
+            var parts = (parameter as string)?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        ?? Array.Empty<string>();
+
+            if (parts.Length > 0 &&
+                double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double a))
+                scrollbar = a;
+
+            if (parts.Length > 1 &&
+                double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double b))
+                inset = b;
+
+            return Math.Max(0d, width - scrollbar - inset);
         }
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
