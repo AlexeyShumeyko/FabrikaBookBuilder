@@ -6,19 +6,24 @@
              UseLayoutRounding="True" SnapsToDevicePixels="True">
 
     <UserControl.Resources>
-        <!-- p-6 (24) rounded-2xl (16) border-2 border-slate-200 -> brand-500 on hover -->
+        <!--
+            The card outline. 2px slate-200 was the mockup's markup and it read as a raw
+            form field rather than a choice: a thick grey frame around a whole screen-sized
+            block, with no fill of its own. A 1px hairline plus a hover frame in the mode's
+            own colour says "this is a card you can open", and the shadow does the lifting.
+        -->
         <Style x:Key="ModeCard" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource Surface}" />
-            <Setter Property="BorderBrush" Value="{StaticResource Slate200}" />
-            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderDefault}" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="16" />
             <Setter Property="Padding" Value="24" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Effect" Value="{StaticResource ShadowSubtle}" />
+            <Setter Property="Effect" Value="{StaticResource ShadowCard}" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="BorderBrush" Value="{StaticResource Brand500}" />
-                    <Setter Property="Effect" Value="{StaticResource ShadowCard}" />
+                    <Setter Property="Effect" Value="{StaticResource ShadowHover}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -40,9 +45,11 @@
         </Style>
 
         <!-- li: flex items-center gap-2 (8) -->
-        <Style x:Key="FeatureRow" TargetType="StackPanel">
-            <Setter Property="Orientation" Value="Horizontal" />
-            <Setter Property="Margin" Value="0,0,0,8" />
+        <!-- A Grid, not a horizontal StackPanel: inside one, a TextBlock is measured
+             with infinite width, TextWrapping does nothing and the sentence is cut
+             off at the card edge. -->
+        <Style x:Key="FeatureRow" TargetType="Grid">
+            <Setter Property="Margin" Value="0,0,0,10" />
         </Style>
 
         <Style x:Key="CheckIcon" TargetType="TextBlock">
@@ -67,62 +74,89 @@
                 <Border Background="{StaticResource Brand50}" BorderBrush="{StaticResource Brand100}"
                         BorderThickness="1" CornerRadius="999" Padding="12,4"
                         HorizontalAlignment="Center">
-                    <TextBlock Text="Выберите алгоритм верстки" Style="{StaticResource TextXsSemibold}"
+                    <TextBlock Text="Выберите режим" Style="{StaticResource TextXsSemibold}"
                                Foreground="{StaticResource Brand600}" />
                 </Border>
                 <!-- text-2xl (24) font-bold -->
-                <TextBlock Text="Как распределить фотографии?" Style="{StaticResource Text2xlBold}"
+                <TextBlock Text="Два способа собрать фотокниги" Style="{StaticResource Text2xlBold}"
                            HorizontalAlignment="Center" Margin="0,8,0,0" />
                 <!-- text-xs slate-500 max-w-lg (512) -->
-                <TextBlock Text="Выберите наиболее удобный формат организации фотокниг под ваш текущий проект"
+                <TextBlock Text="Режим выбирается один раз — при создании проекта. Он определяет, как фотографии попадут в книги, а переключить его позже можно, открыв проект, созданный в нужном режиме."
                            Style="{StaticResource TextXs}" HorizontalAlignment="Center"
-                           TextAlignment="Center" MaxWidth="512" Margin="0,8,0,0"
+                           TextAlignment="Center" TextWrapping="Wrap" MaxWidth="560" Margin="0,8,0,0"
                            Foreground="{StaticResource Slate500}" />
             </StackPanel>
 
-            <!-- grid-cols-2 gap-6 (24) -->
-            <UniformGrid Columns="2" Margin="0,32,0,0">
+            <!--
+                Two equal columns, gap 24. A UniformGrid was wrong here: it hands every cell
+                the same height, so the taller card's last bullet was sliced off mid-word.
+                A Grid with auto rows lets each card be exactly as tall as its own text.
+            -->
+            <Grid Margin="0,32,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
                 <!-- ============ Уникальные папки ============ -->
-                <Border Style="{StaticResource ModeCard}" MouseLeftButtonDown="OnUniqueFoldersClick">
+                <Border Grid.Column="0" Style="{StaticResource ModeCard}" MouseLeftButtonDown="OnUniqueFoldersClick">
                     <Grid>
+                        <!-- The body row takes the slack so the footer sits on the card's
+                             bottom edge in both cards, however many lines the text takes. -->
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0">
-                            <Border Style="{StaticResource ModeIconBox}" Background="{StaticResource Brand50}">
+                            <!-- Green = the automatic mode. Same colour as the chip on a
+                                 saved project and on this project's empty state. -->
+                            <Border Style="{StaticResource ModeIconBox}" Background="{StaticResource Emerald50}">
                                 <TextBlock Style="{StaticResource ModeIcon}" Text="&#xE8C0;"
-                                           Foreground="{StaticResource Brand600}" />
+                                           Foreground="{StaticResource Emerald600}" />
                             </Border>
 
-                            <TextBlock x:Name="UniqueTitleTextBlock" Text="Режим «Уникальные папки»"
+                            <TextBlock x:Name="UniqueTitleTextBlock" Text="Уникальные папки"
                                        Style="{StaticResource TextLgBold}" />
                             <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" Margin="0,8,0,0"
-                                       Foreground="{StaticResource Slate500}" LineHeight="18"
-                                       Text="Идеально для школьных альбомов и групповых заказов. Каждая папка на диске автоматически становится отдельной фотокнигой со своей обложкой и разворотами." />
+                                       Foreground="{StaticResource Slate600}" LineHeight="19"
+                                       Text="Каждая папка на диске становится отдельной фотокнигой: обложка и развороты собираются из неё сами. Загрузили папки — через несколько секунд в проекте уже готовая структура и правильная нумерация файлов. Размечать ничего вручную не нужно." />
 
                             <!-- ul mt-5 (20) space-y-2 (8) -->
                             <StackPanel Margin="0,20,0,0">
-                                <StackPanel Style="{StaticResource FeatureRow}">
-                                    <TextBlock Style="{StaticResource CheckIcon}" Text="&#xE73E;"
+                                <Grid Style="{StaticResource FeatureRow}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource CheckIcon}" Text="&#xE73E;"
                                                Foreground="{StaticResource Emerald500}" />
-                                    <TextBlock Text="Автоматическое определение обложек" Style="{StaticResource TextXs}"
-                                               Foreground="{StaticResource Slate600}" Margin="8,0,0,0" />
-                                </StackPanel>
-                                <StackPanel Style="{StaticResource FeatureRow}">
-                                    <TextBlock Style="{StaticResource CheckIcon}" Text="&#xE73E;"
+                        <TextBlock Grid.Column="1" Style="{StaticResource TextXs}" TextWrapping="Wrap"
+                                               Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
+                                               Text="Обложка определяется сама: самое большое фото в папке" />
+                    </Grid>
+                                <Grid Style="{StaticResource FeatureRow}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource CheckIcon}" Text="&#xE73E;"
                                                Foreground="{StaticResource Emerald500}" />
-                                    <TextBlock Text="Порядковая нумерация файлов (01-000, 01-001)" Style="{StaticResource TextXs}"
-                                               Foreground="{StaticResource Slate600}" Margin="8,0,0,0" />
-                                </StackPanel>
-                                <StackPanel Style="{StaticResource FeatureRow}" Margin="0">
-                                    <TextBlock Style="{StaticResource CheckIcon}" Text="&#xE73E;"
+                        <TextBlock Grid.Column="1" Style="{StaticResource TextXs}" TextWrapping="Wrap"
+                                               Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
+                                               Text="Файлы сразу получают имена для загрузки: 001-00.jpg, 001-01.jpg…" />
+                    </Grid>
+                                <Grid Style="{StaticResource FeatureRow}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource CheckIcon}" Text="&#xE73E;"
                                                Foreground="{StaticResource Emerald500}" />
-                                    <TextBlock Text="Пакетная обработка десятков книг в 1 клик" Style="{StaticResource TextXs}"
-                                               Foreground="{StaticResource Slate600}" Margin="8,0,0,0" />
-                                </StackPanel>
+                        <TextBlock Grid.Column="1" Style="{StaticResource TextXs}" TextWrapping="Wrap"
+                                               Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
+                                               Text="Все папки проекта должны содержать одинаковое число разворотов — иначе структура считается неполной" />
+                    </Grid>
                             </StackPanel>
                         </StackPanel>
 
@@ -133,56 +167,73 @@
                             </Grid.RowDefinitions>
                             <Border Grid.Row="0" Height="1" Background="{StaticResource Slate100}"
                                     VerticalAlignment="Top" Margin="0,0,0,16" />
-                            <TextBlock Grid.Row="0" Margin="0,16,0,0" Text="Выбрать данный режим"
+                            <TextBlock Grid.Row="0" Margin="0,16,0,0" Text="Выбрать режим"
                                        Style="{StaticResource TextXsSemibold}"
-                                       Foreground="{StaticResource Brand600}" />
+                                       Foreground="{StaticResource Emerald600}" />
                             <TextBlock Grid.Row="0" HorizontalAlignment="Right" Text="&#xE72A;"
                                        FontFamily="{StaticResource IconFont}" FontSize="12"
-                                       Foreground="{StaticResource Brand600}" />
+                                       Foreground="{StaticResource Emerald600}" />
                         </Grid>
                     </Grid>
                 </Border>
 
                 <!-- ============ Комбинированный ============ -->
-                <Border Style="{StaticResource ModeCard}" MouseLeftButtonDown="OnCombinedModeClick" Margin="24,0,0,0">
+                <Border Grid.Column="1" Style="{StaticResource ModeCard}" MouseLeftButtonDown="OnCombinedModeClick" Margin="24,0,0,0">
                     <Grid>
+                        <!-- The body row takes the slack so the footer sits on the card's
+                             bottom edge in both cards, however many lines the text takes. -->
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0">
-                            <!-- indigo-50 / indigo-600 (same values as brand) -->
-                            <Border Style="{StaticResource ModeIconBox}" Background="{StaticResource Indigo50}">
-                                <TextBlock Style="{StaticResource ModeIcon}" Text="&#xE71D;"
-                                           Foreground="{StaticResource Indigo600}" />
+                            <!-- Indigo = the hand-tuned mode, the app's own colour. -->
+                            <Border Style="{StaticResource ModeIconBox}" Background="{StaticResource Brand50}">
+                                <TextBlock Style="{StaticResource ModeIcon}" Text="&#xE8F1;"
+                                           Foreground="{StaticResource Brand600}" />
                             </Border>
 
-                            <TextBlock x:Name="CombinedTitleTextBlock" Text="Комбинированный режим"
+                            <TextBlock x:Name="CombinedTitleTextBlock" Text="Комбинированный"
                                        Style="{StaticResource TextLgBold}" />
                             <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" Margin="0,8,0,0"
-                                       Foreground="{StaticResource Slate500}" LineHeight="18"
-                                       Text="Гибкий визуальный конструктор. Загружайте общий массив снимков и распределяйте фотографии по слотам вручную или через Drag-and-Drop." />
+                                       Foreground="{StaticResource Slate600}" LineHeight="19"
+                                       Text="Режим для книг, которые собираются вручную: вы сами решаете, какая фотография стоит на каком развороте и в какой книге. Нужен, когда у книг разное наполнение, когда обложка или разворот повторяется во всех сразу, или когда состав подбирали вручную." />
 
                             <StackPanel Margin="0,20,0,0">
-                                <StackPanel Style="{StaticResource FeatureRow}">
-                                    <TextBlock Style="{StaticResource CheckIcon}" Text="&#xE73E;"
+                                <Grid Style="{StaticResource FeatureRow}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource CheckIcon}" Text="&#xE73E;"
                                                Foreground="{StaticResource Brand500}" />
-                                    <TextBlock Text="Общий бассейн исходных снимков" Style="{StaticResource TextXs}"
-                                               Foreground="{StaticResource Slate600}" Margin="8,0,0,0" />
-                                </StackPanel>
-                                <StackPanel Style="{StaticResource FeatureRow}">
-                                    <TextBlock Style="{StaticResource CheckIcon}" Text="&#xE73E;"
+                        <TextBlock Grid.Column="1" Style="{StaticResource TextXs}" TextWrapping="Wrap"
+                                               Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
+                                               Text="Сколько угодно книг, у каждой своё число разворотов" />
+                    </Grid>
+                                <Grid Style="{StaticResource FeatureRow}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource CheckIcon}" Text="&#xE73E;"
                                                Foreground="{StaticResource Brand500}" />
-                                    <TextBlock Text="Ручная перетаскиваемая сетка разворотов" Style="{StaticResource TextXs}"
-                                               Foreground="{StaticResource Slate600}" Margin="8,0,0,0" />
-                                </StackPanel>
-                                <StackPanel Style="{StaticResource FeatureRow}" Margin="0">
-                                    <TextBlock Style="{StaticResource CheckIcon}" Text="&#xE73E;"
+                        <TextBlock Grid.Column="1" Style="{StaticResource TextXs}" TextWrapping="Wrap"
+                                               Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
+                                               Text="Один клик — одинаковая фотография во все книги сразу" />
+                    </Grid>
+                                <Grid Style="{StaticResource FeatureRow}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource CheckIcon}" Text="&#xE73E;"
                                                Foreground="{StaticResource Brand500}" />
-                                    <TextBlock Text="Контроль дубликатов и неиспользованных фото" Style="{StaticResource TextXs}"
-                                               Foreground="{StaticResource Slate600}" Margin="8,0,0,0" />
-                                </StackPanel>
+                        <TextBlock Grid.Column="1" Style="{StaticResource TextXs}" TextWrapping="Wrap"
+                                               Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
+                                               Text="На выходе общие развороты не дублируются: один файл на всю партию" />
+                    </Grid>
                             </StackPanel>
                         </StackPanel>
 
@@ -192,7 +243,7 @@
                             </Grid.RowDefinitions>
                             <Border Grid.Row="0" Height="1" Background="{StaticResource Slate100}"
                                     VerticalAlignment="Top" Margin="0,0,0,16" />
-                            <TextBlock Grid.Row="0" Margin="0,16,0,0" Text="Выбрать данный режим"
+                            <TextBlock Grid.Row="0" Margin="0,16,0,0" Text="Выбрать режим"
                                        Style="{StaticResource TextXsSemibold}"
                                        Foreground="{StaticResource Brand600}" />
                             <TextBlock Grid.Row="0" HorizontalAlignment="Right" Text="&#xE72A;"
@@ -201,7 +252,7 @@
                         </Grid>
                     </Grid>
                 </Border>
-            </UniformGrid>
+            </Grid>
 
             <!--
                 Reworded: the mode tabs are no longer a way in. A mode is reached by

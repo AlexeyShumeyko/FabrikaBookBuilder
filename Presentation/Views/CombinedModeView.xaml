@@ -179,7 +179,7 @@
                             AutomationProperties.Name="Сохранить проект"
                             ToolTip="Сохранить проект и вернуться к списку проектов">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE8E7;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                            <TextBlock Text="&#xE74E;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                        Foreground="{StaticResource Slate400}" />
                             <TextBlock Text="Сохранить проект" Margin="6,0,0,0" />
                         </StackPanel>
@@ -192,7 +192,7 @@
                             AutomationProperties.Name="Экспортировать все книги"
                             ToolTip="Выгрузка всех книг проекта в одну папку">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE898;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
+                            <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
                             <TextBlock Text="Экспортировать все книги" Margin="6,0,0,0" Foreground="White" />
                         </StackPanel>
                     </Button>
@@ -289,7 +289,7 @@
                             </Rectangle>
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
                                         Margin="18,22">
-                                <TextBlock Text="&#xE898;" FontFamily="{StaticResource IconFont}" FontSize="26"
+                                <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="26"
                                            Foreground="{StaticResource Brand500}" HorizontalAlignment="Center" />
                                 <TextBlock Text="Перетащите снимки сюда" Style="{StaticResource TextXsSemibold}"
                                            Foreground="{StaticResource Slate700}"
@@ -393,24 +393,84 @@
             -->
             <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
                 <StackPanel>
-                    <!-- Empty state: no structure yet -->
-                    <Border Style="{StaticResource Card}" Padding="24" MaxWidth="560"
+                    <!--
+                      Empty state: no structure yet. An empty project used to show three
+                      lines of text and a shrug, which left a first-time user with no idea
+                      what to press first - the structure controls are up in the control
+                      panel, far from this card. It is now the three steps of the mode, in
+                      order, with the step that comes next marked as such.
+                    -->
+                    <Border Style="{StaticResource Card}" Padding="28" MaxWidth="600"
                             HorizontalAlignment="Center" Margin="0,40,0,0"
                             Effect="{StaticResource ShadowSubtle}"
                             Visibility="{Binding HasStructure, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                         <StackPanel>
-                        <Border Width="56" Height="56" CornerRadius="16" HorizontalAlignment="Center"
-                                Background="{StaticResource Brand50}">
-                            <TextBlock Text="&#xE8F1;" FontFamily="{StaticResource IconFont}" FontSize="24"
-                                       Foreground="{StaticResource Brand600}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <TextBlock Text="Создайте структуру тиража" Style="{StaticResource TextBaseBold}"
-                                   HorizontalAlignment="Center" Margin="0,18,0,0" />
-                        <TextBlock Style="{StaticResource TextXs}" TextAlignment="Center" TextWrapping="Wrap"
-                                   MaxWidth="420" HorizontalAlignment="Center" Margin="0,8,0,0"
-                                   Foreground="{StaticResource Slate500}"
-                                   Text="Укажите количество книг и разворотов в панели выше, затем загрузите фотографии и перетащите их в слоты." />
+                            <Border Width="56" Height="56" CornerRadius="16" HorizontalAlignment="Center"
+                                    Background="{StaticResource Brand50}">
+                                <TextBlock Text="&#xE8F1;" FontFamily="{StaticResource IconFont}" FontSize="24"
+                                           Foreground="{StaticResource Brand600}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="Соберите первую партию книг" Style="{StaticResource TextLgBold}"
+                                       HorizontalAlignment="Center" Margin="0,18,0,0" TextAlignment="Center" />
+                            <TextBlock Style="{StaticResource TextXs}" TextAlignment="Center" TextWrapping="Wrap"
+                                       MaxWidth="460" HorizontalAlignment="Center" Margin="0,8,0,0"
+                                       Foreground="{StaticResource Slate500}"
+                                       Text="В этом режиме всё собирается вручную: структуру задаёте вы, фотографии раскладываются по слотам. Три шага:" />
+
+                            <StackPanel Margin="0,20,0,0">
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="24" Height="24" CornerRadius="8"
+                                            Background="{StaticResource Brand600}" VerticalAlignment="Top">
+                                        <TextBlock Text="1" FontSize="12" FontWeight="Bold" Foreground="White"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                        <TextBlock Text="Задайте структуру" Style="{StaticResource TextXsSemibold}" />
+                                        <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" Margin="0,2,0,0"
+                                                   Foreground="{StaticResource Slate500}"
+                                                   Text="В панели управления укажите, сколько книг в партии и сколько разворотов в каждой, и нажмите «Добавить структуру». Потом её можно дорастить или уменьшить." />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="24" Height="24" CornerRadius="8"
+                                            Background="{StaticResource Slate200}" VerticalAlignment="Top">
+                                        <TextBlock Text="2" FontSize="12" FontWeight="Bold" Foreground="{StaticResource Slate600}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                        <TextBlock Text="Загрузите фотографии" Style="{StaticResource TextXsSemibold}" />
+                                        <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" Margin="0,2,0,0"
+                                                   Foreground="{StaticResource Slate500}"
+                                                   Text="Кнопкой «Загрузить фото» или перетащите файлы в зону загрузки. Они попадут в список слева — оттуда их можно ставить в слоты." />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="24" Height="24" CornerRadius="8"
+                                            Background="{StaticResource Slate200}" VerticalAlignment="Top">
+                                        <TextBlock Text="3" FontSize="12" FontWeight="Bold" Foreground="{StaticResource Slate600}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                        <TextBlock Text="Расставьте фотографии" Style="{StaticResource TextXsSemibold}" />
+                                        <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" Margin="0,2,0,0"
+                                                   Foreground="{StaticResource Slate500}"
+                                                   Text="Перетащите фото в слот нужной книги. Если фото должно повторяться во всех книгах — нажмите на слоте «Во все книги», и на экспорте оно уйдёт одним общим файлом." />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 

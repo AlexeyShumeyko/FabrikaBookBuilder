@@ -159,13 +159,14 @@
                                             </Grid.ColumnDefinitions>
 
                                             <!--
-                                                Status chip. The mockup's markup says
-                                                rounded-full, but the requested look is a
-                                                rounded rectangle, so this is rounded-md (6)
-                                                with the 1px border the mockup also has.
-                                                Colours come from StatusToBrushConverter by role.
+                                                Status chip. Rounded 10 rather than the
+                                                mockup's rounded-md (6): at a 22px height
+                                                a 6px radius still reads as a rectangle
+                                                patch, and the owner asked for more
+                                                rounding. Colours come from
+                                                StatusToBrushConverter by role.
                                             -->
-                                            <Border Grid.Column="0" CornerRadius="6" Padding="10,4"
+                                            <Border Grid.Column="0" CornerRadius="10" Padding="11,5"
                                                     BorderThickness="1"
                                                     Background="{Binding Status, Converter={StaticResource StatusToBrushConverter}, ConverterParameter=bg}"
                                                     BorderBrush="{Binding Status, Converter={StaticResource StatusToBrushConverter}, ConverterParameter=border}">
@@ -202,20 +203,20 @@
                                                        VerticalAlignment="Center" />
 
                                             <Border Grid.Column="1" Margin="8,0,0,0"
-                                                    CornerRadius="6" Padding="8,3"
-                                                    Background="{StaticResource Slate50}"
-                                                    BorderBrush="{StaticResource Slate200}"
+                                                    CornerRadius="8" Padding="9,4"
+                                                    Background="{Binding Mode, Converter={StaticResource AppModeToLabelConverter}, ConverterParameter=tintbg}"
+                                                    BorderBrush="{Binding Mode, Converter={StaticResource AppModeToLabelConverter}, ConverterParameter=tintborder}"
                                                     BorderThickness="1"
                                                     VerticalAlignment="Center"
                                                     Visibility="{Binding Mode, Converter={StaticResource AppModeToLabelConverter}, ConverterParameter=visibility}">
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="{Binding Mode, Converter={StaticResource AppModeToLabelConverter}, ConverterParameter=icon}"
                                                                FontFamily="{StaticResource IconFont}" FontSize="11"
-                                                               Foreground="{StaticResource Slate400}"
+                                                               Foreground="{Binding Mode, Converter={StaticResource AppModeToLabelConverter}, ConverterParameter=tinticon}"
                                                                VerticalAlignment="Center" />
                                                     <TextBlock Text="{Binding Mode, Converter={StaticResource AppModeToLabelConverter}}"
-                                                               Style="{StaticResource TextTiny}"
-                                                               Foreground="{StaticResource Slate500}"
+                                                               Style="{StaticResource TextTiny}" FontWeight="SemiBold"
+                                                               Foreground="{Binding Mode, Converter={StaticResource AppModeToLabelConverter}, ConverterParameter=tinttext}"
                                                                VerticalAlignment="Center" Margin="5,0,0,0" />
                                                 </StackPanel>
                                             </Border>
@@ -274,8 +275,9 @@
                                                 Stats. The mockup bolds only the number
                                                 ("Книг: <strong>28 шт.</strong>"), so the label
                                                 and the value are separate Runs.
-                                                fa-book is E82D - a book. E8D7 was used before
-                                                and is a KEY.
+                                                fa-book is E8F1 - books on a shelf. E82D is a
+                                                card with lines, and E8D7 (used before
+                                                both) is a KEY.
                                             -->
                                             <StackPanel Grid.Column="0" Orientation="Horizontal"
                                                         VerticalAlignment="Center">
@@ -287,7 +289,7 @@
                                                     <Run Text="Книг: " />
                                                     <Run Text="{Binding BookCount, Mode=OneWay}" FontWeight="Bold"
                                                          Foreground="{StaticResource Slate800}" />
-                                                    <Run Text=" шт." />
+                                                    <Run Text=" шт." FontWeight="SemiBold" />
                                                 </TextBlock>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal"
@@ -300,7 +302,7 @@
                                                     <Run Text="Разворотов: " />
                                                     <Run Text="{Binding PageCount, Mode=OneWay}" FontWeight="Bold"
                                                          Foreground="{StaticResource Slate800}" />
-                                                    <Run Text=" стр." />
+                                                    <Run Text=" стр." FontWeight="SemiBold" />
                                                 </TextBlock>
                                             </StackPanel>
                                         </Grid>

@@ -18,6 +18,7 @@
         RenderOptions.BitmapScalingMode="HighQuality"
         RenderOptions.ClearTypeHint="Enabled"
         FontFamily="{StaticResource UiFont}"
+        PreviewMouseLeftButtonDown="OnWindowPreviewMouseDown"
         SizeChanged="MainWindow_SizeChanged">
 
     <Window.InputBindings>
@@ -92,7 +93,7 @@
                                      AutomationProperties.Name="Мои проекты"
                                      IsChecked="{Binding CurrentMode, Mode=TwoWay, Converter={StaticResource AppModeEqualsConverter}, ConverterParameter=ProjectList}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                <TextBlock Text="&#xE71D;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                            Opacity="0.8" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
                                 <TextBlock Text="Мои проекты" Margin="6,0,0,0" />
                             </StackPanel>
@@ -112,7 +113,7 @@
                                      ToolTip="Открывается только внутри проекта"
                                      IsChecked="{Binding CurrentMode, Mode=TwoWay, Converter={StaticResource AppModeEqualsConverter}, ConverterParameter=UniqueFolders}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE8E9;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                            Opacity="0.8" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
                                 <TextBlock Text="Уникальные папки" Margin="6,0,0,0" />
                             </StackPanel>
@@ -123,7 +124,7 @@
                                      ToolTip="Открывается только внутри проекта"
                                      IsChecked="{Binding CurrentMode, Mode=TwoWay, Converter={StaticResource AppModeEqualsConverter}, ConverterParameter=Combined}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE71D;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                <TextBlock Text="&#xE8F1;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                            Opacity="0.8" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
                                 <TextBlock Text="Комбинированный" Margin="6,0,0,0" />
                             </StackPanel>
@@ -143,11 +144,11 @@
                                 Visibility="{Binding ShowUndoRedo, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button Style="{StaticResource IconButton}" Command="{Binding ActiveEditor.UndoCommand}"
                                 AutomationProperties.Name="Отменить" ToolTip="Отменить (Ctrl+Z)">
-                            <TextBlock Text="&#xE7A7;" FontFamily="{StaticResource IconFont}" FontSize="13" />
+                            <TextBlock Text="&#xE72B;" FontFamily="{StaticResource IconFont}" FontSize="14" />
                         </Button>
                         <Button Style="{StaticResource IconButton}" Command="{Binding ActiveEditor.RedoCommand}"
                                 AutomationProperties.Name="Вернуть" ToolTip="Вернуть (Ctrl+Y)" Margin="8,0,0,0">
-                            <TextBlock Text="&#xE72A;" FontFamily="{StaticResource IconFont}" FontSize="13" />
+                            <TextBlock Text="&#xE72A;" FontFamily="{StaticResource IconFont}" FontSize="14" />
                         </Button>
                     </StackPanel>
 
@@ -156,7 +157,7 @@
                             Visibility="{Binding ShowSourcePicker, Converter={StaticResource BooleanToVisibilityConverter}}"
                             Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE8E9;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                            <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                        Foreground="{StaticResource Slate400}" />
                             <TextBlock Text="{Binding SourcePickerLabel}" Margin="6,0,0,0" />
                         </StackPanel>
@@ -167,7 +168,7 @@
                             IsEnabled="{Binding CanSave}"
                             Visibility="{Binding ShowProjectActions, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE8E7;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                            <TextBlock Text="&#xE74E;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                        Foreground="{StaticResource Slate400}" />
                             <TextBlock Text="Сохранить" Margin="6,0,0,0" />
                         </StackPanel>
@@ -175,11 +176,39 @@
 
                     <Button Style="{StaticResource PrimaryButton}" Click="OnExportClick"
                             AutomationProperties.Name="Экспорт" IsEnabled="{Binding CanExport}"
-                            Visibility="{Binding ShowProjectActions, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            Visibility="{Binding ShowProjectActions, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Margin="0,0,12,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE898;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
+                            <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="13" Foreground="White" />
                             <TextBlock Text="Экспорт" Margin="6,0,0,0" Foreground="White" />
                         </StackPanel>
+                    </Button>
+
+                    <!--
+                        Theme / help / contacts. Placed in the header on purpose: the owner
+                        wants the finished-product silhouette visible, and these three are
+                        the places a finished app has them. They are stubs - the tooltips
+                        say so, so nobody files a bug about a button that does nothing -
+                        and the theme one carries a single icon rather than a switch,
+                        because there is only a light theme to switch to yet.
+                    -->
+                    <Border Width="1" Background="{StaticResource Slate200}" Margin="0,0,12,0"
+                            VerticalAlignment="Center" Height="24" />
+
+                    <Button Style="{StaticResource IconButton}" Click="OnThemeClick"
+                            AutomationProperties.Name="Тема оформления"
+                            ToolTip="Тема оформления — в разработке">
+                        <TextBlock Text="&#xE706;" FontFamily="{StaticResource IconFont}" FontSize="14" />
+                    </Button>
+                    <Button Style="{StaticResource IconButton}" Click="OnHelpClick"
+                            AutomationProperties.Name="Помощь" Margin="6,0,0,0"
+                            ToolTip="Помощь — в разработке">
+                        <TextBlock Text="&#xE897;" FontFamily="{StaticResource IconFont}" FontSize="14" />
+                    </Button>
+                    <Button Style="{StaticResource IconButton}" Click="OnContactsClick"
+                            AutomationProperties.Name="Контакты" Margin="6,0,0,0"
+                            ToolTip="Контакты — в разработке">
+                        <TextBlock Text="&#xE77B;" FontFamily="{StaticResource IconFont}" FontSize="14" />
                     </Button>
                 </StackPanel>
             </Grid>

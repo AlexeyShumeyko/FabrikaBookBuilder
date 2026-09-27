@@ -22,7 +22,7 @@
             <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
                 <Border Width="36" Height="36" CornerRadius="10" Background="{StaticResource Brand50}"
                         VerticalAlignment="Center">
-                    <TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                    <TextBlock Text="&#xE8FD;" FontFamily="{StaticResource IconFont}" FontSize="15"
                                Foreground="{StaticResource Brand600}"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>

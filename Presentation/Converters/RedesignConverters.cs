@@ -465,18 +465,47 @@ namespace PhotoBookRenamer.Presentation.Converters
 
             bool wantIcon = string.Equals(role, "icon", StringComparison.OrdinalIgnoreCase);
 
+            // The two modes each own a colour, used everywhere a mode is named: the chip
+            // on a project card, the icon on the mode-select cards, the empty states.
+            // Folders are green because that mode is the automatic one; the combined run
+            // is the app's own indigo because that mode is the hand-tuned one. One rule,
+            // three places, so the colour actually means something.
+            if (role is not null && role.StartsWith("tint", StringComparison.OrdinalIgnoreCase))
+            {
+                bool folders = mode == AppMode.UniqueFolders;
+                return role.ToLowerInvariant() switch
+                {
+                    "tintbg" => Brush(folders ? "#ECFDF5" : "#EEF2FF"),
+                    "tintborder" => Brush(folders ? "#A7F3D0" : "#C7D2FE"),
+                    "tinttext" => Brush(folders ? "#047857" : "#4338CA"),
+                    "tinticon" => Brush(folders ? "#059669" : "#4F46E5"),
+                    _ => Brushes.Transparent
+                };
+            }
+
             return (mode, wantIcon) switch
             {
                 (AppMode.UniqueFolders, false) => "Уникальные папки",
                 (AppMode.UniqueFolders, true) => "\uE8C0",
                 (AppMode.Combined, false) => "Комбинированный",
-                (AppMode.Combined, true) => "\uE71D",
+                (AppMode.Combined, true) => "\uE8F1",
                 _ => string.Empty
             };
         }
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
             => Binding.DoNothing;
+
+        /// <summary>
+        /// A brush from a hex string, frozen: a freezable that a binding may keep a
+        /// reference to has to be frozen before it is handed out.
+        /// </summary>
+        private static SolidColorBrush Brush(string hex)
+        {
+            var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex)!);
+            brush.Freeze();
+            return brush;
+        }
     }
 
     /// <summary>

@@ -183,6 +183,16 @@ namespace PhotoBookRenamer.Presentation.Views
                     System.Windows.Threading.DispatcherPriority.Loaded);
         }
 
+        /// <summary>
+        /// Commits a pending inline rename, if one is open. Called by the window so a click
+        /// anywhere - the header, the tabs, the panel - applies the name, not only a click
+        /// inside this view.
+        /// </summary>
+        public void TryCommitPendingRename()
+        {
+            if (ProjectNameTextBox.Visibility == Visibility.Visible)
+                CommitProjectName();
+        }
         private void OnProjectNameClick(object sender, MouseButtonEventArgs e)
         {
             BeginProjectRename();
@@ -235,12 +245,18 @@ namespace PhotoBookRenamer.Presentation.Views
             var newName = ProjectNameTextBox.Text.Trim();
             if (newName.Length == 0 || newName == _viewModel.ProjectName) return;
 
-            _viewModel.ProjectName = newName;
+            // Order matters. The header shows CurrentProjectInfo.Name, and the only thing
+            // that makes it re-read is the PropertyChanged raised by the ProjectName setter.
+            // Writing the info object first and the property second is what makes the top
+            // bar follow the rename; the other way round the header re-reads the OLD name,
+            // so renaming worked in the panel and not in the header.
             if (_viewModel.CurrentProjectInfo != null)
             {
                 _viewModel.CurrentProjectInfo.Name = newName;
                 _viewModel.CurrentProjectInfo.LastModified = DateTime.Now;
             }
+
+            _viewModel.ProjectName = newName;
 
             _ = _viewModel.SaveProjectNameOnlyAsync();
         }

@@ -154,7 +154,7 @@
                                 AutomationProperties.Name="Добавить или заменить папки" Margin="0,0,8,0"
                                 ToolTip="Догрузить новые папки или заменить все папки проекта">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE8E9;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                            Foreground="{StaticResource Slate400}" />
                                 <TextBlock Text="Добавить или заменить папки" Margin="6,0,0,0" />
                             </StackPanel>
@@ -164,7 +164,7 @@
                                 AutomationProperties.Name="Сохранить проект" Margin="0,0,8,0"
                                 ToolTip="Сохранить проект и вернуться к списку проектов">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE8E7;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                <TextBlock Text="&#xE74E;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                            Foreground="{StaticResource Slate400}" />
                                 <TextBlock Text="Сохранить проект" Margin="6,0,0,0" />
                             </StackPanel>
@@ -178,7 +178,7 @@
                                 AutomationProperties.Name="Экспортировать" IsEnabled="{Binding CanExport}"
                                 ToolTip="Выгрузка всех книг проекта в одну папку">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE768;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
+                                <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
                                 <TextBlock Text="Экспортировать все книги" Margin="6,0,0,0" Foreground="White" />
                             </StackPanel>
                         </Button>
@@ -221,14 +221,18 @@
                             <TextBlock Text="Выберите папки с фотографиями" Style="{StaticResource TextLgBold}"
                                        HorizontalAlignment="Center" Margin="0,20,0,0" TextAlignment="Center" />
                             <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" TextAlignment="Center"
+                                       Foreground="{StaticResource Slate600}"
+                                       MaxWidth="420" HorizontalAlignment="Center" Margin="0,8,0,0"
+                                       Text="Каждая папка станет отдельной книгой: самое большое фото в ней — обложка, остальные — развороты. Всё это определяется само, вам останется только выбрать папки." />
+                            <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" TextAlignment="Center"
                                        Foreground="{StaticResource Slate500}"
                                        MaxWidth="420" HorizontalAlignment="Center" Margin="0,8,0,20"
-                                       Text="Каждая папка станет отдельной книгой. Самое большое фото в папке определится как обложка, остальные — как развороты." />
+                                       Text="Папки можно выбрать сразу несколько. Чтобы структура собралась правильно, в них должно быть одинаковое число фотографий." />
                             <Button Style="{StaticResource PrimaryButton}" Padding="16,10"
                                     Command="{Binding LoadFoldersCommand}"
                                     HorizontalAlignment="Center" AutomationProperties.Name="Выбрать папки">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE8E9;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
+                                    <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
                                     <TextBlock Text="Выбрать папки" Margin="6,0,0,0" Foreground="White" />
                                 </StackPanel>
                             </Button>
