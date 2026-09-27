@@ -531,40 +531,49 @@ namespace PhotoBookRenamer.Presentation.Converters
     }
 
     /// <summary>
-    /// Colours for a photo's state badge in the file list.
+    /// The fill of a photo's state badge in the file list: ONE saturated colour per state,
+    /// white text on top, no border. That is the whole design.
     ///
-    /// Usage: ConverterParameter="background", "border" or "text". Free is grey because it
-    /// needs no attention, assigned is the green of "done", and shared is the brand colour
-    /// - the one state the photographer has to notice, since the same picture is going into
-    /// every book.
+    /// The owner asked for it four times and the fourth answer is this one, in his words:
+    /// "like you paint a button". The three that came before it are the reason the roles are
+    /// gone rather than extended:
     ///
-    /// All three parts of the badge are coloured, not just its outline. The owner came back
-    /// on this twice: first a tint over the whole row ("I asked for the STATUS, not the
-    /// cell"), then a coloured frame that was "barely visible". A `-50` fill on a 10px
-    /// label is white with a hint, so the fill moved to `-100`, the frame to `-500` and the
-    /// text to `-800`: the badge reads as a coloured object at a glance while scrolling,
-    /// and the 10px label keeps its contrast.
+    ///   1. a tint over the whole row - "I asked for the status, not the cell";
+    ///   2. a coloured frame only - "barely visible";
+    ///   3. a `-100` tint with dark text and a frame - "there is NO fill", which is what a
+    ///      pale tint on a 10px label looks like: white with a hint, so all three states
+    ///      read as grey-with-a-border and none of them reads as its own colour.
+    ///
+    /// So there is exactly one brush, it is saturated, and the label is white on it. A
+    /// converter with a "border" and a "text" role is what let attempt 2 and attempt 3 exist
+    /// side by side and disagree with attempt 1; there is nothing left here to disagree.
+    /// Free is slate because it needs no attention, assigned is the green of "done", and
+    /// shared is the brand colour - the one state the photographer has to notice, since the
+    /// same picture is going into every book.
     /// </summary>
     public class PhotoUsageToBrushConverter : IValueConverter
     {
         public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            var usage = value is PhotoFileInfo file ? file.Usage : PhotoUsage.Free;
-            var role = (parameter as string)?.ToLowerInvariant() ?? "background";
-
-            return (usage, role) switch
+            // `{Binding Usage, Converter=...}` hands over the VALUE of Usage - the enum -
+            // not the PhotoFileInfo it came from. An `is PhotoFileInfo` test therefore never
+            // matched, every state fell through to "free", and all three badges were the
+            // same grey while their labels said "Общий", "Назначен" and "Свободен". The
+            // owner saw that as "it is outlined and filled with grey" and was right: the
+            // colour was grey, always. Both shapes are accepted so the next binding style
+            // cannot reintroduce it.
+            var usage = value switch
             {
-                (PhotoUsage.Assigned, "border") => Brush(0x05, 0x9E, 0x69),   // emerald-600
-                (PhotoUsage.Assigned, "text")   => Brush(0x06, 0x5F, 0x46),   // emerald-800
-                (PhotoUsage.Assigned, _)        => Brush(0xD1, 0xFA, 0xE5),   // emerald-100
+                PhotoUsage u => u,
+                PhotoFileInfo file => file.Usage,
+                _ => PhotoUsage.Free
+            };
 
-                (PhotoUsage.Shared, "border")   => Brush(0x4F, 0x46, 0xE5),   // indigo-600
-                (PhotoUsage.Shared, "text")     => Brush(0x37, 0x30, 0xA3),   // indigo-800
-                (PhotoUsage.Shared, _)          => Brush(0xE0, 0xE7, 0xFF),   // indigo-100
-
-                (_, "border")                   => Brush(0x94, 0xA3, 0xB8),   // slate-400
-                (_, "text")                     => Brush(0x33, 0x41, 0x55),   // slate-700
-                _                               => Brush(0xE2, 0xE8, 0xF0)    // slate-200
+            return usage switch
+            {
+                PhotoUsage.Assigned => Brush(0x10, 0xB9, 0x81),   // emerald-500
+                PhotoUsage.Shared   => Brush(0x63, 0x66, 0xF1),   // brand-500
+                _                    => Brush(0x94, 0xA3, 0xB8)    // slate-400
             };
         }
 

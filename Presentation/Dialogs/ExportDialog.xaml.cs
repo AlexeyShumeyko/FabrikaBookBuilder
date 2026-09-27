@@ -30,6 +30,16 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         private bool _isRunning;
         private bool _exportSucceeded;
 
+        /// <summary>
+        /// The per-book-subfolders choice, held here and NOT read back off the control.
+        ///
+        /// It used to be `get => SubfoldersCheck.IsChecked == true` with a setter that wrote
+        /// `SubfoldersCheck.IsChecked = value` - a two-way binding whose source wrote the
+        /// target back, which is a binding loop. Ticking the box threw, which is what the
+        /// owner hit: the option is useless if clicking it crashes the dialog.
+        /// </summary>
+        private bool _perBookSubfolders;
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         /// <summary>
@@ -102,10 +112,11 @@ namespace PhotoBookRenamer.Presentation.Dialogs
 
         public bool PerBookSubfolders
         {
-            get => SubfoldersCheck.IsChecked == true;
+            get => _perBookSubfolders;
             set
             {
-                SubfoldersCheck.IsChecked = value;
+                if (_perBookSubfolders == value) return;
+                _perBookSubfolders = value;
                 Raise(nameof(PerBookSubfolders));
                 Raise(nameof(CanStart));
             }
@@ -165,8 +176,38 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                 : Path.GetFileName(project.OutputFolder.TrimEnd(Path.DirectorySeparatorChar));
             if (string.IsNullOrWhiteSpace(name)) name = "PhotoBookExport";
 
-            return Path.Combine(
+            // The base name is only a starting point: the real target is always the first
+            // free PhotoBookExportN under it, so no two exports can land in one folder.
+            return UniqueExportFolder(
                 Environment.GetFolderPath(Environment.SpecialFolder.Desktop), name);
+        }
+
+        /// <summary>
+        /// The first folder named <c>base</c>, <c>base1</c>, <c>base2</c>, ... under
+        /// <paramref name="parent"/> that does not exist yet.
+        ///
+        /// The owner's rule: every export gets its own folder, so exporting the same project
+        /// five times leaves five folders and two runs can never be mixed up. The plain name
+        /// is used while it is free and the index is added from 1, so the first export on a
+        /// clean desktop is <c>PhotoBookExport</c> and not <c>PhotoBookExport0</c>.
+        ///
+        /// Shared by the default and by "Обзор": choosing a parent by hand must not be a way
+        /// to get the old overwrite-everything behaviour back.
+        /// </summary>
+        internal static string UniqueExportFolder(string parent, string @base = "PhotoBookExport")
+        {
+            var root = Path.Combine(parent, @base);
+            if (!Directory.Exists(root) && !File.Exists(root)) return root;
+
+            for (int i = 1; i < 10_000; i++)
+            {
+                var candidate = Path.Combine(parent, $"{@base}{i}");
+                if (!Directory.Exists(candidate) && !File.Exists(candidate)) return candidate;
+            }
+
+            // Ten thousand exports into one parent is not a case worth a different failure
+            // mode; fall back to a timestamp rather than overwriting somebody's folder.
+            return Path.Combine(parent, $"{@base}-{DateTime.Now:yyyyMMdd-HHmmss}");
         }
 
         // ------------------------------------------------------------------
@@ -186,7 +227,8 @@ namespace PhotoBookRenamer.Presentation.Dialogs
 
             if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
 
-            TargetFolder = Path.Combine(dialog.SelectedPath, "PhotoBookExport");
+            // Still a fresh folder inside the chosen parent - see UniqueExportFolder.
+            TargetFolder = UniqueExportFolder(dialog.SelectedPath);
         }
 
         private async void OnExportClick(object sender, RoutedEventArgs e)

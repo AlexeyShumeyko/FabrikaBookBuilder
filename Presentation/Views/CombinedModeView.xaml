@@ -363,16 +363,15 @@
                                                                Foreground="{StaticResource Slate400}" />
                                                 </StackPanel>
 
-                                                <!-- Free / assigned / shared: a bright frame in the
-                                                     state's own colour, so the state is readable
-                                                     while scrolling, not only on close inspection. -->
+                                                <!-- Free / assigned / shared: one solid colour per
+                                                     state, white text on it, no border. Painted
+                                                     like a button, which is what the owner
+                                                     asked for after three other attempts. -->
                                                 <Border Grid.Column="1" HorizontalAlignment="Right"
-                                                        VerticalAlignment="Center" CornerRadius="7" Padding="8,3"
-                                                        BorderThickness="1.5"
-                                                        Background="{Binding Usage, Converter={StaticResource PhotoUsageToBrushConverter}}"
-                                                        BorderBrush="{Binding Usage, Converter={StaticResource PhotoUsageToBrushConverter}, ConverterParameter=border}">
-                                                    <TextBlock Text="{Binding UsageText}" FontSize="10" FontWeight="Bold"
-                                                               Foreground="{Binding Usage, Converter={StaticResource PhotoUsageToBrushConverter}, ConverterParameter=text}" />
+                                                        VerticalAlignment="Center" CornerRadius="6" Padding="8,3"
+                                                        Background="{Binding Usage, Converter={StaticResource PhotoUsageToBrushConverter}}">
+                                                    <TextBlock Text="{Binding UsageText}" FontSize="10" FontWeight="SemiBold"
+                                                               Foreground="White" />
                                                 </Border>
                                             </Grid>
                                         </Border>

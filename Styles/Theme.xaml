@@ -190,6 +190,96 @@
       Ghost:     no border, transparent, 12px
     -->
 
+    <!--
+      The surface every custom dialog sits on.
+
+      Two things it has to solve, both of them reported by the owner on the export window:
+      a "grey shadow with corners" behind the dialog, and a dialog that melted into the
+      application's own background.
+
+      The corners: a Window with AllowsTransparency="True" has NO system shadow - WPF draws
+      one with DropShadowEffect, and that effect is painted INSIDE the window's own bounds.
+      Give the border a shadow and no margin and the shadow is cut off square at the window
+      edge, which is the grey frame with visible corners. Every dialog therefore wraps its
+      surface in a transparent host with a Margin (see DialogHost below) so the shadow has
+      room to fall into.
+
+      The blending: the surface is Surface (white) with a Slate300 border and a bigger
+      shadow, and the header band is SurfaceMuted with a hairline under it. On the app's own
+      SurfaceMuted background the dialog now reads as a raised sheet rather than as the
+      same white card twice.
+    -->
+    <Style x:Key="DialogSurface" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource Surface}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Slate300}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Effect" Value="{StaticResource ShadowModal}" />
+    </Style>
+
+    <!--
+      The transparent room the shadow falls into. A Window that uses AllowsTransparency
+      and puts its surface flush against the window edge cannot have a soft shadow: the
+      effect is clipped to the bounds and comes out square.
+    -->
+    <Style x:Key="DialogShadowRoom" TargetType="Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Margin" Value="30" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <!--
+      Destructive action: PrimaryButton's shape in red. It carries its own template on
+      purpose - PrimaryButton's ControlTemplate sets the hover fill on the inner Border by
+      name, and a derived style cannot reach that, so BasedOn would leave a red button that
+      turns indigo on hover.
+    -->
+    <Style x:Key="DangerButton" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Background" Value="{StaticResource Red600}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="14,8" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="bd" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="12" SnapsToDevicePixels="True">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270"
+                                              Opacity="0.05" RenderingBias="Quality" Color="#0F172A" />
+                        </Border.Effect>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"
+                                          TextElement.Foreground="{TemplateBinding Foreground}"
+                                          TextElement.FontWeight="{TemplateBinding FontWeight}"
+                                          TextElement.FontSize="{TemplateBinding FontSize}"
+                                          TextElement.FontFamily="{TemplateBinding FontFamily}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="{StaticResource Red700}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="bd" Property="Opacity" Value="0.9" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="bd" Property="Background" Value="{StaticResource Slate200}" />
+                            <Setter Property="Foreground" Value="{StaticResource Slate400}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="PrimaryButton" TargetType="Button">
         <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
         <Setter Property="FontSize" Value="12" />

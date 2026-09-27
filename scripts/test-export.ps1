@@ -80,8 +80,32 @@ function Find-ByName($rootEl, [string]$label, [string]$typeName) {
     return $null
 }
 
-$outDir = Join-Path ([Environment]::GetFolderPath('Desktop')) 'PhotoBookExport'
-if (Test-Path $outDir) { Remove-Item $outDir -Recurse -Force }
+# The export always writes to a folder that does not exist yet (PhotoBookExport, then
+# PhotoBookExport1, ...). The plain name and every numbered one are left alone, so this run
+# is forced to the first free name - and, because the folders before it hold real files from
+# earlier runs, the rule is assertable: they must keep exactly what they had, instead of an
+# earlier export's files being silently overwritten.
+$desktop = [Environment]::GetFolderPath('Desktop')
+$base = 'PhotoBookExport'
+$outDir = $base
+$index = 0
+for ($i = 0; $i -lt 500; $i++) {
+    $candidate = if ($i -eq 0) { $base } else { "$base$i" }
+    if (-not (Test-Path (Join-Path $desktop $candidate))) { $outDir = $candidate; $index = $i; break }
+}
+$expected = $outDir
+Write-Host "export must land in: $expected (the first free name)"
+
+# Everything before it in the sequence: it must be untouched.
+$takenBefore = @{}
+if ($index -gt 0) {
+    for ($i = 0; $i -lt $index; $i++) {
+        $name = if ($i -eq 0) { $base } else { "$base$i" }
+        $takenBefore[$name] = @(Get-ChildItem (Join-Path $desktop $name) -Recurse -File).Count
+    }
+    Write-Host "occupied folders that must not be touched: $(($takenBefore.Keys | Sort-Object) -join ', ')"
+}
+
 
 $exe = Join-Path $root 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
 $proc = Start-Process -FilePath $exe -PassThru
@@ -176,6 +200,18 @@ try {
     }
     Start-Sleep -Seconds 3
 
+    # Every folder that was already occupied must come out of this run byte for byte: the
+    # owner's rule is that each export gets its own folder, so a second export of the same
+    # project can never overwrite the first one's files.
+    foreach ($name in $takenBefore.Keys) {
+        $after = @(Get-ChildItem (Join-Path $desktop $name) -Recurse -File).Count
+        if ($after -ne $takenBefore[$name]) {
+            throw "the occupied folder $name was written to after all ($($takenBefore[$name]) before, $after after)"
+        }
+    }
+
+    $outDir = Join-Path $desktop $expected
+    Write-Host "exported into: $expected"
     if (-not (Test-Path $outDir)) { throw "no output at $outDir" }
 
     $files = @(Get-ChildItem $outDir -Recurse -File | Sort-Object FullName)

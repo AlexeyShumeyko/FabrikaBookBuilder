@@ -687,20 +687,22 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 if (value < 1) value = 1;
                 if (value > 99) value = 99;
-                
+
+                // Like NumberOfBooks, and deliberately NOT like it used to be: the setter
+                // used to call SynchronizeSpreadsInAllBooks() the moment the field lost
+                // focus, so typing a smaller number deleted the last spreads - and the
+                // photos in them - before the button was ever pressed. The confirmation
+                // then ran and correctly found nothing left to lose, so the question
+                // never appeared and a filled spread was discarded silently.
+                //
+                // The number is now only a wish: the structure changes when the button is
+                // pressed, and GenerateStructure asks first, exactly as it does for books.
                 if (SetProperty(ref _spreadsPerBook, value))
                 {
-                    if (IsStructureConfirmed && Books.Count > 0)
+                    IsStructureConfirmed = false;
+                    if (ConfirmStructureCommand is RelayCommand confirmCmd)
                     {
-                        SynchronizeSpreadsInAllBooks();
-                    }
-                    else
-                    {
-                        IsStructureConfirmed = false;
-                        if (ConfirmStructureCommand is RelayCommand confirmCmd)
-                        {
-                            confirmCmd.NotifyCanExecuteChanged();
-                        }
+                        confirmCmd.NotifyCanExecuteChanged();
                     }
                 }
             }
@@ -961,14 +963,13 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             string message =
                 $"Уменьшить структуру до {targetBooks} книг по {targetSpreads} разворотов?" +
-                $"\n\nБудет удалено с конца — {string.Join("; ", parts)}.{photoLine}" +
-                "\n\nОтменить изменение?";
+                $"\n\nБудет удалено с конца — {string.Join("; ", parts)}.{photoLine}";
 
-            return System.Windows.MessageBox.Show(
-                       message,
-                       "Подтверждение изменения структуры",
-                       System.Windows.MessageBoxButton.YesNo,
-                       System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes;
+            return Presentation.Dialogs.AppDialogs.Confirm(
+                "Уменьшить структуру?",
+                message,
+                "Уменьшить",
+                destructive: true);
         }
 
         private void SynchronizeSpreadsInAllBooks()
@@ -1674,18 +1675,21 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             if (CurrentProjectInfo != null && Project != null && 
                 (Books.Count > 0 || AvailableFiles.Count > 0))
             {
-                var result = System.Windows.MessageBox.Show(
-                    "Проект не сохранён. Сохранить перед выходом?",
-                    "Подтверждение",
-                    System.Windows.MessageBoxButton.YesNoCancel,
-                    System.Windows.MessageBoxImage.Question);
-                
-                if (result == System.Windows.MessageBoxResult.Yes)
+                // Save / discard / stay. Kept as three buttons rather than a two-button
+                // box: "не сохранять" throws work away and "отмена" keeps the user on the
+                // screen, and neither can be inferred from the other.
+                var result = Presentation.Dialogs.AppDialogs.Ask(
+                    "Сохранить перед выходом?",
+                    "В проекте есть несохранённые изменения. Сохранить их перед возвратом к списку проектов?",
+                    "Сохранить",
+                    "Не сохранять");
+
+                if (result == Presentation.Dialogs.ConfirmOutcome.Primary)
                 {
                     await SaveProjectAsync();
                     return;
                 }
-                else if (result == System.Windows.MessageBoxResult.Cancel)
+                else if (result == Presentation.Dialogs.ConfirmOutcome.Cancelled)
                 {
                     return;
                 }

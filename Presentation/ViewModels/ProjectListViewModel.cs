@@ -535,13 +535,14 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             if (projectInfo == null) return;
 
-            var result = System.Windows.MessageBox.Show(
-                $"Вы уверены, что хотите удалить проект \"{projectInfo.Name}\"?",
-                "Подтверждение удаления",
-                System.Windows.MessageBoxButton.YesNo,
-                System.Windows.MessageBoxImage.Question);
+            var result = Presentation.Dialogs.AppDialogs.Confirm(
+                "Удалить проект?",
+                $"Проект \"{projectInfo.Name}\" будет удалён вместе со своей структурой.\n\n" +
+                "Фотографии на диске останутся на месте — удаляется только проект.",
+                "Удалить",
+                destructive: true);
 
-            if (result == System.Windows.MessageBoxResult.Yes)
+            if (result)
             {
                 try
                 {

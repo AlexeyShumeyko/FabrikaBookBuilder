@@ -62,9 +62,23 @@ namespace PhotoBookRenamer.Application
                     foreach (var book in project.Books)
                     {
                         var bookIndex = book.BookIndex;
-                        var bookFolder = options.PerBookSubfolders
-                            ? Path.Combine(outputFolder, SanitizeFolderName($"{bookIndex:D3} {book.Name}"))
-                            : outputFolder;
+                        var bookFolder = outputFolder;
+
+                        if (options.PerBookSubfolders)
+                        {
+                            bookFolder = Path.Combine(outputFolder, SanitizeFolderName($"{bookIndex:D3} {book.Name}"));
+
+                            // The per-book folder must exist BEFORE its first file is copied
+                            // into it. It is created here rather than left to CopyFileAsync
+                            // because the whole work list is built up front, and a book whose
+                            // folder is missing fails inside Task.WhenAll - which surfaces as
+                            // "could not copy" with no hint about which folder, or as a raw
+                            // exception with nothing in the UI to point at.
+                            if (!Directory.Exists(bookFolder))
+                            {
+                                Directory.CreateDirectory(bookFolder);
+                            }
+                        }
 
                         // Копируем обложку
                         if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))

@@ -9,6 +9,10 @@ param(
     [string]$ProjectName = '',
     [string]$Dialog = 'Export',
     [string]$Out = 'doc\shots\dialog.png',
+    [ValidateSet('Unique', 'Combined')]
+    [string]$Mode = 'Unique',
+    [switch]$NoProject,
+    [string]$Toggle = '',
     [int]$TimeoutSeconds = 30
 )
 
@@ -57,6 +61,22 @@ public class Win3 {
         }, IntPtr.Zero);
         return found.ToArray();
     }
+
+    /// <summary>
+    /// The main window: the visible top-level one with no owner. Opening a project destroys
+    /// and recreates the window, so the handle captured at launch is stale afterwards.
+    /// </summary>
+    public static IntPtr FindTopLevel(uint processId) {
+        var found = TopLevelWindows((int)processId);
+        IntPtr best = IntPtr.Zero;
+        foreach (var h in found) {
+            if (GetWindow(h, 4) != IntPtr.Zero) continue;   // GW_OWNER: a dialog, not the app
+            best = h;
+        }
+        if (best != IntPtr.Zero) return best;
+        return found.Length > 0 ? found[0] : IntPtr.Zero;
+    }
+    [DllImport("user32.dll")] private static extern IntPtr GetWindow(IntPtr h, uint cmd);
 }
 "@
 
@@ -91,38 +111,79 @@ try {
     Start-Sleep -Seconds 2
 
     # Open a project so the export button is enabled.
-    if ($ProjectName) {
+    if (-not $NoProject) {
         $el = [System.Windows.Automation.AutomationElement]::FromHandle($proc.MainWindowHandle)
-        $textCond = New-Object System.Windows.Automation.PropertyCondition(
-            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-            [System.Windows.Automation.ControlType]::Text)
-        $titleEl = $null
-        foreach ($t in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $textCond)) {
-            if ($t.Current.Name -like "*$ProjectName*") { $titleEl = $t; break }
-        }
-        if ($null -eq $titleEl) { throw "no project titled '$ProjectName'" }
+        $openLabel = '*' + [char]0x041E + [char]0x0442 + [char]0x043A + [char]0x0440 + [char]0x044B + [char]0x0442 + [char]0x044C + ' ' + [char]0x041F + [char]0x0440 + [char]0x043E + [char]0x0435 + [char]0x043A + [char]0x0442 + '*'
 
-        $walker = [System.Windows.Automation.TreeWalker]::ControlViewWalker
-        $node = $walker.GetParent($titleEl)
-        $btn = $null
-        for ($up = 0; $up -lt 10 -and $null -ne $node -and $null -eq $btn; $up++) {
-            $b2 = $node.FindAll([System.Windows.Automation.TreeScope]::Descendants,
-                (New-Object System.Windows.Automation.PropertyCondition(
-                    [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-                    [System.Windows.Automation.ControlType]::Button)))
-            foreach ($b in $b2) { if ($b.Current.Name -like '*Открыть проект*') { $btn = $b; break } }
-            $node = $walker.GetParent($node)
+        if (-not $ProjectName) {
+            # Pick the newest project of the right mode from the index. A hardcoded index
+            # stops being one after any project is opened, because opening rewrites
+            # LastModified and moves that card to the top of the list.
+            $indexPath = Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\Projects\projects.json'
+            $parsed = Get-Content $indexPath -Raw -Encoding UTF8 | ConvertFrom-Json
+            $all = @($parsed | ForEach-Object { $_ } | Sort-Object { [datetime]$_.lastModified } -Descending)
+            $wantMode = if ($Mode -eq 'Combined') { 3 } else { 2 }
+            $pick = @($all | Where-Object { $_.mode -eq $wantMode -and $_.bookCount -gt 0 })[0]
+            if (-not $pick) { throw "no filled $Mode project in the index" }
+            $OpenAt = [array]::IndexOf($all, $pick)
+            Write-Host "opening '$($pick.name)' ($Mode, card $OpenAt)"
         }
-        if ($null -eq $btn) { throw 'no Open button in the card' }
+
+        $btn = $null
+        if ($ProjectName) {
+            $titleEl = $null
+            foreach ($t in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $textCond)) {
+                if ($t.Current.Name -like "*$ProjectName*") { $titleEl = $t; break }
+            }
+            if ($null -eq $titleEl) { throw "no project titled '$ProjectName'" }
+
+            $walker = [System.Windows.Automation.TreeWalker]::ControlViewWalker
+            $node = $walker.GetParent($titleEl)
+            for ($up = 0; $up -lt 10 -and $null -ne $node -and $null -eq $btn; $up++) {
+                $b2 = $node.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+                    (New-Object System.Windows.Automation.PropertyCondition(
+                        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+                        [System.Windows.Automation.ControlType]::Button)))
+                foreach ($b in $b2) { if ($b.Current.Name -like '*Открыть проект*') { $btn = $b; break } }
+                $node = $walker.GetParent($node)
+            }
+        }
+        else {
+            # Open by position: the newest project of the wanted mode.
+            $openCond = New-Object System.Windows.Automation.PropertyCondition(
+                [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+                [System.Windows.Automation.ControlType]::Button)
+            $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+            while ($null -eq $btn -and (Get-Date) -lt $deadline) {
+                $cards = @($el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $openCond) |
+                    Where-Object { $_.Current.Name -like $openLabel })
+                if ($cards.Count -gt $OpenAt) { $btn = $cards[$OpenAt] }
+                if ($null -eq $btn) { Start-Sleep -Milliseconds 700 }
+            }
+        }
+        if ($null -eq $btn) { throw 'no Open button for the chosen project' }
         $btn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
         Start-Sleep -Seconds 7
     }
 
-    # Trigger the dialog.
-    $main = [System.Windows.Automation.AutomationElement]::FromHandle($proc.MainWindowHandle)
+    # Trigger the dialog. Opening a project recreates the top-level window, so the handle
+    # captured at launch is stale by now - re-resolve it, or the search runs against a
+    # window that no longer exists and finds nothing.
+    $mainHwndLive = [intptr]::Zero
+    for ($try = 0; $try -lt 20; $try++) {
+        $mainHwndLive = [Win3]::FindTopLevel([uint32]$proc.Id)
+        if ($mainHwndLive -ne [intptr]::Zero) { break }
+        Start-Sleep -Milliseconds 500
+    }
+    if ($mainHwndLive -eq [intptr]::Zero) { throw 'the application window disappeared after opening the project' }
+    $main = [System.Windows.Automation.AutomationElement]::FromHandle($mainHwndLive)
     $trigger = switch ($Dialog) {
-        'Export'  { Find-ByName $main 'Экспорт' 'Button' }
-        'Folders' { Find-ByName $main 'Выбрать папки' 'Button' }
+        # The two modes label the export button differently: the folders mode says
+        # "Экспорт", the combined one "Экспортировать все книги". Try both.
+        'Export'  { $a = Find-ByName $main 'Экспортировать все книги' 'Button'
+                    if ($null -eq $a) { $a = Find-ByName $main 'Экспорт' 'Button' }
+                    $a }
+        'Folders' { Find-ByName $main 'Добавить или заменить папки' 'Button' }
         default   { throw "unknown -Dialog '$Dialog'" }
     }
     if ($null -eq $trigger) { throw "could not find the '$Dialog' trigger button" }
@@ -143,6 +204,26 @@ try {
 
     [void][Win3]::SetForegroundWindow($dlgHwnd)
     Start-Sleep -Seconds 1
+
+    # Optional control to work before the screenshot. The export dialog's subfolder
+    # checkbox is the case: ticking it used to throw, and "does clicking it kill the app"
+    # cannot be seen in a screenshot of the dialog before the click.
+    if ($Toggle) {
+        $dlgEl = [System.Windows.Automation.AutomationElement]::FromHandle($dlgHwnd)
+        $target = $null
+        foreach ($type in 'CheckBox', 'Button') {
+            $target = Find-ByName $dlgEl $Toggle $type
+            if ($null -ne $target) { break }
+        }
+        if ($null -eq $target) { throw "could not find anything named '$Toggle' in the dialog" }
+        $proc.Refresh()
+        if ($proc.HasExited) { throw 'the app already died before the toggle' }
+        $target.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern).Toggle()
+        Start-Sleep -Seconds 2
+        $proc.Refresh()
+        if ($proc.HasExited) { throw "the app died when '$Toggle' was used - that is the bug being hunted" }
+        Write-Host "toggled '$Toggle'; the app is still alive"
+    }
 
     $r = New-Object Win3+RECT
     [void][Win3]::GetWindowRect($dlgHwnd, [ref]$r)
