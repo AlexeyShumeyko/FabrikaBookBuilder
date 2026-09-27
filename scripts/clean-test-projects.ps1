@@ -49,6 +49,7 @@ foreach ($e in $entries) {
     $name = if ($nameMatch.Success) { $nameMatch.Groups[1].Value } else { '' }
     $isTest = $false
     foreach ($pattern in $Names) {
+        if ($name -eq $pattern.Trim()) { $isTest = $true; break }   # exact name first
         if ($name -like $pattern) { $isTest = $true; break }
     }
     if ($isTest) { $dropped += ,$e } else { $kept += ,$e }

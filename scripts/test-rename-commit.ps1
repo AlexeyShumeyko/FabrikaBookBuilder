@@ -99,13 +99,20 @@ try {
     [void][Win8]::SetForegroundWindow($proc.MainWindowHandle)
     Start-Sleep -Seconds 3
 
-    # The newest filled project of the folders mode.
+    # A FIXTURE, never the owner's newest project. This test renames whatever it opens, and
+    # it did exactly that: the owner's "Новый проект 2026-09-27 15:23" came out of it called
+    # "Rename-check" and had to be renamed back by hand. A test that edits data must only
+    # ever touch data it made.
     $indexPath = Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\Projects\projects.json'
     $all = @((Get-Content $indexPath -Raw -Encoding UTF8 | ConvertFrom-Json) |
         Sort-Object { [datetime]$_.lastModified } -Descending)
-    $at = 0
-    for ($i = 0; $i -lt $all.Count; $i++) { if ($all[$i].mode -eq 2 -and $all[$i].bookCount -gt 0) { $at = $i; break } }
-    Write-Host "opening '$($all[$at].name)' (card $at)"
+    $at = -1
+    for ($i = 0; $i -lt $all.Count; $i++) {
+        if ($all[$i].mode -eq 2 -and $all[$i].name -like 'Testovyy*') { $at = $i; break }
+    }
+    if ($at -lt 0) { throw 'no folders fixture - run make-test-fixture.ps1 first (this test must not touch the owner''s projects)' }
+    $originalName = $all[$at].name
+    Write-Host "opening fixture '$originalName' (card $at)"
 
     $hwnd = [Win8]::FindTopLevel([uint32]$proc.Id)
     $el = [System.Windows.Automation.AutomationElement]::FromHandle($hwnd)

@@ -116,7 +116,11 @@
                                     AutomationProperties.Name="Переименовать проект">
                                 <TextBlock Text="&#xE70F;" FontFamily="{StaticResource IconFont}" FontSize="12" />
                             </Button>
-                            <TextBox x:Name="ProjectNameTextBox" Visibility="Collapsed" Width="360"
+                            <!-- 240, not 360: this panel also carries the structure
+                                 controls, and the wider box ran out of room and was
+                                 cut in half mid-word. -->
+                            <TextBox x:Name="ProjectNameTextBox" Visibility="Collapsed"
+                                     Width="240" MaxWidth="240" MinWidth="120"
                                      Margin="6,0,0,0" VerticalAlignment="Center" FontSize="13"
                                      LostFocus="OnProjectNameLostFocus" KeyDown="OnProjectNameKeyDown" />
                         </StackPanel>
@@ -433,7 +437,7 @@
                                         <TextBlock Text="Задайте структуру" Style="{StaticResource TextXsSemibold}" />
                                         <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" Margin="0,2,0,0"
                                                    Foreground="{StaticResource Slate500}"
-                                                   Text="В панели управления укажите, сколько книг в партии и сколько разворотов в каждой, и нажмите «Добавить структуру». Потом её можно дорастить или уменьшить." />
+                                                   Text="В панели управления укажите число книг и число разворотов — оно одинаково для всех книг партии — и нажмите «Добавить структуру». Потом её можно дорастить или уменьшить." />
                                     </StackPanel>
                                 </Grid>
                                 <Grid Margin="0,0,0,14">
@@ -450,7 +454,7 @@
                                         <TextBlock Text="Загрузите фотографии" Style="{StaticResource TextXsSemibold}" />
                                         <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" Margin="0,2,0,0"
                                                    Foreground="{StaticResource Slate500}"
-                                                   Text="Кнопкой «Загрузить фото» или перетащите файлы в зону загрузки. Они попадут в список слева — оттуда их можно ставить в слоты." />
+                                                   Text="Кнопкой «Загрузить фото», перетаскиванием в зону загрузки — или сразу в нужную ячейку. Файлы, оставшиеся в списке слева, ставятся в слоты перетаскиванием." />
                                     </StackPanel>
                                 </Grid>
                                 <Grid>
@@ -467,7 +471,7 @@
                                         <TextBlock Text="Расставьте фотографии" Style="{StaticResource TextXsSemibold}" />
                                         <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" Margin="0,2,0,0"
                                                    Foreground="{StaticResource Slate500}"
-                                                   Text="Перетащите фото в слот нужной книги. Если фото должно повторяться во всех книгах — нажмите на слоте «Во все книги», и на экспорте оно уйдёт одним общим файлом." />
+                                                   Text="Перетащите фото в слот нужной книги. Чтобы поставить один и тот же разворот или обложку сразу во все книги, нажмите на слоте «Во все книги»." />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
