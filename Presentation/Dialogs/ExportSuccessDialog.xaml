@@ -9,48 +9,58 @@
         WindowStyle="None"
         AllowsTransparency="True"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
+        ShowInTaskbar="False"
         FontFamily="{StaticResource UiFont}">
 
-    <Border Background="{StaticResource Surface}" CornerRadius="24"
-            BorderBrush="{StaticResource BorderDefault}" BorderThickness="1">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="50" ShadowDepth="12" Direction="270"
-                              Opacity="0.25" RenderingBias="Quality" Color="#000000" />
-        </Border.Effect>
+    <!-- The same two styles as every other window in the app, for the same reason: with
+         AllowsTransparency there is no system shadow, the DropShadowEffect is painted
+         inside the window, and a surface on the window edge gives the square-cut "grey
+         shadow with corners". DialogShadowRoom's margin gives it somewhere to fall. -->
+    <Border Style="{StaticResource DialogShadowRoom}">
+        <Border Style="{StaticResource DialogSurface}">
+            <StackPanel>
 
-        <StackPanel Margin="28">
-            <!-- Success mark -->
-            <Border Width="56" Height="56" CornerRadius="999" HorizontalAlignment="Center"
-                    Background="{StaticResource Emerald100}">
-                <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="24"
-                           Foreground="{StaticResource Emerald600}"
-                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-            </Border>
+                <!-- Body: the success mark, the news, and where the files went. -->
+                <StackPanel Margin="28,26,28,0">
 
-            <TextBlock Text="Экспорт завершён!" Style="{StaticResource TextH3}"
-                       HorizontalAlignment="Center" Margin="0,18,0,0" TextAlignment="Center" />
-            <TextBlock x:Name="SummaryText" Style="{StaticResource TextCaption}"
-                       HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
-                       Margin="0,8,0,0" MaxWidth="340" />
+                    <Border Width="56" Height="56" CornerRadius="28" HorizontalAlignment="Center"
+                            Background="{StaticResource Emerald100}">
+                        <TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" FontSize="24"
+                                   Foreground="{StaticResource Emerald600}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
 
-            <!-- Destination -->
-            <Border Background="{StaticResource Slate50}" BorderBrush="{StaticResource Slate200}"
-                    BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,18,0,0">
-                <StackPanel>
-                    <TextBlock Text="Файлы сохранены в:" Style="{StaticResource TextMicro}"
-                               Foreground="{StaticResource TextFaint}" Margin="0,0,0,4" />
-                    <TextBlock x:Name="PathTextBlock" Style="{StaticResource TextMono}"
-                               TextWrapping="Wrap" Foreground="{StaticResource TextDefault}" />
+                    <TextBlock Text="Экспорт завершён!" Style="{StaticResource TextH3}"
+                               HorizontalAlignment="Center" Margin="0,18,0,0" TextAlignment="Center" />
+                    <TextBlock x:Name="SummaryText" Style="{StaticResource TextCaption}"
+                               HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                               Margin="0,8,0,0" MaxWidth="340" />
+
+                    <!-- The folder is always a new one, so it is worth showing in full. -->
+                    <Border Background="{StaticResource SurfaceMuted}" BorderBrush="{StaticResource BorderDefault}"
+                            BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,18,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Файлы сохранены в:" Style="{StaticResource TextMicro}"
+                                       Foreground="{StaticResource TextFaint}" Margin="0,0,0,4" />
+                            <TextBlock x:Name="PathTextBlock" Style="{StaticResource TextMono}"
+                                       TextWrapping="Wrap" Foreground="{StaticResource TextDefault}" />
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
-            </Border>
 
-            <Button Style="{StaticResource PrimaryButton}" Click="OnGoToFolderClick"
-                    AutomationProperties.Name="Перейти к файлам" Margin="0,18,0,0" IsDefault="True">
-                <TextBlock Text="Перейти к файлам" Foreground="White" />
-            </Button>
-            <Button Style="{StaticResource GhostButton}" Click="OnContinueClick"
-                    AutomationProperties.Name="Вернуться к редактированию" Margin="0,8,0,0"
-                    Foreground="{StaticResource TextMuted}" Content="Вернуться к редактированию" />
-        </StackPanel>
+                <!-- Footer: hairline, then the actions - the same shape the export dialog
+                     ends with, so the two windows do not look like two programs. -->
+                <Border Height="1" Background="{StaticResource BorderDefault}" Margin="0,22,0,0" />
+                <StackPanel Margin="28,16,28,20">
+                    <Button Style="{StaticResource PrimaryButton}" Click="OnGoToFolderClick"
+                            AutomationProperties.Name="Перейти к файлам" IsDefault="True">
+                        <TextBlock Text="Перейти к файлам" Foreground="White" />
+                    </Button>
+                    <Button Style="{StaticResource GhostButton}" Click="OnContinueClick"
+                            AutomationProperties.Name="Вернуться к редактированию" Margin="0,8,0,0"
+                            Foreground="{StaticResource TextMuted}" Content="Вернуться к редактированию" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
     </Border>
 </Window>
