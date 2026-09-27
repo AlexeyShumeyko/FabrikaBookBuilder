@@ -72,70 +72,86 @@
         </Border>
 
         <!-- ============================================================== -->
-        <!--  Control panel. One shape, always, and the same three zones   -->
-        <!--  the unique mode uses: who the project is on the left, the    -->
-        <!--  run settings in the middle, what you do with it on the right. -->
+        <!--  Control panel. A deliberate copy of the unique mode's one:  -->
+        <!--  Card + Padding 20, a 48x48 mode badge, "Проект:" + name +    -->
+        <!--  pencil, one grey summary line, the same button styles.       -->
+        <!--  The run fields sit in the CENTRE, held between two star      -->
+        <!--  columns so they stay in the middle whatever the window does.  -->
         <!-- ============================================================== -->
-        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="16" Margin="0,0,0,16"
+        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="20" Margin="0,0,0,24"
                 Effect="{StaticResource ShadowSubtle}">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" MinWidth="280" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" MinWidth="300" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" MinWidth="300" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: project name, readiness underneath -->
-                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,24,0">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock x:Name="ProjectNameTextBlock" Text="{Binding DisplayProjectName}"
-                                   Style="{StaticResource TextSmBold}" VerticalAlignment="Center"
-                                   MaxWidth="300" TextTrimming="CharacterEllipsis" Cursor="Hand"
-                                   MouseLeftButtonDown="OnProjectNameClick" />
-                        <TextBlock Text="&#xE70F;" FontFamily="{StaticResource IconFont}" FontSize="12"
-                                   Margin="6,0,0,0" VerticalAlignment="Center" Cursor="Hand"
-                                   Foreground="{StaticResource Slate400}"
-                                   ToolTip="Переименовать" MouseLeftButtonDown="OnProjectNameClick" />
-                        <TextBox x:Name="ProjectNameTextBox" Visibility="Collapsed" Width="300"
-                                 Margin="6,0,0,0" VerticalAlignment="Center" FontSize="13"
-                                 LostFocus="OnProjectNameLostFocus" KeyDown="OnProjectNameKeyDown" />
+                <!-- Left: mode badge, project name, one summary line -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- p-3 indigo-50 rounded-xl border indigo-100, glyph 20 -->
+                    <Border Width="48" Height="48" CornerRadius="12" VerticalAlignment="Center"
+                            Background="{StaticResource Indigo50}" BorderBrush="{StaticResource Indigo100}"
+                            BorderThickness="1">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="4" ShadowDepth="1" Direction="270"
+                                              Opacity="0.05" RenderingBias="Quality" Color="#0F172A" />
+                        </Border.Effect>
+                        <TextBlock Text="&#xE8F1;" FontFamily="{StaticResource IconFont}" FontSize="20"
+                                   Foreground="{StaticResource Indigo600}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+
+                    <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Проект:" Style="{StaticResource TextSmBold}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="ProjectNameTextBlock" Text="{Binding DisplayProjectName}"
+                                       Style="{StaticResource TextSmBold}" Margin="6,0,0,0"
+                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                       MaxWidth="420" Cursor="Hand"
+                                       MouseLeftButtonDown="OnProjectNameClick" />
+                            <Button Style="{StaticResource IconButton}" Margin="6,0,0,0"
+                                    Click="OnProjectNamePencilClick"
+                                    ToolTip="Переименовать проект"
+                                    AutomationProperties.Name="Переименовать проект">
+                                <TextBlock Text="&#xE70F;" FontFamily="{StaticResource IconFont}" FontSize="12" />
+                            </Button>
+                            <TextBox x:Name="ProjectNameTextBox" Visibility="Collapsed" Width="360"
+                                     Margin="6,0,0,0" VerticalAlignment="Center" FontSize="13"
+                                     LostFocus="OnProjectNameLostFocus" KeyDown="OnProjectNameKeyDown" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                            <TextBlock Text="{Binding StructureProgress}" Style="{StaticResource TextXs}"
+                                       Foreground="{StaticResource Slate500}" />
+                        </StackPanel>
                     </StackPanel>
-                    <!-- Same role as the unique mode's "1 обложка • 4 разворота": the one
-                         line that says how far along the project is. -->
-                    <TextBlock Text="{Binding StructureProgress}" Margin="0,3,0,0"
-                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource TextXs}">
-                                <Setter Property="Foreground" Value="{StaticResource Slate500}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding StructureIsComplete}" Value="True">
-                                        <Setter Property="Foreground" Value="{StaticResource Emerald700}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
                 </StackPanel>
 
-                <!-- Middle: the run settings -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <StackPanel Margin="0,0,12,0">
-                        <TextBlock Text="Книг" Style="{StaticResource TextXs}" Margin="0,0,0,4" />
-                        <TextBox Width="80" Text="{Binding NumberOfBooks, UpdateSourceTrigger=LostFocus}"
+                <!-- Centre: the run. Star columns on both sides hold it in the middle. -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                            Margin="24,0">
+                    <StackPanel Margin="0,0,10,0">
+                        <TextBlock Text="Книг" Style="{StaticResource TextMicro}"
+                                   Foreground="{StaticResource Slate500}" Margin="0,0,0,4" />
+                        <TextBox Style="{StaticResource NumberField}"
+                                 Text="{Binding NumberOfBooks, UpdateSourceTrigger=LostFocus}"
+                                 AutomationProperties.Name="Количество книг"
                                  PreviewTextInput="NumberValidationTextBox" />
                     </StackPanel>
-                    <StackPanel Margin="0,0,16,0">
-                        <TextBlock Text="Разворотов в книге" Style="{StaticResource TextXs}" Margin="0,0,0,4" />
-                        <TextBox Width="80" Text="{Binding SpreadsPerBook, UpdateSourceTrigger=LostFocus}"
+                    <StackPanel Margin="0,0,10,0">
+                        <TextBlock Text="Разворотов" Style="{StaticResource TextMicro}"
+                                   Foreground="{StaticResource Slate500}" Margin="0,0,0,4" />
+                        <TextBox Style="{StaticResource NumberField}"
+                                 Text="{Binding SpreadsPerBook, UpdateSourceTrigger=LostFocus}"
+                                 AutomationProperties.Name="Разворотов в книге"
                                  PreviewTextInput="NumberValidationTextBox" />
                     </StackPanel>
-                    <!--
-                      One button, two labels. A second button appearing with the first
-                      book is exactly what used to reshape this panel.
-                    -->
-                    <Button Style="{StaticResource PrimaryButton}" VerticalAlignment="Bottom"
+                    <!-- One button, two labels. A second button that appears with the
+                         first book is exactly what used to reshape this panel. -->
+                    <Button Style="{StaticResource PrimaryButton}" Padding="16,8" VerticalAlignment="Bottom"
                             Command="{Binding ConfirmStructureCommand}"
-                            AutomationProperties.Name="Добавить структуру" Padding="14,10">
+                            AutomationProperties.Name="Добавить структуру">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
                             <TextBlock Text="{Binding StructureButtonText}" Margin="6,0,0,0" Foreground="White" />
@@ -143,20 +159,26 @@
                     </Button>
                 </StackPanel>
 
-                <!-- Right: what you do with the project -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="24,0,0,0">
+                <!-- Right: what you do with the project. Same buttons as the unique mode. -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
+                            HorizontalAlignment="Right">
                     <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"
                             Command="{Binding SaveProjectCommand}"
-                            AutomationProperties.Name="Сохранить проект">
+                            AutomationProperties.Name="Сохранить проект"
+                            ToolTip="Сохранить проект и вернуться к списку проектов">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE8E7;" FontFamily="{StaticResource IconFont}" FontSize="12"
                                        Foreground="{StaticResource Slate400}" />
                             <TextBlock Text="Сохранить проект" Margin="6,0,0,0" />
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource PrimaryButton}"
+
+                    <Border Width="1" Height="20" Background="{StaticResource Slate200}" Margin="0,0,8,0" />
+
+                    <Button Style="{StaticResource PrimaryButton}" Padding="16,8"
                             Command="{Binding ExportCommand}"
-                            AutomationProperties.Name="Экспортировать все книги">
+                            AutomationProperties.Name="Экспортировать все книги"
+                            ToolTip="Выгрузка всех книг проекта в одну папку">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE898;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
                             <TextBlock Text="Экспортировать все книги" Margin="6,0,0,0" Foreground="White" />

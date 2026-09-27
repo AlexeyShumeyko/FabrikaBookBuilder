@@ -185,6 +185,17 @@ namespace PhotoBookRenamer.Presentation.Views
 
         private void OnProjectNameClick(object sender, MouseButtonEventArgs e)
         {
+            BeginProjectRename();
+        }
+
+        /// <summary>Same entry point for the pencil button next to the project name.</summary>
+        private void OnProjectNamePencilClick(object sender, RoutedEventArgs e)
+        {
+            BeginProjectRename();
+        }
+
+        private void BeginProjectRename()
+        {
             ProjectNameTextBox.Text = _viewModel.ProjectName ?? string.Empty;
             ProjectNameTextBlock.Visibility = Visibility.Collapsed;
             ProjectNameTextBox.Visibility = Visibility.Visible;

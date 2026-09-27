@@ -654,6 +654,22 @@
     <Style x:Key="PrimaryButtonStyle"    TargetType="Button" BasedOn="{StaticResource PrimaryButton}" />
     <Style x:Key="SecondaryButtonStyle"  TargetType="Button" BasedOn="{StaticResource SecondaryButton}" />
     <Style x:Key="IconButtonStyle"       TargetType="Button" BasedOn="{StaticResource IconButton}" />
+    <!--
+      Compact numeric field for the project panels. The implicit TextBox is sized for a
+      form (Padding 12,8, FontSize 12), so two of them side by side made the combined
+      panel both taller and wider than the identical panel in the unique mode. Same
+      template, smaller box - so the two panels match to the pixel.
+    -->
+    <Style x:Key="NumberField" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+        <Setter Property="Width" Value="64" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="6,0" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
     <Style x:Key="FluentTextBoxStyle"    TargetType="TextBox" />
 
     <Style x:Key="ModernCard"       TargetType="Border" BasedOn="{StaticResource Card}" />
