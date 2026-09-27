@@ -158,8 +158,20 @@ jobs:
           --runtime win-x64 `
           /p:PublishSingleFile=true `
           /p:IncludeNativeLibrariesForSelfExtract=true `
-          /p:Version=${{ env.VERSION }}
+          /p:Version=${{ env.VERSION }}' + "`r`n" + @'
 
+        # Inno Setup takes the installer icon from publish\icon.ico, and the SDK does not
+        # put it there: the file is also declared as a WPF Resource, so it ends up embedded
+        # in the assembly and the publish folder has no icon at all. The 1.1.0 release
+        # died on exactly that, with a message about a missing file and no hint that the
+        # icon was the cause. Copy it explicitly and fail here, loudly, if it is nowhere.
+        if (-not (Test-Path ".\publish\icon.ico")) {
+          Copy-Item ".\icon.ico" ".\publish\icon.ico" -Force
+        }
+        if (-not (Test-Path ".\publish\icon.ico")) {
+          Write-Error "icon.ico is in neither the publish output nor the repository root"
+          exit 1
+        }
     - name: Install Inno Setup
       run: |
         # jrsoftware.org stopped serving /is/6/<version>.exe: every one of those URLs now
