@@ -215,6 +215,22 @@ namespace PhotoBookRenamer.Infrastructure
                 return BitConverter.ToString(hash).Replace("-", "").Substring(0, 16);
             }
         }
+
+        /// <summary>
+        /// The thumbnail's path, or null when it has not been created yet. Same formula the
+        /// loader uses, so the editor can ask "is there already a thumbnail for this photo?"
+        /// instead of rebuilding the path by hand.
+        /// </summary>
+        public string? GetThumbnailPath(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath)) return null;
+
+            var thumbPath = Path.Combine(
+                Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails",
+                $"{GetFilePathHash(filePath)}_thumb.jpg");
+
+            return File.Exists(thumbPath) ? thumbPath : null;
+        }
     }
 }
 

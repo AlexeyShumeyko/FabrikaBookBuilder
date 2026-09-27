@@ -1,0 +1,196 @@
+<Window x:Class="PhotoBookRenamer.Presentation.Dialogs.ExportDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Экспорт"
+        Width="580" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="Transparent"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        FontFamily="{StaticResource UiFont}">
+
+    <!--
+      DialogShadowRoom first, on purpose. A Window with AllowsTransparency has no system
+      shadow: WPF paints one with DropShadowEffect, and that effect is drawn INSIDE the
+      window's bounds. With the surface flush against the window edge the shadow is cut off
+      square, and what the owner saw as a "grey shadow with corners" is exactly that - the
+      shadow, clipped, not a separate bug. The margin gives it room to fall into.
+    -->
+    <Border Style="{StaticResource DialogShadowRoom}">
+        <Border Style="{StaticResource DialogSurface}">
+            <StackPanel>
+
+                <!-- ================= Header band =================
+                     A muted band with a hairline under it. Without it the white dialog
+                     sat on the app's own white-and-muted background and read as the same
+                     card twice; with it the dialog is a raised sheet with a title you can
+                     aim at. -->
+                <Border Background="{StaticResource SurfaceMuted}"
+                        CornerRadius="16,16,0,0" Padding="24,18">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Width="36" Height="36" CornerRadius="10"
+                                Background="{StaticResource Brand50}" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="15"
+                                       Foreground="{StaticResource Brand600}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+
+                        <TextBlock Grid.Column="1" Text="Параметры экспорта"
+                                   Style="{StaticResource TextH3}" Margin="12,0,0,0" VerticalAlignment="Center" />
+
+                        <Button Grid.Column="2" Style="{StaticResource IconButton}" Click="OnCancelClick"
+                                AutomationProperties.Name="Закрыть" ToolTip="Закрыть" Content="&#xE711;"
+                                FontFamily="{StaticResource IconFont}" FontSize="13" />
+                    </Grid>
+                </Border>
+
+                <Border Height="1" Background="{StaticResource BorderDefault}" />
+
+                <!-- ================= Body ================= -->
+                <StackPanel Margin="24,20,24,0">
+
+                    <!-- What will be produced. Two numbers, no icons: at this size a glyph
+                         adds noise without adding meaning. -->
+                    <Border Background="{StaticResource SurfaceMuted}"
+                            BorderBrush="{StaticResource BorderDefault}" BorderThickness="1"
+                            CornerRadius="12" Padding="16,14">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Книг" Style="{StaticResource TextMicro}"
+                                           Foreground="{StaticResource TextFaint}" />
+                                <TextBlock Text="{Binding BookCount}" Margin="0,2,0,0"
+                                           Style="{StaticResource TextH4}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1">
+                                <!-- "Слотов", not "файлов": in the combined mode the
+                                     produced set is smaller than the slot count by design
+                                     (a shared spread is one file), and two numbers with the
+                                     same word in them read as a contradiction. -->
+                                <TextBlock Text="Слотов" Style="{StaticResource TextMicro}"
+                                           Foreground="{StaticResource TextFaint}" />
+                                <TextBlock Text="{Binding FileCount}" Margin="0,2,0,0"
+                                           Style="{StaticResource TextH4}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- The naming format. Read-only on purpose: the client's site only
+                         accepts KKK-FF.jpg, so this is a fact, not a choice. -->
+                    <TextBlock Text="Имена файлов" Style="{StaticResource TextBodyStrong}"
+                               Margin="0,18,0,8" />
+                    <Border Background="{StaticResource SurfaceMuted}"
+                            BorderBrush="{StaticResource BorderDefault}" BorderThickness="1"
+                            CornerRadius="12" Padding="14,11">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" FontSize="11"
+                                       Foreground="{StaticResource Emerald500}" VerticalAlignment="Center" />
+                            <TextBlock Text="001-00.jpg, 001-01.jpg, 001-02.jpg"
+                                       Style="{StaticResource TextMono}" Margin="9,0,0,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Формат фиксирован — сайт приёма загружает файлы по нему"
+                                       Style="{StaticResource TextMicro}" Foreground="{StaticResource TextFaint}"
+                                       Margin="12,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Where the files go. The folder is always a new one: the path is
+                         shown with its own number (PhotoBookExport1, ...), so what will
+                         be created is visible before anything is copied. -->
+                    <TextBlock Text="Папка назначения" Style="{StaticResource TextBodyStrong}"
+                               Margin="0,18,0,8" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="{StaticResource SurfaceMuted}"
+                                BorderBrush="{StaticResource BorderDefault}" BorderThickness="1"
+                                CornerRadius="12" Padding="12,10">
+                            <TextBlock x:Name="FolderPathText" Text="{Binding TargetFolder}"
+                                       Style="{StaticResource TextBody}" TextTrimming="CharacterEllipsis"
+                                       Foreground="{StaticResource TextDefault}" ToolTip="{Binding TargetFolder}" />
+                        </Border>
+
+                        <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Click="OnBrowseClick"
+                                AutomationProperties.Name="Обзор" Margin="8,0,0,0" Padding="14,9"
+                                Content="Обзор" />
+                    </Grid>
+                    <TextBlock Style="{StaticResource TextMicro}" Foreground="{StaticResource TextFaint}"
+                               Margin="2,6,0,0"
+                               Text="Каждый экспорт получает свою папку — файлы прошлого выгрузки не перезаписываются." />
+
+                    <!-- Per-book subfolders. Hidden in the combined mode: a shared 000-FF
+                         file cannot live in one book's folder, and that mode's naming is the
+                         whole point (see CombinedExportPlanner). Neutral, not amber: it is
+                         an option, not a warning. -->
+                    <Border x:Name="SubfoldersPanel" Margin="0,18,0,0"
+                            Background="{StaticResource SurfaceMuted}"
+                            BorderBrush="{StaticResource BorderDefault}" BorderThickness="1"
+                            CornerRadius="12" Padding="14,12">
+                        <StackPanel>
+                            <CheckBox x:Name="SubfoldersCheck" IsChecked="{Binding PerBookSubfolders}"
+                                      Content="Создавать отдельную папку для каждого альбома" />
+                            <TextBlock Style="{StaticResource TextMicro}" Foreground="{StaticResource TextFaint}"
+                                       TextWrapping="Wrap" Margin="24,5,0,0"
+                                       Text="По умолчанию выключено: все книги складываются в одну папку. Включайте, только если загрузка на сайт это допускает." />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- What the run will produce, shown before the copy starts -->
+                    <TextBlock x:Name="PlanSummary" Style="{StaticResource TextMicro}"
+                               Foreground="{StaticResource Slate500}" TextWrapping="Wrap"
+                               Margin="0,14,0,0" Visibility="Collapsed" />
+
+                    <!-- Progress -->
+                    <StackPanel Margin="0,18,0,0"
+                                Visibility="{Binding IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid Margin="0,0,0,8">
+                            <TextBlock Text="Копирование файлов..." Style="{StaticResource TextBodyStrong}" />
+                            <TextBlock Text="{Binding ProgressText}" Style="{StaticResource TextBodyStrong}"
+                                       Foreground="{StaticResource Brand600}" HorizontalAlignment="Right" />
+                        </Grid>
+                        <!-- Mode=OneWay is required: ProgressBar.Value is a TwoWay property by
+                             default and Progress has a private setter, so the default binding
+                             throws InvalidOperationException on attach. -->
+                        <ProgressBar Value="{Binding Progress, Mode=OneWay}" Maximum="100" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- ================= Footer ================= -->
+                <Border Height="1" Background="{StaticResource BorderDefault}" Margin="0,20,0,0" />
+                <Grid Margin="24,16,24,20">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource SecondaryButton}" Click="OnCancelClick"
+                                AutomationProperties.Name="Отмена" Content="Отмена" Margin="0,0,8,0" />
+                        <Button x:Name="ExportButton" Style="{StaticResource PrimaryButton}" Click="OnExportClick"
+                                AutomationProperties.Name="Начать экспорт" IsDefault="True"
+                                IsEnabled="{Binding CanStart}">
+                            <StackPanel Orientation="Horizontal">
+                                <!-- E8A7: a box with an arrow leaving it - the export/share glyph. E768 was a
+                                     play triangle and E898 a bare up arrow; both read as "up",
+                                     which told the photographer nothing. -->
+                                <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                           Foreground="White" />
+                                <TextBlock Text="Начать экспорт" Margin="7,0,0,0" Foreground="White" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </Border>
+</Window>

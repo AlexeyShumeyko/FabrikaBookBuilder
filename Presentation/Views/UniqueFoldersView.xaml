@@ -1,876 +1,559 @@
 <UserControl x:Class="PhotoBookRenamer.Presentation.Views.UniqueFoldersView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Background="#eceff5" 
-          HorizontalAlignment="Stretch"
-          VerticalAlignment="Stretch"
-          ClipToBounds="True">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:PhotoBookRenamer.Domain"
+             FontFamily="{StaticResource UiFont}"
+             UseLayoutRounding="True" SnapsToDevicePixels="True"
+             HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+    <UserControl.Resources>
+        <!-- Контейнер книги: белый блок с рамкой, внутри шапка и ряд разворотов -->
+        <Style x:Key="BookBlock" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Surface}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderDefault}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="Margin" Value="0,0,0,24" />
+            <Setter Property="Effect" Value="{StaticResource ShadowSubtle}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Effect" Value="{StaticResource ShadowCard}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Номер книги: 28x28 rounded-lg indigo-50 / indigo-600 -->
+        <Style x:Key="BookIndexBadge" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Indigo50}" />
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <!-- Карточка разворота: фото прижато к краям, скругление режет фото -->
+        <Style x:Key="SpreadCard" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Surface}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderDefault}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,16,16" />
+            <Setter Property="ClipToBounds" Value="True" />
+            <Setter Property="Effect" Value="{StaticResource ShadowSubtle}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Effect" Value="{StaticResource ShadowCard}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Плашка имени файла поверх фото: slate-900, rounded-md, mono -->
+        <Style x:Key="PhotoNameBadge" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Slate900}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="8,4" />
+        </Style>
+
+        <!-- Пилюля со стрелками в подвале карточки -->
+        <Style x:Key="ArrowPill" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Slate100}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="2" />
+        </Style>
+
+        <!-- p-1 arrows in the card footer -->
+        <Style x:Key="ArrowButton" TargetType="Button" BasedOn="{StaticResource GhostButton}">
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="Foreground" Value="{StaticResource Slate400}" />
+        </Style>
+
+        <Style x:Key="LinkText" TargetType="TextBlock" BasedOn="{StaticResource TextXs}">
+            <Setter Property="FontWeight" Value="Medium" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid MaxWidth="1600" Margin="32,24,32,24" HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
-            <RowDefinition Height="64"/> <!-- Верхняя панель -->
-            <RowDefinition Height="*"/> <!-- Рабочая область -->
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        
-        <!-- Верхняя панель (в стиле CombinedModeView) -->
-        <Border Grid.Row="0" 
-                Background="White"
-                BorderBrush="#E7E0EC"
-                BorderThickness="0,0,0,1"
-                Height="64">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="3" ShadowDepth="0" Opacity="0.12" Color="#000000"/>
-            </Border.Effect>
-            <Grid Margin="24,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" MinWidth="200"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                
-                <!-- Название проекта -->
-                <StackPanel Grid.Column="0" 
-                            Orientation="Vertical" 
-                           VerticalAlignment="Center"
-                            HorizontalAlignment="Left">
-                    <Grid>
-                        <!-- TextBlock для отображения (по умолчанию видим) -->
-                        <TextBlock x:Name="ProjectNameTextBlock"
-                                   Text="{Binding ProjectName, FallbackValue='Новый проект'}" 
-                                   FontSize="20"
-                                   FontWeight="600"
-                                   Foreground="#1C1B1F"
-                                   UseLayoutRounding="True"
-                                   SnapsToDevicePixels="True"
-                                   TextOptions.TextFormattingMode="Display"
-                                   TextOptions.TextRenderingMode="ClearType"
-                                   RenderOptions.BitmapScalingMode="HighQuality"
-                                   MouseLeftButtonDown="OnProjectNameClick"
-                                   Cursor="Hand"
-                                   Padding="2,0"/>
-                        <!-- TextBox для редактирования (по умолчанию скрыт) -->
-                        <TextBox x:Name="ProjectNameTextBox"
-                                 FontSize="20"
-                                 FontWeight="600"
-                                 Foreground="#1C1B1F"
-                                 Background="White"
-                                 BorderBrush="#6750A4"
-                                 BorderThickness="2"
-                                 Padding="4,2"
-                                 VerticalContentAlignment="Center"
-                                 LostFocus="OnProjectNameLostFocus"
-                                 KeyDown="OnProjectNameKeyDown"
-                                 Visibility="Collapsed"
-                                 MinWidth="200"/>
-                    </Grid>
-                    <TextBlock Text="Режим уникальных папок" 
-                               FontSize="14"
-                               Foreground="#625B71"
-                               Margin="0,4,0,0"
-                               UseLayoutRounding="True"
-                               SnapsToDevicePixels="True"
-                               TextOptions.TextFormattingMode="Display"
-                               TextOptions.TextRenderingMode="ClearType"
-                               RenderOptions.BitmapScalingMode="HighQuality"/>
-                </StackPanel>
-                
-                <!-- Кнопка "Загрузить ещё папки" (по центру) -->
-                <Button Grid.Column="1"
-                        Command="{Binding LoadFoldersCommand}"
-                        HorizontalAlignment="Left"
-                        Margin="16,0,0,0"
-                        VerticalAlignment="Center"
-                        Padding="16,8"
-                        FontSize="14"
-                        FontWeight="500"
-                        IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}"
-                        Visibility="{Binding Books.Count, Converter={StaticResource NullToVisibilityConverter}}"
-                        Cursor="Hand">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Background" Value="#F5F3FF"/>
-                            <Setter Property="Foreground" Value="#6750A4"/>
-                            <Setter Property="BorderBrush" Value="#E7E0EC"/>
-                            <Setter Property="BorderThickness" Value="1"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}"
-                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                BorderThickness="{TemplateBinding BorderThickness}"
-                                                CornerRadius="8"
-                                                Padding="{TemplateBinding Padding}">
-                                            <Border.Effect>
-                                                <DropShadowEffect BlurRadius="4" ShadowDepth="0" Opacity="0.06" Color="#6750A4"/>
-                                            </Border.Effect>
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#EADDFF"/>
-                                    <Setter Property="BorderBrush" Value="#6750A4"/>
-                                    <Setter Property="Effect">
-                                        <Setter.Value>
-                                            <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.1" Color="#6750A4"/>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="📁" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Загрузить ещё папки" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-                
-                <!-- Кнопки управления -->
-                <StackPanel Grid.Column="2" 
-                            Orientation="Horizontal" 
-                            VerticalAlignment="Center"
-                            HorizontalAlignment="Right">
-                    <Button Command="{Binding BackCommand}"
-                            Padding="8,8"
-                            Height="36"
-                            FontSize="14"
-                            FontWeight="500"
-                            Margin="0,0,8,0"
-                            Cursor="Hand">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Background" Value="#FEF7FF"/>
-                                <Setter Property="Foreground" Value="#6750A4"/>
-                                <Setter Property="BorderBrush" Value="#79747E"/>
-                                <Setter Property="BorderThickness" Value="1"/>
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="8"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#E7E0EC"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="←" FontSize="16" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Назад" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-                    <Button Command="{Binding SaveProjectCommand}"
-                            Padding="8,8"
-                            Height="36"
-                            FontSize="14"
-                            FontWeight="500"
-                            Margin="0,0,8,0"
-                            Cursor="Hand">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Background" Value="#FEF7FF"/>
-                                <Setter Property="Foreground" Value="#6750A4"/>
-                                <Setter Property="BorderBrush" Value="#79747E"/>
-                                <Setter Property="BorderThickness" Value="1"/>
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="8"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#E7E0EC"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="💾" FontSize="16" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Сохранить" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-                    <Button Command="{Binding ExportCommand}"
-                            Padding="8,8"
-                            Height="36"
-                            FontSize="14"
-                            FontWeight="500"
-                            Margin="0,0,8,0"
-                            Cursor="Hand"
-                            IsEnabled="{Binding Books.Count, Converter={StaticResource CountToBooleanConverter}}">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Background" Value="#6750A4"/>
-                                <Setter Property="Foreground" Value="White"/>
-                                <Setter Property="BorderThickness" Value="0"/>
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    CornerRadius="8"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <Border.Effect>
-                                                    <DropShadowEffect BlurRadius="3" ShadowDepth="0" Opacity="0.12" Color="#000000"/>
-                                                </Border.Effect>
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#5A4B8F"/>
-                                        <Setter Property="RenderTransform">
-                                            <Setter.Value>
-                                                <TranslateTransform Y="-1"/>
-                                            </Setter.Value>
-                                        </Setter>
-                                        <Setter Property="Effect">
-                                            <Setter.Value>
-                                                <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.15" Color="#000000"/>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="📤" FontSize="16" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Экспорт" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-                    <Button Command="{Binding OpenHelpCommand}"
-                            Padding="8,8"
-                            Height="36"
-                            FontSize="14"
-                            FontWeight="500"
-                            Margin="0,0,0,0"
-                            Cursor="Hand">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="Foreground" Value="#625B71"/>
-                                <Setter Property="BorderBrush" Value="#79747E"/>
-                                <Setter Property="BorderThickness" Value="1"/>
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="8"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#F5F3FF"/>
-                                        <Setter Property="Foreground" Value="#6750A4"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="?" FontSize="18" FontWeight="600" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Помощь" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
-            </Grid>
+
+        <!-- Error banner -->
+        <Border Grid.Row="0" Background="{StaticResource Red50}" BorderBrush="{StaticResource Red200}"
+                BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,16" VerticalAlignment="Top"
+                Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+            <TextBlock Text="{Binding ErrorMessage}" Style="{StaticResource TextXs}"
+                       Foreground="{StaticResource Red700}" TextWrapping="Wrap" />
         </Border>
-        
-        <!-- Рабочая область -->
-        <Grid Grid.Row="1" Margin="24">
-        <!-- Error Message -->
-            <Border Background="#7F1D1D" 
-                    Padding="24" 
-                    Margin="0,24,0,0"
-                CornerRadius="16"
-                    BorderBrush="#EF4444"
-                BorderThickness="2"
-                Visibility="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Top"
-                Panel.ZIndex="10">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="16" ShadowDepth="0" Opacity="0.2" Color="#EF4444"/>
-            </Border.Effect>
-            <StackPanel>
-                <TextBlock Text="❌ Ошибка" 
-                               Foreground="#EF4444" 
-                               FontSize="18"
-                               FontWeight="600"
-                               Margin="0,0,0,12"
-                               UseLayoutRounding="True"
-                               SnapsToDevicePixels="True"
-                               TextOptions.TextFormattingMode="Display"
-                               TextOptions.TextRenderingMode="ClearType"/>
-                <TextBlock Text="{Binding ErrorMessage}" 
-                           Foreground="#FEE2E2" 
-                               FontSize="14"
-                               TextWrapping="Wrap"
-                               UseLayoutRounding="True"
-                               SnapsToDevicePixels="True"
-                               TextOptions.TextFormattingMode="Display"
-                               TextOptions.TextRenderingMode="ClearType"/>
-            </StackPanel>
-        </Border>
-        
-        <!-- Empty State -->
-            <Border Visibility="{Binding Books.Count, Converter={StaticResource InverseNullToVisibilityConverter}}"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                Panel.ZIndex="1"
-                IsHitTestVisible="True">
-            <StackPanel>
-                    <Border Background="#EADDFF" 
-                        CornerRadius="32" 
-                        Width="140" Height="140"
-                        HorizontalAlignment="Center"
-                        Margin="0,0,0,32">
-                    <Border.Effect>
-                            <DropShadowEffect BlurRadius="24" ShadowDepth="0" Opacity="0.12" Color="#6750A4"/>
-                    </Border.Effect>
-                    <TextBlock Text="📁" FontSize="84" 
-                               HorizontalAlignment="Center" 
-                               VerticalAlignment="Center"
-                               Foreground="#6750A4"/>
-                </Border>
-                <TextBlock Text="Начните работу с загрузки папок" 
-                               FontSize="24"
-                               FontWeight="600"
-                               Foreground="#1C1B1F"
-                           HorizontalAlignment="Center"
-                               Margin="0,0,0,20"
-                               UseLayoutRounding="True"
-                               SnapsToDevicePixels="True"
-                               TextOptions.TextFormattingMode="Display"
-                               TextOptions.TextRenderingMode="ClearType"/>
-                <TextBlock Text="Выберите папки с JPG/JPEG файлами.&#x0a;Каждая папка будет преобразована в отдельную книгу.&#x0a;Все папки должны содержать одинаковое количество файлов." 
-                           TextWrapping="Wrap"
-                           TextAlignment="Center"
-                               FontSize="14"
-                               Foreground="#625B71"
-                           LineHeight="28"
-                           Margin="0,0,0,40"
-                               MaxWidth="450"
-                               UseLayoutRounding="True"
-                               SnapsToDevicePixels="True"
-                               TextOptions.TextFormattingMode="Display"
-                               TextOptions.TextRenderingMode="ClearType"/>
-                    <Button Command="{Binding LoadFoldersCommand}"
-                        HorizontalAlignment="Center"
-                        Padding="32,16"
-                        FontSize="16"
-                            FontWeight="500"
-                            IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}"
-                            Cursor="Hand">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Background" Value="#6750A4"/>
-                                <Setter Property="Foreground" Value="White"/>
-                                <Setter Property="BorderBrush" Value="#6750A4"/>
-                                <Setter Property="BorderThickness" Value="1"/>
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="12"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <Border.Effect>
-                                                    <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.08" Color="#6750A4"/>
-                                                </Border.Effect>
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#5A4B8F"/>
-                                        <Setter Property="BorderBrush" Value="#5A4B8F"/>
-                                        <Setter Property="RenderTransform">
-                                            <Setter.Value>
-                                                <TranslateTransform Y="-1"/>
-                                            </Setter.Value>
-                                        </Setter>
-                                        <Setter Property="Effect">
-                                            <Setter.Value>
-                                                <DropShadowEffect BlurRadius="8" ShadowDepth="0" Opacity="0.12" Color="#6750A4"/>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="📁" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Загрузить папки" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-            </StackPanel>
-        </Border>
-        
-        <!-- Books List -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto" 
-                      Visibility="{Binding Books.Count, Converter={StaticResource NullToVisibilityConverter}}">
-            <ItemsControl ItemsSource="{Binding Books}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                            <Border BorderBrush="#E7E0EC" 
-                                BorderThickness="1" 
-                                Margin="0,16" 
-                                    Padding="24" 
-                                    Background="White"
-                                CornerRadius="20"
-                                ClipToBounds="False">
+
+        <Grid Grid.Row="0" Margin="0,0,0,24"
+              Visibility="{Binding ErrorMessage, Converter={StaticResource InverseStringToVisibilityConverter}}">
+            <!-- ============================================================== -->
+            <!--  Toolbar: p-5 (20), gap-4 (16)                               -->
+            <!-- ============================================================== -->
+            <Border Style="{StaticResource Card}" Padding="20" Effect="{StaticResource ShadowSubtle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- p-3 emerald-50 rounded-xl border emerald-100 -->
+                        <Border Width="48" Height="48" CornerRadius="12" VerticalAlignment="Center"
+                                Background="{StaticResource Sky50}" BorderBrush="{StaticResource Emerald100}"
+                                BorderThickness="1">
                             <Border.Effect>
-                                    <DropShadowEffect BlurRadius="24" ShadowDepth="0" Opacity="0.12" Color="#000000" RenderingBias="Quality"/>
+                                <DropShadowEffect BlurRadius="4" ShadowDepth="1" Direction="270"
+                                                  Opacity="0.05" RenderingBias="Quality" Color="#0F172A" />
                             </Border.Effect>
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                
-                                <!-- Header with Icon and Name -->
-                                    <Grid Grid.Row="0" Margin="0,0,0,20">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    
-                                    <!-- Folder Icon -->
-                                    <Border Grid.Column="0" 
-                                                Background="#EADDFF" 
-                                            CornerRadius="12" 
-                                            Padding="14" 
-                                            Margin="0,0,16,0" 
-                                            VerticalAlignment="Center">
-                                        <Border.Effect>
-                                                <DropShadowEffect BlurRadius="8" ShadowDepth="0" Opacity="0.08" Color="#6750A4"/>
-                                        </Border.Effect>
-                                        <TextBlock Text="📁" FontSize="32"/>
-                                    </Border>
-                                    
-                                    <!-- Book Name -->
-                                    <TextBlock Grid.Column="1" 
-                                               Text="{Binding Name}" 
-                                                   FontSize="18"
-                                                   FontWeight="600"
-                                                   Foreground="#1C1B1F"
-                                                   VerticalAlignment="Center"
-                                                   UseLayoutRounding="True"
-                                                   SnapsToDevicePixels="True"
-                                                   TextOptions.TextFormattingMode="Display"
-                                                   TextOptions.TextRenderingMode="ClearType"/>
-                                    
-                                    <!-- Book Index and Delete -->
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal" 
-                                                Margin="20,0,0,0"
-                                                VerticalAlignment="Center">
-                                            <Border Background="#6750A4" 
-                                                CornerRadius="8" 
-                                                    Padding="12,8" 
-                                                Margin="0,0,12,0"
-                                                    MinWidth="100">
-                                            <TextBlock Text="{Binding BookIndex, StringFormat='Книга {0}'}" 
-                                                           FontSize="13"
-                                                           FontWeight="500"
-                                                           Foreground="White"
-                                                       HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           UseLayoutRounding="True"
-                                                           SnapsToDevicePixels="True"
-                                                           TextOptions.TextFormattingMode="Display"
-                                                           TextOptions.TextRenderingMode="ClearType"/>
-                                        </Border>
-                                            <Button Command="{Binding DataContext.DeleteBookCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}"
-                                                    Padding="12,8"
-                                                MinWidth="90"
-                                                FontSize="13"
-                                                    FontWeight="500"
-                                                    VerticalAlignment="Center"
-                                                    Cursor="Hand">
-                                                <Button.Style>
-                                                    <Style TargetType="Button">
-                                                        <Setter Property="Background" Value="#BA1A1A"/>
-                                                        <Setter Property="Foreground" Value="White"/>
-                                                        <Setter Property="BorderThickness" Value="0"/>
-                                                        <Setter Property="Template">
-                                                            <Setter.Value>
-                                                                <ControlTemplate TargetType="Button">
-                                                                    <Border Background="{TemplateBinding Background}"
-                                                                            CornerRadius="8"
-                                                                            Padding="{TemplateBinding Padding}">
-                                                                        <Border.Effect>
-                                                                            <DropShadowEffect BlurRadius="3" ShadowDepth="0" Opacity="0.12" Color="#000000"/>
-                                                                        </Border.Effect>
-                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                    </Border>
-                                                                </ControlTemplate>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                        <Style.Triggers>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="#9A1A1A"/>
-                                                                <Setter Property="RenderTransform">
-                                                                    <Setter.Value>
-                                                                        <TranslateTransform Y="-1"/>
-                                                                    </Setter.Value>
-                                                                </Setter>
-                                                            </Trigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Button.Style>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="🗑️" FontSize="14" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="Удалить" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Button>
-                                    </StackPanel>
-                                </Grid>
-                                
-                                <!-- Cover and Pages in one row - 5 items per row -->
-                                <ItemsControl Grid.Row="1" 
-                                              x:Name="AllSlotsItemsControl" 
-                                              Tag="{Binding}" 
-                                              DataContext="{Binding}">
-                                    <ItemsControl.ItemsSource>
-                                        <Binding Path="AllSlots"/>
-                                    </ItemsControl.ItemsSource>
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <UniformGrid Columns="5"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border BorderBrush="#E7E0EC" 
-                                                    BorderThickness="1" 
-                                                    CornerRadius="12" 
-                                                    Padding="8" 
-                                                    Margin="6"
-                                                    Background="White"
-                                                    DataContext="{Binding}"
-                                                    Height="220"
-                                                    Loaded="OnCellLoaded">
-                                                <Border.Effect>
-                                                    <DropShadowEffect BlurRadius="8" ShadowDepth="0" Opacity="0.08" Color="#000000"/>
-                                                </Border.Effect>
-                                                <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="*"/>
-                                                    </Grid.RowDefinitions>
-                                                    
-                                                    <!-- Заголовок: Обложка или Стр. X -->
-                                                    <TextBlock Grid.Row="0"
-                                                               FontWeight="Semibold"
-                                                               FontSize="12"
-                                                               Foreground="#1C1B1F"
-                                                               HorizontalAlignment="Center"
-                                                               Margin="0,0,0,4"
-                                                               UseLayoutRounding="True"
-                                                               SnapsToDevicePixels="True"
-                                                               TextOptions.TextFormattingMode="Display"
-                                                               TextOptions.TextRenderingMode="ClearType">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Setter Property="Text" Value="{Binding StringFormat='Разв. {0}'}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding}" Value="0">
-                                                                        <Setter Property="Text" Value="Обложка"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                    
-                                                    <!-- Фото: обложка или страница - Grid растягивается по ширине ячейки -->
-                                                    <Grid Grid.Row="1"
-                                                          Background="Transparent"
-                                                          ClipToBounds="True"
-                                                          HorizontalAlignment="Stretch"
-                                                          VerticalAlignment="Stretch"
-                                                          Loaded="OnPhotoGridLoaded">
-                                                        <Image Stretch="Fill"
-                                                               HorizontalAlignment="Stretch"
-                                                               VerticalAlignment="Stretch"
-                                                               Cursor="Hand"
-                                                               ToolTip="Двойной клик для открытия"
-                                                               Loaded="OnImageLoaded"
-                                                               SizeChanged="OnImageSizeChanged"
-                                                               LayoutUpdated="OnImageLayoutUpdated">
-                                                            <Image.Source>
-                                                                <MultiBinding Converter="{StaticResource CoverOrPageByIndexConverter}">
-                                                                    <Binding Path="DataContext.Cover" RelativeSource="{RelativeSource AncestorType=ItemsControl, AncestorLevel=1}"/>
-                                                                    <Binding Path="DataContext.Pages" RelativeSource="{RelativeSource AncestorType=ItemsControl, AncestorLevel=1}"/>
-                                                                    <Binding/>
-                                                                </MultiBinding>
-                                                            </Image.Source>
-                                                            <Image.Style>
-                                                                <Style TargetType="Image">
-                                                                    <Setter Property="Opacity" Value="1"/>
-                                                                    <EventSetter Event="MouseLeftButtonDown" Handler="OnPageImageDoubleClick"/>
-                                                                    <Style.Triggers>
-                                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                                            <Setter Property="Opacity" Value="0.8"/>
-                                                                        </Trigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Image.Style>
-                                                            <Image.Tag>
-                                                                <Binding/>
-                                                            </Image.Tag>
-                                                        </Image>
-                                                        
-                                                        <!-- Кнопка "Изменить" для обложки - накладывается на фото -->
-                                                        <Button Content="Изменить" 
-                                                                Command="{Binding DataContext.SelectCoverCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                CommandParameter="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl, AncestorLevel=1}}"
-                                                                HorizontalAlignment="Center"
-                                                                VerticalAlignment="Bottom"
-                                                                Margin="0,0,0,8"
-                                                                Padding="6,4"
-                                                                FontSize="10"
-                                                                FontWeight="500"
-                                                                Visibility="{Binding Converter={StaticResource IsZeroToVisibilityConverter}}"
-                                                                Cursor="Hand"
-                                                                Panel.ZIndex="10">
-                                                            <Button.Style>
-                                                                <Style TargetType="Button">
-                                                                    <Setter Property="Background" Value="#FEF7FF"/>
-                                                                    <Setter Property="Foreground" Value="#6750A4"/>
-                                                                    <Setter Property="BorderBrush" Value="#79747E"/>
-                                                                    <Setter Property="BorderThickness" Value="1"/>
-                                                                    <Setter Property="Template">
-                                                                        <Setter.Value>
-                                                                            <ControlTemplate TargetType="Button">
-                                                                                <Border Background="{TemplateBinding Background}"
-                                                                                        BorderBrush="{TemplateBinding BorderBrush}"
-                                                                                        BorderThickness="{TemplateBinding BorderThickness}"
-                                                                                        CornerRadius="8"
-                                                                                        Padding="{TemplateBinding Padding}">
-                                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                                </Border>
-                                                                            </ControlTemplate>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                    <Style.Triggers>
-                                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                                            <Setter Property="Background" Value="#E7E0EC"/>
-                                                                        </Trigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Button.Style>
-                                                        </Button>
-                                                        
-                                                        <!-- Имя файла для страниц - накладывается на фото -->
-                                                        <TextBlock HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Top"
-                                                                   Margin="0,4,0,0"
-                                                                   FontSize="9"
-                                                                   Foreground="#625B71"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                   Visibility="{Binding Converter={StaticResource IsNotZeroToVisibilityConverter}}"
-                                                                   UseLayoutRounding="True"
-                                                                   SnapsToDevicePixels="True"
-                                                                   TextOptions.TextFormattingMode="Display"
-                                                                   TextOptions.TextRenderingMode="ClearType"
-                                                                   Panel.ZIndex="10">
-                                                            <TextBlock.Text>
-                                                                <MultiBinding Converter="{StaticResource PageFileNameConverter}">
-                                                                    <Binding Path="DataContext.Pages" RelativeSource="{RelativeSource AncestorType=ItemsControl, AncestorLevel=1}"/>
-                                                                    <Binding/>
-                                                                </MultiBinding>
-                                                            </TextBlock.Text>
-                                                        </TextBlock>
-                                                        
-                                                        <!-- Кнопки управления для страниц - накладываются на фото -->
-                                                        <StackPanel Orientation="Horizontal" 
-                                                                    HorizontalAlignment="Center"
-                                                                    VerticalAlignment="Bottom"
-                                                                    Margin="0,0,0,8"
-                                                                    Visibility="{Binding Converter={StaticResource IsNotZeroToVisibilityConverter}}"
-                                                                    Panel.ZIndex="10">
-                                                        <Button Content="◄" 
-                                                                Width="28"
-                                                                Height="28"
-                                                                FontSize="12"
-                                                                FontWeight="600"
-                                                                ToolTip="Переместить влево (раньше)"
-                                                                Click="OnMovePageLeftClick"
-                                                                Tag="{Binding}"
-                                                                Margin="0,0,3,0"
-                                                                Cursor="Hand">
-                                                            <Button.Style>
-                                                                <Style TargetType="Button">
-                                                                    <Setter Property="Background" Value="#6750A4"/>
-                                                                    <Setter Property="Foreground" Value="White"/>
-                                                                    <Setter Property="BorderThickness" Value="0"/>
-                                                                    <Setter Property="Template">
-                                                                        <Setter.Value>
-                                                                            <ControlTemplate TargetType="Button">
-                                                                                <Border Background="{TemplateBinding Background}"
-                                                                                        CornerRadius="6"
-                                                                                        Padding="{TemplateBinding Padding}">
-                                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                                </Border>
-                                                                            </ControlTemplate>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                    <Style.Triggers>
-                                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                                            <Setter Property="Background" Value="#5A4B8F"/>
-                                                                        </Trigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Button.Style>
-                                                        </Button>
-                                                        <Button Content="►" 
-                                                                Width="28"
-                                                                Height="28"
-                                                                FontSize="12"
-                                                                FontWeight="600"
-                                                                ToolTip="Переместить вправо (позже)"
-                                                                Click="OnMovePageRightClick"
-                                                                Tag="{Binding}"
-                                                                Margin="0,0,3,0"
-                                                                Cursor="Hand">
-                                                            <Button.Style>
-                                                                <Style TargetType="Button">
-                                                                    <Setter Property="Background" Value="#6750A4"/>
-                                                                    <Setter Property="Foreground" Value="White"/>
-                                                                    <Setter Property="BorderThickness" Value="0"/>
-                                                                    <Setter Property="Template">
-                                                                        <Setter.Value>
-                                                                            <ControlTemplate TargetType="Button">
-                                                                                <Border Background="{TemplateBinding Background}"
-                                                                                        CornerRadius="6"
-                                                                                        Padding="{TemplateBinding Padding}">
-                                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                                </Border>
-                                                                            </ControlTemplate>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                    <Style.Triggers>
-                                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                                            <Setter Property="Background" Value="#5A4B8F"/>
-                                                                        </Trigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Button.Style>
-                                                        </Button>
-                                                        <Button Content="№" 
-                                                                Width="28"
-                                                                Height="28"
-                                                                FontSize="12"
-                                                                FontWeight="600"
-                                                                ToolTip="Назначить номер разворота"
-                                                                Click="OnAssignPageNumberClick"
-                                                                Tag="{Binding}"
-                                                                Cursor="Hand">
-                                                            <Button.Style>
-                                                                <Style TargetType="Button">
-                                                                    <Setter Property="Background" Value="#6750A4"/>
-                                                                    <Setter Property="Foreground" Value="White"/>
-                                                                    <Setter Property="BorderThickness" Value="0"/>
-                                                                    <Setter Property="Template">
-                                                                        <Setter.Value>
-                                                                            <ControlTemplate TargetType="Button">
-                                                                                <Border Background="{TemplateBinding Background}"
-                                                                                        CornerRadius="6"
-                                                                                        Padding="{TemplateBinding Padding}">
-                                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                                </Border>
-                                                                            </ControlTemplate>
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                    <Style.Triggers>
-                                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                                            <Setter Property="Background" Value="#5A4B8F"/>
-                                                                        </Trigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Button.Style>
-                                                        </Button>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </Grid>
+                            <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="20"
+                                       Foreground="{StaticResource Sky600}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
-        
-        </Grid>
-        
-        <!-- Loading Indicator -->
-        <Grid Grid.Row="0" Grid.RowSpan="2" Background="#CC000000" 
-              Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border Background="White"
-                    CornerRadius="20"
-                    Padding="48,40" 
-                    HorizontalAlignment="Center" 
-                    VerticalAlignment="Center"
-                    MinWidth="360"
-                    ClipToBounds="False">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="24" ShadowDepth="0" Opacity="0.25" Color="#000000" RenderingBias="Quality"/>
-                </Border.Effect>
-                <StackPanel>
-                    <TextBlock Text="Загрузка..." 
-                               FontSize="20"
-                               FontWeight="600"
-                               Foreground="#1C1B1F"
-                               HorizontalAlignment="Center" 
-                               Margin="0,0,0,32"
-                               UseLayoutRounding="True"
-                               SnapsToDevicePixels="True"
-                               TextOptions.TextFormattingMode="Display"
-                               TextOptions.TextRenderingMode="ClearType"/>
-                    <ProgressBar IsIndeterminate="True" 
-                                 Height="6" 
-                                 Width="300"
-                                 Background="#E7E0EC">
-                        <ProgressBar.Foreground>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                <GradientStop Color="#6750A4" Offset="0"/>
-                                <GradientStop Color="#8651F3" Offset="1"/>
-                            </LinearGradientBrush>
-                        </ProgressBar.Foreground>
-                    </ProgressBar>
-                </StackPanel>
+
+                        <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                            <!--
+                                "Проект", not "Папка": this is the project's name. The pencil
+                                is the affordance - the label alone did not read as editable,
+                                so clicking the name did nothing a user would expect.
+                            -->
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Проект:" Style="{StaticResource TextSmBold}" VerticalAlignment="Center" />
+                                <TextBlock x:Name="ProjectNameTextBlock" Text="{Binding DisplayProjectName}"
+                                           Style="{StaticResource TextSmBold}" Margin="6,0,0,0"
+                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                           MaxWidth="420" Cursor="Hand"
+                                           MouseLeftButtonDown="OnProjectNameClick" />
+                                <Button Style="{StaticResource IconButton}" Margin="6,0,0,0"
+                                        Click="OnProjectNamePencilClick"
+                                        ToolTip="Переименовать проект"
+                                        AutomationProperties.Name="Переименовать проект">
+                                    <TextBlock Text="&#xE70F;" FontFamily="{StaticResource IconFont}" FontSize="12" />
+                                </Button>
+                                <TextBox x:Name="ProjectNameTextBox" Visibility="Collapsed" Width="360"
+                                         Margin="6,0,0,0" VerticalAlignment="Center" FontSize="13"
+                                         LostFocus="OnProjectNameLostFocus" KeyDown="OnProjectNameKeyDown" />
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                <TextBlock Text="{Binding BooksSummary}" Style="{StaticResource TextXs}"
+                                           Foreground="{StaticResource Slate500}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!--
+                        Project control panel. The header bar no longer duplicates any of
+                        this: "Сохранить" and "Экспорт" moved here, "Сбросить порядок" moved
+                        into each book, so it is gone from here.
+                    -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource SecondaryButton}" Command="{Binding LoadFoldersCommand}"
+                                AutomationProperties.Name="Добавить или заменить папки" Margin="0,0,8,0"
+                                ToolTip="Догрузить новые папки или заменить все папки проекта">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                           Foreground="{StaticResource Slate400}" />
+                                <TextBlock Text="Добавить или заменить папки" Margin="6,0,0,0" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource SecondaryButton}" Command="{Binding SaveProjectCommand}"
+                                AutomationProperties.Name="Сохранить проект" Margin="0,0,8,0"
+                                ToolTip="Сохранить проект и вернуться к списку проектов">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE74E;" FontFamily="{StaticResource IconFont}" FontSize="12"
+                                           Foreground="{StaticResource Slate400}" />
+                                <TextBlock Text="Сохранить проект" Margin="6,0,0,0" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- h-5 w-px divider -->
+                        <Border Width="1" Height="20" Background="{StaticResource Slate200}" Margin="0,0,8,0" />
+
+                        <Button Style="{StaticResource PrimaryButton}" Padding="16,8"
+                                Command="{Binding ExportCommand}"
+                                AutomationProperties.Name="Экспортировать" IsEnabled="{Binding CanExport}"
+                                ToolTip="Выгрузка всех книг проекта в одну папку">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
+                                <TextBlock Text="Экспортировать все книги" Margin="6,0,0,0" Foreground="White" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
             </Border>
+        </Grid>
+
+        <!-- ============================================================== -->
+        <!--  Content                                                       -->
+        <!-- ============================================================== -->
+        <Grid Grid.Row="1">
+            <Border Style="{StaticResource LoadingVeil}"
+                    Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Border Style="{StaticResource LoadingVeilCard}">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE9D5;" FontFamily="{StaticResource IconFont}" FontSize="14"
+                                   Foreground="{StaticResource Brand600}" VerticalAlignment="Center" />
+                        <TextBlock Text="Обработка папок..." Style="{StaticResource TextXsMedium}"
+                                   Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </Border>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+                <StackPanel>
+
+                    <!-- Empty state -->
+                    <Border Style="{StaticResource Card}" Padding="24" MaxWidth="560" HorizontalAlignment="Center"
+                            Margin="0,40,0,0" Effect="{StaticResource ShadowSubtle}"
+                            Visibility="{Binding BooksCount, Converter={StaticResource CountToBoolConverter}, ConverterParameter=invert}">
+                        <StackPanel>
+                            <Border Width="56" Height="56" CornerRadius="16" HorizontalAlignment="Center"
+                                    Background="{StaticResource Sky50}">
+                                <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="24"
+                                           Foreground="{StaticResource Sky600}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="Выберите папки с фотографиями" Style="{StaticResource TextLgBold}"
+                                       HorizontalAlignment="Center" Margin="0,20,0,0" TextAlignment="Center" />
+                            <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" TextAlignment="Center"
+                                       Foreground="{StaticResource Slate600}"
+                                       MaxWidth="440" HorizontalAlignment="Center" Margin="0,8,0,0"
+                                       Text="Каждая выбранная папка станет отдельной книгой: самое большое фото в ней будет обложкой, остальные — разворотами." />
+                            <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" TextAlignment="Center"
+                                       Foreground="{StaticResource Slate500}"
+                                       MaxWidth="440" HorizontalAlignment="Center" Margin="0,8,0,20"
+                                       Text="Можно выбрать сразу несколько папок. В одном проекте допускается загружать только папки с одинаковым количеством файлов — это нужно для правильной сборки книг. Порядок разворотов потом можно изменить." />
+                            <Button Style="{StaticResource PrimaryButton}" Padding="16,10"
+                                    Command="{Binding LoadFoldersCommand}"
+                                    HorizontalAlignment="Center" AutomationProperties.Name="Выбрать папки">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="White" />
+                                    <TextBlock Text="Выбрать папки" Margin="6,0,0,0" Foreground="White" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                    <!--
+                        UniformGrid Columns="4" keeps md:2 lg:3 xl:4 from the mockup.
+                        The gap is now 16 (card Margin), see doc/DESIGN_SPEC.md 5.2.
+                    -->
+                    <ItemsControl ItemsSource="{Binding Books}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:Book}">
+                                <Border Style="{StaticResource BookBlock}">
+                                    <StackPanel>
+
+                                        <!-- Book header -->
+                                        <Grid Margin="0,0,0,16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal"
+                                                        VerticalAlignment="Center">
+                                                <Border Style="{StaticResource BookIndexBadge}">
+                                                    <TextBlock Text="{Binding BookIndex, StringFormat={}{0:D2}}"
+                                                               Style="{StaticResource TextXsBold}"
+                                                               Foreground="{StaticResource Indigo600}"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center" />
+                                                </Border>
+                                                <TextBlock Text="{Binding Name}" Style="{StaticResource TextSmBold}"
+                                                           Foreground="{StaticResource TextStrong}"
+                                                           Margin="12,0,0,0" VerticalAlignment="Center"
+                                                           MaxWidth="460" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center"
+                                                       HorizontalAlignment="Left" TextAlignment="Left"
+                                                       TextTrimming="CharacterEllipsis" MaxWidth="460"
+                                                       ToolTip="{Binding FolderPath}"
+                                                       Visibility="{Binding FolderPath, Converter={StaticResource StringToVisibilityConverter}}">
+                                                <Run Text="(Папка: " Foreground="{StaticResource Slate400}" FontSize="12" />
+                                                <Run Text="{Binding FolderPath}" Foreground="{StaticResource Slate400}" FontSize="12" />
+                                            </TextBlock>
+
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                        VerticalAlignment="Center">
+                                                <!--
+                                                    Per book, not per project: re-sorts only
+                                                    this book. GhostButton inherits a WHITE
+                                                    Foreground from PrimaryButton, so the
+                                                    colour has to be set here or the label
+                                                    renders white on a white card.
+                                                -->
+                                                <Button Style="{StaticResource GhostButton}" Margin="0,0,12,0"
+                                                        Padding="10,6"
+                                                        Foreground="{StaticResource Slate600}"
+                                                        Click="OnResetBookOrderClick" Tag="{Binding}"
+                                                        ToolTip="Вернуть развороты этой книги в исходный порядок по именам файлов"
+                                                        AutomationProperties.Name="Сбросить порядок книги">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE777;" FontFamily="{StaticResource IconFont}"
+                                                                   FontSize="12" />
+                                                        <TextBlock Text="Сбросить порядок" Margin="6,0,0,0" />
+                                                    </StackPanel>
+                                                </Button>
+
+                                                <!-- fa-circle-check: every slot is filled -->
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsValid, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}"
+                                                               FontSize="12" Foreground="{StaticResource Sky600}"
+                                                               VerticalAlignment="Center" />
+                                                    <TextBlock Text="Структура корректна"
+                                                               Style="{StaticResource TextXsSemibold}"
+                                                               Foreground="{StaticResource Sky600}"
+                                                               VerticalAlignment="Center" Margin="6,0,0,0" />
+                                                </StackPanel>
+
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsValid, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                                    <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource IconFont}"
+                                                               FontSize="12" Foreground="{StaticResource Amber600}"
+                                                               VerticalAlignment="Center" />
+                                                    <TextBlock Text="Структура неполная"
+                                                               Style="{StaticResource TextXsSemibold}"
+                                                               Foreground="{StaticResource Amber600}"
+                                                               VerticalAlignment="Center" Margin="6,0,0,0" />
+                                                </StackPanel>
+
+                                                <Button Margin="12,0,0,0" Style="{StaticResource DangerGhostButton}"
+                                                        ToolTip="Удалить книгу"
+                                                        AutomationProperties.Name="Удалить книгу"
+                                                        Command="{Binding DataContext.DeleteBookCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" FontSize="12" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+
+                                    <!--
+                                        UniformGrid Columns="4" forced one cell width on
+                                        every book, which is exactly what a frame that
+                                        follows the format could not survive: a 1.9
+                                        format needs a wider card and a 0.68 post-print
+                                        a narrower one. Cards now carry their own
+                                        width, so they flow and wrap. Inside a book all
+                                        widths are equal, so the rows still line up.
+                                    -->
+                                    <ItemsControl x:Name="SpreadsList" ItemsSource="{Binding AllSlotsPages}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type models:Page}">
+                                                <Border x:Name="CardRoot">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource SpreadCard}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsCover}" Value="True">
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource Brand500}" />
+                                                                    <Setter Property="BorderThickness" Value="2" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <!--
+                                                        One rounded clip for the whole card
+                                                        content. Border.ClipToBounds clips
+                                                        to a plain rectangle, so without
+                                                        this the photo's square corners
+                                                        paint over the card's rounded border
+                                                        - and the hover zoom would escape
+                                                        the frame as well.
+                                                    -->
+                                                    <Grid x:Name="CardContent">
+                                                        <Grid.Clip>
+                                                            <MultiBinding Converter="{StaticResource RoundedClipGeometryConverter}" ConverterParameter="12">
+                                                                <Binding Path="ActualWidth" ElementName="CardContent" />
+                                                                <Binding Path="ActualHeight" ElementName="CardContent" />
+                                                            </MultiBinding>
+                                                        </Grid.Clip>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto" />
+                                                            <RowDefinition Height="Auto" />
+                                                        </Grid.RowDefinitions>
+
+                                                        <!--
+                                                            Photo frame. Natural size is the
+                                                            mockup's 190px tall and that
+                                                            times the book's own format wide
+                                                            (Page.FrameAspect). Both sides
+                                                            then scale together - keeping the
+                                                            proportions - when one whole extra
+                                                            card per row is within reach, so a
+                                                            wide monitor leaves no strip of
+                                                            dead space. The room comes from
+                                                            the row area's width only, never
+                                                            from how many photos there are,
+                                                            so a half-empty last row changes
+                                                            nothing.
+                                                        -->
+                                                        <Grid Grid.Row="0" x:Name="FrameHost"
+                                                              Background="{StaticResource Slate100}">
+                                                            <Grid.Width>
+                                                                <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="width">
+                                                                    <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
+                                                                    <Binding />
+                                                                </MultiBinding>
+                                                            </Grid.Width>
+                                                            <Grid.Height>
+                                                                <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="height">
+                                                                    <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
+                                                                    <Binding />
+                                                                </MultiBinding>
+                                                            </Grid.Height>
+
+                                                            <Image Source="{Binding Converter={StaticResource PageSourceConverter}}"
+                                                                   Stretch="UniformToFill" Tag="{Binding}"
+                                                                   MouseLeftButtonDown="OnPageImageDoubleClick">
+                                                                <Image.Style>
+                                                                    <Style TargetType="Image">
+                                                                        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+                                                                        <Setter Property="RenderTransform">
+                                                                            <Setter.Value>
+                                                                                <ScaleTransform ScaleX="1" ScaleY="1" />
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <Style.Triggers>
+                                                                            <!-- No overlay on hover: the photo just grows a little.
+                                                                                 The card's ClipToBounds trims what leaves the frame.
+                                                                                 The transform is swapped rather than animated on purpose:
+                                                                                 Storyboard.TargetName does not compile inside a
+                                                                                 DataTemplate trigger (MC4011). -->
+                                                                            <DataTrigger Value="True" Binding="{Binding IsMouseOver, ElementName=CardRoot}">
+                                                                                <Setter Property="RenderTransform">
+                                                                                    <Setter.Value>
+                                                                                        <ScaleTransform ScaleX="1.04" ScaleY="1.04" />
+                                                                                    </Setter.Value>
+                                                                                </Setter>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Image.Style>
+                                                            </Image>
+
+                                                            <!-- export file name on the photo; star + (Обложка) on the cover -->
+                                                            <Border Style="{StaticResource PhotoNameBadge}"
+                                                                    HorizontalAlignment="Left"
+                                                                    VerticalAlignment="Top"
+                                                                    Margin="10">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="&#xE735;" FontFamily="{StaticResource IconFont}"
+                                                                               FontSize="10" Foreground="White"
+                                                                               VerticalAlignment="Center" Margin="0,0,6,0"
+                                                                               Visibility="{Binding IsCover, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                                    <TextBlock Text="{Binding ExportFileName}"
+                                                                               Style="{StaticResource TextMono}"
+                                                                               FontSize="12" Foreground="White"
+                                                                               VerticalAlignment="Center" />
+                                                                    <TextBlock Text="(Обложка)"
+                                                                               Style="{StaticResource TextXsSemibold}"
+                                                                               Foreground="White" VerticalAlignment="Center"
+                                                                               Margin="6,0,0,0"
+                                                                               Visibility="{Binding IsCover, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </Grid>
+
+                                                        <!-- Footer: caption / on-hover action + arrow pill -->
+                                                        <Grid Grid.Row="1" Margin="10,8,10,10">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <Grid Grid.Column="0">
+                                                                <!-- One element, four states. It was four overlapping TextBlocks before, and
+                                                                     the caption could not be hidden on hover, so the link was drawn on top of
+                                                                     "Разворот N". A single TextBlock cannot overlap itself.
+                                                                     TextTrimming: a very portrait book gets a narrow card (the frame keeps
+                                                                     its shape), and the label shortens instead of colliding with
+                                                                     the arrow pill. -->
+                                                                <TextBlock VerticalAlignment="Center" Tag="{Binding}"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           MouseLeftButtonDown="OnFooterActionClick">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextXsSemibold}">
+                                                                            <Setter Property="Foreground" Value="{StaticResource Slate500}" />
+                                                                            <Setter Property="Text">
+                                                                                <Setter.Value>
+                                                                                    <Binding Path="Index" StringFormat="Разворот {0}" />
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                            <Setter Property="AutomationProperties.Name" Value="Действие с разворотом" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsCover}" Value="True">
+                                                                                    <Setter Property="Text" Value="Обложка" />
+                                                                                    <Setter Property="Foreground" Value="{StaticResource Brand600}" />
+                                                                                </DataTrigger>
+                                                                                <MultiDataTrigger>
+                                                                                    <MultiDataTrigger.Conditions>
+                                                                                        <Condition Binding="{Binding IsCover}" Value="True" />
+                                                                                        <Condition Binding="{Binding IsMouseOver, ElementName=CardRoot}" Value="True" />
+                                                                                    </MultiDataTrigger.Conditions>
+                                                                                    <Setter Property="Text" Value="Заменить" />
+                                                                                    <Setter Property="Foreground" Value="{StaticResource Brand600}" />
+                                                                                    <Setter Property="Cursor" Value="Hand" />
+                                                                                    <Setter Property="AutomationProperties.Name" Value="Заменить обложку" />
+                                                                                </MultiDataTrigger>
+                                                                                <MultiDataTrigger>
+                                                                                    <MultiDataTrigger.Conditions>
+                                                                                        <Condition Binding="{Binding IsCover}" Value="False" />
+                                                                                        <Condition Binding="{Binding IsMouseOver, ElementName=CardRoot}" Value="True" />
+                                                                                    </MultiDataTrigger.Conditions>
+                                                                                    <Setter Property="Text" Value="Назначить обложкой" />
+                                                                                    <Setter Property="Foreground" Value="{StaticResource Emerald600}" />
+                                                                                    <Setter Property="Cursor" Value="Hand" />
+                                                                                    <Setter Property="AutomationProperties.Name" Value="Назначить обложкой" />
+                                                                                </MultiDataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
+                                                            </Grid>
+
+                                                            <Border Grid.Column="1" Style="{StaticResource ArrowPill}"
+                                                                    VerticalAlignment="Center"
+                                                                    Visibility="{Binding IsCover, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <Button Style="{StaticResource ArrowButton}" Tag="{Binding}"
+                                                                            Click="OnMovePageLeftClick" ToolTip="Переместить левее"
+                                                                            AutomationProperties.Name="Переместить левее">
+                                                                        <TextBlock Text="&#xE72B;" FontFamily="{StaticResource IconFont}" FontSize="12" />
+                                                                    </Button>
+                                                                    <Border Width="1" Margin="2,0" Background="{StaticResource Slate200}" />
+                                                                    <Button Style="{StaticResource ArrowButton}" Tag="{Binding}"
+                                                                            Click="OnMovePageRightClick" ToolTip="Переместить правее"
+                                                                            AutomationProperties.Name="Переместить правее">
+                                                                        <TextBlock Text="&#xE72A;" FontFamily="{StaticResource IconFont}" FontSize="12" />
+                                                                    </Button>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </Grid>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
         </Grid>
     </Grid>
 </UserControl>

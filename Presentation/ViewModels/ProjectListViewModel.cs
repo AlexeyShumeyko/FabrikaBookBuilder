@@ -33,10 +33,25 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             OpenHelpCommand = new RelayCommand(OpenHelp);
             
             // Загружаем проекты при создании
+            // CollectionChanged -> ProjectsCount, so "N проектов" and the empty state
+            // re-evaluate. See the remark on ProjectsCount.
+            Projects.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ProjectsCount));
             _ = LoadProjectsAsync();
         }
 
         public ObservableCollection<ProjectInfo> Projects { get; }
+
+        /// <summary>
+        /// Count for bindings that must react to items being added.
+        ///
+        /// WPF does not re-evaluate a binding just because an ObservableCollection grew:
+        /// it only listens for INotifyPropertyChanged on the binding source. Binding
+        /// straight to <c>Projects</c> therefore latched onto whatever the collection
+        /// contained at load time (empty), and the "no projects yet" panel stayed on top
+        /// of the freshly loaded cards. Subscribing to CollectionChanged and re-raising is
+        /// what makes such bindings update.
+        /// </summary>
+        public int ProjectsCount => Projects.Count;
 
         public ProjectInfo? SelectedProject
         {
@@ -75,22 +90,43 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (System.Windows.Application.Current.MainWindow is MainWindow mainWindow)
+                    // MainViewModel is a singleton and is already the MainWindow's
+                    // DataContext, so flipping the mode is enough. Re-assigning
+                    // DataContext here used to rebuild the persistent header.
+                    var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
+                    var mainVm = serviceProvider?.GetRequiredService<MainViewModel>();
+                    if (mainVm != null)
                     {
-                        var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                        if (serviceProvider != null)
-                        {
-                            var mainVm = serviceProvider.GetRequiredService<MainViewModel>();
-                            mainVm.CurrentMode = value;
-                            mainWindow.DataContext = mainVm;
-                        }
+                        mainVm.CurrentMode = value;
                     }
                 });
             }
         }
 
+        /// <summary>
+        /// Opening a saved project is one of the two ways into an editor. The mode tab is
+        /// disabled otherwise, so this has to go through OpenProject rather than a plain
+        /// CurrentMode change - the setter would refuse it.
+        /// </summary>
+        private void OpenProjectMode(AppMode mode)
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
+                var mainVm = serviceProvider?.GetRequiredService<MainViewModel>();
+                mainVm?.OpenProject(mode);
+            });
+        }
+
         private async Task LoadProjectsAsync()
         {
+            // Two loads can start at once: the constructor fires one and BuildView() asks
+            // for another right after creating the ViewModel. Each of them only clears
+            // Projects after awaiting the file reads, so they interleave as
+            // clear / clear / add / add and every project shows up twice. A second load
+            // while one is running reads the same data anyway, so skipping it is safe.
+            if (_isLoading) return;
+
             IsLoading = true;
             ErrorMessage = null;
 
@@ -123,6 +159,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     // Загружаем проект из файла и пересчитываем PageCount
                     int actualPageCount = project.PageCount;
                     int actualBookCount = project.BookCount;
+                    Project? previewSource = null;
                     
                     if (!string.IsNullOrEmpty(project.FilePath) && File.Exists(project.FilePath))
                     {
@@ -135,6 +172,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                                 // Во всех книгах должно быть одинаковое количество разворотов
                                 actualPageCount = loadedProject.Books.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
                                 actualBookCount = loadedProject.Books.Count;
+
+                                // The mockup's project card leads with a strip of three
+                                // 48x48 photos plus a "+N" tile. The project is already
+                                // fully loaded here, so the paths are simply read off it
+                                // rather than re-opened per card.
+                                previewSource = loadedProject;
                                 
                                 // Обновляем PageCount в сохранённом ProjectInfo, если он изменился
                                 if (actualPageCount != project.PageCount || actualBookCount != project.BookCount)
@@ -142,10 +185,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                                     project.PageCount = actualPageCount;
                                     project.BookCount = actualBookCount;
                                     // Сохраняем обновлённую информацию в фоне
-                                    _ = Task.Run(async () =>
-                                    {
-                                        await _projectListService.SaveProjectInfoAsync(project);
-                                    });
+                                    Background.Run(
+                                        async () => await _projectListService.SaveProjectInfoAsync(project),
+                                        "save project index");
                                 }
                             }
                         }
@@ -168,6 +210,14 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         CreatedDate = project.CreatedDate,
                         LastModified = project.LastModified
                     };
+
+                    // Preview strip: 3 photos + "+N". Filled before the card is added to
+                    // Projects so the template's first layout pass already has the data.
+                    if (previewSource != null)
+                    {
+                        FillPreviewPhotos(previewSource, projectCopy);
+                    }
+
                     Projects.Add(projectCopy);
                 }
             }
@@ -179,6 +229,54 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        /// <summary>
+        /// How many photos the card shows as thumbnails. The mockup uses three, then
+        /// puts the remainder in a "+N" tile.
+        /// </summary>
+        private const int PreviewPhotoLimit = 3;
+
+        /// <summary>
+        /// Fills a project card's preview strip from an already-loaded project.
+        ///
+        /// Covers come first, then spreads, book by book, because that is the order the
+        /// photos appear in the finished book. Only paths that still exist on disk are
+        /// taken: a project can outlive a moved or deleted photo, and a broken image in
+        /// the strip would be worse than one tile fewer.
+        /// </summary>
+        private static void FillPreviewPhotos(Project project, ProjectInfo target)
+        {
+            if (project?.Books == null) return;
+
+            int total = 0;
+
+            foreach (var book in project.Books)
+            {
+                if (book == null) continue;
+
+                // The cover is a separate object from Pages, and it is the first thing
+                // the reader sees, so it leads the strip.
+                if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
+                {
+                    total++;
+                    if (target.PreviewPhotos.Count < PreviewPhotoLimit && File.Exists(book.Cover.SourcePath))
+                        target.PreviewPhotos.Add(book.Cover.SourcePath);
+                }
+
+                if (book.Pages == null) continue;
+
+                foreach (var page in book.Pages)
+                {
+                    if (page == null || string.IsNullOrEmpty(page.SourcePath)) continue;
+
+                    total++;
+                    if (target.PreviewPhotos.Count < PreviewPhotoLimit && File.Exists(page.SourcePath))
+                        target.PreviewPhotos.Add(page.SourcePath);
+                }
+            }
+
+            target.TotalPhotoCount = total;
         }
 
         private void CreateProject()
@@ -341,7 +439,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 // ОТЛАДКА: Логируем захваченные данные
                 
                 // Переключаемся на режим редактирования проекта ПОСЛЕ сохранения данных
-                CurrentMode = projectMode;
+                OpenProjectMode(projectMode);
                 
                 // КРИТИЧЕСКИ ВАЖНО: Создаём НОВЫЙ projectInfo из захваченных данных ПЕРЕД асинхронным вызовом
                 // Это гарантирует, что мы используем правильные данные выбранного проекта
@@ -436,13 +534,14 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             if (projectInfo == null) return;
 
-            var result = System.Windows.MessageBox.Show(
-                $"Вы уверены, что хотите удалить проект \"{projectInfo.Name}\"?",
-                "Подтверждение удаления",
-                System.Windows.MessageBoxButton.YesNo,
-                System.Windows.MessageBoxImage.Question);
+            var result = Presentation.Dialogs.AppDialogs.Confirm(
+                "Удалить проект?",
+                $"Проект \"{projectInfo.Name}\" будет удалён вместе со своей структурой.\n\n" +
+                "Фотографии на диске останутся на месте — удаляется только проект.",
+                "Удалить",
+                destructive: true);
 
-            if (result == System.Windows.MessageBoxResult.Yes)
+            if (result)
             {
                 try
                 {

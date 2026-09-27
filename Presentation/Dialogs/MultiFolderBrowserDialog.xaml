@@ -2,201 +2,310 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:utils="clr-namespace:PhotoBookRenamer.Presentation.Converters"
-        Title="Выберите папки с фотографиями" 
-        Height="650" Width="800"
+        Title="Проводник папок проекта"
+        Width="820" Height="620"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="CanResize"
-        Background="#eceff5">
+        Background="Transparent"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        FontFamily="{StaticResource UiFont}">
+
+    <!-- The three error converters are declared locally on purpose: they shadow the
+         global ones for this window so the selected-folder error tint stays red. -->
     <Window.Resources>
-        <utils:ErrorToBackgroundConverter x:Key="ErrorToBackgroundConverter"/>
-        <utils:ErrorToForegroundConverter x:Key="ErrorToForegroundConverter"/>
-        <utils:ErrorToFontWeightConverter x:Key="ErrorToFontWeightConverter"/>
+        <utils:ErrorToBackgroundConverter x:Key="ErrorToBackgroundConverter" />
+        <utils:ErrorToForegroundConverter x:Key="ErrorToForegroundConverter" />
+        <utils:ErrorToFontWeightConverter x:Key="ErrorToFontWeightConverter" />
+
+        <Style x:Key="NavRow" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Margin" Value="0,0,0,2" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="bd" Background="Transparent" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource Slate50}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource Brand50}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="FolderRow" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="12,9" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="bd" Background="{StaticResource Surface}"
+                                BorderBrush="{StaticResource Slate200}" BorderThickness="1"
+                                CornerRadius="10" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Brand400}" />
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource Slate50}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Brand500}" />
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource Brand50}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
-    <Grid Margin="15">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        
-        <TextBlock Grid.Row="0" 
-                   Text="Выберите папки с JPG/JPEG файлами. Используйте Ctrl+ЛКМ или Shift+ЛКМ для выбора нескольких папок." 
-                   TextWrapping="Wrap" 
-                   Margin="0,0,0,15" 
-                   FontSize="14" 
-                   Foreground="#4A4A4A"/>
-        
-        <!-- Error Message -->
-        <Border Grid.Row="1" 
-                Background="#FFE5E5" 
-                Padding="12" 
-                Margin="0,0,0,15"
-                CornerRadius="6"
-                x:Name="ErrorBorder"
-                Visibility="Collapsed">
-            <StackPanel>
-                <TextBlock Text="❌ Ошибка валидации" 
-                           Foreground="#D32F2F" FontSize="13" FontWeight="Bold"
-                           Margin="0,0,0,5"/>
-                <TextBlock x:Name="ErrorTextBlock" 
-                           Foreground="#D32F2F" FontSize="12" 
-                           TextWrapping="Wrap"/>
-            </StackPanel>
-        </Border>
-        
-        <Grid Grid.Row="2" Margin="0,0,0,15">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="250"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            
-            <!-- Navigation Tree -->
-            <ListBox Grid.Column="0" 
-                     x:Name="NavigationTree"
-                     BorderBrush="#E0E0E0"
-                     BorderThickness="1"
-                     Background="White"
-                     Margin="0,0,10,0"
-                     SelectionChanged="NavigationTree_SelectionChanged">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="📁" Margin="0,0,5,0"/>
-                            <TextBlock Text="{Binding Name}"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-            
-            <!-- Navigation buttons and folder list -->
-            <Grid Grid.Column="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                
-                <!-- Navigation buttons for folder browsing -->
-                <StackPanel Grid.Row="0"
-                            Orientation="Horizontal" 
-                            Margin="0,0,0,5"
-                            HorizontalAlignment="Left">
-                    <Button Content="← Назад" 
-                            Click="BackButton_Click" 
-                            Padding="10,5"
-                            Margin="0,0,5,0"
-                            x:Name="BackButton"
-                            IsEnabled="False"
-                            ToolTip="Вернуться в предыдущую папку"/>
-                    <TextBlock x:Name="CurrentPathTextBlock" 
-                               VerticalAlignment="Center"
-                               Margin="5,0"
-                               Foreground="#666"
-                               FontSize="12"
-                               TextTrimming="CharacterEllipsis"
-                               MaxWidth="400"/>
+
+    <!-- DialogShadowRoom first: with AllowsTransparency the shadow effect is painted inside
+         the window and comes out square if the surface sits on the window edge. That grey
+         frame with corners was this, not a separate bug. -->
+    <Border Style="{StaticResource DialogShadowRoom}">
+    <Border Style="{StaticResource DialogSurface}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- ============================================================== -->
+            <!--  Header: the same band the export dialog uses, so the two windows read
+                  as one family. On its own it used to sit on the dialog's own white and
+                  disappear into the application behind it.                          -->
+            <!-- ============================================================== -->
+            <Border Grid.Row="0" Background="{StaticResource SurfaceMuted}"
+                    CornerRadius="16,16,0,0" Padding="24,18">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Width="36" Height="36" CornerRadius="10"
+                            Background="{StaticResource Brand50}" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="15"
+                                   Foreground="{StaticResource Brand600}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Grid.Column="1" Text="Проводник папок проекта" Style="{StaticResource TextH3}"
+                               Margin="12,0,0,0" VerticalAlignment="Center" />
+                    <Button Grid.Column="2" Style="{StaticResource IconButton}" Click="CancelButton_Click"
+                            AutomationProperties.Name="Закрыть" ToolTip="Закрыть"
+                            Content="&#xE711;" FontFamily="{StaticResource IconFont}" FontSize="13" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom"
+                    Background="{StaticResource BorderDefault}" />
+
+            <!-- ============================================================== -->
+            <!--  Error banner                                                 -->
+            <!-- ============================================================== -->
+            <Border x:Name="ErrorBorder" Grid.Row="1" Visibility="Collapsed" Margin="20,0,20,12"
+                    Background="{StaticResource Red50}" BorderBrush="{StaticResource Red200}"
+                    BorderThickness="1" CornerRadius="12" Padding="14">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                               Foreground="{StaticResource Red600}" VerticalAlignment="Center" />
+                    <TextBlock x:Name="ErrorTextBlock" Style="{StaticResource TextBody}"
+                               Foreground="{StaticResource Red700}" TextWrapping="Wrap"
+                               Margin="10,0,0,0" MaxWidth="660" />
                 </StackPanel>
-                
-                <!-- Folder List -->
-                <ListBox Grid.Row="1"
-                         x:Name="FoldersListBox"
-                         BorderBrush="#E0E0E0"
-                         BorderThickness="1"
-                         Background="White"
-                         SelectionMode="Extended"
-                         MouseDoubleClick="FoldersListBox_MouseDoubleClick"
-                         SelectionChanged="FoldersListBox_SelectionChanged">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
+            </Border>
+
+            <!-- ============================================================== -->
+            <!--  Body: places tree | folders | selection                      -->
+            <!-- ============================================================== -->
+            <Grid Grid.Row="2" Margin="20,0,20,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200" MinWidth="170" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" MinWidth="240" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="230" MinWidth="200" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Places -->
+                <Border Grid.Column="0" Background="{StaticResource SurfaceMuted}" CornerRadius="12"
+                        BorderBrush="{StaticResource Slate200}" BorderThickness="1" Padding="8">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Места" Style="{StaticResource TextMicro}"
+                                   Foreground="{StaticResource TextFaint}" Margin="6,0,0,6" />
+                        <ListBox x:Name="NavigationTree" Grid.Row="1"
+                                 ItemContainerStyle="{StaticResource NavRow}"
+                                 Background="Transparent" BorderThickness="0"
+                                 SelectionChanged="NavigationTree_SelectionChanged">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE838;" FontFamily="{StaticResource IconFont}"
+                                                   FontSize="12" Foreground="{StaticResource Amber500}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource TextBody}"
+                                                   Margin="8,0,0,0" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+
+                <!-- Folders -->
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Current path + back -->
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="BackButton" Grid.Column="0" Style="{StaticResource SecondaryButton}"
+                                Click="BackButton_Click" Padding="10,6" Margin="0,0,8,0"
+                                AutomationProperties.Name="Назад" ToolTip="Вернуться в предыдущую папку">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="📁" Margin="0,0,8,0" FontSize="16"/>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding FullPath}" 
-                                               FontSize="11" 
-                                               Foreground="#999"
-                                               TextTrimming="CharacterEllipsis"/>
-                                </StackPanel>
+                                <TextBlock Text="&#xE72B;" FontFamily="{StaticResource IconFont}" FontSize="11" />
+                                <TextBlock Text="Назад" Margin="5,0,0,0" />
                             </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                        </Button>
+                        <TextBlock x:Name="CurrentPathTextBlock" Grid.Column="1"
+                                   Style="{StaticResource TextMono}" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" Foreground="{StaticResource Slate600}" />
+                    </Grid>
+
+                    <ListBox x:Name="FoldersListBox" Grid.Row="1"
+                             ItemContainerStyle="{StaticResource FolderRow}"
+                             Background="Transparent" BorderThickness="0"
+                             SelectionMode="Extended"
+                             MouseDoubleClick="FoldersListBox_MouseDoubleClick"
+                             SelectionChanged="FoldersListBox_SelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE8B7;" FontFamily="{StaticResource IconFont}" FontSize="14"
+                                               Foreground="{StaticResource Amber500}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{StaticResource Slate700}" Margin="10,0,0,0"
+                                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Style="{StaticResource TextMicro}" Margin="8,0,0,0"
+                                               VerticalAlignment="Center"
+                                               Foreground="{StaticResource TextFaint}"
+                                               Text="{Binding FileCount, StringFormat='{}{0} файлов'}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+
+                <!-- Selection tray -->
+                <Border Grid.Column="4" Background="{StaticResource SurfaceMuted}" CornerRadius="12"
+                        BorderBrush="{StaticResource Slate200}" BorderThickness="1" Padding="12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <TextBlock Text="Выбрано папок" Style="{StaticResource TextMicro}"
+                                       Foreground="{StaticResource TextFaint}" />
+                            <TextBlock Style="{StaticResource TextMicro}" HorizontalAlignment="Right"
+                                       Foreground="{StaticResource Brand600}" FontWeight="Bold"
+                                       Text="{Binding Items.Count, ElementName=SelectedFoldersListBox}" />
+                        </Grid>
+
+                        <ListBox x:Name="SelectedFoldersListBox" Grid.Row="1"
+                                 Background="Transparent" BorderThickness="0" FontSize="11"
+                                 SelectionChanged="SelectedFoldersListBox_SelectionChanged">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border CornerRadius="6" Padding="6,4" Margin="0,0,0,2"
+                                            Background="{Binding HasError, Converter={StaticResource ErrorToBackgroundConverter}}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Path}"
+                                                       FontSize="11" TextTrimming="CharacterEllipsis"
+                                                       ToolTip="{Binding ErrorMessage}"
+                                                       Foreground="{Binding HasError, Converter={StaticResource ErrorToForegroundConverter}}"
+                                                       FontWeight="{Binding HasError, Converter={StaticResource ErrorToFontWeightConverter}}" />
+                                            <TextBlock Grid.Column="1" Text="&#xE7BA;" FontFamily="{StaticResource IconFont}"
+                                                       FontSize="10" VerticalAlignment="Center" Margin="4,0,0,0"
+                                                       Foreground="{StaticResource Red500}"
+                                                       Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <Grid Grid.Row="2" Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="RemoveSelectedButton" Grid.Column="0"
+                                    Style="{StaticResource SecondaryButton}" Padding="8,5"
+                                    Click="RemoveSelectedButton_Click"
+                                    AutomationProperties.Name="Убрать выбранные" Content="Убрать" />
+                            <Button x:Name="AddSelectedButton" Grid.Column="2"
+                                    Style="{StaticResource PrimaryButton}" Padding="8,5"
+                                    Click="AddSelectedButton_Click"
+                                    AutomationProperties.Name="Добавить выбранные" Content="Добавить" />
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ============================================================== -->
+            <!--  Footer                                                       -->
+            <!-- ============================================================== -->
+            <Grid Grid.Row="3" Margin="20,14,20,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Style="{StaticResource TextCaption}"
+                               Text="{Binding Items.Count, ElementName=FoldersListBox, StringFormat='Найдено подпапок: {0}'}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource SecondaryButton}" Click="CancelButton_Click"
+                            AutomationProperties.Name="Отмена" Content="Отмена" Margin="0,0,8,0" />
+                    <Button x:Name="OkButton" Style="{StaticResource PrimaryButton}" Click="OkButton_Click"
+                            AutomationProperties.Name="Загрузить структуру" IsDefault="True" IsCancel="False">
+                        <TextBlock Text="Загрузить структуру" Foreground="White" />
+                    </Button>
+                </StackPanel>
             </Grid>
         </Grid>
-        
-        <!-- Selected Folders -->
-        <Border Grid.Row="3" 
-                Background="White" 
-                BorderBrush="#E0E0E0"
-                BorderThickness="1"
-                CornerRadius="6"
-                Padding="10"
-                Margin="0,0,0,15">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0"
-                           Text="Выбранные папки:" 
-                           FontWeight="SemiBold" 
-                           Margin="0,0,0,8"/>
-                <ListBox Grid.Row="1"
-                         x:Name="SelectedFoldersListBox"
-                         MaxHeight="100"
-                         BorderThickness="0"
-                         SelectionMode="Extended"
-                         SelectionChanged="SelectedFoldersListBox_SelectionChanged">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="{Binding HasError, Converter={StaticResource ErrorToBackgroundConverter}}"
-                                    Padding="5,2"
-                                    CornerRadius="3"
-                                    Margin="0,1">
-                                <TextBlock Text="{Binding Path}" 
-                                           TextTrimming="CharacterEllipsis"
-                                           Foreground="{Binding HasError, Converter={StaticResource ErrorToForegroundConverter}}"
-                                           FontWeight="{Binding HasError, Converter={StaticResource ErrorToFontWeightConverter}}"/>
-                            </Border>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-                <Button Grid.Row="2"
-                        Content="Удалить выбранные"
-                        Click="RemoveSelectedButton_Click"
-                        HorizontalAlignment="Right"
-                        Margin="0,8,0,0"
-                        Padding="10,5"
-                        x:Name="RemoveSelectedButton"
-                        IsEnabled="False">
-                </Button>
-            </Grid>
-        </Border>
-        
-        <!-- Buttons -->
-        <StackPanel Grid.Row="4" Orientation="Horizontal" 
-                    HorizontalAlignment="Right">
-            <Button Content="Добавить выбранные" 
-                    Click="AddSelectedButton_Click" 
-                    Padding="20,10" 
-                    Margin="0,0,10,0"
-                    MinWidth="150"
-                    x:Name="AddSelectedButton"/>
-            <Button Content="Загрузить" 
-                    Click="OkButton_Click" 
-                    Padding="25,10" 
-                    Margin="0,0,10,0"
-                    IsDefault="True"
-                    MinWidth="100"
-                    x:Name="OkButton"/>
-            <Button Content="Отмена" 
-                    Click="CancelButton_Click" 
-                    Padding="25,10"
-                    IsCancel="True"
-                    MinWidth="100"/>
-        </StackPanel>
-    </Grid>
+    </Border>
+    </Border>
 </Window>
-

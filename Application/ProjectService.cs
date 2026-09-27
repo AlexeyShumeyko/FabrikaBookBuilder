@@ -97,7 +97,47 @@ namespace PhotoBookRenamer.Application
                 project.Books[i].BookIndex = i + 1;
             }
 
+            // Кадр карточек формируется по реальным размерам фото, поэтому они нужны
+            // сразу при создании проекта. DetectCoverAsync выше уже прочитал заголовки
+            // всех файлов, здесь попадаем в кэш ImageService - диск не трогаем дважды.
+            await FillImageDimensionsAsync(project);
+
             return project;
+        }
+
+        /// <summary>
+        /// Fills <see cref="Page.ImageWidth"/> / <see cref="Page.ImageHeight"/> from the
+        /// files on disk, for pages that do not have them yet, and re-derives each book's
+        /// card frame.
+        ///
+        /// Only the file header is read (ImageSharp <c>Identify</c>) and ImageService
+        /// caches the result, so a project saved by this version never pays for it again.
+        /// Older project files simply fill in on first open.
+        /// </summary>
+        private async Task FillImageDimensionsAsync(Project project)
+        {
+            if (project?.Books == null) return;
+
+            var pending = new List<Page>();
+            foreach (var book in project.Books)
+            {
+                if (book.Cover != null && !book.Cover.HasDimensions) pending.Add(book.Cover);
+                foreach (var page in book.Pages)
+                    if (page != null && !page.HasDimensions) pending.Add(page);
+            }
+
+            if (pending.Count > 0)
+            {
+                await Task.WhenAll(pending.Select(async page =>
+                {
+                    var (width, height) = await _imageService.GetImageDimensionsAsync(page.SourcePath ?? string.Empty);
+                    page.ImageWidth = width;
+                    page.ImageHeight = height;
+                }));
+
+                foreach (var book in project.Books)
+                    book.UpdatePageSlots();
+            }
         }
 
         public async Task SaveProjectAsync(Project project, string filePath)
@@ -215,6 +255,10 @@ namespace PhotoBookRenamer.Application
                             book.UpdatePageSlots();
                         }
                     }
+
+                    // Проекты, сохранённые до появления размеров, получают их при первом
+                    // открытии - и дальше они лежат в файле проекта.
+                    await FillImageDimensionsAsync(project);
                 }
                 
                 return project;

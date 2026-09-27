@@ -141,7 +141,8 @@ namespace PhotoBookRenamer.Presentation.Converters
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.CreateOptions = BitmapCreateOptions.None;
                     bitmap.DecodePixelWidth = 600;
-                    bitmap.DecodePixelHeight = 900;
+                    // Только DecodePixelWidth: обе стороны растянули бы фото,
+                    // вторая считается по пропорциям оригинала.
                     bitmap.UriSource = new Uri(imagePath, UriKind.Absolute);
                     bitmap.EndInit();
                     bitmap.Freeze();

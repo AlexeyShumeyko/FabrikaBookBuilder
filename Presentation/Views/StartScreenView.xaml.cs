@@ -1,9 +1,7 @@
-using System;
 using System.Windows;
 using System.Windows.Controls;
-using Microsoft.Extensions.DependencyInjection;
+using System.Windows.Input;
 using PhotoBookRenamer.Domain;
-using PhotoBookRenamer.Application;
 using PhotoBookRenamer.Presentation.ViewModels;
 
 namespace PhotoBookRenamer.Presentation.Views
@@ -18,68 +16,38 @@ namespace PhotoBookRenamer.Presentation.Views
             _viewModel = viewModel;
         }
 
-        private async void OnUniqueFoldersClick(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Goes straight to the editor. The project record is created lazily on the first
+        /// data-bearing action inside the editor (see EnsureProjectInfoAsync), so merely
+        /// looking at this screen no longer leaves an empty "Черновик" in the project list.
+        /// </summary>
+        private void OnUniqueFoldersClick(object sender, MouseButtonEventArgs e)
         {
-            await CreateAndOpenProjectAsync(AppMode.UniqueFolders);
+            if (ClickLandedOnInnerButton(e)) return;
+            _viewModel.CreateProject(AppMode.UniqueFolders);
         }
 
-        private async void OnCombinedModeClick(object sender, RoutedEventArgs e)
+        private void OnCombinedModeClick(object sender, MouseButtonEventArgs e)
         {
-            await CreateAndOpenProjectAsync(AppMode.Combined);
+            if (ClickLandedOnInnerButton(e)) return;
+            _viewModel.CreateProject(AppMode.Combined);
         }
 
-        private void OnBackClick(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// MouseLeftButtonDown on a card also fires for clicks on child controls. Without
+        /// this guard a single click could both activate a nested button and navigate.
+        /// </summary>
+        private static bool ClickLandedOnInnerButton(MouseButtonEventArgs e)
         {
-            _viewModel.CurrentMode = AppMode.ProjectList;
-        }
+            if (e.OriginalSource is not DependencyObject source) return false;
 
-        private void OnHelpClick(object sender, RoutedEventArgs e)
-        {
-            _viewModel.OpenHelp(HelpSection.StartScreen);
-        }
-
-        private async System.Threading.Tasks.Task CreateAndOpenProjectAsync(AppMode mode)
-        {
-            try
+            var current = source;
+            while (current != null)
             {
-                var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                if (serviceProvider == null) return;
-
-                var projectListService = serviceProvider.GetRequiredService<IProjectListService>();
-                
-                // Создаем новый проект
-                var projectName = $"Новый проект {DateTime.Now:yyyy-MM-dd HH:mm}";
-                var projectInfo = await projectListService.CreateProjectAsync(mode, projectName);
-                
-                if (projectInfo != null)
-                {
-                    // Переключаемся на режим редактирования
-                    _viewModel.CurrentMode = mode;
-                    
-                    // Устанавливаем проект в ViewModel синхронно
-                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        if (mode == AppMode.UniqueFolders)
-                        {
-                            var uniqueVm = serviceProvider.GetRequiredService<UniqueFoldersViewModel>();
-                            var project = new Project { Mode = mode };
-                            uniqueVm.SetProject(project, projectInfo);
-                        }
-                        else if (mode == AppMode.Combined)
-                        {
-                            var combinedVm = serviceProvider.GetRequiredService<CombinedModeViewModel>();
-                            var project = new Project { Mode = mode };
-                            combinedVm.SetProject(project, projectInfo);
-                        }
-                    });
-                }
+                if (current is Button) return true;
+                current = System.Windows.Media.VisualTreeHelper.GetParent(current);
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка создания проекта: {ex.Message}", "Ошибка", 
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            return false;
         }
     }
 }
-

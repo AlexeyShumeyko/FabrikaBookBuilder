@@ -19,6 +19,12 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         public string FullPath { get; set; } = string.Empty;
         public List<FolderNode> Children { get; set; } = new();
         public bool IsExpanded { get; set; }
+
+        /// <summary>
+        /// Number of JPEG files directly inside this folder, so the browser can show
+        /// "(6 файлов)" the way the design does. Populated by LoadFolders; 0 when unknown.
+        /// </summary>
+        public int FileCount { get; set; }
     }
 
     public class SelectedFolderInfo : INotifyPropertyChanged
@@ -154,6 +160,22 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             }
         }
 
+        private static readonly string[] JpegExtensions = { ".jpg", ".jpeg", ".JPG", ".JPEG" };
+
+        /// <summary>Counts JPEG files directly inside a folder. Returns 0 on any failure.</summary>
+        private static int CountJpegFiles(string folder)
+        {
+            try
+            {
+                return Directory.GetFiles(folder)
+                    .Count(f => JpegExtensions.Contains(Path.GetExtension(f)));
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
         private void LoadFolders(string path)
         {
             try
@@ -205,7 +227,11 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                         .Select(d => new FolderNode
                         {
                             Name = Path.GetFileName(d),
-                            FullPath = d
+                            FullPath = d,
+                            // Cheap, best-effort count so the list can show "(N файлов)".
+                            // Wrapped because a folder can disappear or deny access between
+                            // the enumeration above and this call.
+                            FileCount = CountJpegFiles(d)
                         })
                         .OrderBy(d => d.Name)
                         .ToList();

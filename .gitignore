@@ -76,6 +76,9 @@ bld/
 # Thumbnails
 Thumbnails/
 
+# Internal design documents, working notes and scratch files. Never published.
+doc/
+
 
 
 
