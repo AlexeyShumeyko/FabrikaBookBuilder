@@ -178,6 +178,12 @@ namespace PhotoBookRenamer.Domain
             foreach (var p in Pages)
                 if (p != null) p.FrameAspect = clamped;
 
+            // Only shout when it actually changed. This runs on every assignment in the
+            // run, and an unconditional notification here is a loop waiting to happen:
+            // anything listening for FrameAspect ends up calling straight back into the
+            // code that set it.
+            if (Math.Abs(FrameAspect - clamped) < 0.0001) return;
+
             FrameAspect = clamped;
             OnPropertyChanged(nameof(FrameAspect));
         }

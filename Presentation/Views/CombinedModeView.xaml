@@ -470,7 +470,8 @@
                                                                 -->
                                                                 <Grid.Width>
                                                                     <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="width">
-                                                                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
+                                                                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ScrollViewer}"
+                                                                                Converter="{StaticResource ReserveWidthConverter}" ConverterParameter="18" />
                                                                         <Binding />
                                                                     </MultiBinding>
                                                                 </Grid.Width>
@@ -486,13 +487,15 @@
                                                                 <Grid Grid.Row="0" Background="{StaticResource Slate100}">
                                                                     <Grid.Width>
                                                                         <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="width">
-                                                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
+                                                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ScrollViewer}"
+                                                                                Converter="{StaticResource ReserveWidthConverter}" ConverterParameter="18" />
                                                                             <Binding />
                                                                         </MultiBinding>
                                                                     </Grid.Width>
                                                                     <Grid.Height>
                                                                         <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="height">
-                                                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
+                                                                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ScrollViewer}"
+                                                                                Converter="{StaticResource ReserveWidthConverter}" ConverterParameter="18" />
                                                                             <Binding />
                                                                         </MultiBinding>
                                                                     </Grid.Height>

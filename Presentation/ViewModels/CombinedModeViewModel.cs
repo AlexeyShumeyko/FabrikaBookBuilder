@@ -154,6 +154,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             System.ComponentModel.PropertyChangedEventHandler handler = (s, e) =>
             {
+                // FrameAspect is deliberately NOT in this list: it is the OUTPUT of
+                // UpdateRunFrameAspect, so reacting to it calls itself forever and takes
+                // the process down with a stack overflow.
                 if (e.PropertyName is nameof(Book.Cover)
                                  or nameof(Book.Pages)
                                  or nameof(Book.AllSlotsPages))
@@ -348,58 +351,75 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         //  One frame shape for the whole run
         // ------------------------------------------------------------------
 
+        private double? _runFrameAspect;
+
         /// <summary>
-        /// Decides the frame shape for every book of the run: the MEDIAN of every spread
-        /// in the run, the cover never counted.
+        /// The spread that decided the shape, by path. While that photo is still in the
+        /// run the shape does not move again - a second spread of the same format must
+        /// not nudge the cards, and one odd photo pasted into a spread slot must not
+        /// average with the rest. A median did both wrong: with an even number of spreads
+        /// it returns the midpoint of the middle pair, so a stray 1.9 next to 0.68 gave
+        /// 1.29 and the cards swung there and back as more photos arrived.
         ///
-        /// Both of the owner's requirements fall out of a median rather than a latch.
-        /// A run is aligned by its spreads, so a 1.9 cover next to square spreads must not
-        /// drag the frames - and it does not, because it is not in the set. And the median
-        /// of a run of equally shaped spreads IS that shape, so loading photo after photo
-        /// stops moving the cards after the first one - which a frozen value also did, but
-        /// a frozen value could not recover: delete the books, build the run again, and
-        /// the frames stayed in the old format while the new photos were a different one.
-        ///
-        /// Recomputed on every change, so a wrong photo loaded by mistake is outnumbered
-        /// by the right ones and the frames follow the content again.
+        /// Anchoring on a path also makes the shape recoverable without a reset button:
+        /// clear that photo, or empty the run and build it again, and the next spread
+        /// becomes the anchor. What it must not be is permanent.
+        /// </summary>
+        private string? _runFrameAspectSource;
+
+        /// <summary>
+        /// Decides the frame shape for every book of the run: the first SPREAD in reading
+        /// order, the cover never counting. The cover only holds the fort while there is
+        /// no spread yet, because a client may well load the cover first.
         /// </summary>
         private void UpdateRunFrameAspect()
         {
-            var ratios = new List<double>();
+            List<string> spreads = new();
+            double? firstSpreadAspect = null;
 
             foreach (var book in Books)
             {
                 foreach (var page in book.Pages)
                 {
                     if (page == null || page.IsCover || page.IsEmpty || !page.HasDimensions) continue;
-                    ratios.Add(page.AspectRatio);
+
+                    spreads.Add(page.SourcePath!);
+                    firstSpreadAspect ??= page.AspectRatio;
                 }
             }
 
-            // Nothing measured yet: a cover may still say something useful, otherwise the
-            // default 16:10. Once a spread arrives the cover stops counting.
-            if (ratios.Count == 0)
+            if (spreads.Count > 0)
             {
-                foreach (var book in Books)
+                // Keep the anchor while it is still there, so loading photo after photo
+                // leaves the cards alone.
+                if (_runFrameAspectSource != null && spreads.Contains(_runFrameAspectSource))
                 {
-                    if (book.Cover != null && !book.Cover.IsEmpty && book.Cover.HasDimensions)
-                    {
-                        ratios.Add(book.Cover.AspectRatio);
-                        break;
-                    }
+                    StampRunAspect(_runFrameAspect ?? firstSpreadAspect!.Value);
+                    return;
+                }
+
+                // Anchor lost - cleared, or the run was rebuilt from scratch. Re-anchor.
+                _runFrameAspect = firstSpreadAspect;
+                _runFrameAspectSource = spreads[0];
+                StampRunAspect(_runFrameAspect!.Value);
+                return;
+            }
+
+            // No spreads at all: an empty run resets the anchor, so a rebuilt run starts
+            // from the new photos instead of the old format.
+            _runFrameAspect = null;
+            _runFrameAspectSource = null;
+
+            foreach (var book in Books)
+            {
+                if (book.Cover != null && !book.Cover.IsEmpty && book.Cover.HasDimensions)
+                {
+                    StampRunAspect(book.Cover.AspectRatio);
+                    return;
                 }
             }
 
-            StampRunAspect(ratios.Count > 0 ? MedianOf(ratios) : 1.6);
-        }
-
-        private static double MedianOf(List<double> values)
-        {
-            values.Sort();
-            int mid = values.Count / 2;
-            return values.Count % 2 == 1
-                ? values[mid]
-                : (values[mid - 1] + values[mid]) / 2d;
+            StampRunAspect(1.6);
         }
 
         private void StampRunAspect(double aspect)

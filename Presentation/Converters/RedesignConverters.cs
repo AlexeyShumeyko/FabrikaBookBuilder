@@ -564,6 +564,44 @@ namespace PhotoBookRenamer.Presentation.Converters
     }
 
     /// <summary>
+    /// Takes a scrollbar's width off a measured row width.
+    ///
+    /// The card size has to be decided from a width that does NOT depend on the scrollbar,
+    /// or the two argue with each other: the cards set the row count, the row count sets
+    /// the content height, the content height decides whether the scrollbar is showing,
+    /// and a scrollbar that comes and goes changes the very width the cards were sized
+    /// from. That loop made a run of books flicker between four cards per row and three,
+    /// for as long as the screen was watched.
+    ///
+    /// A view that measures the ScrollViewer's OWN width - constant, but also the width
+    /// the scrollbar will take - runs its measurement through this first. A view that
+    /// measures the viewport must NOT: the scrollbar is already taken out there.
+    ///
+    /// Usage: ConverterParameter = pixels to hold back, default 18.
+    /// </summary>
+    public class ReserveWidthConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            double width = value switch
+            {
+                double d => d,
+                int i => i,
+                _ => 0d
+            };
+
+            double reserve = 18d;
+            if (double.TryParse(parameter as string, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
+                reserve = parsed;
+
+            return Math.Max(0d, width - reserve);
+        }
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => Binding.DoNothing;
+    }
+
+    /// <summary>
     /// Card size for a spread card: the photo frame's width and height, adapted to how
     /// much room the book block actually has.
     ///
@@ -582,8 +620,12 @@ namespace PhotoBookRenamer.Presentation.Converters
     /// <see cref="MinWidth"/>, is rejected: at that point the photos stop being big enough
     /// to judge, and losing a card is better than losing the ability to see the photo.
     ///
-    /// Usage: MultiBinding of the row area's ActualWidth and the Page, with
+    /// Usage: MultiBinding of the row area's width and the Page, with
     /// ConverterParameter="width" or "height".
+    ///
+    /// The width must be something the cards cannot influence: the enclosing
+    /// <c>ScrollViewer</c>'s own width, run through <see cref="ReserveWidthConverter"/>.
+    /// Measuring the viewport instead is what produced the endless row/scrollback loop.
     /// </summary>
     public class AdaptiveCardSizeConverter : IMultiValueConverter
     {
@@ -599,6 +641,14 @@ namespace PhotoBookRenamer.Presentation.Converters
         /// last card of the row.
         /// </summary>
         private const double CardChrome = 2d;
+
+        /// <summary>
+        /// Held back from a measured width so a row never slides under a scrollbar.
+        ///
+        /// Only needed where the width comes from a ScrollViewer's OWN width: that width
+        /// is constant, but it is also the width the scrollbar will eat, and the cards
+        /// have to be sized before it appears. See <see cref="ReserveWidthConverter"/>.
+        /// </summary>
 
         /// <summary>How far a card may be scaled down to win one more per row.</summary>
         private const double MinScale = 0.8d;
@@ -670,7 +720,11 @@ namespace PhotoBookRenamer.Presentation.Converters
             // floating point rounding cannot push the last item over the edge.
             double target = available / (perRow + 1) - CardChrome - CardMargin - 1d;
 
-            if (target >= natural * MinScale && target < natural)
+            // The floor applies to the RESULT, not just to the starting size. Shrinking
+            // past it is how "Разворот 1", "Во все книги" and the bin stopped fitting -
+            // and the card width must never depend on whether the scrollbar is showing,
+            // or the two fight each other.
+            if (target >= MinWidth && target >= natural * MinScale && target < natural)
                 return target;
 
             return natural;

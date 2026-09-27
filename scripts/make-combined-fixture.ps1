@@ -15,7 +15,10 @@ param(
     [int]$PhotoH = 0,
     [string]$CoverPhotoPath = '',
     [int]$CoverW = 0,
-    [int]$CoverH = 0
+    [int]$CoverH = 0,
+    [string]$OutlierPhotoPath = '',
+    [int]$OutlierW = 0,
+    [int]$OutlierH = 0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -87,6 +90,18 @@ for ($b = 1; $b -le $Books; $b++) {
             imageWidth = if ($pick) { $pick.w } else { 0 }
             imageHeight = if ($pick) { $pick.h } else { 0 }
         }
+    }
+
+    # -OutlierPhotoPath puts a photo of a DIFFERENT format in the LAST spread. That is
+    # the case the owner hit by accident: a cover pasted over a spread. A median would
+    # average the two formats; the frames must stay on the first spread's format and crop
+    # the odd one out.
+    if ($fill -and $OutlierPhotoPath -ne '' -and $OutlierW -gt 0 -and $OutlierH -gt 0 -and $Spreads -ge 1) {
+        $last = $pages[$pages.Count - 1]
+        $last.sourcePath = $OutlierPhotoPath
+        $last.thumbnailPath = $null
+        $last.imageWidth = $OutlierW
+        $last.imageHeight = $OutlierH
     }
     $cover = if ($fill) { $photos[0] } else { $null }
 
