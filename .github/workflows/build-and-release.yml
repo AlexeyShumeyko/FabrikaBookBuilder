@@ -158,7 +158,7 @@ jobs:
           --runtime win-x64 `
           /p:PublishSingleFile=true `
           /p:IncludeNativeLibrariesForSelfExtract=true `
-          /p:Version=${{ env.VERSION }}' + "`r`n" + @'
+          /p:Version=${{ env.VERSION }}
 
         # Inno Setup takes the installer icon from publish\icon.ico, and the SDK does not
         # put it there: the file is also declared as a WPF Resource, so it ends up embedded
