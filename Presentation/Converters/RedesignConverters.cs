@@ -538,10 +538,12 @@ namespace PhotoBookRenamer.Presentation.Converters
     /// - the one state the photographer has to notice, since the same picture is going into
     /// every book.
     ///
-    /// The border is the loud one on purpose: the owner asked for a bright coloured frame
-    /// around the STATUS, not a tint over the whole row. A tint on a 320px-wide row is
-    /// almost invisible at a glance; a 1.5px frame of the state colour is read instantly
-    /// while scanning for what is still free.
+    /// All three parts of the badge are coloured, not just its outline. The owner came back
+    /// on this twice: first a tint over the whole row ("I asked for the STATUS, not the
+    /// cell"), then a coloured frame that was "barely visible". A `-50` fill on a 10px
+    /// label is white with a hint, so the fill moved to `-100`, the frame to `-500` and the
+    /// text to `-800`: the badge reads as a coloured object at a glance while scrolling,
+    /// and the 10px label keeps its contrast.
     /// </summary>
     public class PhotoUsageToBrushConverter : IValueConverter
     {
@@ -552,17 +554,17 @@ namespace PhotoBookRenamer.Presentation.Converters
 
             return (usage, role) switch
             {
-                (PhotoUsage.Assigned, "border") => Brush(0x10, 0xB9, 0x81),   // emerald-500
-                (PhotoUsage.Assigned, "text")   => Brush(0x04, 0x78, 0x57),   // emerald-700
-                (PhotoUsage.Assigned, _)        => Brush(0xEC, 0xFD, 0xF5),   // emerald-50
+                (PhotoUsage.Assigned, "border") => Brush(0x05, 0x9E, 0x69),   // emerald-600
+                (PhotoUsage.Assigned, "text")   => Brush(0x06, 0x5F, 0x46),   // emerald-800
+                (PhotoUsage.Assigned, _)        => Brush(0xD1, 0xFA, 0xE5),   // emerald-100
 
-                (PhotoUsage.Shared, "border")   => Brush(0x63, 0x66, 0xF1),   // brand-500
-                (PhotoUsage.Shared, "text")     => Brush(0x43, 0x38, 0xCA),   // indigo-700
-                (PhotoUsage.Shared, _)          => Brush(0xEE, 0xF2, 0xFF),   // indigo-50
+                (PhotoUsage.Shared, "border")   => Brush(0x4F, 0x46, 0xE5),   // indigo-600
+                (PhotoUsage.Shared, "text")     => Brush(0x37, 0x30, 0xA3),   // indigo-800
+                (PhotoUsage.Shared, _)          => Brush(0xE0, 0xE7, 0xFF),   // indigo-100
 
-                (_, "border")                   => Brush(0xCB, 0xD5, 0xE1),   // slate-300
-                (_, "text")                     => Brush(0x64, 0x74, 0x8B),   // slate-500
-                _                               => Brush(0xF1, 0xF5, 0xF9)    // slate-100
+                (_, "border")                   => Brush(0x94, 0xA3, 0xB8),   // slate-400
+                (_, "text")                     => Brush(0x33, 0x41, 0x55),   // slate-700
+                _                               => Brush(0xE2, 0xE8, 0xF0)    // slate-200
             };
         }
 
