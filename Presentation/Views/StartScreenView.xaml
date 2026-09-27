@@ -115,16 +115,16 @@
                         <StackPanel Grid.Row="0">
                             <!-- Green = the automatic mode. Same colour as the chip on a
                                  saved project and on this project's empty state. -->
-                            <Border Style="{StaticResource ModeIconBox}" Background="{StaticResource Stone50}">
+                            <Border Style="{StaticResource ModeIconBox}" Background="{StaticResource Sky50}">
                                 <TextBlock Style="{StaticResource ModeIcon}" Text="&#xE8C0;"
-                                           Foreground="{StaticResource Stone600}" />
+                                           Foreground="{StaticResource Sky600}" />
                             </Border>
 
                             <TextBlock x:Name="UniqueTitleTextBlock" Text="Уникальные папки"
                                        Style="{StaticResource TextLgBold}" />
                             <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" Margin="0,8,0,0"
                                        Foreground="{StaticResource Slate600}" LineHeight="19"
-                                       Text="Каждая загруженная папка становится отдельной фотокнигой. Вы выбираете папки — программа сама находит в каждой обложку, раскладывает фотографии по разворотам и сразу даёт файлам имена, готовые к загрузке." />
+                                       Text="Каждая загруженная папка становится отдельной фотокнигой. Программа сама определит обложку, разложит фотографии по разворотам и присвоит файлам имена, готовые к загрузке." />
 
                             <!-- ul mt-5 (20) space-y-2 (8) -->
                             <StackPanel Margin="0,20,0,0">
@@ -134,7 +134,7 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Style="{StaticResource CheckIcon}" Text="&#xE73E;"
-                                               Foreground="{StaticResource Stone400}" />
+                                               Foreground="{StaticResource Sky500}" />
                         <TextBlock Grid.Column="1" Style="{StaticResource TextXs}" TextWrapping="Wrap"
                                                Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
                                                Text="Обложка определяется сама: самое большое фото в папке" />
@@ -145,10 +145,10 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Style="{StaticResource CheckIcon}" Text="&#xE73E;"
-                                               Foreground="{StaticResource Stone400}" />
+                                               Foreground="{StaticResource Sky500}" />
                         <TextBlock Grid.Column="1" Style="{StaticResource TextXs}" TextWrapping="Wrap"
                                                Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
-                                               Text="Порядок разворотов можно поправить стрелками, если файлы шли не по сюжету" />
+                                               Text="Порядок разворотов можно изменить, если фотографии в папке идут не по сюжету" />
                     </Grid>
                                 <Grid Style="{StaticResource FeatureRow}">
                         <Grid.ColumnDefinitions>
@@ -156,10 +156,10 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Style="{StaticResource CheckIcon}" Text="&#xE73E;"
-                                               Foreground="{StaticResource Stone400}" />
+                                               Foreground="{StaticResource Sky500}" />
                         <TextBlock Grid.Column="1" Style="{StaticResource TextXs}" TextWrapping="Wrap"
                                                Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
-                                               Text="У всех книг проекта одинаковое число разворотов — этого требует сайт приёма" />
+                                               Text="В одном проекте можно загружать только папки с одинаковым количеством файлов — это нужно для правильной сборки книг" />
                     </Grid>
                             </StackPanel>
                         </StackPanel>
@@ -173,10 +173,10 @@
                                     VerticalAlignment="Top" Margin="0,0,0,16" />
                             <TextBlock Grid.Row="0" Margin="0,16,0,0" Text="Выбрать режим"
                                        Style="{StaticResource TextXsSemibold}"
-                                       Foreground="{StaticResource Stone600}" />
+                                       Foreground="{StaticResource Sky600}" />
                             <TextBlock Grid.Row="0" HorizontalAlignment="Right" Text="&#xE72A;"
                                        FontFamily="{StaticResource IconFont}" FontSize="12"
-                                       Foreground="{StaticResource Stone600}" />
+                                       Foreground="{StaticResource Sky600}" />
                         </Grid>
                     </Grid>
                 </Border>
@@ -202,7 +202,21 @@
                                        Style="{StaticResource TextLgBold}" />
                             <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" Margin="0,8,0,0"
                                        Foreground="{StaticResource Slate600}" LineHeight="19"
-                                       Text="Все фотографии партии лежат в одном списке, и вы сами решаете, какое фото в какой книге и на каком развороте стоит. Режим для партий, которые собирают вручную, — когда состав каждой книги подбирают отдельно." />
+                                       Text="Режим для сборки книг вручную: вы выбираете, какое фото в какой книге и на каком развороте будет стоять. Подходит, когда состав каждой книги подбирают отдельно." />
+
+                            <!-- The point of the mode, in one sentence. "Общий разворот" is
+                                 what makes a run of forty books bearable, and it is the one
+                                 thing this mode does that the folders mode cannot. -->
+                            <Border Background="{StaticResource Brand50}" BorderBrush="{StaticResource Brand100}"
+                                    BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,14,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Главное — общие развороты и обложки" Style="{StaticResource TextXsSemibold}"
+                                               Foreground="{StaticResource Brand700}" />
+                                    <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" Margin="0,3,0,0"
+                                               Foreground="{StaticResource Slate600}" LineHeight="18"
+                                               Text="Одинаковый разворот или обложку можно добавить сразу во все книги одним действием — и больше не заполнять его вручную в каждой. На больших заказах это заметно ускоряет сборку." />
+                                </StackPanel>
+                            </Border>
 
                             <StackPanel Margin="0,20,0,0">
                                 <Grid Style="{StaticResource FeatureRow}">
@@ -214,7 +228,7 @@
                                                Foreground="{StaticResource Brand500}" />
                         <TextBlock Grid.Column="1" Style="{StaticResource TextXs}" TextWrapping="Wrap"
                                                Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
-                                               Text="Любая фотография — в любую книгу и в любой разворот, перетаскиванием или прямо в ячейку" />
+                                               Text="Любая фотография попадает в любую книгу и на любой разворот" />
                     </Grid>
                                 <Grid Style="{StaticResource FeatureRow}">
                         <Grid.ColumnDefinitions>
@@ -225,7 +239,7 @@
                                                Foreground="{StaticResource Brand500}" />
                         <TextBlock Grid.Column="1" Style="{StaticResource TextXs}" TextWrapping="Wrap"
                                                Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
-                                               Text="«Во все книги» ставит один и тот же разворот или обложку сразу во все книги партии" />
+                                               Text="Общий разворот или обложка добавляется сразу во все книги одним действием" />
                     </Grid>
                                 <Grid Style="{StaticResource FeatureRow}">
                         <Grid.ColumnDefinitions>
@@ -236,7 +250,7 @@
                                                Foreground="{StaticResource Brand500}" />
                         <TextBlock Grid.Column="1" Style="{StaticResource TextXs}" TextWrapping="Wrap"
                                                Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
-                                               Text="У всех книг одинаковое число разворотов, а то, что повторяется везде, уходит на выход одним файлом" />
+                                               Text="Количество разворотов у всех книг одинаковое — это нужно для правильной сборки" />
                     </Grid>
                             </StackPanel>
                         </StackPanel>

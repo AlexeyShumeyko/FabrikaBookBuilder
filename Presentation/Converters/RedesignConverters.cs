@@ -467,25 +467,22 @@ namespace PhotoBookRenamer.Presentation.Converters
 
             // The two modes each own a colour, used everywhere a mode is named: the chip
             // on a project card, the icon on the mode-select cards, the empty states.
-            // Folders = warm neutral, combined = the app's indigo. Folders was green
-            // first and the owner rejected it: the mode chip, "Готов к печати" and the
-            // "Структура корректна" tick are all green, and a mode wearing a status's
-            // colour stops reading as a mode. Warm rather than slate, because "Черновик"
-            // is slate - a neutral that shared a status's family would have the same
-            // problem all over again.
+            // Sky for the folders mode, the app's indigo for the combined one. The folders
+            // mode was emerald first and the owner rejected it - emerald is "Готов к печати"
+            // and the "Структура корректна" tick - and grey second, for the same reason:
+            // a mode chip has to stand out, and grey is what every status already is.
             if (role is not null && role.StartsWith("tint", StringComparison.OrdinalIgnoreCase))
             {
                 bool folders = mode == AppMode.UniqueFolders;
                 return role.ToLowerInvariant() switch
                 {
-                    "tintbg" => Brush(folders ? "#FAFAF9" : "#EEF2FF"),
-                    "tintborder" => Brush(folders ? "#E7E5E4" : "#C7D2FE"),
-                    "tinttext" => Brush(folders ? "#44403C" : "#4338CA"),
-                    "tinticon" => Brush(folders ? "#57534E" : "#4F46E5"),
+                    "tintbg" => Brush(folders ? "#F0F9FF" : "#EEF2FF"),
+                    "tintborder" => Brush(folders ? "#BAE6FD" : "#C7D2FE"),
+                    "tinttext" => Brush(folders ? "#0369A1" : "#4338CA"),
+                    "tinticon" => Brush(folders ? "#0284C7" : "#4F46E5"),
                     _ => Brushes.Transparent
                 };
             }
-
             return (mode, wantIcon) switch
             {
                 (AppMode.UniqueFolders, false) => "Уникальные папки",

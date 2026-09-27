@@ -102,14 +102,14 @@
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- p-3 emerald-50 rounded-xl border emerald-100 -->
                         <Border Width="48" Height="48" CornerRadius="12" VerticalAlignment="Center"
-                                Background="{StaticResource Stone50}" BorderBrush="{StaticResource Emerald100}"
+                                Background="{StaticResource Sky50}" BorderBrush="{StaticResource Emerald100}"
                                 BorderThickness="1">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="4" ShadowDepth="1" Direction="270"
                                                   Opacity="0.05" RenderingBias="Quality" Color="#0F172A" />
                             </Border.Effect>
                             <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="20"
-                                       Foreground="{StaticResource Stone600}"
+                                       Foreground="{StaticResource Sky600}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
 
@@ -213,9 +213,9 @@
                             Visibility="{Binding BooksCount, Converter={StaticResource CountToBoolConverter}, ConverterParameter=invert}">
                         <StackPanel>
                             <Border Width="56" Height="56" CornerRadius="16" HorizontalAlignment="Center"
-                                    Background="{StaticResource Stone50}">
+                                    Background="{StaticResource Sky50}">
                                 <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="24"
-                                           Foreground="{StaticResource Stone600}"
+                                           Foreground="{StaticResource Sky600}"
                                            HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <TextBlock Text="Выберите папки с фотографиями" Style="{StaticResource TextLgBold}"
@@ -223,11 +223,11 @@
                             <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" TextAlignment="Center"
                                        Foreground="{StaticResource Slate600}"
                                        MaxWidth="440" HorizontalAlignment="Center" Margin="0,8,0,0"
-                                       Text="Каждая выбранная папка станет отдельной книгой: самое большое фото в ней — обложка, остальные — развороты." />
+                                       Text="Каждая выбранная папка станет отдельной книгой: самое большое фото в ней будет обложкой, остальные — разворотами." />
                             <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" TextAlignment="Center"
                                        Foreground="{StaticResource Slate500}"
                                        MaxWidth="440" HorizontalAlignment="Center" Margin="0,8,0,20"
-                                       Text="Папок можно выбрать сразу несколько. В них должно быть одинаковое число фотографий, тогда у всех книг получится одинаковое число разворотов. Если порядок файлов не совпадает с сюжетом, развороты можно переставить стрелками." />
+                                       Text="Можно выбрать сразу несколько папок. В одном проекте допускается загружать только папки с одинаковым количеством файлов — это нужно для правильной сборки книг. Порядок разворотов потом можно изменить." />
                             <Button Style="{StaticResource PrimaryButton}" Padding="16,10"
                                     Command="{Binding LoadFoldersCommand}"
                                     HorizontalAlignment="Center" AutomationProperties.Name="Выбрать папки">
@@ -307,11 +307,11 @@
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
                                                             Visibility="{Binding IsValid, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                     <TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}"
-                                                               FontSize="12" Foreground="{StaticResource Stone600}"
+                                                               FontSize="12" Foreground="{StaticResource Sky600}"
                                                                VerticalAlignment="Center" />
                                                     <TextBlock Text="Структура корректна"
                                                                Style="{StaticResource TextXsSemibold}"
-                                                               Foreground="{StaticResource Stone600}"
+                                                               Foreground="{StaticResource Sky600}"
                                                                VerticalAlignment="Center" Margin="6,0,0,0" />
                                                 </StackPanel>
 

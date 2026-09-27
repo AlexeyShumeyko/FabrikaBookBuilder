@@ -60,17 +60,18 @@
     <SolidColorBrush x:Key="Emerald700" Color="#047857" />
 
     <!--
-      Stone: the warm neutral. It exists for the folders mode's colour and nothing else.
-      The owner rejected green there because the mode chip, the "Готов к печати" status and
-      the "Структура корректна" tick are all already green, and three greens in one card is
-      a smear, not an accent. The neutral had to be warm rather than slate as well:
-      "Черновик" is slate, and reusing slate would put the mode in a status's own family.
+      Sky: the folders mode's colour. It is the one hue nothing else in the interface
+      uses - emerald is "Готов к печати" and the "Структура корректна" tick, amber is
+      "В процессе сборки", slate is "Черновик", indigo is the combined mode. A grey was
+      tried and rejected: the chip has to read at a glance, and grey is what every status
+      already is.
     -->
-    <SolidColorBrush x:Key="Stone50"  Color="#FAFAF9" />
-    <SolidColorBrush x:Key="Stone200" Color="#E7E5E4" />
-    <SolidColorBrush x:Key="Stone400" Color="#A8A29E" />
-    <SolidColorBrush x:Key="Stone600" Color="#57534E" />
-    <SolidColorBrush x:Key="Stone700" Color="#44403C" />
+    <SolidColorBrush x:Key="Sky50"  Color="#F0F9FF" />
+    <SolidColorBrush x:Key="Sky100" Color="#E0F2FE" />
+    <SolidColorBrush x:Key="Sky200" Color="#BAE6FD" />
+    <SolidColorBrush x:Key="Sky500" Color="#0EA5E9" />
+    <SolidColorBrush x:Key="Sky600" Color="#0284C7" />
+    <SolidColorBrush x:Key="Sky700" Color="#0369A1" />
     <SolidColorBrush x:Key="Amber50"  Color="#FFFBEB" />
     <SolidColorBrush x:Key="Amber100" Color="#FEF3C7" />
     <SolidColorBrush x:Key="Amber200" Color="#FDE68A" />

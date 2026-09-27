@@ -415,12 +415,12 @@
                                            Foreground="{StaticResource Brand600}"
                                            HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
-                            <TextBlock Text="Соберите первую партию книг" Style="{StaticResource TextLgBold}"
+                            <TextBlock Text="Соберите первые книги" Style="{StaticResource TextLgBold}"
                                        HorizontalAlignment="Center" Margin="0,18,0,0" TextAlignment="Center" />
                             <TextBlock Style="{StaticResource TextXs}" TextAlignment="Center" TextWrapping="Wrap"
                                        MaxWidth="460" HorizontalAlignment="Center" Margin="0,8,0,0"
                                        Foreground="{StaticResource Slate500}"
-                                       Text="В этом режиме всё собирается вручную: структуру задаёте вы, фотографии раскладываются по слотам. Три шага:" />
+                                       Text="Книги собираются вручную: структуру задаёте вы, фотографии раскладываете по ячейкам. Три шага:" />
 
                             <StackPanel Margin="0,20,0,0">
                                 <Grid Margin="0,0,0,14">
@@ -437,7 +437,7 @@
                                         <TextBlock Text="Задайте структуру" Style="{StaticResource TextXsSemibold}" />
                                         <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" Margin="0,2,0,0"
                                                    Foreground="{StaticResource Slate500}"
-                                                   Text="В панели управления укажите число книг и число разворотов — оно одинаково для всех книг партии — и нажмите «Добавить структуру». Потом её можно дорастить или уменьшить." />
+                                                   Text="В панели управления укажите число книг и число разворотов — одинаковое для всех книг — и нажмите «Добавить структуру». Потом её можно дорастить или уменьшить." />
                                     </StackPanel>
                                 </Grid>
                                 <Grid Margin="0,0,0,14">
@@ -471,7 +471,7 @@
                                         <TextBlock Text="Расставьте фотографии" Style="{StaticResource TextXsSemibold}" />
                                         <TextBlock Style="{StaticResource TextXs}" TextWrapping="Wrap" Margin="0,2,0,0"
                                                    Foreground="{StaticResource Slate500}"
-                                                   Text="Перетащите фото в слот нужной книги. Чтобы поставить один и тот же разворот или обложку сразу во все книги, нажмите на слоте «Во все книги»." />
+                                                   Text="Перетащите фото в нужную ячейку. Если разворот или обложка повторяется во всех книгах, добавьте его сразу во все книги одним действием — так большие заказы собираются быстрее." />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
