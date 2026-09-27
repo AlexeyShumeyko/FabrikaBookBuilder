@@ -101,8 +101,10 @@
                             Content="Обзор" />
                 </Grid>
 
-                <!-- Per-book subfolders -->
-                <Border Background="{StaticResource Amber50}" BorderBrush="{StaticResource Amber200}"
+                <!-- Per-book subfolders. Hidden in the combined mode: a shared 000-FF file
+                     cannot live in one book's folder, and that mode's naming is the whole
+                     point (see CombinedExportPlanner). -->
+                <Border x:Name="SubfoldersPanel" Background="{StaticResource Amber50}" BorderBrush="{StaticResource Amber200}"
                         BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,0,16">
                     <StackPanel>
                         <CheckBox x:Name="SubfoldersCheck" IsChecked="{Binding PerBookSubfolders}"
@@ -112,6 +114,11 @@
                                    Text="По умолчанию выключено: все книги складываются в одну папку. Включайте, только если загрузка на сайт это допускает." />
                     </StackPanel>
                 </Border>
+
+                <!-- What the run will produce, shown before the copy starts -->
+                <TextBlock x:Name="PlanSummary" Style="{StaticResource TextMicro}"
+                           Foreground="{StaticResource Slate500}" TextWrapping="Wrap"
+                           Margin="0,0,0,16" Visibility="Collapsed" />
 
                 <!-- Progress -->
                 <StackPanel Visibility="{Binding IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}">

@@ -44,27 +44,43 @@ namespace PhotoBookRenamer.Application
                 var work = new List<(string Source, string Destination)>();
                 var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                foreach (var book in project.Books)
+                // The combined run writes the smallest set the client's site accepts: one
+                // 000-FF file per position every book shares, and one KKK-FF file per book
+                // that overrides it. The folders mode is untouched and keeps writing a file
+                // per slot, because there every book is a different set of photographs.
+                if (project.Mode == AppMode.Combined)
                 {
-                    var bookIndex = book.BookIndex;
-                    var bookFolder = options.PerBookSubfolders
-                        ? Path.Combine(outputFolder, SanitizeFolderName($"{bookIndex:D3} {book.Name}"))
-                        : outputFolder;
-
-                    // Копируем обложку
-                    if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
+                    var plan = CombinedExportPlanner.Build(project, GenerateFileName);
+                    foreach (var entry in plan.Entries)
                     {
-                        work.Add((book.Cover.SourcePath,
-                                  Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, 0), usedNames))));
+                        work.Add((entry.SourcePath,
+                                  Path.Combine(outputFolder, UniqueName(entry.FileName, usedNames))));
                     }
-
-                    // Копируем страницы (сортируем по индексу для правильного порядка)
-                    var pageIndex = 1;
-                    foreach (var page in book.Pages.Where(p => !p.IsEmpty).OrderBy(p => p.Index))
+                }
+                else
+                {
+                    foreach (var book in project.Books)
                     {
-                        work.Add((page.SourcePath!,
-                                  Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, pageIndex), usedNames))));
-                        pageIndex++;
+                        var bookIndex = book.BookIndex;
+                        var bookFolder = options.PerBookSubfolders
+                            ? Path.Combine(outputFolder, SanitizeFolderName($"{bookIndex:D3} {book.Name}"))
+                            : outputFolder;
+
+                        // Копируем обложку
+                        if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
+                        {
+                            work.Add((book.Cover.SourcePath,
+                                      Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, 0), usedNames))));
+                        }
+
+                        // Копируем страницы (сортируем по индексу для правильного порядка)
+                        var pageIndex = 1;
+                        foreach (var page in book.Pages.Where(p => !p.IsEmpty).OrderBy(p => p.Index))
+                        {
+                            work.Add((page.SourcePath!,
+                                      Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, pageIndex), usedNames))));
+                            pageIndex++;
+                        }
                     }
                 }
 

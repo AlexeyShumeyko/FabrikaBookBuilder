@@ -57,6 +57,37 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             _exportService = exportService;
             _targetFolder = defaultFolder ?? DefaultFolder(project);
             DataContext = this;
+
+            if (_project.Mode == AppMode.Combined)
+            {
+                // Per-book subfolders would put a shared 000-FF file in one book's folder and
+                // break the run-wide default, so the option is not offered in this mode.
+                SubfoldersPanel.Visibility = Visibility.Collapsed;
+                var plan = CombinedExportPlanner.Build(_project, _exportService.GenerateFileName);
+                PlanSummary.Text = BuildPlanSummary(plan);
+                PlanSummary.Visibility = Visibility.Visible;
+            }
+        }
+
+        /// <summary>
+        /// Says what the run will produce, before anything is copied: how many files, how
+        /// many of them shared, and whether the size of the run reaches the site.
+        /// </summary>
+        private static string BuildPlanSummary(ExportPlan plan)
+        {
+            if (plan.Entries.Count == 0)
+                return "Файлы для экспорта не найдены.";
+
+            var text =
+                $"Книг: {plan.BookCount}. Файлов: {plan.Entries.Count} — общих {plan.SharedCount}, по книгам {plan.PerBookCount}.";
+
+            if (plan.Entries.Any(e => e.CarriesBookCount))
+                text += " Количество книг передаётся отдельным файлом с номером последней книги.";
+
+            if (plan.Warning != null)
+                text += " " + plan.Warning;
+
+            return text;
         }
 
         // ------------------------------------------------------------------

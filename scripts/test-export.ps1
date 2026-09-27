@@ -10,15 +10,24 @@
 # Usage:
 #   pwsh -File scripts\test-export.ps1
 #   pwsh -File scripts\test-export.ps1 -PerBookSubfolders
+#   pwsh -File scripts\test-export.ps1 -Combined Example1   (also Example2, Override)
+#
+# NOTE: this file holds Cyrillic and must stay UTF-8 **with BOM**.
+
+param(
+    [switch]$PerBookSubfolders,
+    [ValidateSet('Example1', 'Example2', 'Override')]
+    [string]$Combined
+)
 
 # The harness console runs on code page 866, which turns every Cyrillic string this
 # script prints into "?" and floods the agent context with mojibake. Force UTF-8 on
 # both channels; a child powershell.exe resets these on its own, so it has to be set
 # inside each script rather than once in the caller.
+# This has to sit AFTER the param block: param must be the first statement in the body,
+# and two lines above it used to be exactly that mistake.
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
-
-param([switch]$PerBookSubfolders)
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
@@ -93,11 +102,12 @@ try {
     $textCond = New-Object System.Windows.Automation.PropertyCondition(
         [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
         [System.Windows.Automation.ControlType]::Text)
+    $wantedTitle = if ($Combined) { '*TR-test*' } else { '*Testovyy*' }
     $titleEl = $null
     foreach ($t in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $textCond)) {
-        if ($t.Current.Name -like '*Testovyy*') { $titleEl = $t; break }
+        if ($t.Current.Name -like $wantedTitle) { $titleEl = $t; break }
     }
-    if ($null -eq $titleEl) { throw 'fixture project not found - run make-test-fixture.ps1' }
+    if ($null -eq $titleEl) { throw "fixture project '$wantedTitle' not found" }
 
     $walker = [System.Windows.Automation.TreeWalker]::ControlViewWalker
     $node = $walker.GetParent($titleEl); $open = $null
@@ -114,16 +124,19 @@ try {
     $open.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
     Start-Sleep -Seconds 8
 
-    # Header Export button.
+    # The project's own Export button, in the project panel. The two modes word it
+    # differently, and the old top-bar 'Экспорт' button is gone from both - the top bar no
+    # longer carries project actions.
     $el = [System.Windows.Automation.AutomationElement]::FromHandle($mainHwnd)
+    $exportName = if ($Combined) { 'Экспортировать все книги' } else { 'Экспортировать' }
     $exportBtn = $null
     foreach ($b in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants,
         (New-Object System.Windows.Automation.PropertyCondition(
             [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
             [System.Windows.Automation.ControlType]::Button)))) {
-        if ($b.Current.Name -eq 'Экспорт' -and -not $b.Current.IsOffscreen) { $exportBtn = $b; break }
+        if ($b.Current.Name -eq $exportName -and -not $b.Current.IsOffscreen) { $exportBtn = $b; break }
     }
-    if ($null -eq $exportBtn) { throw 'export button not found' }
+    if ($null -eq $exportBtn) { throw "export button '$exportName' not found" }
     if (-not $exportBtn.Current.IsEnabled) { throw 'export button is disabled' }
     $exportBtn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
 
@@ -173,7 +186,36 @@ try {
     }
 
     Write-Host ''
-    if ($PerBookSubfolders) {
+    if ($Combined) {
+        # The combined mode writes the smallest set the site accepts: one 000-FF file per
+        # position every book shares, plus one KKK-FF file per book that overrides it.
+        $expected = switch ($Combined) {
+            'Example1' {
+                # 3 books x 4 spreads: cover and spreads 1-3 shared, spread 4 per book.
+                @('000-00.jpg', '000-01.jpg', '000-02.jpg', '000-03.jpg',
+                  '001-04.jpg', '002-04.jpg', '003-04.jpg')
+            }
+            'Example2' {
+                # 3 books x 3 spreads, everything shared: no file carries a book index, so
+                # one extra file with the last book's number states the size of the run.
+                # Spreads occupy slots 1..3, the cover is slot 0.
+                @('000-00.jpg', '000-01.jpg', '000-02.jpg', '000-03.jpg', '003-00.jpg')
+            }
+            'Override' {
+                # Spread 1 is shared by books 1-2 and the last book replaced it.
+                @('000-00.jpg', '000-01.jpg', '000-02.jpg', '000-03.jpg', '003-01.jpg')
+            }
+        }
+
+        $actual = @($files | ForEach-Object { $_.Name })
+        $missing = @($expected | Where-Object { $actual -notcontains $_ })
+        $extra = @($actual | Where-Object { $expected -notcontains $_ })
+        if ($missing.Count) { throw ('missing: ' + ($missing -join ', ')) }
+        if ($extra.Count) { throw ('unexpected: ' + ($extra -join ', ')) }
+
+        Write-Host "PASS: $Combined produced exactly $($expected.Count) files as the site expects"
+    }
+    elseif ($PerBookSubfolders) {
         $dirs = @(Get-ChildItem $outDir -Directory)
         Write-Host "subfolder mode: $($dirs.Count) subfolder(s)"
         if ($dirs.Count -ne 3) { throw "expected 3 per-book subfolders, found $($dirs.Count)" }

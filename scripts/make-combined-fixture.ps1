@@ -20,7 +20,9 @@ param(
     [int]$OutlierW = 0,
     [int]$OutlierH = 0,
     [switch]$AllEmpty,
-    [switch]$OnlyCover
+    [switch]$OnlyCover,
+    [ValidateSet('Unique', 'Example1', 'Example2', 'Override')]
+    [string]$Pattern = 'Unique'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -81,9 +83,25 @@ for ($b = 1; $b -le $Books; $b++) {
     for ($s = 1; $s -le $Spreads; $s++) {
         # Spread 2 of every book gets the SAME photo on purpose: that is the run-wide
         # spread the owner asked to see labelled.
-        $pick = if (-not $fill -or $OnlyCover) { $null }
-                elseif ($s -eq 2) { $photos[1] }
-                else { $photos[(($b - 1) * 3 + $s - 1) % $photos.Count] }
+        $pick =
+            if (-not $fill -or $OnlyCover) { $null }
+            elseif ($Pattern -eq 'Example1') {
+                # Cover and every spread but the last are shared by the whole run; the last
+                # spread is one photo per book. The owner's first example.
+                if ($s -lt $Spreads) { $photos[$s % $photos.Count] } else { $photos[($b - 1) % $photos.Count] }
+            }
+            elseif ($Pattern -eq 'Example2') {
+                # Everything shared. Nothing in the set says how many books there are, which
+                # is exactly the owner's second example.
+                $photos[$s % $photos.Count]
+            }
+            elseif ($Pattern -eq 'Override') {
+                # A shared spread that the LAST book replaced with its own photo: the run keeps
+                # 000-FF for the others and 003-FF for the book that went its own way.
+                if ($s -eq 1 -and $b -eq $Books) { $photos[3 % $photos.Count] } else { $photos[$s % $photos.Count] }
+            }
+            elseif ($s -eq 2) { $photos[1] }
+            else { $photos[(($b - 1) * 3 + $s - 1) % $photos.Count] }
         $pages += [ordered]@{
             isCover = $false; index = $s; displayIndex = $s
             sourcePath = if ($pick) { $pick.path } else { $null }
