@@ -317,10 +317,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 CurrentProjectInfo.PageCount = Project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
                 CurrentProjectInfo.BookCount = Project.Books?.Count ?? 0;
                 // Сохраняем обновлённую информацию в фоне
-                _ = Task.Run(async () =>
-                {
-                    await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
-                });
+                Background.Run(
+                    async () => await _projectListService.SaveProjectInfoAsync(projectInfo),
+                    "save project index");
             }
             
             // Уведомляем UI об обновлении
@@ -362,7 +361,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 // PrewarmAndWarmThumbnailsAsync (CombinedModeViewModel): без декодирования
                 // вне UI-потока первый ренвер читает 18 МБ JPEG прямо в разметке, и слоты
                 // остаются пустыми серыми рамками до пересохранения проекта.
-                _ = Task.Run(async () =>
+                Background.Run(async () =>
                 {
                     await _imageService.LoadThumbnailsAsync(allImagePaths!);
                     await Presentation.Converters.PageSourceConverter.PrewarmAsync(allImagePaths!);
@@ -392,7 +391,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                             }
                         }
                     });
-                });
+                }, "prewarm and warm thumbnails");
             }
         }
         
@@ -700,10 +699,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     .ToList();
                 
                 // Загружаем миниатюры в фоне, чтобы не блокировать UI
-                _ = Task.Run(async () =>
+                Background.Run(async () =>
                 {
                     await _imageService.LoadThumbnailsAsync(allImagePaths!);
-                    
                     // Обновляем ThumbnailPath для всех страниц и обложек после загрузки миниатюр
                     // Используем Dispatcher для обновления UI на правильном потоке
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -737,7 +735,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                             }
                         }
                     });
-                });
+                }, "load thumbnails after folder scan");
             }
             catch (Exception ex)
             {

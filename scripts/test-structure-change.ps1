@@ -43,6 +43,19 @@ public class Win7 {
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr h);
     [DllImport("user32.dll")] private static extern IntPtr GetWindow(IntPtr h, uint cmd);
+    // A WPF ToolTip is a real top-level window: 69x25 pixels, empty title, owned by the
+    // main window. It appears on its own whenever the pointer rests on a slot, so a test
+    // that treats "another window appeared" as "a question was asked" fails at random -
+    // and it did, here. A dialog has a title; a tooltip does not.
+    [DllImport("user32.dll")] private static extern int GetWindowTextLength(IntPtr h);
+    [DllImport("user32.dll")] private static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
+    public static bool HasTitle(IntPtr h) {
+        int n = GetWindowTextLength(h);
+        if (n <= 0) return false;
+        var sb = new System.Text.StringBuilder(n + 1);
+        GetWindowText(h, sb, sb.Capacity);
+        return sb.Length > 0;
+    }
     public static IntPtr[] Visible(int pid) {
         var f = new List<IntPtr>();
         EnumWindows((h, l) => { uint p; GetWindowThreadProcessId(h, out p);
@@ -76,14 +89,18 @@ $labelShrink = 'Уменьшить'
 
 $indexPath = Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\Projects\projects.json'
 
-function Get-FixturePath {
+function Get-FixtureEntry {
     $parsed = Get-Content $indexPath -Raw -Encoding UTF8 | ConvertFrom-Json
-    $newest = @($parsed | ForEach-Object { $_ } |
-        Sort-Object { [datetime]$_.lastModified } -Descending |
-        Where-Object { $_.mode -eq 3 -and $_.name -like 'TR-test*' })[0]
-    if (-not $newest) { throw 'no combined fixture in the index - run make-combined-fixture.ps1' }
+    $sorted = @($parsed | ForEach-Object { $_ } | Sort-Object { [datetime]$_.lastModified } -Descending)
+    $hit = @($sorted | Where-Object { $_.mode -eq 3 -and $_.name -like 'TR-test*' })[0]
+    if (-not $hit) { throw 'no combined fixture in the index - run make-combined-fixture.ps1' }
+    return @{ Entry = $hit; Card = [array]::IndexOf($sorted, $hit) }
+}
+
+function Get-FixturePath {
+    $hit = (Get-FixtureEntry).Entry
     # Projects are one flat file per project: Projects\<id>.json
-    return Join-Path (Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\Projects') "$($newest.id).json"
+    return Join-Path (Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\Projects') "$($hit.id).json"
 }
 
 function Get-SavedSpreads {
@@ -119,7 +136,12 @@ try {
                 [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
                 [System.Windows.Automation.ControlType]::Button))) |
             Where-Object { $_.Current.Name -like $labelOpen })
-        if ($cards.Count -gt 0) { $open = $cards[0] }
+        # The card of THIS fixture, not the first card. The list is ordered by
+        # LastModified, and every test run moves its own project to the top - so "the
+        # first card" is whichever project some other test opened last, and the test
+        # then reads one project's spread count and edits another's.
+        $want = (Get-FixtureEntry).Card
+        if ($cards.Count -gt $want) { $open = $cards[$want] }
         if ($null -eq $open) { Start-Sleep -Milliseconds 700 }
     }
     if ($null -eq $open) { throw 'the combined fixture card did not appear' }
@@ -149,7 +171,7 @@ try {
         while ((Get-Date) -lt $deadline) {
             $proc.Refresh()
             if ($proc.HasExited) { throw 'the app died while the structure question was open' }
-            foreach ($h in [Win7]::Visible($proc.Id)) { if ($h -ne $hwnd) { return $h } }
+            foreach ($h in [Win7]::Visible($proc.Id)) { if ($h -ne $hwnd -and [Win7]::HasTitle($h)) { return $h } }
             Start-Sleep -Milliseconds 400
         }
         return [intptr]::Zero

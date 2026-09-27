@@ -332,7 +332,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             RefreshPhotoUsage();
 
             if (toMeasure.Count > 0)
-                _ = MeasurePhotoFilesAsync(toMeasure);
+                Background.Run(() => MeasurePhotoFilesAsync(toMeasure), "measure photos");
         }
 
         /// <summary>Reads each new file's pixel size for the caption in the list.</summary>
@@ -792,7 +792,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         }
                     }
 
-                    _ = Task.Run(async () => await _imageService.LoadThumbnailsAsync(AvailableFiles));
+                    Background.Run(async () => await _imageService.LoadThumbnailsAsync(AvailableFiles), "load thumbnails");
                 }
                 finally
                 {
@@ -1042,7 +1042,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             // away instead of waiting for a button the owner may never press. Photo
             // assignment is deliberately NOT auto-saved: that is where "без перебора" comes
             // in, and the export saves the whole project anyway.
-            _ = SaveStructureAsync();
+            Background.Run(() => SaveStructureAsync(), "save structure");
         }
 
         private async Task SaveStructureAsync()
@@ -1133,7 +1133,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 
                 OnPropertyChanged(nameof(Books));
                 LoadThumbnailForPage(page);
-                _ = FillSlotDimensionsAsync(page);
+                Background.Run(() => FillSlotDimensionsAsync(page), "fill slot dimensions");
                 UpdateExportCommands();
             }
             else if (action == DropAction.AllBooks)
@@ -1159,7 +1159,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     }
                 }
                 
-                _ = FillSlotDimensionsAsync(page);
+                Background.Run(() => FillSlotDimensionsAsync(page), "fill slot dimensions");
                 UpdateExportCommands();
             }
             else if (action == DropAction.SelectedBooks && selectedBooks != null)
@@ -1184,7 +1184,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     }
                 }
                 
-                _ = FillSlotDimensionsAsync(page);
+                Background.Run(() => FillSlotDimensionsAsync(page), "fill slot dimensions");
                 UpdateExportCommands();
             }
         }
@@ -1345,6 +1345,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             IsStructureConfirmed = false;
             ErrorMessage = null;
             Presentation.Converters.PageSourceConverter.ClearCache();
+                Presentation.Converters.FilePathToThumbnailConverter.ClearCache();
             
             var projectId = projectInfo.Id ?? string.Empty;
             var projectName = projectInfo.Name ?? string.Empty;
@@ -1371,6 +1372,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             
             CurrentProjectInfo = projectInfoCopy;
             ProjectName = projectInfoCopy.Name;
+
+            // Off unless FBR_PERF_TRACE=1, and then it only writes lines. It is here because
+            // every guess about this cost was wrong - see PerfPhase for the numbers.
+            PerfPhase.Reset();
             
             if (project == null && !string.IsNullOrEmpty(projectFilePath) && File.Exists(projectFilePath))
             {
@@ -1448,16 +1453,26 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     CurrentProjectInfo.PageCount = Project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
                     CurrentProjectInfo.BookCount = Project.Books?.Count ?? 0;
-                    _ = Task.Run(async () =>
-                    {
-                        await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
-                    });
+                    Background.Run(
+                        async () => await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo),
+                        "save project index");
                 }
             }
             
             OnPropertyChanged(nameof(Books));
             OnPropertyChanged(nameof(Project));
             OnPropertyChanged(nameof(ProjectName));
+
+            // The ViewModel is not the cost: the layout of the slots it just announced is,
+            // and that happens after this method returns, inside the next dispatcher pass.
+            PerfPhase.Mark("view model done (the layout pass is still to come)");
+            var app = System.Windows.Application.Current;
+            if (app != null)
+            {
+                app.Dispatcher.BeginInvoke(new Action(() => PerfPhase.CountElements("at Render priority (layout done)")), System.Windows.Threading.DispatcherPriority.Render);
+                app.Dispatcher.BeginInvoke(new Action(() => PerfPhase.CountElements("at Background priority")), System.Windows.Threading.DispatcherPriority.Background);
+                app.Dispatcher.BeginInvoke(new Action(() => { PerfPhase.CountElements("at ContextIdle (dispatcher empty)"); PerfPhase.Write("open combined project"); }), System.Windows.Threading.DispatcherPriority.ContextIdle);
+            }
             
             if (Project?.Books != null && Project.Books.Any())
             {
@@ -1468,13 +1483,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                 if (allImagePaths.Any())
                 {
-                    _ = PrewarmAndWarmThumbnailsAsync(allImagePaths!);
+                    Background.Run(() => PrewarmAndWarmThumbnailsAsync(allImagePaths!), "prewarm thumbnails");
                 }
             }
-
             if (AvailableFiles.Any())
             {
-                _ = Task.Run(async () => await _imageService.LoadThumbnailsAsync(AvailableFiles));
+                Background.Run(async () => await _imageService.LoadThumbnailsAsync(AvailableFiles), "load thumbnails");
             }
             
             UpdateExportCommands();
@@ -2225,10 +2239,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             if (AvailableFiles.Count == 0) return;
 
             var paths = AvailableFiles.ToList();
-            Task.Run(async () =>
+            Background.Run(async () =>
             {
                 await _imageService.LoadThumbnailsAsync(paths);
                 Presentation.Converters.PageSourceConverter.ClearCache();
+                Presentation.Converters.FilePathToThumbnailConverter.ClearCache();
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     foreach (var p in Books)
@@ -2237,7 +2252,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         foreach (var page in p.Pages) page.RaiseThumbnailChanged();
                     }
                 });
-            });
+            }, "load thumbnails for new files");
         }
     }
 

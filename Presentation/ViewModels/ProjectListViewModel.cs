@@ -185,10 +185,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                                     project.PageCount = actualPageCount;
                                     project.BookCount = actualBookCount;
                                     // Сохраняем обновлённую информацию в фоне
-                                    _ = Task.Run(async () =>
-                                    {
-                                        await _projectListService.SaveProjectInfoAsync(project);
-                                    });
+                                    Background.Run(
+                                        async () => await _projectListService.SaveProjectInfoAsync(project),
+                                        "save project index");
                                 }
                             }
                         }

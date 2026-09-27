@@ -78,9 +78,9 @@ namespace PhotoBookRenamer.Presentation.Converters
             });
         }
 
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+       public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            // КРИТИЧЕСКИ ВАЖНО: Поддерживаем как Page объект, так и string (SourcePath)
+            PhotoBookRenamer.Presentation.PerfPhase.Count("PageSourceConverter");
             // Это обеспечивает обратную совместимость
             string? imagePath = null;
             string? thumbnailPath = null;

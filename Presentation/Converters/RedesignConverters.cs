@@ -709,6 +709,7 @@ namespace PhotoBookRenamer.Presentation.Converters
                 h > 0d)
                 naturalHeight = h;
 
+            PhotoBookRenamer.Presentation.PerfPhase.Count("fit w=" + (int)Math.Round(available) + " h=" + (int)Math.Round(naturalHeight));
             double naturalWidth = naturalHeight * aspect;
             double width = FitWidth(available, naturalWidth);
 
