@@ -60,7 +60,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             ConfirmStructureCommand = new RelayCommand(ConfirmStructure, () => NumberOfBooks > 0 && SpreadsPerBook > 0);
             ExportCommand = new AsyncRelayCommand(ExportAsync, () => Project?.IsValid ?? false);
             ExportWithFolderCommand = new AsyncRelayCommand(ExportWithFolderAsync, () => Project?.IsValid ?? false);
-            SaveProjectCommand = new AsyncRelayCommand(SaveProjectAsync, () => CurrentProjectInfo != null);
+            // Enabled as soon as there is anything to save. Not tied to
+            // CurrentProjectInfo: the record is created by the save itself, so tying it
+            // to that left the button dead until something else happened to create it.
+            SaveProjectCommand = new AsyncRelayCommand(SaveProjectAsync,
+                () => Books.Count > 0 || AvailableFiles.Count > 0);
             BackCommand = new AsyncRelayCommand(BackAsync);
             DeleteFileCommand = new RelayCommand<string>(DeleteFile);
             ResetProjectCommand = new RelayCommand(ResetProject);
@@ -132,6 +136,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 OnPropertyChanged(nameof(AvailableFilesCount));
                 OnPropertyChanged(nameof(HasFiles));
+                // "Something to save" just became true, so the save button has to wake up.
+                UpdateExportCommands();
                 SyncPhotoFiles();
             };
         }
@@ -187,6 +193,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             if (ExportWithFolderCommand is AsyncRelayCommand asyncCommand2)
             {
                 asyncCommand2.NotifyCanExecuteChanged();
+            }
+            if (SaveProjectCommand is AsyncRelayCommand saveCommand)
+            {
+                saveCommand.NotifyCanExecuteChanged();
             }
         }
 
@@ -1418,13 +1428,19 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         private async Task SaveProjectAsync()
         {
-            if (CurrentProjectInfo == null)
+            // The project record is created HERE rather than on the first "load photos"
+            // click. It used to be created by the file loader only, and the save button's
+            // CanExecute was CurrentProjectInfo != null - so a photo dropped straight into
+            // an empty slot left the button dead, while the same photo loaded through the
+            // loader panel worked. The user must not have to know which door the photo
+            // came in by.
+            if (await EnsureProjectInfoAsync() == null)
             {
-                System.Windows.MessageBox.Show("Информация о проекте не найдена. Пожалуйста, создайте новый проект.", 
+                System.Windows.MessageBox.Show("Не удалось создать запись проекта.",
                     "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return;
             }
-            
+
             // Инициализируем Project, если его нет
             if (Project == null)
             {

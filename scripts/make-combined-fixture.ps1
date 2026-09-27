@@ -9,7 +9,10 @@ param(
     [string]$RemoveId = '',
     [int]$Books = 2,
     [int]$Spreads = 3,
-    [switch]$EmptyLastBook
+    [switch]$EmptyLastBook,
+    [string]$PhotoPath = '',
+    [int]$PhotoW = 0,
+    [int]$PhotoH = 0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -47,6 +50,16 @@ $photos = @($src.books[0].pages | Where-Object { $_.sourcePath } | ForEach-Objec
     @{ path = $_.sourcePath; w = $_.imageWidth; h = $_.imageHeight; thumb = $_.thumbnailPath }
 })
 if ($photos.Count -lt 4) { throw "only $($photos.Count) photos with sizes in the source project" }
+
+# -PhotoPath replaces the harvest with one real photo of a chosen format. That is how the
+# narrow post-print case gets tested: a 0.67 photo makes the narrowest card the program
+# has to lay out, and the path contains Cyrillic that a typed parameter would mangle, so
+# the caller discovers the file and passes it in.
+if ($PhotoPath -ne '' -and $PhotoW -gt 0 -and $PhotoH -gt 0) {
+    $photos = 1..4 | ForEach-Object {
+        @{ path = $PhotoPath; w = $PhotoW; h = $PhotoH; thumb = $null }
+    }
+}
 
 $id = [guid]::NewGuid().ToString()
 $bookList = @()

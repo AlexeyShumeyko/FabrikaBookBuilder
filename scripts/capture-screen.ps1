@@ -22,7 +22,10 @@ param(
     [int]$TimeoutSeconds = 30,
     [switch]$OpenProject,
     [int]$OpenIndex = 0,
-    [string]$ProjectName = ''
+    [string]$ProjectName = '',
+    [int]$HoverX = -1,
+    [int]$HoverY = -1,
+    [string]$HoverOut = ''
 )
 
 # The harness console runs on code page 866, which turns every Cyrillic string this
@@ -48,6 +51,7 @@ public class Win2 {
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
+    [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
 
     private delegate bool EnumProc(IntPtr h, IntPtr l);
     [DllImport("user32.dll")] private static extern bool EnumWindows(EnumProc cb, IntPtr l);
@@ -248,6 +252,26 @@ try {
     if ($dir -and -not (Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
     $bmp.Save($full, [System.Drawing.Imaging.ImageFormat]::Png)
     $g.Dispose(); $bmp.Dispose()
+
+    # Optional hover pass. A hover state that changes the layout can only be judged
+    # against the resting shot, so both are taken from the same live window: the first
+    # one above, this one below, with the pointer parked where the caller asked.
+    if ($HoverX -ge 0) {
+        [void][Win2]::SetForegroundWindow($hwnd)
+        [void][Win2]::SetCursorPos($r.Left + $HoverX, $r.Top + $HoverY)
+        Start-Sleep -Milliseconds 900
+
+        $hbmp = New-Object System.Drawing.Bitmap $w, $h
+        $hg = [System.Drawing.Graphics]::FromImage($hbmp)
+        $hg.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w, $h)))
+        $hoverFull = if ($HoverOut) { Join-Path $root $HoverOut } else { $full.Replace('.png', '-hover.png') }
+        $hdir = Split-Path -Parent $hoverFull
+        if ($hdir -and -not (Test-Path $hdir)) { New-Item -ItemType Directory -Force -Path $hdir | Out-Null }
+        $hbmp.Save($hoverFull, [System.Drawing.Imaging.ImageFormat]::Png)
+        $hg.Dispose(); $hbmp.Dispose()
+        Write-Host "saved $hoverFull (hover at ${HoverX},${HoverY})"
+    }
+
     Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
 
     Write-Host "saved $full (${w}x${h}) for tab '$Tab'"

@@ -392,14 +392,19 @@
                                             </Grid.ColumnDefinitions>
 
                                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <!-- The number IS the name. It used to be "01" in
+                                                     the tile and "Книга 1" next to it, which said
+                                                     the same thing twice. -->
                                                 <Border Background="{StaticResource Brand600}" CornerRadius="8"
-                                                        Padding="8,4" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding BookIndex, StringFormat='{}{0:D2}'}"
-                                                               FontSize="12" FontWeight="Bold"
-                                                               Foreground="White" />
+                                                        Padding="10,4" VerticalAlignment="Center">
+                                                    <TextBlock FontSize="12" FontWeight="Bold" Foreground="White">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="{Binding BookIndex, StringFormat='Книга {0:D2}'}" />
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </Border>
-                                                <TextBlock Text="{Binding Name}" Style="{StaticResource TextSmBold}"
-                                                           Margin="10,0,0,0" VerticalAlignment="Center" />
                                                 <TextBlock Text="{Binding ProgressText}"
                                                            Style="{StaticResource TextXs}"
                                                            Foreground="{StaticResource Slate500}"
@@ -449,6 +454,19 @@
                                                             </Grid.Clip>
 
                                                             <Grid x:Name="SlotContent">
+                                                                <!--
+                                                                    Pinned to the frame's own width. Without this the
+                                                                    card is only as wide as its widest child, so
+                                                                    revealing "Во все книги" on hover PUSHED the card
+                                                                    wider and the row reflowed. The frame below is
+                                                                    the sizing authority; nothing may outvote it.
+                                                                -->
+                                                                <Grid.Width>
+                                                                    <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="width">
+                                                                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
+                                                                        <Binding />
+                                                                    </MultiBinding>
+                                                                </Grid.Width>
                                                                 <Grid.RowDefinitions>
                                                                     <RowDefinition Height="Auto" />
                                                                     <RowDefinition Height="Auto" />
@@ -512,61 +530,6 @@
                                                                                    Foreground="{StaticResource Slate400}"
                                                                                    HorizontalAlignment="Center" Margin="0,2,0,0" />
                                                                     </StackPanel>
-
-                                                                    <!-- Export name, top-left. Blue for the cover and
-                                                                         for a run-wide spread, as in the owner's sketch. -->
-                                                                    <Border VerticalAlignment="Top" HorizontalAlignment="Left"
-                                                                            Margin="10" CornerRadius="6" Padding="8,2"
-                                                                            Visibility="{Binding SourcePath, Converter={StaticResource HasValueConverter}}">
-                                                                        <Border.Style>
-                                                                            <Style TargetType="Border">
-                                                                                <Setter Property="Background" Value="#D90F172A" />
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Binding="{Binding IsCover}" Value="True">
-                                                                                        <Setter Property="Background" Value="{StaticResource Brand600}" />
-                                                                                    </DataTrigger>
-                                                                                    <DataTrigger Binding="{Binding IsShared}" Value="True">
-                                                                                        <Setter Property="Background" Value="{StaticResource Brand600}" />
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </Border.Style>
-                                                                        <StackPanel Orientation="Horizontal">
-                                                                            <TextBlock Text="&#xE8AB;" FontFamily="{StaticResource IconFont}" FontSize="10"
-                                                                                       Foreground="White" VerticalAlignment="Center"
-                                                                                       Visibility="{Binding IsShared, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                                                            <TextBlock Text="{Binding ExportFileName}" FontSize="10"
-                                                                                       FontFamily="{StaticResource MonoFont}" FontWeight="Bold"
-                                                                                       Foreground="White" VerticalAlignment="Center" />
-                                                                            <TextBlock FontSize="10" FontWeight="Bold" Foreground="White"
-                                                                                       VerticalAlignment="Center" Margin="4,0,0,0">
-                                                                                <TextBlock.Style>
-                                                                                    <Style TargetType="TextBlock">
-                                                                                        <Setter Property="Text" Value="" />
-                                                                                        <Style.Triggers>
-                                                                                            <DataTrigger Binding="{Binding IsCover}" Value="True">
-                                                                                                <Setter Property="Text" Value="(Обложка)" />
-                                                                                            </DataTrigger>
-                                                                                        </Style.Triggers>
-                                                                                    </Style>
-                                                                                </TextBlock.Style>
-                                                                            </TextBlock>
-                                                                            <TextBlock FontSize="10" FontWeight="Bold" Foreground="White"
-                                                                                       VerticalAlignment="Center" Margin="4,0,0,0"
-                                                                                       Visibility="{Binding IsShared, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                                                <TextBlock.Style>
-                                                                                    <Style TargetType="TextBlock">
-                                                                                        <Setter Property="Text" Value="(Общий разворот)" />
-                                                                                        <Style.Triggers>
-                                                                                            <DataTrigger Binding="{Binding IsCover}" Value="True">
-                                                                                                <Setter Property="Text" Value="(Общая обложка)" />
-                                                                                            </DataTrigger>
-                                                                                        </Style.Triggers>
-                                                                                    </Style>
-                                                                                </TextBlock.Style>
-                                                                            </TextBlock>
-                                                                        </StackPanel>
-                                                                    </Border>
 
                                                                     <!-- Triggers -->
                                                                     <Grid.Triggers>
@@ -646,10 +609,12 @@
                                                                               action a photographer has to be
                                                                               sure about, so it says what it does.
                                                                             -->
-                                                                            <TextBlock Text="&#xE8AB;  Во все книги"
+                                                                            <TextBlock Text="Во все книги"
                                                                                        FontSize="11" FontWeight="Bold"
                                                                                        Foreground="{StaticResource Brand600}"
                                                                                        VerticalAlignment="Center" Cursor="Hand"
+                                                                                       TextTrimming="CharacterEllipsis"
+                                                                                       ToolTip="Поставить это фото в ту же позицию всех книг"
                                                                                        Tag="{Binding}" MouseLeftButtonDown="OnDuplicateToAllClick">
                                                                                 <TextBlock.Style>
                                                                                     <Style TargetType="TextBlock">
@@ -664,6 +629,9 @@
                                                                                                 <MultiDataTrigger.Conditions>
                                                                                                     <Condition Binding="{Binding IsMouseOver, ElementName=SlotCard}" Value="True" />
                                                                                                     <Condition Binding="{Binding SourcePath, Converter={StaticResource HasValueConverter}}" Value="True" />
+                                                                                                    <!-- Already run-wide: there is nothing left to
+                                                                                                         apply, so the action is hidden. -->
+                                                                                                    <Condition Binding="{Binding IsShared}" Value="False" />
                                                                                                 </MultiDataTrigger.Conditions>
                                                                                                 <Setter Property="Visibility" Value="Visible" />
                                                                                             </MultiDataTrigger>

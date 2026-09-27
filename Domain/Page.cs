@@ -181,7 +181,7 @@ namespace PhotoBookRenamer.Domain
             get
             {
                 if (IsEmpty) return "Пустой слот";
-                if (IsShared) return IsCover ? "Общая обложка" : $"Разворот {Index} (Сквозной)";
+                if (IsShared) return IsCover ? "Общая обложка" : $"Разворот {Index} (общий)";
                 return IsCover ? "Обложка" : $"Разворот {Index}";
             }
         }

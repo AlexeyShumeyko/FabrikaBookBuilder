@@ -611,12 +611,13 @@ namespace PhotoBookRenamer.Presentation.Converters
         private const double LeftoverShare = 0.25d;
 
         /// <summary>
-        /// Safety floor only, deliberately low. Clamping the width would change the frame's
-        /// aspect and crop the photo again, which is the whole point of this sizing rule -
-        /// so a very portrait format simply gets a narrow card and the footer text is
-        /// trimmed instead.
+        /// Floor set by what the card has to SAY, not by taste: "Разворот 1", the
+        /// "Во все книги" word and the bin have to fit on one line at any scale. A very
+        /// portrait format - 0.67 post-prints - is naturally 127px wide, which is not
+        /// enough, so such a book gets a LARGER frame rather than a clipped caption. The
+        /// frame keeps the book's aspect either way; only its size changes.
         /// </summary>
-        private const double MinWidth = 120d;
+        private const double MinWidth = 180d;
 
         /// <summary>Upper clamp, so an extreme panorama cannot become a banner.</summary>
         private const double MaxWidth = 480d;
