@@ -602,6 +602,40 @@
                                                                                    HorizontalAlignment="Center" Margin="0,2,0,0" />
                                                                     </StackPanel>
 
+                                                                    <!--
+                                                                      The photo is in this slot, but nothing could be
+                                                                      read from disk. Shown instead of an empty grey
+                                                                      frame, because an empty frame is
+                                                                      indistinguishable from an empty slot - and that
+                                                                      is how "the photos fell off" went unnoticed for
+                                                                      a day. The path is in the tooltip; the same line
+                                                                      is appended to %TEMP%\PhotoBookRenamer\image-errors.log.
+                                                                    -->
+                                                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                                                 Margin="8"
+                                                                                 ToolTip="{Binding ImageErrorPath}">
+                                                                        <StackPanel.Style>
+                                                                            <Style TargetType="StackPanel">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                                <Style.Triggers>
+                                                                                    <MultiDataTrigger>
+                                                                                        <MultiDataTrigger.Conditions>
+                                                                                            <Condition Binding="{Binding SourcePath, Converter={StaticResource HasValueConverter}}" Value="True" />
+                                                                                            <Condition Binding="{Binding HasImage}" Value="False" />
+                                                                                        </MultiDataTrigger.Conditions>
+                                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                                    </MultiDataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </StackPanel.Style>
+                                                                        <TextBlock Text="&#xE783;" FontFamily="{StaticResource IconFont}" FontSize="18"
+                                                                                   Foreground="{StaticResource Red500}"
+                                                                                   HorizontalAlignment="Center" />
+                                                                        <TextBlock Text="Файл не читается" Style="{StaticResource TextMicro}"
+                                                                                   Foreground="{StaticResource Red600}" FontWeight="Bold"
+                                                                                   HorizontalAlignment="Center" Margin="0,6,0,0" />
+                                                                    </StackPanel>
+
                                                                     <!-- Triggers -->
                                                                     <Grid.Triggers>
                                                                         <EventTrigger RoutedEvent="MouseEnter">

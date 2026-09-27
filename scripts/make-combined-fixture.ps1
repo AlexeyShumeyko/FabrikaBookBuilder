@@ -23,6 +23,7 @@ param(
     [switch]$OnlyCover,
     [switch]$DuplicateInBook,
     [int]$BooksFilled = 0,
+    [switch]$MissingPhoto,
     [ValidateSet('Unique', 'Example1', 'Example2', 'Override')]
     [string]$Pattern = 'Unique'
 )
@@ -143,6 +144,19 @@ for ($b = 1; $b -le $Books; $b++) {
     if ($fill -and $CoverPhotoPath -ne '' -and $CoverW -gt 0 -and $CoverH -gt 0) {
         $cover = @{ path = $CoverPhotoPath; w = $CoverW; h = $CoverH; thumb = $null }
     }
+
+    # -MissingPhoto points the first spread of the first book at a file that is not there,
+    # with its real size. That is the case a cell used to swallow: an empty grey frame with a
+    # caption, indistinguishable from an empty slot. The cell has to say the file cannot be
+    # read, and the reason has to land in the image-errors log.
+    if ($fill -and $MissingPhoto -and $b -eq 1 -and $pages.Count -ge 1) {
+        $ghost = Join-Path $dir ("no-such-photo-{0}.jpg" -f $b)
+        $pages[0].sourcePath = $ghost
+        $pages[0].thumbnailPath = $null
+        $pages[0].imageWidth = 3000
+        $pages[0].imageHeight = 2000
+    }
+
     $bookList += [ordered]@{
         folderPath = $null
         name = "Book $b"

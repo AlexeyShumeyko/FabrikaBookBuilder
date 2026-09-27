@@ -25,6 +25,11 @@ namespace PhotoBookRenamer.Domain
             {
                 if (SetProperty(ref _sourcePath, value))
                 {
+                    // A new photo gets a fresh chance: whatever went wrong reading the old
+                    // one says nothing about this one.
+                    MarkImageOk();
+                    ImageErrorPath = null;
+
                     // Уведомляем об изменении IsEmpty при изменении SourcePath
                     OnPropertyChanged(nameof(IsEmpty));
                     OnPropertyChanged(nameof(SlotLabel));
@@ -161,6 +166,37 @@ namespace PhotoBookRenamer.Domain
                 }
             }
         }
+
+        /// <summary>
+        /// True once something has been decoded for this slot. A slot that HAS a photo but
+        /// cannot show it looks exactly like an empty slot - same grey frame, no warning -
+        /// and that is how a day went on a bug which was only this: "the photo cells fell
+        /// off, and saving and reopening brought them back". The flag lets the view say
+        /// what is wrong instead of showing nothing.
+        /// </summary>
+        [JsonIgnore]
+        public bool HasImage
+        {
+            get => _hasImage;
+            private set => SetProperty(ref _hasImage, value);
+        }
+
+        private bool _hasImage = true;
+
+        /// <summary>Called by the image converter when this slot has something to show.</summary>
+        public void MarkImageOk() => HasImage = true;
+
+        /// <summary>Called by the image converter when the photo could not be read at all.</summary>
+        public void MarkImageFailed(string path)
+        {
+            if (!HasImage && string.Equals(ImageErrorPath, path, StringComparison.OrdinalIgnoreCase)) return;
+            ImageErrorPath = path;
+            HasImage = false;
+        }
+
+        /// <summary>The photo this slot could not show, for the tooltip.</summary>
+        [JsonIgnore]
+        public string? ImageErrorPath { get; private set; }
 
         /// <summary>
         /// Nudges the view to re-read ThumbnailPath after a background thumbnail pass

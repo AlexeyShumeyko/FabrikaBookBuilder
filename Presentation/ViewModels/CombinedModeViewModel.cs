@@ -1412,32 +1412,24 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     
                     foreach (var book in Books)
                     {
-                        if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
+                        // One helper owns the thumbnail's path now. It used to be rebuilt
+                        // inline here, once per mode, which is three copies of one formula.
+                        if (book.Cover != null)
+                            book.Cover.ThumbnailPath = _imageService.GetThumbnailPath(book.Cover.SourcePath ?? string.Empty);
+
+                        foreach (var page in book.Pages)
                         {
-                            var thumbDir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails");
-                            var filePathHash = _imageService.GetFilePathHash(book.Cover.SourcePath);
-                            var thumbName = $"{filePathHash}_thumb.jpg";
-                            var thumbPath = Path.Combine(thumbDir, thumbName);
-                            
-                            if (File.Exists(thumbPath))
-                            {
-                                book.Cover.ThumbnailPath = thumbPath;
-                            }
-                        }
-                        
-                        foreach (var page in book.Pages.Where(p => !string.IsNullOrEmpty(p.SourcePath)))
-                        {
-                            var thumbDir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails");
-                            var filePathHash = _imageService.GetFilePathHash(page.SourcePath);
-                            var thumbName = $"{filePathHash}_thumb.jpg";
-                            var thumbPath = Path.Combine(thumbDir, thumbName);
-                            
-                            if (File.Exists(thumbPath))
-                            {
-                                page.ThumbnailPath = thumbPath;
-                            }
+                            if (page != null)
+                                page.ThumbnailPath = _imageService.GetThumbnailPath(page.SourcePath ?? string.Empty);
                         }
                     }
+
+                    // A photo with no thumbnail yet has to decode its original - and these
+                    // originals are 18 MB print files. Doing that inside the layout pass
+                    // freezes the window and leaves slots painted as empty grey boxes, which
+                    // is what the owner saw on a first open. The pass below builds the
+                    // missing thumbnails off the UI thread, hands the decoded bitmaps to the
+                    // converter's cache, and then tells the slots to look again.
                 }
             }
             
@@ -1472,54 +1464,90 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     .SelectMany(b => b.Pages.Select(p => p.SourcePath).Concat(new[] { b.Cover?.SourcePath }))
                     .Where(p => !string.IsNullOrEmpty(p))
                     .ToList();
-                
+
                 if (allImagePaths.Any())
                 {
-                    _ = Task.Run(async () =>
-                    {
-                        await _imageService.LoadThumbnailsAsync(allImagePaths!);
-                        
-                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            foreach (var book in Project.Books)
-                            {
-                                if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
-                                {
-                                    var thumbDir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails");
-                                    var filePathHash = _imageService.GetFilePathHash(book.Cover.SourcePath);
-                                    var thumbName = $"{filePathHash}_thumb.jpg";
-                                    var thumbPath = Path.Combine(thumbDir, thumbName);
-                                    
-                                    if (File.Exists(thumbPath) && book.Cover.ThumbnailPath != thumbPath)
-                                    {
-                                        book.Cover.ThumbnailPath = thumbPath;
-                                    }
-                                }
-                                
-                                foreach (var page in book.Pages.Where(p => !string.IsNullOrEmpty(p.SourcePath)))
-                                {
-                                    var thumbDir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails");
-                                    var filePathHash = _imageService.GetFilePathHash(page.SourcePath);
-                                    var thumbName = $"{filePathHash}_thumb.jpg";
-                                    var thumbPath = Path.Combine(thumbDir, thumbName);
-                                    
-                                    if (File.Exists(thumbPath) && page.ThumbnailPath != thumbPath)
-                                    {
-                                        page.ThumbnailPath = thumbPath;
-                                    }
-                                }
-                            }
-                        });
-                    });
+                    _ = PrewarmAndWarmThumbnailsAsync(allImagePaths!);
                 }
             }
-            
+
             if (AvailableFiles.Any())
             {
                 _ = Task.Run(async () => await _imageService.LoadThumbnailsAsync(AvailableFiles));
             }
             
             UpdateExportCommands();
+        }
+
+        /// <summary>
+        /// Gets every photo of a freshly opened project ready to draw, in this order and off
+        /// the UI thread:
+        ///
+        ///   1. build the thumbnails that do not exist yet;
+        ///   2. decode what is left into the converter's cache;
+        ///   3. point the slots at the new thumbnails and tell the view to look again.
+        ///
+        /// The order matters. Step 2 is what keeps the UI thread out of an 18 MB JPEG decode
+        /// during the first layout, which is the difference between "the photos are there"
+        /// and "the photo cells are empty grey boxes until I save and reopen". Step 3 is what
+        /// makes the result visible: a slot only re-reads its photo when something raises a
+        /// notification.
+        ///
+        /// Nothing here can lose work: it only adds thumbnails and bitmap cache entries, and
+        /// every step is individually wrapped so a failure leaves the previous behaviour.
+        /// </summary>
+        private async Task PrewarmAndWarmThumbnailsAsync(List<string> imagePaths)
+        {
+            try
+            {
+                await _imageService.LoadThumbnailsAsync(imagePaths);
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError("Не удалось построить миниатюры при открытии проекта", ex);
+            }
+
+            try
+            {
+                await Presentation.Converters.PageSourceConverter.PrewarmAsync(imagePaths);
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError("Не удалось подготовить фото при открытии проекта", ex);
+            }
+
+            try
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    foreach (var book in Books)
+                    {
+                        if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
+                        {
+                            var thumb = _imageService.GetThumbnailPath(book.Cover.SourcePath!);
+                            if (thumb != null && book.Cover.ThumbnailPath != thumb)
+                            {
+                                book.Cover.ThumbnailPath = thumb;
+                                book.Cover.RaiseThumbnailChanged();
+                            }
+                        }
+
+                        foreach (var page in book.Pages.Where(p => p != null && !string.IsNullOrEmpty(p.SourcePath)))
+                        {
+                            var thumb = _imageService.GetThumbnailPath(page.SourcePath!);
+                            if (thumb != null && page.ThumbnailPath != thumb)
+                            {
+                                page.ThumbnailPath = thumb;
+                                page.RaiseThumbnailChanged();
+                            }
+                        }
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError("Не удалось обновить миниатюры слотов", ex);
+            }
         }
 
         private async Task SaveProjectAsync()

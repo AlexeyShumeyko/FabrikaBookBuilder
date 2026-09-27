@@ -28,6 +28,7 @@ param(
     [string]$HoverOut = '',
     [int]$Width = 0,
     [int]$Height = 0,
+    [int]$OpenWaitSeconds = 7,
     [switch]$WithDialog
 )
 
@@ -209,7 +210,8 @@ try {
 
         Invoke-Element $target
         # Project loading is async (thumbnails, double BeginInvoke), so give it room.
-        Start-Sleep -Seconds 7
+        # -OpenWaitSeconds 1 is how the "the photos are not there yet" report is caught.
+        Start-Sleep -Seconds $OpenWaitSeconds
     }
 
     # Switch to the requested screen only after any project is open.

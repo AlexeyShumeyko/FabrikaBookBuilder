@@ -334,86 +334,66 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 saveCmd.NotifyCanExecuteChanged();
             }
             
-            // КРИТИЧЕСКИ ВАЖНО: Сначала устанавливаем ThumbnailPath для уже существующих миниатюр
-            // Это позволяет UI использовать миниатюры сразу, без ожидания их создания
+            // Сначала привязываем уже существующие миниатюры: путь миниатюры теперь считает
+            // один помощник, а не три копии одной формулы в двух ViewModel.
             if (Project != null && Project.Books != null && Project.Books.Count > 0)
             {
                 foreach (var book in Project.Books)
                 {
-                    if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
+                    if (book.Cover != null)
                     {
-                        var thumbDir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails");
-                        var filePathHash = _imageService.GetFilePathHash(book.Cover.SourcePath);
-                        var thumbName = $"{filePathHash}_thumb.jpg";
-                        var thumbPath = Path.Combine(thumbDir, thumbName);
-                        
-                        if (File.Exists(thumbPath))
-                        {
-                            book.Cover.ThumbnailPath = thumbPath;
-                        }
+                        book.Cover.ThumbnailPath = _imageService.GetThumbnailPath(book.Cover.SourcePath ?? string.Empty);
                     }
-                    
-                    foreach (var page in book.Pages.Where(p => !string.IsNullOrEmpty(p.SourcePath)))
+
+                    foreach (var page in book.Pages)
                     {
-                        var thumbDir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails");
-                        var filePathHash = _imageService.GetFilePathHash(page.SourcePath);
-                        var thumbName = $"{filePathHash}_thumb.jpg";
-                        var thumbPath = Path.Combine(thumbDir, thumbName);
-                        
-                        if (File.Exists(thumbPath))
-                        {
-                            page.ThumbnailPath = thumbPath;
-                        }
+                        if (page != null)
+                            page.ThumbnailPath = _imageService.GetThumbnailPath(page.SourcePath ?? string.Empty);
                     }
                 }
-                
-                // Загружаем недостающие миниатюры в фоне
+
                 var allImagePaths = Project.Books
                     .SelectMany(b => b.Pages.Select(p => p.SourcePath).Concat(new[] { b.Cover?.SourcePath }))
                     .Where(p => !string.IsNullOrEmpty(p))
                     .ToList();
-                
-                // Загружаем миниатюры в фоне, чтобы не блокировать UI
+
+                // Фоновая подготовка: сначала недостающие миниатюры, затем декодирование
+                // вне UI-потока, затем обновление слотов. Смысл и порядок описаны в
+                // PrewarmAndWarmThumbnailsAsync (CombinedModeViewModel): без декодирования
+                // вне UI-потока первый ренвер читает 18 МБ JPEG прямо в разметке, и слоты
+                // остаются пустыми серыми рамками до пересохранения проекта.
                 _ = Task.Run(async () =>
                 {
                     await _imageService.LoadThumbnailsAsync(allImagePaths!);
-                    
-                    // Обновляем ThumbnailPath для всех страниц и обложек после загрузки миниатюр
-                    // Используем Dispatcher для обновления UI на правильном потоке
+                    await Presentation.Converters.PageSourceConverter.PrewarmAsync(allImagePaths!);
+
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
                         foreach (var book in Project.Books)
                         {
                             if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
                             {
-                                var thumbDir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails");
-                                var filePathHash = _imageService.GetFilePathHash(book.Cover.SourcePath);
-                                var thumbName = $"{filePathHash}_thumb.jpg";
-                                var thumbPath = Path.Combine(thumbDir, thumbName);
-                                
-                                if (File.Exists(thumbPath) && book.Cover.ThumbnailPath != thumbPath)
+                                var thumb = _imageService.GetThumbnailPath(book.Cover.SourcePath!);
+                                if (thumb != null && book.Cover.ThumbnailPath != thumb)
                                 {
-                                    book.Cover.ThumbnailPath = thumbPath;
+                                    book.Cover.ThumbnailPath = thumb;
+                                    book.Cover.RaiseThumbnailChanged();
                                 }
                             }
-                            
+
                             foreach (var page in book.Pages.Where(p => !string.IsNullOrEmpty(p.SourcePath)))
                             {
-                                var thumbDir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails");
-                                var filePathHash = _imageService.GetFilePathHash(page.SourcePath);
-                                var thumbName = $"{filePathHash}_thumb.jpg";
-                                var thumbPath = Path.Combine(thumbDir, thumbName);
-                                
-                                if (File.Exists(thumbPath) && page.ThumbnailPath != thumbPath)
+                                var thumb = _imageService.GetThumbnailPath(page.SourcePath!);
+                                if (thumb != null && page.ThumbnailPath != thumb)
                                 {
-                                    page.ThumbnailPath = thumbPath;
+                                    page.ThumbnailPath = thumb;
+                                    page.RaiseThumbnailChanged();
                                 }
                             }
                         }
                     });
                 });
             }
-            
         }
         
         /// <summary>
