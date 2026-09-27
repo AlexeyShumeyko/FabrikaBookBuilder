@@ -191,9 +191,17 @@
         <!--  Content                                                       -->
         <!-- ============================================================== -->
         <Grid Grid.Row="1">
-            <Border Background="#CC0F172A" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <TextBlock Text="Обработка папок..." Style="{StaticResource TextXs}"
-                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Border Style="{StaticResource LoadingVeil}"
+                    Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Border Style="{StaticResource LoadingVeilCard}">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE9D5;" FontFamily="{StaticResource IconFont}" FontSize="14"
+                                   Foreground="{StaticResource Brand600}" VerticalAlignment="Center" />
+                        <TextBlock Text="Обработка папок..." Style="{StaticResource TextXsMedium}"
+                                   Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
             </Border>
 
             <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">

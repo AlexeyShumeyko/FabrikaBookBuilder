@@ -797,9 +797,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             var options = new Presentation.Dialogs.ExportDialog(Project, _exportService);
             options.Owner = System.Windows.Application.Current.MainWindow;
 
-            IsLoading = true;
             try
             {
+                // No window veil here: the export dialog shows its own progress, and
+                // a dark wash behind a modal is what the owner kept reporting as a
+                // grey background leaking in.
                 if (options.ShowDialog() != true || !options.Exported)
                     return;
 
@@ -823,10 +825,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 ErrorMessage = $"Ошибка экспорта: {ex.Message}";
                 _loggingService.LogError("Ошибка экспорта", ex);
-            }
-            finally
-            {
-                IsLoading = false;
             }
         }
 
@@ -863,9 +861,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             var options = new Presentation.Dialogs.ExportDialog(Project, _exportService);
             options.Owner = System.Windows.Application.Current.MainWindow;
 
-            IsLoading = true;
             try
             {
+                // No window veil here: the export dialog shows its own progress, and
+                // a dark wash behind a modal is what the owner kept reporting as a
+                // grey background leaking in.
                 if (options.ShowDialog() != true || !options.Exported)
                     return;
 
@@ -888,10 +888,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 ErrorMessage = $"Ошибка экспорта: {ex.Message}";
                 _loggingService.LogError("Ошибка экспорта", ex);
-            }
-            finally
-            {
-                IsLoading = false;
             }
         }
 

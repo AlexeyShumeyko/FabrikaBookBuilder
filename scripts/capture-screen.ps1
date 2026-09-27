@@ -25,7 +25,8 @@ param(
     [string]$ProjectName = '',
     [int]$HoverX = -1,
     [int]$HoverY = -1,
-    [string]$HoverOut = ''
+    [string]$HoverOut = '',
+    [switch]$WithDialog
 )
 
 # The harness console runs on code page 866, which turns every Cyrillic string this
@@ -241,6 +242,27 @@ try {
             Select-Object -First 2 | ForEach-Object { Write-Host $_.Message }
         Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
         exit 1
+    }
+
+    if ($WithDialog) {
+        # Open the OS file picker and photograph the WHOLE screen, dialog included. The
+        # picker is a modal, so it is the one moment where a veil drawn over our own
+        # window becomes visible - which is how the owner saw a grey background appear.
+        $pick = Get-ByName $el 'Загрузить фото' 'Button'
+        if ($null -eq $pick) { Write-Host 'FAIL: no load button to open the picker with' }
+        else { Invoke-Element $pick; Start-Sleep -Seconds 4 }
+
+        Add-Type -AssemblyName System.Windows.Forms
+        $vs = [System.Windows.Forms.SystemInformation]::VirtualScreen
+        $dbmp = New-Object System.Drawing.Bitmap $vs.Width, $vs.Height
+        $dg = [System.Drawing.Graphics]::FromImage($dbmp)
+        $dg.CopyFromScreen($vs.X, $vs.Y, 0, 0, $dbmp.Size)
+        $dfull = Join-Path $root 'doc\shots\with-dialog.png'
+        $dbmp.Save($dfull, [System.Drawing.Imaging.ImageFormat]::Png)
+        $dg.Dispose(); $dbmp.Dispose()
+        Write-Host "saved $dfull with the picker open"
+        Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+        exit 0
     }
 
     $bmp = New-Object System.Drawing.Bitmap $w, $h

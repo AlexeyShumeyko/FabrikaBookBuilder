@@ -199,10 +199,17 @@
             </Grid.ColumnDefinitions>
 
             <!-- Loading -->
-            <Border Grid.ColumnSpan="3" Background="#CC0F172A"
+            <Border Grid.ColumnSpan="3" Style="{StaticResource LoadingVeil}"
                     Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <TextBlock Text="Обработка фотографий..." Style="{StaticResource TextXs}"
-                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Border Style="{StaticResource LoadingVeilCard}">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE9D5;" FontFamily="{StaticResource IconFont}" FontSize="14"
+                                   Foreground="{StaticResource Brand600}" VerticalAlignment="Center" />
+                        <TextBlock Text="Обработка фотографий..." Style="{StaticResource TextXsMedium}"
+                                   Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
             </Border>
 
             <!-- ============ The file list ============ -->

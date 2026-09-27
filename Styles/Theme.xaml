@@ -670,6 +670,29 @@
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
 
+    <!--
+      Loading veil. It used to be a flat #CC0F172A wash over the whole window, which read
+      as a rendering glitch rather than as work in progress - the owner kept reporting it
+      as "a grey background leaks in". It was on screen at the worst possible moments too:
+      while the Windows file picker was open, and while the export dialog was open showing
+      a progress bar of its own.
+
+      Now it is a light wash with a small card in the middle, so the screen underneath
+      stays readable and the state looks deliberate. The timing is fixed in the view
+      models: do not raise IsLoading while a dialog of ours owns the progress.
+    -->
+    <Style x:Key="LoadingVeil" TargetType="Border">
+        <Setter Property="Background" Value="#B8FFFFFF" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <Style x:Key="LoadingVeilCard" TargetType="Border" BasedOn="{StaticResource Card}">
+        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Effect" Value="{StaticResource ShadowSubtle}" />
+    </Style>
+
     <Style x:Key="FluentTextBoxStyle"    TargetType="TextBox" />
 
     <Style x:Key="ModernCard"       TargetType="Border" BasedOn="{StaticResource Card}" />

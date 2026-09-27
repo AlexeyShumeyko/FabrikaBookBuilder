@@ -348,60 +348,58 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         //  One frame shape for the whole run
         // ------------------------------------------------------------------
 
-        private double? _runFrameAspect;
-        private bool _runFrameAspectFrozen;
-
         /// <summary>
-        /// Decides the frame shape for every book of the run, following the owner's rule:
-        /// the cover may arrive first and sets the shape, the first SPREAD then replaces
-        /// it (a run is aligned by its spreads), and after that it is frozen.
+        /// Decides the frame shape for every book of the run: the MEDIAN of every spread
+        /// in the run, the cover never counted.
         ///
-        /// A per-book median did neither half of that. It reshaped only the book a photo
-        /// landed in, and it moved again with every new photo, because the median of one
-        /// value is that value - so a photographer loading a run photo by photo watched
-        /// the cards jump twice per photo.
+        /// Both of the owner's requirements fall out of a median rather than a latch.
+        /// A run is aligned by its spreads, so a 1.9 cover next to square spreads must not
+        /// drag the frames - and it does not, because it is not in the set. And the median
+        /// of a run of equally shaped spreads IS that shape, so loading photo after photo
+        /// stops moving the cards after the first one - which a frozen value also did, but
+        /// a frozen value could not recover: delete the books, build the run again, and
+        /// the frames stayed in the old format while the new photos were a different one.
+        ///
+        /// Recomputed on every change, so a wrong photo loaded by mistake is outnumbered
+        /// by the right ones and the frames follow the content again.
         /// </summary>
         private void UpdateRunFrameAspect()
         {
-            if (_runFrameAspectFrozen && _runFrameAspect is double frozen)
-            {
-                StampRunAspect(frozen);
-                return;
-            }
+            var ratios = new List<double>();
 
-            // First spread in reading order. The cover, whatever shape it is, never sets
-            // the final answer - it only holds the fort until a spread shows up.
             foreach (var book in Books)
             {
                 foreach (var page in book.Pages)
                 {
                     if (page == null || page.IsCover || page.IsEmpty || !page.HasDimensions) continue;
-
-                    _runFrameAspect = page.AspectRatio;
-                    _runFrameAspectFrozen = true;
-                    StampRunAspect(_runFrameAspect.Value);
-                    return;
+                    ratios.Add(page.AspectRatio);
                 }
             }
 
-            if (_runFrameAspect is double current)
+            // Nothing measured yet: a cover may still say something useful, otherwise the
+            // default 16:10. Once a spread arrives the cover stops counting.
+            if (ratios.Count == 0)
             {
-                StampRunAspect(current);   // still provisional, a spread may arrive later
-                return;
-            }
-
-            foreach (var book in Books)
-            {
-                if (book.Cover != null && !book.Cover.IsEmpty && book.Cover.HasDimensions)
+                foreach (var book in Books)
                 {
-                    _runFrameAspect = book.Cover.AspectRatio;
-                    StampRunAspect(_runFrameAspect.Value);
-                    return;
+                    if (book.Cover != null && !book.Cover.IsEmpty && book.Cover.HasDimensions)
+                    {
+                        ratios.Add(book.Cover.AspectRatio);
+                        break;
+                    }
                 }
             }
 
-            // Nothing measured yet: the default shape, stamped so a new book matches.
-            StampRunAspect(1.6);
+            StampRunAspect(ratios.Count > 0 ? MedianOf(ratios) : 1.6);
+        }
+
+        private static double MedianOf(List<double> values)
+        {
+            values.Sort();
+            int mid = values.Count / 2;
+            return values.Count % 2 == 1
+                ? values[mid]
+                : (values[mid - 1] + values[mid]) / 2d;
         }
 
         private void StampRunAspect(double aspect)
@@ -411,16 +409,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         }
 
         /// <summary>
-        /// Forgets the run's shape so the next photo decides it again. Called when the
-        /// project is emptied or reloaded - otherwise reopening a project would keep the
-        /// shape from the session before it.
+        /// Nothing to forget: the run's shape is derived from the photos that are actually
+        /// in the books right now, so an emptied project falls back to the default on its
+        /// own. The latch that used to sit here is what left a rebuilt run in the old
+        /// format.
         /// </summary>
-        private void ResetRunFrameAspect()
-        {
-            _runFrameAspect = null;
-            _runFrameAspectFrozen = false;
-        }
-
         /// <summary>
         /// Counts how many slots hold each photo and pushes the counts into the list.
         /// "Общий" is therefore a fact about the run, not a flag anyone has to maintain:
@@ -696,41 +689,44 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         private async Task LoadFilesAsync()
         {
-            IsLoading = true;
             ErrorMessage = null;
 
             try
             {
+                // IsLoading is raised AFTER the picker, not around it. The picker is its own
+                // progress indicator, and the veil used to cover the whole window while it
+                // was open - which is where the owner saw a grey background appear.
                 var files = await _fileService.SelectFilesAsync();
-                
+
                 if (files == null || files.Length == 0)
+                    return;
+
+                IsLoading = true;
+                try
+                {
+                    // Первое действие с данными создаёт запись проекта — до этого момента
+                    // вкладка могла быть открыта без какого-либо проекта вообще.
+                    await EnsureProjectInfoAsync();
+
+                    foreach (var file in files)
+                    {
+                        if (_fileService.IsJpegFile(file) && !AvailableFiles.Contains(file))
+                        {
+                            AvailableFiles.Add(file);
+                        }
+                    }
+
+                    _ = Task.Run(async () => await _imageService.LoadThumbnailsAsync(AvailableFiles));
+                }
+                finally
                 {
                     IsLoading = false;
-                    return;
                 }
-
-                // Первое действие с данными создаёт запись проекта — до этого момента
-                // вкладка могла быть открыта без какого-либо проекта вообще.
-                await EnsureProjectInfoAsync();
-
-                foreach (var file in files)
-                {
-                    if (_fileService.IsJpegFile(file) && !AvailableFiles.Contains(file))
-                    {
-                        AvailableFiles.Add(file);
-                    }
-                }
-
-                _ = Task.Run(async () => await _imageService.LoadThumbnailsAsync(AvailableFiles));
             }
             catch (Exception ex)
             {
                 ErrorMessage = $"Ошибка: {ex.Message}";
                 _loggingService.LogError("Ошибка загрузки файлов", ex);
-            }
-            finally
-            {
-                IsLoading = false;
             }
         }
 
@@ -1241,9 +1237,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             Books.Clear();
             Project = null;
             AvailableFiles.Clear();
-            // A new project re-decides its own frame shape: the frozen value belongs to the
-            // run that was open before, not to this one.
-            ResetRunFrameAspect();
             IsStructureConfirmed = false;
             ErrorMessage = null;
             Presentation.Converters.PageSourceConverter.ClearCache();
@@ -1308,8 +1301,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     // Re-decide from what is on disk: the first spread of the saved run
                     // sets the shape again, so a reopened project looks exactly like it did
                     // when it was closed.
-                    ResetRunFrameAspect();
-                    foreach (var book in project.Books)
+                            foreach (var book in project.Books)
                     {
                         Books.Add(book);
                     }
@@ -1775,7 +1767,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             Project = null;
             Books.Clear();
             AvailableFiles.Clear();
-            ResetRunFrameAspect();
             ErrorMessage = null;
             IsStructureConfirmed = false;
             CurrentProjectInfo = null;

@@ -86,9 +86,17 @@
         <!--  Grid: max 3 columns, gap-6 (24)                               -->
         <!-- ============================================================== -->
         <Grid Grid.Row="1" Margin="0,24,0,0">
-            <Border Background="#CC0F172A" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <TextBlock Text="Загрузка проектов..." Style="{StaticResource TextXs}"
-                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Border Style="{StaticResource LoadingVeil}"
+                    Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Border Style="{StaticResource LoadingVeilCard}">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE9D5;" FontFamily="{StaticResource IconFont}" FontSize="14"
+                                   Foreground="{StaticResource Brand600}" VerticalAlignment="Center" />
+                        <TextBlock Text="Загрузка проектов..." Style="{StaticResource TextXsMedium}"
+                                   Foreground="{StaticResource Slate600}" Margin="8,0,0,0"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
             </Border>
 
             <Border Background="{StaticResource Red50}" BorderBrush="{StaticResource Red200}" BorderThickness="1"

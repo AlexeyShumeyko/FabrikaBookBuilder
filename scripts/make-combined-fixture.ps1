@@ -12,7 +12,10 @@ param(
     [switch]$EmptyLastBook,
     [string]$PhotoPath = '',
     [int]$PhotoW = 0,
-    [int]$PhotoH = 0
+    [int]$PhotoH = 0,
+    [string]$CoverPhotoPath = '',
+    [int]$CoverW = 0,
+    [int]$CoverH = 0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -86,6 +89,13 @@ for ($b = 1; $b -le $Books; $b++) {
         }
     }
     $cover = if ($fill) { $photos[0] } else { $null }
+
+    # -CoverPhotoPath swaps the cover for a photo of a DIFFERENT format. That is the
+    # owner's real pattern (a 1.9 cover above square spreads), and it is how the rule
+    # "aligned by the spreads, the cover does not count" gets checked.
+    if ($fill -and $CoverPhotoPath -ne '' -and $CoverW -gt 0 -and $CoverH -gt 0) {
+        $cover = @{ path = $CoverPhotoPath; w = $CoverW; h = $CoverH; thumb = $null }
+    }
     $bookList += [ordered]@{
         folderPath = $null
         name = "Book $b"
