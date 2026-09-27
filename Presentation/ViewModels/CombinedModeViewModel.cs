@@ -163,6 +163,13 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     UpdateRunFrameAspect();
                     RefreshPhotoUsage();
+
+                    // The panel's book counter is a projection over EVERY book, so it has to
+                    // be republished whenever any book changes - not only when books are added
+                    // or removed. It used to react to the collection alone, which is why it
+                    // sat at "0 из 10" while books were quietly being finished one by one.
+                    OnPropertyChanged(nameof(StructureProgress));
+                    OnPropertyChanged(nameof(StructureIsComplete));
                 }
             };
 
@@ -473,7 +480,15 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             }
 
             foreach (var file in PhotoFiles)
-                file.SetUsage(slotCounts.TryGetValue(file.Path, out int n) ? n : 0);
+            {
+                // Counted by BOOK, not by slot. The same photograph dropped into five spreads
+                // of ONE book is five separate spreads the photographer means to keep
+                // separate - the owner calls that out explicitly - so it must not read as
+                // "shared", and the slot's "Во все книги" has to stay available. Sharing is
+                // something the photographer does with one button, not something two drops
+                // into the same book achieve by accident.
+                file.SetUsage(bookCounts.TryGetValue(file.Path, out int n) ? n : 0);
+            }
 
             foreach (var book in Books)
             {
@@ -968,10 +983,33 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             IsStructureConfirmed = true;
             GenerateStructure();
-            
+
             if (ConfirmStructureCommand is RelayCommand confirmCmd)
             {
                 confirmCmd.NotifyCanExecuteChanged();
+            }
+
+            // One more automatic save, and only here. The structure is the most expensive
+            // thing in a run to put back by hand, and setting it is a single deliberate act
+            // rather than something done sixty times in a row - so it is written straight
+            // away instead of waiting for a button the owner may never press. Photo
+            // assignment is deliberately NOT auto-saved: that is where "без перебора" comes
+            // in, and the export saves the whole project anyway.
+            _ = SaveStructureAsync();
+        }
+
+        private async Task SaveStructureAsync()
+        {
+            try
+            {
+                if (await EnsureProjectInfoAsync() == null) return;
+                await SaveProjectSilentlyAsync();
+            }
+            catch (Exception ex)
+            {
+                // A failed auto-save must never interrupt the work: the owner can still
+                // press "Сохранить проект", and the error log keeps the reason.
+                _loggingService.LogError("Не удалось автоматически сохранить проект после изменения структуры", ex);
             }
         }
 
@@ -1184,6 +1222,13 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private async Task RunExportAsync()
         {
             if (Project == null) return;
+
+            // Save FIRST. The export used to update the index to "ready to print" and end
+            // the session without ever writing the project file, so the list showed a
+            // finished project that reopened empty - a critical data loss dressed as a
+            // success. The copy works on the in-memory project; the save is what makes the
+            // result survive, and it has to happen before anything navigates away.
+            await SaveProjectBeforeExportAsync();
 
             var options = new Presentation.Dialogs.ExportDialog(Project, _exportService);
             options.Owner = System.Windows.Application.Current.MainWindow;
@@ -1941,6 +1986,25 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             });
         }
         
+        /// <summary>
+        /// Saves the project right before an export, and never lets a save problem stop the
+        /// export. The copy is what the owner asked for; the save is the safety net under
+        /// it, so a full disk or a locked index must not turn into "nothing happened".
+        /// </summary>
+        private async Task SaveProjectBeforeExportAsync()
+        {
+            try
+            {
+                await QuickSaveAsync();
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError("Не удалось сохранить проект перед экспортом", ex);
+                ErrorMessage = "Не удалось сохранить проект перед экспортом. Экспорт продолжен, но проект может быть потерян.";
+                OnPropertyChanged(nameof(ErrorMessage));
+            }
+        }
+
         private async Task SaveProjectSilentlyAsync()
         {
             if (CurrentProjectInfo == null)

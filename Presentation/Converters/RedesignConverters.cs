@@ -636,7 +636,16 @@ namespace PhotoBookRenamer.Presentation.Converters
     /// to judge, and losing a card is better than losing the ability to see the photo.
     ///
     /// Usage: MultiBinding of the row area's width and the Page, with
-    /// ConverterParameter="width" or "height".
+    /// ConverterParameter="width" or "height". A second comma-separated number overrides
+    /// <see cref="DefaultNaturalHeight"/> for that binding, i.e. "width,150".
+    ///
+    /// The override exists because the two modes do not have the same room. The
+    /// unique-folder mode gives its cards the whole window, and 190px is the size the
+    /// mockup was drawn at. The combined mode shares the window with a 320px file list,
+    /// so its design height is smaller - and without that, a wide book format landed on
+    /// three cards per row with the leftover wide enough to be a hole in the layout, yet
+    /// too small a step to justify the one shrink the rule allows. Only the size changes;
+    /// the frame still keeps the book's own format, both sides scaled together.
     ///
     /// The width must be something the cards cannot influence: the enclosing
     /// <c>ScrollViewer</c>'s own width, run through <see cref="ReserveWidthConverter"/>.
@@ -645,7 +654,7 @@ namespace PhotoBookRenamer.Presentation.Converters
     public class AdaptiveCardSizeConverter : IMultiValueConverter
     {
         /// <summary>Mockup card height. See doc/DESIGN_SPEC.md 5.2.</summary>
-        private const double NaturalHeight = 190d;
+        protected const double DefaultNaturalHeight = 190d;
 
         /// <summary>Gap between cards. Must match SpreadCard's Margin in the view.</summary>
         private const double CardMargin = 16d;
@@ -696,12 +705,21 @@ namespace PhotoBookRenamer.Presentation.Converters
                 ? page.FrameAspect
                 : FallbackAspect;
 
-            double naturalWidth = NaturalHeight * aspect;
+            bool wantHeight = false;
+            double naturalHeight = DefaultNaturalHeight;
+            var parts = (parameter as string)?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        ?? Array.Empty<string>();
+            if (parts.Length > 0)
+                wantHeight = string.Equals(parts[0].Trim(), "height", StringComparison.OrdinalIgnoreCase);
+            if (parts.Length > 1 &&
+                double.TryParse(parts[1].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double h) &&
+                h > 0d)
+                naturalHeight = h;
+
+            double naturalWidth = naturalHeight * aspect;
             double width = FitWidth(available, naturalWidth);
 
-            return Math.Round(string.Equals(parameter as string, "height", StringComparison.OrdinalIgnoreCase)
-                ? width / aspect
-                : width, 1);
+            return Math.Round(wantHeight ? width / aspect : width, 1);
         }
 
         /// <summary>

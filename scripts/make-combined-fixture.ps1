@@ -21,6 +21,8 @@ param(
     [int]$OutlierH = 0,
     [switch]$AllEmpty,
     [switch]$OnlyCover,
+    [switch]$DuplicateInBook,
+    [int]$BooksFilled = 0,
     [ValidateSet('Unique', 'Example1', 'Example2', 'Override')]
     [string]$Pattern = 'Unique'
 )
@@ -79,12 +81,21 @@ for ($b = 1; $b -le $Books; $b++) {
     # size as the filled one instead of falling back to the default 16:10.
     # -AllEmpty empties every book, -OnlyCover leaves a cover and no spreads at all.
     $fill = -not ($EmptyLastBook -and $b -eq $Books) -and -not $AllEmpty
+    # -BooksFilled N leaves every book after the Nth without photos, which is how the
+    # panel's book counter gets checked mid-run: it must read "N of Books" in red while
+    # the rest of the run is still being assembled.
+    if ($BooksFilled -gt 0 -and $b -gt $BooksFilled) { $fill = $false }
     $pages = @()
     for ($s = 1; $s -le $Spreads; $s++) {
         # Spread 2 of every book gets the SAME photo on purpose: that is the run-wide
         # spread the owner asked to see labelled.
         $pick =
             if (-not $fill -or $OnlyCover) { $null }
+            # -DuplicateInBook puts ONE photo in every spread of the FIRST book. Sharing is
+            # what the "apply to all books" button does; the same file dropped twice inside
+            # one book is the photographer's own repetition and must stay unshared, with the
+            # button still available.
+            elseif ($DuplicateInBook -and $b -eq 1) { $photos[0] }
             elseif ($Pattern -eq 'Example1') {
                 # Cover and every spread but the last are shared by the whole run; the last
                 # spread is one photo per book. The owner's first example.
@@ -165,8 +176,8 @@ $new = [ordered]@{
     filePath = $projPath
     mode = 3
     status = 0
-    bookCount = 2
-    pageCount = 3
+    bookCount = $Books
+    pageCount = $Spreads
     createdDate = $now
     lastModified = $now
 }

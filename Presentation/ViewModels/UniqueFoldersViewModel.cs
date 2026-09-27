@@ -792,6 +792,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             if (Project == null) return;
 
+            // Save FIRST, for the same reason as in the combined mode: the export used to
+            // mark the project "ready to print" in the index and end the session without
+            // ever writing the project file, so a finished project reopened empty.
+            await SaveProjectBeforeExportAsync();
+
             // The options modal owns the copy so it can show a progress bar, and it runs
             // the export itself. This method only handles the surrounding bookkeeping.
             var options = new Presentation.Dialogs.ExportDialog(Project, _exportService);
@@ -1192,6 +1197,23 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             });
         }
         
+        /// <summary>
+        /// Saves the project right before an export, and never lets a save problem stop the
+        /// export: the copy is what the owner asked for, the save is the safety net under
+        /// it, so a full disk must not turn into "nothing happened".
+        /// </summary>
+        private async Task SaveProjectBeforeExportAsync()
+        {
+            try
+            {
+                await QuickSaveAsync();
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError("Не удалось сохранить проект перед экспортом", ex);
+            }
+        }
+
         private async Task SaveProjectSilentlyAsync()
         {
             if (CurrentProjectInfo == null || Project == null)
