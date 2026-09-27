@@ -1,84 +1,153 @@
-# Инструкции по сборке
+# Сборка, проверки и выпуск релиза
 
-## Требования
+Всё, что нужно, чтобы собрать программу, убедиться, что она работает, и выпустить
+релиз. Для работы с ветками — [BRANCHING.md](BRANCHING.md).
 
-- .NET 8.0 SDK
-- Visual Studio 2022 или JetBrains Rider (опционально)
+---
 
-## Сборка из командной строки
+## 1. Требования
+
+| Что | Версия | Обязательно? |
+|---|---|---|
+| .NET SDK | 8.0 | да |
+| Visual Studio | 2022, 17.8+ (Desktop workload) | нет, можно из командной строки |
+| Inno Setup | 6.2+ | нет, только если собираем установщик локально |
+
+Публикуемый файл самодостаточен: .NET и все библиотеки входят в него, устанавливать
+рантайм на машину клиента не нужно.
+
+## 2. Сборка и запуск
 
 ```bash
-# Восстановление зависимостей
+git clone <url>
+cd FabrikaBookBuilder
 dotnet restore
-
-# Сборка проекта
-dotnet build --configuration Release
-
-# Запуск приложения
-dotnet run --project PhotoBookRenamer/PhotoBookRenamer.csproj
+dotnet build -c Release
 ```
 
-## Сборка в Visual Studio
-
-1. Откройте `PhotoBookRenamer.sln` в Visual Studio 2022
-2. Выберите конфигурацию Release
-3. Нажмите Build > Build Solution (Ctrl+Shift+B)
-4. Запустите проект (F5)
-
-## Создание установщика
-
-Для создания установщика рекомендуется использовать:
-
-- **WiX Toolset** - для создания MSI установщика
-- **Inno Setup** - для создания EXE установщика
-- **Squirrel** - для создания установщика с автообновлением
-
-### Пример с WiX
-
-```xml
-<!-- WiX проект для создания MSI -->
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="*" Name="PhotoBook Renamer" Language="1033" Version="1.0.0" 
-           Manufacturer="Your Company" UpgradeCode="YOUR-GUID-HERE">
-    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
-    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
-    <MediaTemplate />
-    
-    <Feature Id="ProductFeature" Title="PhotoBook Renamer" Level="1">
-      <ComponentRef Id="ApplicationFiles" />
-    </Feature>
-  </Product>
-</Wix>
-```
-
-## Публикация
+Запуск без Visual Studio:
 
 ```bash
-# Создание самодостаточного приложения
-dotnet publish -c Release -r win-x64 --self-contained true
-
-# Создание зависимого от .NET приложения (меньший размер)
-dotnet publish -c Release -r win-x64 --self-contained false
+dotnet run -c Release
 ```
 
-## Автообновление
+Готовый файл: `bin/Release/net8.0-windows/PhotoBookRenamer.exe`
 
-Приложение включает сервис проверки обновлений через GitHub Releases.
-Настройте в `UpdateService.cs`:
+> **Если сборка «зависла» или не обновила файл** — почти всегда запущена сама программа:
+> `bin/.../PhotoBookRenamer.exe` занят. Закройте её и повторите сборку. Ошибки при этом
+> выглядят как MSB3021/MSB3027 и не содержат слов «error».
 
-```csharp
-private const string Owner = "YourGitHubUsername";
-private const string Repo = "PhotoBookRenamer";
+## 3. Проверки
+
+Скрипты лежат в `scripts/` и запускаются при закрытой программе. Полный набор — перед
+каждым слиянием в `master`.
+
+| Скрипт | Что проверяет |
+|---|---|
+| `verify-startup.ps1` | Программа запускается и показывает окно. Сборка сама по себе не доказывает, что WPF-приложение стартует. |
+| `check-resource-keys.ps1` | Нет дублирующихся `x:Key` в словарях ресурсов (ошибка только в рантайме). |
+| `check-resource-refs.ps1` | Каждая ссылка `{StaticResource K}` разрешается. |
+| `test-export.ps1` | Контракт имён при экспорте: `001-00.jpg … 003-05.jpg`. Опция `-PerBookSubfolders` — раскладка по подпапкам, `-Combined Example1\|Example2\|Override` — сквозные имена в комбинированном режиме. |
+| `test-export-autosave.ps1` | Экспорт сначала сохраняет проект, и только потом копирует файлы. |
+| `test-structure-change.ps1` | Увеличение тиража применяется без вопроса, уменьшение спрашивает; «Отмена» ничего не меняет. |
+| `test-rename-commit.ps1` | Переименование проекта применяется по клику в шапке и видно и в панели, и в заголовке. |
+| `test-missing-photo.ps1` | Нечитаемый файл помечается в ячейке и попадает в журнал. |
+| `test-list-scroll.ps1` | Список загруженных фото прокручивается колесом. |
+| `test-books-scroll.ps1` | Список книг прокручивается, последняя книга тиража достижима. |
+| `measure-fit.ps1` | Ряд карточек заполняется на всех ширинах окна (1100–1616 px). |
+| `open-project-probe.ps1` | Программа переживает открытие проекта. |
+| `glyph-proof.ps1` | Отрисовывает кандидатов в иконки Segoe MDL2 в PNG — проверка кодов точек. |
+
+Фикстуры для проверок создаются скриптами `make-test-fixture.ps1`,
+`make-combined-fixture.ps1`, `make-big-fixture.ps1`, `make-empty-fixture.ps1`.
+После проверок удаляются одним движением:
+
+```bash
+pwsh -File scripts/clean-test-projects.ps1 -WhatIf   # посмотреть, что будет удалено
+pwsh -File scripts/clean-test-projects.ps1
 ```
 
-## Заметки
+Индекс проектов (`%LOCALAPPDATA%\PhotoBookRenamer\Projects\projects.json`) правится
+фикстурами **как обычный текст**: он хранит не-ASCII как `\uXXXX`, и обход через
+`ConvertTo-Json` переписывает файл и портит кириллицу.
 
-- Приложение использует System.Windows.Forms для FolderBrowserDialog
-- Миниатюры сохраняются в `%TEMP%\PhotoBookRenamer\Thumbnails`
-- Все операции с файлами выполняются асинхронно
-- Оригинальные файлы никогда не изменяются
+### Замер производительности
 
+```bash
+# задержка ответа интерфейса, CPU и память при открытии проекта
+pwsh -File scripts/perf-open.ps1 -Books 29 -Spreads 10 -Label "29x10 empty"
 
+# подробный след фаз открытия, число созданных элементов, вызовы конвертеров
+set FBR_PERF_TRACE=1
+```
 
+`perf-open.ps1` меряет не «время клика», а задержку ответа потока интерфейса на
+кросс-процессный запрос: её клиент видит как зависание окна.
 
+## 4. Выпуск релиза
 
+Релиз собирается **только** из `master` — так настроен
+`.github/workflows/build-and-release.yml`, и он же это проверяет.
+
+Порядок:
+
+1. Поднять версию в `PhotoBookRenamer.csproj`:
+
+   ```xml
+   <Version>1.1.0</Version>
+   ```
+
+   **Обязательный шаг.** Сборка падает, если релиз с такой версиной уже существует или
+   версия не больше последней опубликованной.
+
+2. Написать заметки релиза в `docs/release-notes/v<версия>.md` — они попадут в описание
+   релиза на GitHub и показываются в программе при обновлении.
+
+3. Прогнать все проверки из раздела 3.
+
+4. Слить ветку в `master` и отправить:
+
+   ```bash
+   git checkout master
+   git merge --no-ff <ветка>
+   git push origin master
+   ```
+
+5. Дождаться GitHub Actions и проверить, что релиз `v<версия>` создан и в нём есть
+   `BookBuilder-Studio-Setup.zip`.
+
+### Что делает сборка
+
+| Шаг | Результат |
+|---|---|
+| `dotnet publish` | один самодостаточный `.exe` |
+| Inno Setup | установщик `BookBuilder-Studio-Setup-<версия>.exe` |
+| zip | `BookBuilder-Studio-Setup.zip` — файл с постоянным именем |
+| GitHub Release | тег `v<версия>`, описание из `docs/release-notes/` |
+| Обновление старых релизов | установщик заменяется в **всех** предыдущих релизах |
+
+Последний пункт — причина, по которой ссылка на скачивание не меняется от версии к
+версии: клиент открывает «последний релиз» и получает свежий установщик, а установленные
+копии находят обновление сами.
+
+Постоянные ссылки:
+
+- последний релиз: `https://github.com/AlexeyShumeyko/FabrikaBookBuilder/releases/latest`
+- файл напрямую: `https://github.com/AlexeyShumeyko/FabrikaBookBuilder/releases/latest/download/BookBuilder-Studio-Setup.zip`
+
+### Ручная пересборка
+
+Вкладка **Actions → Build and Release → Run workflow**. В поле `confirm` ввести
+`RELEASE`. Без этого шага сборка не запустится — так релиз нельзя выпустить случайно.
+Сборка с несколькими ветками сериализована: новый запуск встаёт в очередь, а не
+прерывает текущий.
+
+## 5. Разбор проблем
+
+| Симптом | Причина и что делать |
+|---|---|
+| Сборка падает с MSB3021/MSB3027, файл не обновляется | Запущена сама программа — закройте и повторите. |
+| Ошибки только в рантайме, сборка зелёная | Проверьте ресурсы: `check-resource-keys.ps1`, `check-resource-refs.ps1`. |
+| В программе квадраты вместо иконок | Сбились коды точек Segoe MDL2 — `glyph-proof.ps1`, таблица проверенных кодов в проекте. |
+| Повреждён список проектов | `scripts/repair-projects-json.ps1`. |
+| `projects.json` показывает мусор вместо кириллицы | Не обходить файл через `ConvertTo-Json` — только текстовая правка, как делают скрипты. |

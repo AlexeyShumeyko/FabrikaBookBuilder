@@ -340,7 +340,8 @@
                             clicks exactly like the one it replaced.
                         -->
                         <ListBox Grid.Row="1" ItemsSource="{Binding FilteredPhotoFiles}"
-                                 Background="Transparent" BorderThickness="0" Padding="0" Margin="0"
+                                 Background="Transparent" BorderThickness="0" Padding="0" Margin="0" MinWidth="0"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
                                  HorizontalContentAlignment="Stretch"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  VirtualizingStackPanel.IsVirtualizing="True"

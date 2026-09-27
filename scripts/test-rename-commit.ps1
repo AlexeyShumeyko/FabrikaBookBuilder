@@ -30,6 +30,7 @@ Push-Location $root
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
+Add-Type -AssemblyName System.Windows.Forms
 Add-Type @"
 using System;
 using System.Collections.Generic;
@@ -196,6 +197,35 @@ try {
     }
     if (-not $shown) { throw "the name did not apply: '$newName' is nowhere on screen after the click" }
     if (-not $inHeader) { throw 'the panel took the new name but the top bar still shows the old one' }
+
+    # Put the name back. The fixture is disposable, but its NAME is how every other
+    # script finds it: test-export looks for '*Testovyy*', and leaving it renamed to
+    # "Rename-check" made that test fail for no reason that had anything to do with
+    # export. A test must leave the world the way it found it.
+    $el = [System.Windows.Automation.AutomationElement]::FromHandle($hwnd)
+    $pencil = Find-ByName $el $labelPencil 'Button'
+    if ($null -ne $pencil) {
+        $pencil.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+        Start-Sleep -Seconds 1
+    }
+    $edit = $null
+    $editCond = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::Edit)
+    foreach ($e in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $editCond)) {
+        $er = $e.Current.BoundingRectangle
+        if (-not $e.Current.IsOffscreen -and $er.Width -gt 40) { $edit = $e; break }
+    }
+    if ($null -ne $edit) {
+        $edit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue($originalName)
+        Start-Sleep -Milliseconds 300
+        [System.Windows.Forms.SendKeys]::SendWait('{TAB}')
+        Start-Sleep -Milliseconds 800
+        Write-Host "name restored to '$originalName'"
+    }
+    else {
+        Write-Host "could not reach the rename box to restore '$originalName' - remove this project by hand"
+    }
 
     Write-Host ''
     Write-Host 'PASS: clicking the control panel applies the new project name'

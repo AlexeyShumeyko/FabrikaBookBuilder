@@ -235,11 +235,33 @@ jobs:
     - name: Create release notes
       id: release_notes
       run: |
-        $notes = "## Что нового в версии ${{ env.VERSION }}`n`n"
-        $notes += "Автоматическая сборка от $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n`n"
-        $notes += "### Изменения:`n"
-        $notes += "- Обновления из последнего коммита`n"
-        $notes | Out-File -FilePath ./release-notes.md -Encoding UTF8
+        # Hand-written notes win. They are the text the program shows after an update,
+        # so "обновления из последнего коммита" is worse than useless there - it is what
+        # a client reads to decide whether the update is worth installing now.
+        # Convention: docs/release-notes/v<version>.md. No file -> a factual list of
+        # commits, never an invented summary.
+        $hand = "./docs/release-notes/v${{ env.VERSION }}.md"
+
+        if (Test-Path $hand) {
+          Write-Host "Using hand-written release notes: $hand"
+          Copy-Item $hand ./release-notes.md
+        }
+        else {
+          Write-Host "No hand-written notes at $hand - falling back to the commit list."
+          $range = "${{ env.GITHUB_SHA }}^..${{ env.GITHUB_SHA }}"
+          $lines = @(git log $range --pretty=format:"- %s" 2>$null)
+          $notes = "## Версия ${{ env.VERSION }}`n`n"
+          $notes += "_Заметки к релизу не были подготовлены, список изменений из истории коммитов._`n`n"
+          if ($lines.Count -gt 0) {
+            $notes += "### Изменения`n"
+            $notes += ($lines -join "`n")
+            $notes += "`n"
+          }
+          else {
+            $notes += "### Изменения`n- Сборка ${{ env.VERSION }}`n"
+          }
+          $notes | Out-File -FilePath ./release-notes.md -Encoding UTF8
+        }
 
     - name: Find installer file and create ZIP
       id: find_installer
