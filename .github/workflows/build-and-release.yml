@@ -98,6 +98,12 @@ jobs:
         echo "VERSION=$version" >> $env:GITHUB_OUTPUT
 
     - name: "Guard: version must be new and must not already be released"
+      # The token has to be mapped into the step explicitly. Reading $env:GITHUB_TOKEN
+      # without this line sends an empty "Bearer" and the API answers 401 - the step then
+      # dies on the HTTP call with a message that says nothing about versions. That is
+      # exactly how the 1.1.0 release failed: the guard never got to check anything.
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         $version = "${{ env.VERSION }}"
         $headers = @{
@@ -107,7 +113,16 @@ jobs:
           "User-Agent"     = "build-and-release"
         }
 
-        $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/AlexeyShumeyko/FabrikaBookBuilder/releases?per_page=100" -Headers $headers -Method Get
+        try {
+          $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/AlexeyShumeyko/FabrikaBookBuilder/releases?per_page=100" -Headers $headers -Method Get
+        }
+        catch {
+          # Say what actually went wrong. A bare failure here reads like "the version is
+          # wrong" and sends the next person hunting in the wrong place.
+          Write-Error "Could not read published releases from the GitHub API: $($_.Exception.Message)"
+          Write-Error "If this says 401, the step is missing its GITHUB_TOKEN env mapping."
+          exit 1
+        }
 
         foreach ($r in $releases) {
           if ($r.tag_name -eq "v$version") {
@@ -147,13 +162,39 @@ jobs:
 
     - name: Install Inno Setup
       run: |
-        $innoUrl = "https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe"
+        # jrsoftware.org stopped serving /is/6/<version>.exe: every one of those URLs now
+        # answers 404, so the release failed here too. The current Inno Setup is published
+        # as a GitHub release, and 6.7.3 is the one that installs to
+        # "Program Files (x86)\Inno Setup 6" - the path the build step below already looks in.
+        $innoUrl = "https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe"
         $innoPath = "$env:TEMP\innosetup.exe"
-        Write-Host "Downloading Inno Setup..."
+        Write-Host "Downloading Inno Setup from $innoUrl"
         Invoke-WebRequest -Uri $innoUrl -OutFile $innoPath -UseBasicParsing
         Write-Host "Installing Inno Setup silently..."
         Start-Process -FilePath $innoPath -ArgumentList "/SILENT /SUPPRESSMSGBOXES /NORESTART" -Wait
-        Start-Sleep -Seconds 5
+
+        # Do not guess how long the installer needs. Wait for the compiler to appear:
+        # a fixed sleep that is too short fails the release for no visible reason, which
+        # is the same class of bug as the missing token above.
+        $isccCandidates = @(
+          "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+          "${env:ProgramFiles}\Inno Setup 6\ISCC.exe",
+          "${env:ProgramFiles}\Inno Setup 7\ISCC.exe",
+          "${env:ProgramFiles(x86)}\Inno Setup 7\ISCC.exe"
+        )
+        $deadline = (Get-Date).AddSeconds(120)
+        $iscc = $null
+        while ((Get-Date) -lt $deadline) {
+          $iscc = $isccCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if ($iscc) { break }
+          Start-Sleep -Seconds 2
+        }
+        if (-not $iscc) {
+          Write-Error "Inno Setup installed but ISCC.exe never appeared. Looked in:"
+          $isccCandidates | ForEach-Object { Write-Host "  $_" }
+          exit 1
+        }
+        Write-Host "Inno Setup ready: $iscc"
 
     - name: Create installer script (Inno Setup)
       run: |
