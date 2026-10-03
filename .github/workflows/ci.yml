@@ -9,16 +9,15 @@ name: CI (dev only)
 on:
   push:
     branches:
-      - develop
       - 'feature/**'
       - 'fix/**'
       - 'hotfix/**'
-      - 'release/**'
+      - 'refactor/**'
       - 'chore/**'
+      - 'spike/**'
   pull_request:
     branches:
       - master
-      - develop
 
 env:
   DOTNET_VERSION: '8.0.x'
@@ -59,6 +58,13 @@ jobs:
         $version = (Select-Xml -Path "PhotoBookRenamer.csproj" -XPath "//Version").Node.InnerText
         Write-Host "Version in csproj: $version"
         Write-Host "Note: the version is only published to customers when this code is merged into master."
+
+    - name: "Release notes must carry no links"
+      run: |
+        # The notes are shown in the update dialog and on the release page. Links, account
+        # names and markdown the dialog cannot render are rejected here rather than in front
+        # of a user. See scripts\check-release-notes.ps1 for the rules.
+        pwsh -File scripts/check-release-notes.ps1
 
     - name: "Warn if the release workflow was touched in this PR"
       if: github.event_name == 'pull_request'

@@ -16,7 +16,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private readonly IUpdateService _updateService;
         private string _currentVersionText = "";
         private string _latestVersionText = "";
-        private string _releaseNotes = "";
+        private System.Windows.Documents.FlowDocument _notes =
+            ReleaseNotesFormatter.Build(null);
         private bool _isDownloading;
         private double _downloadProgress;
         private string _downloadProgressText = "";
@@ -27,7 +28,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             _updateService = updateService;
             CurrentVersionText = $"Текущая версия: {_updateService.GetCurrentVersion()}";
             LatestVersionText = $"Новая версия: {latestVersion}";
-            ReleaseNotes = releaseNotes ?? "Обновления доступны. Рекомендуется обновить приложение.";
+            // Rendered once, here: the dialog binds a document, not the raw markdown.
+            // ReleaseNotesFormatter also drops what does not belong in front of a user -
+            // links and GitHub's generated block with the author's account.
+            Notes = ReleaseNotesFormatter.Build(releaseNotes);
             
             UpdateCommand = new AsyncRelayCommand(UpdateAsync, () => CanUpdate && !IsDownloading);
             PostponeCommand = new RelayCommand(Postpone);
@@ -45,10 +49,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             set => SetProperty(ref _latestVersionText, value);
         }
 
-        public string ReleaseNotes
+        /// <summary>The release text, formatted for reading. Set once, at construction.</summary>
+        public System.Windows.Documents.FlowDocument Notes
         {
-            get => _releaseNotes;
-            set => SetProperty(ref _releaseNotes, value);
+            get => _notes;
+            set => SetProperty(ref _notes, value);
         }
 
         public bool IsDownloading
