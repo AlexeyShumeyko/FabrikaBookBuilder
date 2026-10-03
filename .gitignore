@@ -83,3 +83,7 @@ doc/
 
 
 
+
+# Test artefacts
+TestResults/
+coverage*.json

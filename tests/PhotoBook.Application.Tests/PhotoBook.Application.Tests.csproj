@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Tests for the use cases and the rules they rely on.
+
+    The reference points at the application project because the split into
+    PhotoBook.Core / Application / Infrastructure has not happened yet. When it does, this
+    reference is repointed at PhotoBook.Application and nothing else here changes - which is
+    the point of naming the project after the layer it tests rather than after the
+    solution it happens to sit in.
+
+    net8.0-windows, not net8.0: the application project is a WPF executable on that
+    framework, and a test project has to match what it references.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>PhotoBook.Application.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PhotoBookRenamer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <!-- System.IO is not in the implicit set for a UseWPF project, and the export tests
+         are entirely about files on disk. -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+</Project>
