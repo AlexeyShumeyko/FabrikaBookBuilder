@@ -132,7 +132,13 @@ try {
         $btn = $null
         if ($ProjectName) {
             $titleEl = $null
-            foreach ($t in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $textCond)) {
+            # Match on the name of any descendant, not on a control type: the project title
+            # is a TextBlock inside the card, and the element that reports it as its name
+            # depends on how the card template is built. $textCond used to be referenced
+            # here and never defined, so passing -ProjectName always threw and this path
+            # was never exercised until a capture actually needed it.
+            $anyCond = [System.Windows.Automation.Condition]::TrueCondition
+            foreach ($t in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $anyCond)) {
                 if ($t.Current.Name -like "*$ProjectName*") { $titleEl = $t; break }
             }
             if ($null -eq $titleEl) { throw "no project titled '$ProjectName'" }
