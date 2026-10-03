@@ -12,7 +12,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         public FolderNameDialog(string? defaultPath = null, string? defaultFolderName = null)
         {
             InitializeComponent();
-            
+
             if (!string.IsNullOrEmpty(defaultPath))
             {
                 FolderPathTextBox.Text = defaultPath;
@@ -21,7 +21,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             {
                 FolderPathTextBox.Text = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop);
             }
-            
+
             // Генерируем уникальное имя папки
             var baseName = defaultFolderName ?? "PhotoBookExport";
             var uniqueName = GenerateUniqueFolderName(FolderPathTextBox.Text, baseName);
@@ -70,14 +70,14 @@ namespace PhotoBookRenamer.Presentation.Dialogs
 
             if (string.IsNullOrEmpty(parentPath))
             {
-                System.Windows.MessageBox.Show("Выберите родительскую папку!", "Ошибка", 
+                System.Windows.MessageBox.Show("Выберите родительскую папку!", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             if (string.IsNullOrEmpty(folderName))
             {
-                System.Windows.MessageBox.Show("Введите имя папки!", "Ошибка", 
+                System.Windows.MessageBox.Show("Введите имя папки!", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -86,7 +86,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             var invalidChars = Path.GetInvalidFileNameChars();
             if (folderName.IndexOfAny(invalidChars) >= 0)
             {
-                System.Windows.MessageBox.Show("Имя папки содержит недопустимые символы!", "Ошибка", 
+                System.Windows.MessageBox.Show("Имя папки содержит недопустимые символы!", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }

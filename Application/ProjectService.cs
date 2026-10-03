@@ -51,7 +51,7 @@ namespace PhotoBookRenamer.Application
             var books = await Task.WhenAll(folderPaths.Select(async folderPath =>
             {
                 var folderName = System.IO.Path.GetFileName(folderPath);
-                
+
                 var files = await _fileService.GetJpegFilesAsync(folderPath);
                 var coverPath = await _imageService.DetectCoverAsync(files.ToArray());
 
@@ -157,7 +157,7 @@ namespace PhotoBookRenamer.Application
                 };
 
                 var json = JsonSerializer.Serialize(project, options);
-                
+
                 await File.WriteAllTextAsync(filePath, json);
             }
             catch (Exception ex)
@@ -176,7 +176,7 @@ namespace PhotoBookRenamer.Application
                 }
 
                 var json = await File.ReadAllTextAsync(filePath);
-                
+
                 if (string.IsNullOrWhiteSpace(json))
                 {
                     return null;
@@ -189,7 +189,7 @@ namespace PhotoBookRenamer.Application
                 };
 
                 var projectData = JsonSerializer.Deserialize<ProjectData>(json, options);
-                
+
                 Project? project = null;
                 if (projectData != null)
                 {
@@ -198,7 +198,7 @@ namespace PhotoBookRenamer.Application
                         Mode = projectData.Mode,
                         OutputFolder = projectData.OutputFolder
                     };
-                    
+
                     if (projectData.Books != null && projectData.Books.Count > 0)
                     {
                         foreach (var bookData in projectData.Books)
@@ -210,7 +210,7 @@ namespace PhotoBookRenamer.Application
                                 Cover = bookData.Cover,
                                 BookIndex = bookData.BookIndex
                             };
-                            
+
                             if (bookData.Pages != null && bookData.Pages.Count > 0)
                             {
                                 foreach (var page in bookData.Pages)
@@ -218,14 +218,14 @@ namespace PhotoBookRenamer.Application
                                     book.Pages.Add(page);
                                 }
                             }
-                            
+
                             // Обновляем слоты страниц после добавления всех страниц
                             book.UpdatePageSlots();
-                            
+
                             project.Books.Add(book);
                         }
                     }
-                    
+
                     // Добавляем доступные файлы
                     if (projectData.AvailableFiles != null)
                     {
@@ -235,7 +235,7 @@ namespace PhotoBookRenamer.Application
                         }
                     }
                 }
-                
+
                 // ВАЖНО: После десериализации нужно убедиться, что все коллекции правильно инициализированы
                 if (project != null)
                 {
@@ -250,7 +250,7 @@ namespace PhotoBookRenamer.Application
                                 // Это критическая ошибка - пропускаем эту книгу
                                 continue;
                             }
-                            
+
                             // Убеждаемся, что слоты страниц обновлены после десериализации
                             book.UpdatePageSlots();
                         }
@@ -260,7 +260,7 @@ namespace PhotoBookRenamer.Application
                     // открытии - и дальше они лежат в файле проекта.
                     await FillImageDimensionsAsync(project);
                 }
-                
+
                 return project;
             }
             catch (Exception ex)
@@ -272,7 +272,7 @@ namespace PhotoBookRenamer.Application
         public void SaveState(Project project)
         {
             if (project == null) return;
-            
+
             var clone = project.Clone();
             _undoStack.Push(clone);
             _redoStack.Clear(); // Очищаем redo при новом действии

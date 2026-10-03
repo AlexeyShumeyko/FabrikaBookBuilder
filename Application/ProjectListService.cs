@@ -38,7 +38,7 @@ namespace PhotoBookRenamer.Application
                 "Projects");
             _projectsDirectory = appDataPath;
             _projectsListPath = Path.Combine(_projectsDirectory, "projects.json");
-            
+
             // Создаём папку, если её нет
             if (!Directory.Exists(_projectsDirectory))
             {
@@ -50,7 +50,7 @@ namespace PhotoBookRenamer.Application
                 {
                 }
             }
-            
+
         }
 
         /// <summary>
@@ -176,7 +176,7 @@ namespace PhotoBookRenamer.Application
             try
             {
                 var allProjects = await ReadAllProjects_NoLock();
-                
+
                 // Генерируем уникальный ID
                 string projectId;
                 do
@@ -340,7 +340,7 @@ namespace PhotoBookRenamer.Application
 
                 var allProjects = await GetAllProjectsAsync();
                 var projectInfo = allProjects.FirstOrDefault(p => p.Id == fileName);
-                
+
                 if (projectInfo != null)
                 {
                     projectInfo.BookCount = project.Books?.Count ?? 0;
@@ -352,7 +352,7 @@ namespace PhotoBookRenamer.Application
                     await SaveProjectInfoAsync(projectInfo);
                     return projectInfo;
                 }
-                
+
                 return null;
             }
             catch
@@ -382,8 +382,8 @@ namespace PhotoBookRenamer.Application
                 project.FilePath = GetProjectFilePath(project.Id);
             }
 
-            var options = new JsonSerializerOptions 
-            { 
+            var options = new JsonSerializerOptions
+            {
                 WriteIndented = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
@@ -405,17 +405,17 @@ namespace PhotoBookRenamer.Application
             }
 
             var allBooksReady = project.Books.All(b => b.IsValid);
-            
+
             if (allBooksReady)
             {
                 if (!string.IsNullOrEmpty(project.OutputFolder) && Directory.Exists(project.OutputFolder))
                 {
                     return ProjectStatus.SuccessfullyCompleted;
                 }
-                
+
                 return ProjectStatus.Ready;
             }
-            
+
             return ProjectStatus.NotFilled;
         }
 
@@ -448,7 +448,7 @@ namespace PhotoBookRenamer.Application
                                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                                 };
                                 var oldProjects = JsonSerializer.Deserialize<List<ProjectInfo>>(json, options);
-                                
+
                                 if (oldProjects != null)
                                 {
                                     foreach (var oldProject in oldProjects)
@@ -458,10 +458,10 @@ namespace PhotoBookRenamer.Application
                                         {
                                             oldProject.Id = Guid.NewGuid().ToString();
                                         }
-                                        
+
                                         // Формируем правильный FilePath
                                         oldProject.FilePath = GetProjectFilePath(oldProject.Id);
-                                        
+
                                         migratedProjects.Add(oldProject);
                                     }
                                 }

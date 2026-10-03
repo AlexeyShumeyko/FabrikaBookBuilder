@@ -111,16 +111,16 @@ namespace PhotoBookRenamer.Presentation.Converters
             string hex = (status, role) switch
             {
                 (ProjectStatus.SuccessfullyCompleted, "border") => "#A7F3D0", // emerald-200
-                (ProjectStatus.SuccessfullyCompleted, "text")   => "#047857", // emerald-700
-                (ProjectStatus.SuccessfullyCompleted, _)        => "#ECFDF5", // emerald-50
+                (ProjectStatus.SuccessfullyCompleted, "text") => "#047857", // emerald-700
+                (ProjectStatus.SuccessfullyCompleted, _) => "#ECFDF5", // emerald-50
 
                 (ProjectStatus.Ready, "border") => "#FDE68A",                 // amber-200
-                (ProjectStatus.Ready, "text")   => "#B45309",                 // amber-700
-                (ProjectStatus.Ready, _)        => "#FFFBEB",                 // amber-50
+                (ProjectStatus.Ready, "text") => "#B45309",                 // amber-700
+                (ProjectStatus.Ready, _) => "#FFFBEB",                 // amber-50
 
                 (_, "border") => "#E2E8F0",                                   // slate-200
-                (_, "text")   => "#334155",                                   // slate-700
-                _             => "#F1F5F9"                                    // slate-100
+                (_, "text") => "#334155",                                   // slate-700
+                _ => "#F1F5F9"                                    // slate-100
             };
 
             return new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex)!);
@@ -601,8 +601,8 @@ namespace PhotoBookRenamer.Presentation.Converters
             return usage switch
             {
                 PhotoUsage.Assigned => Brush(0x10, 0xB9, 0x81),   // emerald-500
-                PhotoUsage.Shared   => Brush(0x63, 0x66, 0xF1),   // brand-500
-                _                    => Brush(0x94, 0xA3, 0xB8)    // slate-400
+                PhotoUsage.Shared => Brush(0x63, 0x66, 0xF1),   // brand-500
+                _ => Brush(0x94, 0xA3, 0xB8)    // slate-400
             };
         }
 

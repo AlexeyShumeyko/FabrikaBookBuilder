@@ -19,7 +19,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         public BookSelectionDialog(IEnumerable<Book> books)
         {
             InitializeComponent();
-            
+
             var items = books.Select(b => new BookSelectionItem { Book = b, IsSelected = false }).ToList();
             BooksListBox.ItemsSource = items;
         }

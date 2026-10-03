@@ -76,28 +76,28 @@ namespace PhotoBookRenamer.Infrastructure
                     // Если изображение уже меньше нужного размера, просто сохраняем
                     if (image.Width <= maxSize && image.Height <= maxSize)
                     {
-                    // Используем оптимизированные настройки JPEG для миниатюр
-                    var encoder = new JpegEncoder
-                    {
-                        Quality = 85 // Качество 85 достаточно для миниатюр и уменьшает размер файла
-                    };
-                    
-                    // КРИТИЧЕСКИ ВАЖНО: Сохраняем с FileShare.ReadWrite чтобы другие процессы могли читать файл
-                    // Удаляем старый файл если он существует и заблокирован
-                    if (File.Exists(thumbnailPath))
-                    {
-                        try
+                        // Используем оптимизированные настройки JPEG для миниатюр
+                        var encoder = new JpegEncoder
                         {
-                            File.Delete(thumbnailPath);
-                        }
-                        catch
+                            Quality = 85 // Качество 85 достаточно для миниатюр и уменьшает размер файла
+                        };
+
+                        // КРИТИЧЕСКИ ВАЖНО: Сохраняем с FileShare.ReadWrite чтобы другие процессы могли читать файл
+                        // Удаляем старый файл если он существует и заблокирован
+                        if (File.Exists(thumbnailPath))
                         {
-                            // Игнорируем ошибки удаления
+                            try
+                            {
+                                File.Delete(thumbnailPath);
+                            }
+                            catch
+                            {
+                                // Игнорируем ошибки удаления
+                            }
                         }
-                    }
-                    
-                    image.SaveAsJpeg(thumbnailPath, encoder);
-                    return thumbnailPath;
+
+                        image.SaveAsJpeg(thumbnailPath, encoder);
+                        return thumbnailPath;
                     }
 
                     image.Mutate(x => x.Resize(new ResizeOptions
@@ -113,7 +113,7 @@ namespace PhotoBookRenamer.Infrastructure
                         Quality = 85 // Качество 85 достаточно для миниатюр и уменьшает размер файла
                     };
                     image.SaveAsJpeg(thumbnailPath, jpegEncoder);
-                    
+
                     return thumbnailPath;
                 }
                 catch (Exception ex)
@@ -138,10 +138,10 @@ namespace PhotoBookRenamer.Infrastructure
             });
 
             var results = await Task.WhenAll(tasks);
-            
+
             // Находим файл с максимальным количеством пикселей
             var maxResult = results.OrderByDescending(r => r.Pixels).FirstOrDefault();
-            
+
             return maxResult?.FilePath;
         }
 
@@ -161,7 +161,7 @@ namespace PhotoBookRenamer.Infrastructure
                     {
                         Directory.CreateDirectory(thumbDir);
                     }
-                    
+
                     // КРИТИЧЕСКИ ВАЖНО: Используем хэш полного пути для создания уникального имени миниатюры
                     // Это предотвращает конфликты при одинаковых именах файлов в разных папках
                     var filePathHash = GetFilePathHash(filePath);
@@ -204,7 +204,7 @@ namespace PhotoBookRenamer.Infrastructure
 
             await Task.WhenAll(tasks);
         }
-        
+
         // КРИТИЧЕСКИ ВАЖНО: Создаем уникальный хэш для полного пути файла
         public string GetFilePathHash(string filePath)
         {

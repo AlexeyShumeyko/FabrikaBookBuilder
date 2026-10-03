@@ -11,9 +11,9 @@ namespace PhotoBookRenamer.Presentation.Converters
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
             if (values.Length != 3) return string.Empty;
-            
-            if (values[0] is Page cover && 
-                values[1] is System.Collections.ObjectModel.ObservableCollection<Page> pages && 
+
+            if (values[0] is Page cover &&
+                values[1] is System.Collections.ObjectModel.ObservableCollection<Page> pages &&
                 values[2] is int slotIndex)
             {
                 // Если индекс 0 - возвращаем имя файла обложки
@@ -38,7 +38,7 @@ namespace PhotoBookRenamer.Presentation.Converters
                     // slotIndex - это номер разворота (1, 2, 3, 4...)
                     var pagesWithoutCover = pages.Where(p => !p.IsCover).ToList();
                     var pageIndex = slotIndex - 1; // slotIndex начинается с 1, индекс с 0
-                    
+
                     if (pageIndex >= 0 && pageIndex < pagesWithoutCover.Count)
                     {
                         var page = pagesWithoutCover[pageIndex];
@@ -56,7 +56,7 @@ namespace PhotoBookRenamer.Presentation.Converters
                     }
                 }
             }
-            
+
             return string.Empty;
         }
 

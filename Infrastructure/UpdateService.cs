@@ -81,7 +81,7 @@ namespace PhotoBookRenamer.Infrastructure
             {
                 var releases = await _client.Repository.Release.GetLatest(Owner, Repo);
                 var version = releases.TagName.TrimStart('v');
-                
+
                 // Ищем ZIP файл с установщиком (приоритет на файл без версии, затем с версией)
                 foreach (var asset in releases.Assets)
                 {
@@ -90,7 +90,7 @@ namespace PhotoBookRenamer.Infrastructure
                         return asset.BrowserDownloadUrl;
                     }
                 }
-                
+
                 foreach (var asset in releases.Assets)
                 {
                     if (asset.Name.Contains("BookBuilder-Studio-Setup") && asset.Name.EndsWith(".zip"))
@@ -98,7 +98,7 @@ namespace PhotoBookRenamer.Infrastructure
                         return asset.BrowserDownloadUrl;
                     }
                 }
-                
+
                 foreach (var asset in releases.Assets)
                 {
                     if (asset.Name.Contains("BookBuilder-Studio-Setup") && asset.Name.EndsWith(".exe"))
@@ -106,7 +106,7 @@ namespace PhotoBookRenamer.Infrastructure
                         return asset.BrowserDownloadUrl;
                     }
                 }
-                
+
                 return null;
             }
             catch
@@ -131,7 +131,7 @@ namespace PhotoBookRenamer.Infrastructure
                 var isExe = downloadUrl.EndsWith(".exe", StringComparison.OrdinalIgnoreCase);
                 var extension = isZip ? ".zip" : (isExe ? ".exe" : ".zip");
                 var filePath = Path.Combine(tempDir, $"update{extension}");
-                
+
                 // Загружаем файл
                 using (var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead))
                 {
@@ -149,7 +149,7 @@ namespace PhotoBookRenamer.Infrastructure
                         {
                             await fileStream.WriteAsync(buffer, 0, bytesRead);
                             downloadedBytes += bytesRead;
-                            
+
                             if (totalBytes > 0 && progress != null)
                             {
                                 var percent = (double)downloadedBytes / totalBytes * 100;
@@ -169,7 +169,7 @@ namespace PhotoBookRenamer.Infrastructure
                     // Ищем EXE установщик в распакованном архиве
                     var installerExe = Directory.GetFiles(extractPath, "*.exe", SearchOption.AllDirectories)
                         .FirstOrDefault(f => Path.GetFileName(f).Contains("BookBuilder-Studio-Setup"));
-                    
+
                     if (installerExe != null && File.Exists(installerExe))
                     {
                         var processInfo = new System.Diagnostics.ProcessStartInfo
@@ -180,14 +180,14 @@ namespace PhotoBookRenamer.Infrastructure
                         };
 
                         System.Diagnostics.Process.Start(processInfo);
-                        
+
                         // Закрываем текущее приложение
                         await Task.Delay(1000);
                         System.Windows.Application.Current.Shutdown();
-                        
+
                         return true;
                     }
-                    
+
                     var installerPath = Path.Combine(extractPath, "install.bat");
                     if (File.Exists(installerPath))
                     {
@@ -200,15 +200,15 @@ namespace PhotoBookRenamer.Infrastructure
                         };
 
                         System.Diagnostics.Process.Start(processInfo);
-                        
+
                         // Закрываем текущее приложение
                         await Task.Delay(1000);
                         System.Windows.Application.Current.Shutdown();
-                        
+
                         return true;
                     }
                 }
-                
+
                 // Если это EXE установщик - запускаем напрямую
                 if (isExe)
                 {
@@ -220,11 +220,11 @@ namespace PhotoBookRenamer.Infrastructure
                     };
 
                     System.Diagnostics.Process.Start(processInfo);
-                    
+
                     // Закрываем текущее приложение
                     await Task.Delay(1000);
                     System.Windows.Application.Current.Shutdown();
-                    
+
                     return true;
                 }
 
