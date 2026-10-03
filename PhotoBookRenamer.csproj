@@ -26,6 +26,18 @@
 
 
   <ItemGroup>
+    <!--
+      The project sits in the repository root, and the SDK globs every .cs file below it -
+      so the moment tests\ appeared, the application started compiling the test sources and
+      failing on [Fact]. Excluded explicitly here; the exclusion disappears in wave 1 when
+      this code becomes its own project under src\.
+    -->
+    <Compile Remove="tests\**" />
+    <Page Remove="tests\**" />
+    <Resource Remove="tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="icon.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
