@@ -21,20 +21,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
     /// </summary>
     public class MainViewModel : ViewModelBase
     {
-        /// <summary>
-        /// The in-app help system (HelpView / HelpViewModel / HelpSection) is fully
-        /// intact but currently not reachable. Flip this to true to bring the
-        /// header "?" button and the F1 binding back.
-        /// </summary>
-        public const bool HelpVisible = false;
-
         private readonly UniqueFoldersViewModel _uniqueFolders;
         private readonly CombinedModeViewModel _combinedMode;
 
         private AppMode _currentMode = AppMode.StartScreen;
-        private AppMode? _previousModeBeforeHelp;
         private object? _currentView;
-        private bool _isReturningFromHelp;
 
         /// <summary>
         /// Mode of the project the user currently has open, or null when no project is
@@ -44,8 +35,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// <see cref="CreateProject"/> (mode card), cleared by <see cref="EndSession"/>.
         /// </summary>
         private AppMode? _openProjectMode;
-
-        public HelpSection? HelpSection { get; private set; }
 
         public MainViewModel(UniqueFoldersViewModel uniqueFolders, CombinedModeViewModel combinedMode)
         {
@@ -74,8 +63,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             // Legacy names kept for the old Ctrl+1 / Ctrl+2 bindings.
             SwitchToUniqueFoldersCommand = GoToModeSelectCommand;
             SwitchToCombinedModeCommand = GoToModeSelectCommand;
-
-            OpenHelpCommand = new RelayCommand(() => OpenHelp());
 
             // По умолчанию показываем список всех проектов
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -113,13 +100,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 // the mode tab would stay enabled with no project behind it.
                 if (value is AppMode.ProjectList or AppMode.StartScreen)
                     _openProjectMode = null;
-
-                // Если мы возвращаемся из помощи, не создаем новый View
-                if (_isReturningFromHelp)
-                {
-                    _isReturningFromHelp = false;
-                    return;
-                }
 
                 BuildView();
             }
@@ -205,10 +185,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                     case AppMode.Combined:
                         CurrentView = new CombinedModeView(_combinedMode);
-                        break;
-
-                    case AppMode.Help:
-                        CurrentView = new HelpView(new HelpViewModel(HelpSection ?? Domain.HelpSection.Overview));
                         break;
                 }
 
@@ -325,44 +301,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         public ICommand GoToModeSelectCommand { get; }
         public ICommand GoToUniqueFoldersCommand { get; }
         public ICommand GoToCombinedModeCommand { get; }
-        public ICommand OpenHelpCommand { get; }
 
         public ICommand SwitchToUniqueFoldersCommand { get; }
         public ICommand SwitchToCombinedModeCommand { get; }
-
-        // ------------------------------------------------------------------
-        //  Help
-        // ------------------------------------------------------------------
-
-        public void OpenHelp(HelpSection? section = null)
-        {
-            // Сохраняем текущий режим перед переходом в помощь.
-            // ViewModel редактора - Singleton, поэтому состояние не теряется.
-            _previousModeBeforeHelp = _currentMode;
-            HelpSection = section;
-            CurrentMode = AppMode.Help;
-        }
-
-        public void ReturnFromHelp()
-        {
-            if (_previousModeBeforeHelp.HasValue)
-            {
-                var previousMode = _previousModeBeforeHelp.Value;
-                _previousModeBeforeHelp = null;
-
-                // Обходим сеттер, чтобы он не создал View дважды
-                _isReturningFromHelp = true;
-                _currentMode = previousMode;
-                OnPropertyChanged(nameof(CurrentMode));
-
-                BuildView();
-
-                _isReturningFromHelp = false;
-            }
-            else
-            {
-                CurrentMode = AppMode.ProjectList;
-            }
-        }
     }
 }

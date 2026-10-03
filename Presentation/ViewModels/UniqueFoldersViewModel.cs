@@ -139,7 +139,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             MovePageDownCommand = new RelayCommand<Page>(MovePageDown);
             AssignPageNumberCommand = new RelayCommand<Page>(AssignPageNumber);
             AssignCoverCommand = new RelayCommand<Page>(AssignCover);
-            OpenHelpCommand = new RelayCommand(OpenHelp);
 
             // WPF only re-evaluates a binding when the SOURCE raises PropertyChanged.
             // An ObservableCollection growing is not enough, so counts are surfaced
@@ -530,7 +529,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// <summary>Promotes a spread to be the book's cover, keeping the file it points at.</summary>
         public ICommand AssignCoverCommand { get; }
 
-        public ICommand OpenHelpCommand { get; }
         
 
         private async Task LoadFoldersAsync()
@@ -1152,29 +1150,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             page.ThumbnailPath = thumbPath;
         }
 
-        private async void OpenHelp()
-        {
-            // Автоматически сохраняем проект перед переходом в помощь
-            if (CurrentProjectInfo != null && Project != null && Project.Books != null && Project.Books.Count > 0)
-            {
-                try
-                {
-                    await SaveProjectSilentlyAsync();
-                }
-                catch (Exception ex)
-                {
-                    _loggingService.LogError($"Ошибка при автоматическом сохранении проекта перед переходом в помощь: {ex.Message}", ex);
-                }
-            }
-            
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
-            {
-                var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                serviceProvider?.GetRequiredService<MainViewModel>()
-                    .OpenHelp(HelpSection.UniqueFolders);
-            });
-        }
-        
         /// <summary>
         /// Saves the project right before an export, and never lets a save problem stop the
         /// export: the copy is what the owner asked for, the save is the safety net under

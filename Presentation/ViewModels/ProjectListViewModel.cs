@@ -30,7 +30,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             CreateProjectCommand = new RelayCommand(CreateProject);
             OpenProjectCommand = new RelayCommand<ProjectInfo>(OpenProject);
             DeleteProjectCommand = new AsyncRelayCommand<ProjectInfo>(DeleteProjectAsync, CanDeleteProject);
-            OpenHelpCommand = new RelayCommand(OpenHelp);
             
             // Загружаем проекты при создании
             // CollectionChanged -> ProjectsCount, so "N проектов" and the empty state
@@ -82,7 +81,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         public ICommand OpenProjectCommand { get; }
         public ICommand DeleteProjectCommand { get; }
         public ICommand BackCommand { get; }
-        public ICommand OpenHelpCommand { get; }
 
         private AppMode CurrentMode
         {
@@ -283,23 +281,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             // Переходим на страницу выбора режима
             CurrentMode = AppMode.StartScreen;
-        }
-
-        private void OpenHelp()
-        {
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
-            {
-                if (System.Windows.Application.Current.MainWindow is MainWindow mainWindow)
-                {
-                    var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                    if (serviceProvider != null)
-                    {
-                        var mainVm = serviceProvider.GetRequiredService<MainViewModel>();
-                        mainVm.OpenHelp(HelpSection.ProjectList);
-                        mainWindow.DataContext = mainVm;
-                    }
-                }
-            });
         }
 
         private void OpenProject(ProjectInfo? projectInfo)

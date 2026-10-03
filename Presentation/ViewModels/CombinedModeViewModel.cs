@@ -73,7 +73,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             DeletePageCommand = new RelayCommand<Page>(DeletePage);
             LoadPageFileCommand = new RelayCommand<Page>(LoadPageFile);
             DuplicateToAllBooksCommand = new RelayCommand<Page>(DuplicateToAllBooks);
-            OpenHelpCommand = new RelayCommand(OpenHelp);
             DeletePageFromAllBooksCommand = new RelayCommand<Page>(DeletePageFromAllBooks);
             AddBookCommand = new RelayCommand(AddBook);
             AddSpreadCommand = new RelayCommand(AddSpread);
@@ -756,7 +755,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         public ICommand DuplicateToAllBooksCommand { get; }
         public ICommand DeletePageFromAllBooksCommand { get; }
         public ICommand AddBookCommand { get; }
-        public ICommand OpenHelpCommand { get; }
         public ICommand AddSpreadCommand { get; }
         public ICommand MovePageLeftCommand { get; }
         public ICommand MovePageRightCommand { get; }
@@ -2056,28 +2054,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
         }
 
-        private async void OpenHelp()
-        {
-            if (CurrentProjectInfo != null && Project != null && Books != null && Books.Count > 0)
-            {
-                try
-                {
-                    await SaveProjectSilentlyAsync();
-                }
-                catch (Exception ex)
-                {
-                    _loggingService.LogError($"Ошибка при автоматическом сохранении проекта перед переходом в помощь: {ex.Message}", ex);
-                }
-            }
-            
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
-            {
-                var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                serviceProvider?.GetRequiredService<MainViewModel>()
-                    .OpenHelp(HelpSection.Combined);
-            });
-        }
-        
         /// <summary>
         /// Saves the project right before an export, and never lets a save problem stop the
         /// export. The copy is what the owner asked for; the save is the safety net under
