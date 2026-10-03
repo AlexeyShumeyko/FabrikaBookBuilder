@@ -12,7 +12,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         public MultiFolderPickerDialog(List<string>? existingFolders = null)
         {
             InitializeComponent();
-            
+
             if (existingFolders != null && existingFolders.Count > 0)
             {
                 foreach (var folder in existingFolders)
@@ -20,7 +20,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                     SelectedFolders.Add(folder);
                 }
             }
-            
+
             FoldersListBox.ItemsSource = SelectedFolders;
             UpdateOkButton();
         }
@@ -29,13 +29,13 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         {
             // Используем цикл для выбора нескольких папок
             var newFolders = new List<string>();
-            
+
             while (true)
             {
                 using var dialog = new FolderBrowserDialog
                 {
-                    Description = newFolders.Count == 0 
-                        ? "Выберите папку с фотографиями" 
+                    Description = newFolders.Count == 0
+                        ? "Выберите папку с фотографиями"
                         : $"Выбрано папок: {newFolders.Count}. Выберите следующую (Отмена для завершения)",
                     UseDescriptionForTitle = true
                 };
@@ -43,7 +43,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                 if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
                     var selectedPath = dialog.SelectedPath;
-                    
+
                     // Проверяем, не добавлена ли уже эта папка
                     if (!newFolders.Contains(selectedPath) && !SelectedFolders.Contains(selectedPath))
                     {
@@ -51,7 +51,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                     }
                     else
                     {
-                        System.Windows.MessageBox.Show("Эта папка уже добавлена!", "Предупреждение", 
+                        System.Windows.MessageBox.Show("Эта папка уже добавлена!", "Предупреждение",
                             System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     }
                 }
@@ -85,7 +85,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         {
             if (SelectedFolders.Count == 0)
             {
-                System.Windows.MessageBox.Show("Выберите хотя бы одну папку!", "Ошибка", 
+                System.Windows.MessageBox.Show("Выберите хотя бы одну папку!", "Ошибка",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 return;
             }

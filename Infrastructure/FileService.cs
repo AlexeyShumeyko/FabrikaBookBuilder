@@ -22,7 +22,7 @@ namespace PhotoBookRenamer.Infrastructure
 
                 var allFiles = Directory.GetFiles(folderPath);
                 var jpegFiles = allFiles.Where(IsJpegFile).OrderBy(f => f).ToList();
-                
+
                 return jpegFiles;
             });
         }
@@ -52,7 +52,7 @@ namespace PhotoBookRenamer.Infrastructure
                 foreach (var folder in folderPaths)
                 {
                     var folderName = Path.GetFileName(folder);
-                    
+
                     if (!Directory.Exists(folder))
                     {
                         return new ValidationResult
@@ -69,7 +69,7 @@ namespace PhotoBookRenamer.Infrastructure
                     // Проверяем, что все файлы - JPG (используем уже полученный список)
                     var allFiles = Directory.GetFiles(folder);
                     var nonJpegFiles = allFiles.Where(f => !IsJpegFile(f)).ToList();
-                    
+
                     if (nonJpegFiles.Any())
                     {
                         return new ValidationResult
@@ -113,12 +113,12 @@ namespace PhotoBookRenamer.Infrastructure
                         var folderName = Path.GetFileName(problemFolder.Key);
                         var expectedCount = majorityCount;
                         var actualCount = problemFolder.Value;
-                        
+
                         var errorMessage = $"❌ Количество файлов в папке \"{folderName}\" не совпадает с большинством папок.\n\n" +
                                           $"Ожидается: {expectedCount} файлов (как у {majorityFolders.Count} из {folderFileCounts.Count} папок)\n" +
                                           $"Найдено: {actualCount} файлов\n\n" +
                                           $"Удалите проблемную папку из списка и попробуйте снова.";
-                        
+
                         return new ValidationResult
                         {
                             IsValid = false,
@@ -178,7 +178,7 @@ namespace PhotoBookRenamer.Infrastructure
                     defaultPath ?? Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
                     defaultFolderName);
                 dialog.Owner = System.Windows.Application.Current.MainWindow;
-                
+
                 if (dialog.ShowDialog() == true && dialog.SelectedPath != null && dialog.FolderName != null)
                 {
                     var fullPath = Path.Combine(dialog.SelectedPath, dialog.FolderName);

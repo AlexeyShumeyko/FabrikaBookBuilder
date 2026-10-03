@@ -17,17 +17,17 @@ namespace PhotoBookRenamer.Presentation.Converters
                 {
                     return false;
                 }
-                
+
                 // Проверяем, что все страницы заполнены
                 var pagesWithoutCover = book.Pages.Where(p => !p.IsCover).ToList();
                 if (pagesWithoutCover.Count == 0)
                 {
                     return false;
                 }
-                
+
                 return pagesWithoutCover.All(p => !string.IsNullOrEmpty(p.SourcePath));
             }
-            
+
             return false;
         }
 

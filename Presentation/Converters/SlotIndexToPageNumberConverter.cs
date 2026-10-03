@@ -18,7 +18,7 @@ namespace PhotoBookRenamer.Presentation.Converters
                 }
                 return page.Index.ToString();
             }
-            
+
             if (value is int slotIndex)
             {
                 if (slotIndex == 0)
@@ -27,7 +27,7 @@ namespace PhotoBookRenamer.Presentation.Converters
                 }
                 return slotIndex.ToString();
             }
-            
+
             return value?.ToString() ?? string.Empty;
         }
 

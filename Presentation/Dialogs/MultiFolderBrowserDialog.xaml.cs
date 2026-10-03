@@ -85,7 +85,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         {
             InitializeComponent();
             _fileService = fileService;
-            
+
             if (existingFolders != null)
             {
                 foreach (var folder in existingFolders)
@@ -94,10 +94,10 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                     _selectedFoldersInfo.Add(new SelectedFolderInfo { Path = folder, HasError = false });
                 }
             }
-            
+
             UpdateSelectedFoldersList();
             LoadDrives();
-            
+
             // Валидируем существующие папки при загрузке только если есть папки
             if (_selectedFolders.Count > 0)
             {
@@ -205,13 +205,13 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                 {
                     BackButton.IsEnabled = _navigationHistory.Count > 0;
                 }
-                
+
                 var folders = new List<FolderNode>();
-                
+
                 try
                 {
                     var dirs = Directory.GetDirectories(path)
-                        .Where(d => 
+                        .Where(d =>
                         {
                             try
                             {
@@ -235,7 +235,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                         })
                         .OrderBy(d => d.Name)
                         .ToList();
-                    
+
                     folders.AddRange(dirs);
                 }
                 catch (UnauthorizedAccessException)
@@ -246,7 +246,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                 catch (Exception ex)
                 {
                     // Другие ошибки
-                    MessageBox.Show($"Ошибка доступа к папке: {ex.Message}", "Ошибка", 
+                    MessageBox.Show($"Ошибка доступа к папке: {ex.Message}", "Ошибка",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                     folders.Clear();
                 }
@@ -256,7 +256,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка загрузки папок: {ex.Message}", "Ошибка", 
+                MessageBox.Show($"Ошибка загрузки папок: {ex.Message}", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 FoldersListBox.ItemsSource = new List<FolderNode>();
             }
@@ -270,13 +270,13 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                 {
                     // Открываем папку и показываем её содержимое
                     LoadFolders(node.FullPath);
-                    
+
                     // Обновляем навигацию - добавляем текущую папку в историю или обновляем выделение
                     // Можно также добавить кнопку "Назад" для навигации
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Не удалось открыть папку: {ex.Message}", "Ошибка", 
+                    MessageBox.Show($"Не удалось открыть папку: {ex.Message}", "Ошибка",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
@@ -304,10 +304,10 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         private async void AddSelectedButton_Click(object sender, RoutedEventArgs e)
         {
             var selectedItems = FoldersListBox.SelectedItems.Cast<FolderNode>().ToList();
-            
+
             if (selectedItems.Count == 0)
             {
-                MessageBox.Show("Выберите папки для добавления! Используйте Ctrl+ЛКМ или Shift+ЛКМ для выбора нескольких папок.", "Предупреждение", 
+                MessageBox.Show("Выберите папки для добавления! Используйте Ctrl+ЛКМ или Shift+ЛКМ для выбора нескольких папок.", "Предупреждение",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -331,7 +331,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             }
             else
             {
-                MessageBox.Show("Все выбранные папки уже добавлены!", "Информация", 
+                MessageBox.Show("Все выбранные папки уже добавлены!", "Информация",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
@@ -341,7 +341,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             SelectedFoldersListBox.ItemsSource = null;
             SelectedFoldersListBox.ItemsSource = _selectedFoldersInfo;
             OkButton.IsEnabled = _selectedFolders.Count > 0;
-            
+
             // Обновляем состояние кнопки удалить
             UpdateRemoveButtonState();
         }
@@ -360,13 +360,13 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         {
             if (SelectedFoldersListBox.SelectedItems.Count == 0)
             {
-                MessageBox.Show("Выберите папки для удаления!", "Предупреждение", 
+                MessageBox.Show("Выберите папки для удаления!", "Предупреждение",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             var selectedItems = SelectedFoldersListBox.SelectedItems.Cast<SelectedFolderInfo>().ToList();
-            
+
             foreach (var item in selectedItems)
             {
                 _selectedFolders.Remove(item.Path);
@@ -381,7 +381,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         {
             if (_selectedFolders.Count == 0)
             {
-                MessageBox.Show("Выберите хотя бы одну папку!", "Ошибка", 
+                MessageBox.Show("Выберите хотя бы одну папку!", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -437,7 +437,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                 // Подсвечиваем проблемную папку
                 if (!string.IsNullOrEmpty(validationResult.ProblemFolder))
                 {
-                    var problemFolder = _selectedFoldersInfo.FirstOrDefault(f => 
+                    var problemFolder = _selectedFoldersInfo.FirstOrDefault(f =>
                         string.Equals(f.Path, validationResult.ProblemFolder, StringComparison.OrdinalIgnoreCase));
                     if (problemFolder != null)
                     {

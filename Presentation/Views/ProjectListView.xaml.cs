@@ -22,7 +22,7 @@ namespace PhotoBookRenamer.Presentation.Views
                 {
                     // Пытаемся загрузить иконку из разных мест
                     var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icon.ico");
-                    
+
                     if (File.Exists(iconPath))
                     {
                         var bitmap = new BitmapImage();

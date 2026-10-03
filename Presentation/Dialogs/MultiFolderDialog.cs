@@ -13,13 +13,13 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             return System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 var folders = new List<string>();
-                
+
                 while (true)
                 {
                     using var dialog = new FolderBrowserDialog
                     {
-                        Description = folders.Count == 0 
-                            ? "Выберите первую папку с фотографиями" 
+                        Description = folders.Count == 0
+                            ? "Выберите первую папку с фотографиями"
                             : $"Выбрано папок: {folders.Count}. Выберите следующую (Отмена для завершения)",
                         UseDescriptionForTitle = true
                     };

@@ -12,18 +12,18 @@ namespace PhotoBookRenamer.Presentation.Converters
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
             if (values.Length != 2) return null;
-            
-            if (values[0] is System.Collections.ObjectModel.ObservableCollection<Page> pages && 
+
+            if (values[0] is System.Collections.ObjectModel.ObservableCollection<Page> pages &&
                 values[1] is int pageNumber)
             {
                 var pagesWithoutCover = pages.Where(p => !p.IsCover).ToList();
                 var index = pageNumber - 1; // pageNumber начинается с 1, индекс с 0
-                
+
                 if (index >= 0 && index < pagesWithoutCover.Count)
                 {
                     var page = pagesWithoutCover[index];
                     string? imagePath = null;
-                    
+
                     // Используем ThumbnailPath, если он есть, иначе SourcePath
                     // КРИТИЧЕСКИ ВАЖНО: Если миниатюры нет, используем SourcePath
                     // Это временно загрузит полное изображение, но миниатюра будет создана при необходимости
@@ -35,7 +35,7 @@ namespace PhotoBookRenamer.Presentation.Converters
                     {
                         imagePath = page.SourcePath;
                     }
-                    
+
                     if (!string.IsNullOrEmpty(imagePath))
                     {
                         try
@@ -56,7 +56,7 @@ namespace PhotoBookRenamer.Presentation.Converters
                     }
                 }
             }
-            
+
             return null;
         }
 

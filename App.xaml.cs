@@ -78,7 +78,7 @@ namespace PhotoBookRenamer
                 try
                 {
                     await Task.Delay(2000); // Ждем 2 секунды после запуска приложения
-                    
+
                     var updateService = _serviceProvider.GetRequiredService<IUpdateService>();
                     var hasUpdate = await updateService.CheckForUpdatesAsync();
                     if (hasUpdate)
@@ -87,7 +87,7 @@ namespace PhotoBookRenamer
                         {
                             var latestVersion = await updateService.GetLatestVersionAsync();
                             var releaseNotes = await updateService.GetLatestReleaseNotesAsync();
-                            
+
                             if (!string.IsNullOrEmpty(latestVersion))
                             {
                                 var updateVm = new Presentation.ViewModels.UpdateDialogViewModel(updateService, latestVersion, releaseNotes);

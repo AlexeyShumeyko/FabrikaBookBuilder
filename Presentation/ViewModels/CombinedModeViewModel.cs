@@ -13,7 +13,8 @@ using PhotoBookRenamer.Domain;
 using PhotoBookRenamer.Application;
 using PhotoBookRenamer.Infrastructure;
 using PhotoBookRenamer.Presentation.Views;
-using PhotoBookRenamer.Presentation.Converters;using PhotoBookRenamer.Presentation.Dialogs;
+using PhotoBookRenamer.Presentation.Converters;
+using PhotoBookRenamer.Presentation.Dialogs;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
 {
@@ -53,7 +54,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             AvailableFiles = new ObservableCollection<string>();
             Books = new ObservableCollection<Book>();
             PhotoFiles = new ObservableCollection<PhotoFileInfo>();
-            
+
             LoadFilesCommand = new AsyncRelayCommand(LoadFilesAsync);
             ClearFilesCommand = new RelayCommand(ClearFiles);
             GenerateStructureCommand = new RelayCommand(GenerateStructure);
@@ -80,7 +81,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             MovePageRightCommand = new RelayCommand<Page>(MovePageRight);
             UndoCommand = new RelayCommand(Undo, () => false);
             RedoCommand = new RelayCommand(Redo, () => false);
-            
+
             PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(Project))
@@ -184,7 +185,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 _bookWatchers.Remove(book);
             }
         }
-        
+
         private void Project_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(Project.IsValid))
@@ -192,7 +193,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 UpdateExportCommands();
             }
         }
-        
+
         private void UpdateExportCommands()
         {
             if (ExportCommand is AsyncRelayCommand asyncCommand)
@@ -667,7 +668,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 if (value < 1) value = 1;
                 if (value > 99) value = 99;
-                
+
                 if (SetProperty(ref _numberOfBooks, value))
                 {
                     IsStructureConfirmed = false;
@@ -815,7 +816,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 return;
             }
-            
+
             if (Books.Count == 0)
             {
                 for (int i = 0; i < NumberOfBooks; i++)
@@ -835,7 +836,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     book.UpdatePageSlots();
                     Books.Add(book);
                 }
-                
+
                 OnPropertyChanged(nameof(Books));
             }
             else
@@ -879,9 +880,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         Books.RemoveAt(Books.Count - 1);
                     }
                 }
-                
+
                 SynchronizeSpreadsInAllBooks();
-                
+
                 for (int i = 0; i < Books.Count; i++)
                 {
                     Books[i].BookIndex = i + 1;
@@ -899,16 +900,16 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     Mode = AppMode.Combined
                 };
             }
-            
+
             Project.Books.Clear();
             foreach (var book in Books)
             {
                 Project.Books.Add(book);
             }
-            
+
             UpdateExportCommands();
         }
-        
+
         /// <summary>
         /// Asks before the structure gets SMALLER; growing it needs no question.
         ///
@@ -973,12 +974,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private void SynchronizeSpreadsInAllBooks()
         {
             if (Books.Count == 0) return;
-            
-            
+
+
             foreach (var book in Books)
             {
                 var currentSpreads = book.Pages.Count(p => !p.IsCover);
-                
+
                 if (currentSpreads < SpreadsPerBook)
                 {
                     for (int i = currentSpreads; i < SpreadsPerBook; i++)
@@ -997,7 +998,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                             book.Pages.Remove(page);
                         }
                     }
-                    
+
                     while (book.Pages.Count(p => !p.IsCover) > SpreadsPerBook)
                     {
                         var lastPage = book.Pages.Where(p => !p.IsCover).OrderByDescending(p => p.Index).FirstOrDefault();
@@ -1011,17 +1012,17 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         }
                     }
                 }
-                
+
                 var spreads = book.Pages.Where(p => !p.IsCover).OrderBy(p => p.Index).ToList();
                 for (int i = 0; i < spreads.Count; i++)
                 {
                     spreads[i].Index = i + 1;
                     spreads[i].DisplayIndex = i + 1;
                 }
-                
+
                 book.UpdatePageSlots();
             }
-            
+
         }
 
         private void ConfirmStructure()
@@ -1115,20 +1116,20 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 var book = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
                 var targetBook = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
-                
+
                 if (!string.IsNullOrEmpty(page.SourcePath) && page.SourcePath != filePath)
                 {
                     Presentation.Converters.PageSourceConverter.ClearCacheForFile(page.SourcePath);
                 }
-                
+
                 Presentation.Converters.PageSourceConverter.ClearCacheForFile(filePath);
                 page.SourcePath = filePath;
-                
+
                 if (targetBook != null)
                 {
                     targetBook.UpdatePageSlots();
                 }
-                
+
                 OnPropertyChanged(nameof(Books));
                 LoadThumbnailForPage(page);
                 Background.Run(() => FillSlotDimensionsAsync(page), "fill slot dimensions");
@@ -1147,7 +1148,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     {
                         targetPage = book.Pages.FirstOrDefault(p => p.Index == page.Index);
                     }
-                    
+
                     if (targetPage != null)
                     {
                         targetPage.SourcePath = filePath;
@@ -1156,7 +1157,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         CopyDimensions(page, targetPage);
                     }
                 }
-                
+
                 Background.Run(() => FillSlotDimensionsAsync(page), "fill slot dimensions");
                 UpdateExportCommands();
             }
@@ -1173,7 +1174,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     {
                         targetPage = book.Pages.FirstOrDefault(p => p.Index == page.Index);
                     }
-                    
+
                     if (targetPage != null)
                     {
                         targetPage.SourcePath = filePath;
@@ -1181,7 +1182,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         CopyDimensions(page, targetPage);
                     }
                 }
-                
+
                 Background.Run(() => FillSlotDimensionsAsync(page), "fill slot dimensions");
                 UpdateExportCommands();
             }
@@ -1343,18 +1344,18 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             IsStructureConfirmed = false;
             ErrorMessage = null;
             Presentation.Converters.PageSourceConverter.ClearCache();
-                Presentation.Converters.FilePathToThumbnailConverter.ClearCache();
-            
+            Presentation.Converters.FilePathToThumbnailConverter.ClearCache();
+
             var projectId = projectInfo.Id ?? string.Empty;
             var projectName = projectInfo.Name ?? string.Empty;
             var projectFilePath = projectInfo.FilePath ?? string.Empty;
             var projectMode = projectInfo.Mode;
-            
+
             if (string.IsNullOrEmpty(projectId))
             {
                 projectId = Guid.NewGuid().ToString();
             }
-            
+
             var projectInfoCopy = new ProjectInfo
             {
                 Id = projectId,
@@ -1367,19 +1368,19 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 CreatedDate = projectInfo.CreatedDate,
                 LastModified = projectInfo.LastModified
             };
-            
+
             CurrentProjectInfo = projectInfoCopy;
             ProjectName = projectInfoCopy.Name;
 
             // Off unless FBR_PERF_TRACE=1, and then it only writes lines. It is here because
             // every guess about this cost was wrong - see PerfPhase for the numbers.
             PerfPhase.Reset();
-            
+
             if (project == null && !string.IsNullOrEmpty(projectFilePath) && File.Exists(projectFilePath))
             {
                 project = await _projectService.LoadProjectAsync(projectFilePath);
             }
-            
+
             if (project == null)
             {
                 project = new Project { Mode = AppMode.Combined };
@@ -1387,7 +1388,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             else
             {
                 project.Mode = AppMode.Combined;
-                
+
                 if (project.AvailableFiles != null)
                 {
                     foreach (var file in project.AvailableFiles)
@@ -1398,22 +1399,22 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         }
                     }
                 }
-                
+
                 if (project.Books != null && project.Books.Count > 0)
                 {
                     NumberOfBooks = project.Books.Count;
                     SpreadsPerBook = project.Books.FirstOrDefault()?.Pages?.Count ?? 1;
                     IsStructureConfirmed = true;
-                    
+
                     Books.Clear();
                     // Re-decide from what is on disk: the first spread of the saved run
                     // sets the shape again, so a reopened project looks exactly like it did
                     // when it was closed.
-                            foreach (var book in project.Books)
+                    foreach (var book in project.Books)
                     {
                         Books.Add(book);
                     }
-                    
+
                     foreach (var book in Books)
                     {
                         // One helper owns the thumbnail's path now. It used to be rebuilt
@@ -1436,9 +1437,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     // converter's cache, and then tells the slots to look again.
                 }
             }
-            
+
             Project = project;
-            
+
             if (Project != null)
             {
                 Project.Books.Clear();
@@ -1446,7 +1447,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     Project.Books.Add(book);
                 }
-                
+
                 if (CurrentProjectInfo != null)
                 {
                     CurrentProjectInfo.PageCount = Project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
@@ -1456,7 +1457,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         "save project index");
                 }
             }
-            
+
             OnPropertyChanged(nameof(Books));
             OnPropertyChanged(nameof(Project));
             OnPropertyChanged(nameof(ProjectName));
@@ -1471,7 +1472,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 app.Dispatcher.BeginInvoke(new Action(() => PerfPhase.CountElements("at Background priority")), System.Windows.Threading.DispatcherPriority.Background);
                 app.Dispatcher.BeginInvoke(new Action(() => { PerfPhase.CountElements("at ContextIdle (dispatcher empty)"); PerfPhase.Write("open combined project"); }), System.Windows.Threading.DispatcherPriority.ContextIdle);
             }
-            
+
             if (Project?.Books != null && Project.Books.Any())
             {
                 var allImagePaths = Project.Books
@@ -1488,7 +1489,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 Background.Run(async () => await _imageService.LoadThumbnailsAsync(AvailableFiles), "load thumbnails");
             }
-            
+
             UpdateExportCommands();
         }
 
@@ -1583,11 +1584,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 Project = new Project { Mode = AppMode.Combined };
             }
-            
+
             try
             {
                 IsLoading = true;
-                
+
                 var projectId = CurrentProjectInfo.Id ?? string.Empty;
                 if (string.IsNullOrEmpty(projectId))
                 {
@@ -1597,51 +1598,51 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         CurrentProjectInfo.Id = projectId;
                     }
                 }
-                
+
                 if (!string.IsNullOrEmpty(ProjectName) && ProjectName != CurrentProjectInfo.Name)
                 {
                     CurrentProjectInfo.Name = ProjectName;
                 }
-                
+
                 // Синхронизируем Books с Project.Books
                 Project.Books.Clear();
                 foreach (var book in Books)
                 {
                     Project.Books.Add(book);
                 }
-                
+
                 // Синхронизируем AvailableFiles
                 Project.AvailableFiles.Clear();
                 foreach (var file in AvailableFiles)
                 {
                     Project.AvailableFiles.Add(file);
                 }
-                
+
                 // Сохраняем проект
                 var projectsDir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "PhotoBookRenamer",
                     "Projects");
-                
+
                 if (!Directory.Exists(projectsDir))
                 {
                     Directory.CreateDirectory(projectsDir);
                 }
-                
+
                 var filePath = Path.Combine(projectsDir, $"{projectId}.json");
                 await _projectService.SaveProjectAsync(Project, filePath);
-                
+
                 if (!string.IsNullOrEmpty(ProjectName))
                 {
                     CurrentProjectInfo.Name = ProjectName;
                 }
-                
+
                 CurrentProjectInfo.FilePath = filePath;
                 CurrentProjectInfo.BookCount = Books.Count;
                 CurrentProjectInfo.PageCount = Books.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
                 CurrentProjectInfo.Status = DetermineStatus(Project);
                 CurrentProjectInfo.LastModified = DateTime.Now;
-                
+
                 var updatedInfo = await _projectListService.UpdateProjectInfoAsync(Project, filePath);
                 if (updatedInfo != null)
                 {
@@ -1652,14 +1653,14 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     CurrentProjectInfo.LastModified = updatedInfo.LastModified;
                     CurrentProjectInfo.Name = savedName;
                 }
-                
+
                 await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
                 CurrentMode = AppMode.ProjectList;
             }
             catch (Exception ex)
             {
                 _loggingService.LogError("Ошибка сохранения проекта", ex);
-                System.Windows.MessageBox.Show($"Ошибка сохранения проекта: {ex.Message}", 
+                System.Windows.MessageBox.Show($"Ошибка сохранения проекта: {ex.Message}",
                     "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
             finally
@@ -1674,17 +1675,17 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 return ProjectStatus.NotFilled;
             }
-            
+
             var allFilled = project.Books.All(book =>
                 book.Cover != null && !book.Cover.IsEmpty &&
                 book.Pages != null && book.Pages.All(p => !p.IsEmpty));
-            
+
             return allFilled ? ProjectStatus.Ready : ProjectStatus.NotFilled;
         }
 
         private async Task BackAsync()
         {
-            if (CurrentProjectInfo != null && Project != null && 
+            if (CurrentProjectInfo != null && Project != null &&
                 (Books.Count > 0 || AvailableFiles.Count > 0))
             {
                 // Save / discard / stay. Kept as three buttons rather than a two-button
@@ -1706,8 +1707,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     return;
                 }
             }
-            
-            if (CurrentProjectInfo != null && 
+
+            if (CurrentProjectInfo != null &&
                 (Books.Count == 0 && AvailableFiles.Count == 0))
             {
                 try
@@ -1718,22 +1719,22 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                 }
             }
-            
+
             CurrentMode = AppMode.ProjectList;
         }
 
         private void DeleteBook(Book? book)
         {
             if (book == null) return;
-            
+
             Books.Remove(book);
-            
+
             for (int i = 0; i < Books.Count; i++)
             {
                 Books[i].BookIndex = i + 1;
                 Books[i].Name = $"Книга {i + 1}";
             }
-            
+
             if (Project != null)
             {
                 Project.Books.Clear();
@@ -1742,14 +1743,14 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     Project.Books.Add(b);
                 }
             }
-            
+
             UpdateExportCommands();
         }
 
         private void DuplicateBook(Book? book)
         {
             if (book == null) return;
-            
+
             var newBook = new Book
             {
                 BookIndex = Books.Count + 1,
@@ -1766,7 +1767,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     ImageHeight = book.Cover?.ImageHeight ?? 0
                 }
             };
-            
+
             foreach (var page in book.Pages)
             {
                 newBook.Pages.Add(new Page
@@ -1780,18 +1781,18 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     ImageHeight = page.ImageHeight
                 });
             }
-            
+
             newBook.UpdatePageSlots();
             Books.Add(newBook);
-            
+
             for (int i = 0; i < Books.Count; i++)
             {
                 Books[i].BookIndex = i + 1;
                 Books[i].Name = $"Книга {i + 1}";
             }
-            
+
             NumberOfBooks = Books.Count;
-            
+
             if (Project != null)
             {
                 Project.Books.Clear();
@@ -1800,29 +1801,29 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     Project.Books.Add(b);
                 }
             }
-            
+
             UpdateExportCommands();
         }
 
         private void DeletePage(Page? page)
         {
             if (page == null) return;
-            
+
             if (!string.IsNullOrEmpty(page.SourcePath))
             {
                 Presentation.Converters.PageSourceConverter.ClearCacheForFile(page.SourcePath);
             }
-            
+
             page.SourcePath = null;
             page.ThumbnailPath = null;
             page.FileName = null;
-            
+
             var book = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
             if (book != null)
             {
                 book.UpdatePageSlots();
             }
-            
+
             OnPropertyChanged(nameof(Books));
             UpdateExportCommands();
         }
@@ -1830,12 +1831,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private async void LoadPageFile(Page? page)
         {
             if (page == null) return;
-            
+
             try
             {
                 var files = await _fileService.SelectFilesAsync();
                 if (files == null || files.Length == 0) return;
-                
+
                 var file = files.FirstOrDefault(f => _fileService.IsJpegFile(f));
                 if (file != null)
                 {
@@ -1843,10 +1844,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     {
                         Presentation.Converters.PageSourceConverter.ClearCacheForFile(page.SourcePath);
                     }
-                    
+
                     Presentation.Converters.PageSourceConverter.ClearCacheForFile(file);
                     page.SourcePath = file;
-                    
+
                     var book = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
                     if (book != null)
                     {
@@ -1856,10 +1857,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     // Size first, then the frame: UpdatePageSlots is what re-shapes the
                     // book, so it has to run after the size is known.
                     await FillSlotDimensionsAsync(page);
-                    
+
                     await LoadThumbnailForPage(page);
                     OnPropertyChanged(nameof(Books));
-                    
+
                     if (!AvailableFiles.Contains(file))
                     {
                         AvailableFiles.Add(file);
@@ -1875,9 +1876,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private async void DuplicateToAllBooks(Page? page)
         {
             if (page == null || string.IsNullOrEmpty(page.SourcePath)) return;
-            
+
             Presentation.Converters.PageSourceConverter.ClearCacheForFile(page.SourcePath);
-            
+
             var tasks = new List<Task>();
             foreach (var book in Books)
             {
@@ -1890,21 +1891,21 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     targetPage = book.Pages.FirstOrDefault(p => p.Index == page.Index);
                 }
-                
+
                 if (targetPage != null)
                 {
                     if (!string.IsNullOrEmpty(targetPage.SourcePath) && targetPage.SourcePath != page.SourcePath)
                     {
                         Presentation.Converters.PageSourceConverter.ClearCacheForFile(targetPage.SourcePath);
                     }
-                    
+
                     targetPage.SourcePath = page.SourcePath;
                     CopyDimensions(page, targetPage);
                     book.UpdatePageSlots();
                     tasks.Add(LoadThumbnailForPage(targetPage));
                 }
             }
-            
+
             await Task.WhenAll(tasks);
             OnPropertyChanged(nameof(Books));
             UpdateExportCommands();
@@ -1920,18 +1921,18 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             CurrentProjectInfo = null;
             ProjectName = null;
         }
-        
+
         private void DeletePageFromAllBooks(Page? page)
         {
             if (page == null) return;
-            
+
             var firstBook = Books.FirstOrDefault();
             if (firstBook == null) return;
-            
+
             var pagesWithoutCover = firstBook.Pages.Where(p => !p.IsCover).ToList();
             var pageIndex = pagesWithoutCover.IndexOf(page);
             if (pageIndex < 0) return;
-            
+
             foreach (var book in Books)
             {
                 var pages = book.Pages.Where(p => !p.IsCover).ToList();
@@ -1943,14 +1944,14 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     targetPage.FileName = null;
                 }
             }
-            
+
             UpdateExportCommands();
         }
-        
+
         private void AddBook()
         {
             var spreadsCount = Books.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? SpreadsPerBook;
-            
+
             var newBookIndex = Books.Count + 1;
             var newBook = new Book
             {
@@ -1958,15 +1959,15 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 Name = $"Книга {newBookIndex}",
                 Cover = new Page { IsCover = true, Index = 0 }
             };
-            
+
             for (int j = 0; j < spreadsCount; j++)
             {
                 newBook.Pages.Add(new Page { IsCover = false, Index = j + 1, DisplayIndex = j + 1 });
             }
-            
+
             newBook.UpdatePageSlots();
             Books.Add(newBook);
-            
+
             if (Project != null)
             {
                 Project.Books.Clear();
@@ -1975,67 +1976,67 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     Project.Books.Add(b);
                 }
             }
-            
+
             UpdateExportCommands();
         }
-        
+
         private void AddSpread()
         {
             var firstBook = Books.FirstOrDefault();
             if (firstBook == null) return;
-            
+
             var newIndex = firstBook.Pages.Count(p => !p.IsCover) + 1;
-            
+
             foreach (var book in Books)
             {
                 book.Pages.Add(new Page { IsCover = false, Index = newIndex, DisplayIndex = newIndex });
                 book.UpdatePageSlots();
             }
-            
+
         }
-        
+
         private void MovePageLeft(Page? page)
         {
             if (page == null || page.IsCover) return;
-            
+
             var book = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
             if (book == null) return;
-            
+
             var pagesWithoutCover = book.Pages.Where(p => !p.IsCover).ToList();
             var pageIndex = pagesWithoutCover.IndexOf(page);
             if (pageIndex <= 0) return;
-            
+
             var currentIndex = book.Pages.IndexOf(page);
             var targetIndex = currentIndex - 1;
-            
+
             if (targetIndex >= 0 && !book.Pages[targetIndex].IsCover)
             {
                 book.Pages.Move(currentIndex, targetIndex);
                 UpdatePageDisplayIndices(book);
             }
         }
-        
+
         private void MovePageRight(Page? page)
         {
             if (page == null || page.IsCover) return;
-            
+
             var book = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
             if (book == null) return;
-            
+
             var pagesWithoutCover = book.Pages.Where(p => !p.IsCover).ToList();
             var pageIndex = pagesWithoutCover.IndexOf(page);
             if (pageIndex >= pagesWithoutCover.Count - 1) return;
-            
+
             var currentIndex = book.Pages.IndexOf(page);
             var targetIndex = currentIndex + 1;
-            
+
             if (targetIndex < book.Pages.Count)
             {
                 book.Pages.Move(currentIndex, targetIndex);
                 UpdatePageDisplayIndices(book);
             }
         }
-        
+
         private void UpdatePageDisplayIndices(Book book)
         {
             var pagesWithoutCover = book.Pages.Where(p => !p.IsCover).ToList();
@@ -2079,12 +2080,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 return;
             }
-            
+
             if (Project == null)
             {
                 Project = new Project { Mode = AppMode.Combined };
             }
-            
+
             try
             {
                 var projectId = CurrentProjectInfo.Id ?? string.Empty;
@@ -2096,51 +2097,51 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         CurrentProjectInfo.Id = projectId;
                     }
                 }
-                
+
                 if (!string.IsNullOrEmpty(ProjectName) && ProjectName != CurrentProjectInfo.Name)
                 {
                     CurrentProjectInfo.Name = ProjectName;
                 }
-                
+
                 // Синхронизируем Books с Project.Books
                 Project.Books.Clear();
                 foreach (var book in Books)
                 {
                     Project.Books.Add(book);
                 }
-                
+
                 // Синхронизируем AvailableFiles
                 Project.AvailableFiles.Clear();
                 foreach (var file in AvailableFiles)
                 {
                     Project.AvailableFiles.Add(file);
                 }
-                
+
                 // Сохраняем проект
                 var projectsDir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "PhotoBookRenamer",
                     "Projects");
-                
+
                 if (!Directory.Exists(projectsDir))
                 {
                     Directory.CreateDirectory(projectsDir);
                 }
-                
+
                 var filePath = Path.Combine(projectsDir, $"{projectId}.json");
                 await _projectService.SaveProjectAsync(Project, filePath);
-                
+
                 if (!string.IsNullOrEmpty(ProjectName))
                 {
                     CurrentProjectInfo.Name = ProjectName;
                 }
-                
+
                 CurrentProjectInfo.FilePath = filePath;
                 CurrentProjectInfo.BookCount = Books.Count;
                 CurrentProjectInfo.PageCount = Books.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
                 CurrentProjectInfo.Status = DetermineStatus(Project);
                 CurrentProjectInfo.LastModified = DateTime.Now;
-                
+
                 await _projectListService.UpdateProjectInfoAsync(Project, filePath);
             }
             catch (Exception ex)

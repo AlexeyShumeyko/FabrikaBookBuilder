@@ -11,13 +11,13 @@ namespace PhotoBookRenamer.Presentation.Converters
         {
             if (value == null)
                 return Visibility.Visible;
-            
+
             if (value is int intValue)
                 return intValue == 0 ? Visibility.Visible : Visibility.Collapsed;
-            
+
             if (value is string strValue)
                 return string.IsNullOrEmpty(strValue) ? Visibility.Visible : Visibility.Collapsed;
-            
+
             return Visibility.Collapsed;
         }
 

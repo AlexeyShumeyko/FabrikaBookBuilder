@@ -78,7 +78,7 @@ namespace PhotoBookRenamer.Presentation.Converters
             });
         }
 
-       public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             PhotoBookRenamer.Presentation.PerfPhase.Count("PageSourceConverter");
             // Это обеспечивает обратную совместимость
@@ -120,7 +120,7 @@ namespace PhotoBookRenamer.Presentation.Converters
                 return bitmap;
             }
 
-            (value as Page)?.MarkImageFailed(imagePath!);
+             (value as Page)?.MarkImageFailed(imagePath!);
             return null;
         }
 

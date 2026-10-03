@@ -58,6 +58,9 @@ jobs:
     - name: Run tests
       run: dotnet test ${{ env.SOLUTION_FILE }} --configuration Release --no-build --nologo
 
+    - name: Check formatting
+      run: dotnet format ${{ env.SOLUTION_FILE }} --verify-no-changes --verbosity minimal
+
     - name: Report version
       run: |
         $version = (Select-Xml -Path "PhotoBookRenamer.csproj" -XPath "//Version").Node.InnerText

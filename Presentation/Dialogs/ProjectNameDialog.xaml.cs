@@ -24,7 +24,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             }
             else
             {
-                MessageBox.Show("Введите название проекта!", "Ошибка", 
+                MessageBox.Show("Введите название проекта!", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }

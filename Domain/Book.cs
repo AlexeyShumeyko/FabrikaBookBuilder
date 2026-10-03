@@ -23,7 +23,7 @@ namespace PhotoBookRenamer.Domain
             _isValid = false; // Инициализируем значение
             _allSlots.Add(0); // Обложка всегда есть
             UpdatePageSlots();
-            
+
             // Подписываемся на изменения обложки, если она уже установлена
             if (_cover != null)
             {
@@ -42,7 +42,7 @@ namespace PhotoBookRenamer.Domain
                 UpdateIsValid();
             }
         }
-        
+
         private void Pages_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             // Отписываемся от удаленных страниц
@@ -53,7 +53,7 @@ namespace PhotoBookRenamer.Domain
                     page.PropertyChanged -= Page_PropertyChanged;
                 }
             }
-            
+
             // Подписываемся на добавленные страницы
             if (e.NewItems != null)
             {
@@ -62,7 +62,7 @@ namespace PhotoBookRenamer.Domain
                     page.PropertyChanged += Page_PropertyChanged;
                 }
             }
-            
+
             UpdatePageSlots();
             // Уведомляем об изменении коллекции Pages для обновления конвертеров
             OnPropertyChanged(nameof(Pages));
@@ -231,7 +231,7 @@ namespace PhotoBookRenamer.Domain
                 {
                     _cover.PropertyChanged -= Page_PropertyChanged;
                 }
-                
+
                 if (SetProperty(ref _cover, value))
                 {
                     // Подписываемся на новую обложку
@@ -267,15 +267,15 @@ namespace PhotoBookRenamer.Domain
         /// clamped.
         /// </summary>
         public double FrameAspect { get; private set; } = 1.6;
-        
+
         public ObservableCollection<int> PageSlots => _pageSlots;
-        
+
         // Коллекция для отображения: обложка (0) + страницы (1, 2, 3...)
         public ObservableCollection<int> AllSlots => _allSlots;
         public ObservableCollection<Page> AllSlotsPages => _allSlotsPages;
 
         private bool _isValid;
-        
+
         public bool IsValid
         {
             get
@@ -284,7 +284,7 @@ namespace PhotoBookRenamer.Domain
                 return Cover != null && !Cover.IsEmpty && Pages.All(p => !p.IsEmpty);
             }
         }
-        
+
         private void UpdateIsValid()
         {
             var newValue = Cover != null && !Cover.IsEmpty && Pages.All(p => !p.IsEmpty);

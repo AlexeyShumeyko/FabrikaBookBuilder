@@ -26,10 +26,10 @@ namespace PhotoBookRenamer.Domain
         private int _totalPhotoCount;
 
         [JsonPropertyName("id")]
-        public string Id 
-        { 
-            get => _id; 
-            set 
+        public string Id
+        {
+            get => _id;
+            set
             {
                 // При десериализации из JSON value может быть null или пустым
                 if (string.IsNullOrEmpty(value))

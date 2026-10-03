@@ -32,7 +32,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             // ReleaseNotesFormatter also drops what does not belong in front of a user -
             // links and GitHub's generated block with the author's account.
             Notes = ReleaseNotesFormatter.Build(releaseNotes);
-            
+
             UpdateCommand = new AsyncRelayCommand(UpdateAsync, () => CanUpdate && !IsDownloading);
             PostponeCommand = new RelayCommand(Postpone);
         }
@@ -103,7 +103,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 var downloadUrl = await _updateService.GetDownloadUrlAsync();
                 if (string.IsNullOrEmpty(downloadUrl))
                 {
-                    MessageBox.Show("Не удалось получить ссылку для загрузки обновления.", 
+                    MessageBox.Show("Не удалось получить ссылку для загрузки обновления.",
                         "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     IsDownloading = false;
                     CanUpdate = true;
@@ -117,10 +117,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 });
 
                 var success = await _updateService.DownloadAndInstallUpdateAsync(downloadUrl, progress);
-                
+
                 if (!success)
                 {
-                    MessageBox.Show("Не удалось загрузить или установить обновление.", 
+                    MessageBox.Show("Не удалось загрузить или установить обновление.",
                         "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     IsDownloading = false;
                     CanUpdate = true;
@@ -128,7 +128,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при обновлении: {ex.Message}", 
+                MessageBox.Show($"Ошибка при обновлении: {ex.Message}",
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 IsDownloading = false;
                 CanUpdate = true;

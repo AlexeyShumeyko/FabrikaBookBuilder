@@ -28,7 +28,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         {
             InitializeComponent();
             _fileService = fileService;
-            
+
             if (existingFolders != null)
             {
                 _existingFolders = existingFolders;
@@ -37,9 +37,9 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                     SelectedFolders.Add(new FolderInfo { Path = folder, FileCount = 0 });
                 }
             }
-            
+
             FoldersListBox.ItemsSource = SelectedFolders;
-            
+
             // Загружаем количество файлов для существующих папок
             _ = LoadFileCountsAsync();
         }
@@ -64,27 +64,27 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         {
             // Позволяем выбрать несколько папок через цикл
             var folders = new List<string>();
-            
+
             while (true)
             {
                 using var dialog = new FolderBrowserDialog
                 {
-                    Description = folders.Count == 0 
-                        ? "Выберите папку с фотографиями (можно выбрать несколько)" 
+                    Description = folders.Count == 0
+                        ? "Выберите папку с фотографиями (можно выбрать несколько)"
                         : $"Выбрано папок: {folders.Count}. Выберите следующую (Отмена для завершения)",
                     UseDescriptionForTitle = true
                 };
 
                 if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
-                    if (!folders.Contains(dialog.SelectedPath) && 
+                    if (!folders.Contains(dialog.SelectedPath) &&
                         !SelectedFolders.Any(f => f.Path == dialog.SelectedPath))
                     {
                         folders.Add(dialog.SelectedPath);
                     }
                     else
                     {
-                        System.Windows.MessageBox.Show("Эта папка уже добавлена!", "Предупреждение", 
+                        System.Windows.MessageBox.Show("Эта папка уже добавлена!", "Предупреждение",
                             System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     }
                 }
@@ -104,7 +104,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         {
             if (SelectedFolders.Any(f => f.Path == folderPath))
             {
-                System.Windows.MessageBox.Show("Эта папка уже добавлена!", "Предупреждение", 
+                System.Windows.MessageBox.Show("Эта папка уже добавлена!", "Предупреждение",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 return;
             }
@@ -134,7 +134,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             {
                 SelectedFolders.Remove(item);
             }
-            
+
             await ValidateFoldersAsync();
         }
 
@@ -154,7 +154,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             if (!validationResult.IsValid)
             {
                 ErrorTextBlock.Text = validationResult.ErrorMessage ?? "Ошибка валидации папок.";
-                
+
                 // Подсвечиваем проблемную папку
                 if (!string.IsNullOrEmpty(validationResult.ProblemFolder))
                 {
@@ -164,7 +164,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                         problemFolder.ErrorMessage = validationResult.ErrorMessage;
                     }
                 }
-                
+
                 OkButton.IsEnabled = false;
             }
             else
@@ -181,7 +181,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         {
             if (SelectedFolders.Count == 0)
             {
-                System.Windows.MessageBox.Show("Выберите хотя бы одну папку!", "Ошибка", 
+                System.Windows.MessageBox.Show("Выберите хотя бы одну папку!", "Ошибка",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 return;
             }

@@ -29,7 +29,7 @@ namespace PhotoBookRenamer.Domain
                     book.PropertyChanged -= Book_PropertyChanged;
                 }
             }
-            
+
             // Подписываемся на добавленные книги
             if (e.NewItems != null)
             {
@@ -38,7 +38,7 @@ namespace PhotoBookRenamer.Domain
                     book.PropertyChanged += Book_PropertyChanged;
                 }
             }
-            
+
             UpdateIsValid();
         }
 

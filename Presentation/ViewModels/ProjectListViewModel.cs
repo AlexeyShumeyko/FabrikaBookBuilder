@@ -25,12 +25,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             _projectListService = projectListService;
             Projects = new ObservableCollection<ProjectInfo>();
-            
+
             LoadProjectsCommand = new AsyncRelayCommand(LoadProjectsAsync);
             CreateProjectCommand = new RelayCommand(CreateProject);
             OpenProjectCommand = new RelayCommand<ProjectInfo>(OpenProject);
             DeleteProjectCommand = new AsyncRelayCommand<ProjectInfo>(DeleteProjectAsync, CanDeleteProject);
-            
+
             // Загружаем проекты при создании
             // CollectionChanged -> ProjectsCount, so "N проектов" and the empty state
             // re-evaluate. See the remark on ProjectsCount.
@@ -140,7 +140,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 var projectService = serviceProvider.GetRequiredService<IProjectService>();
                 var projects = await _projectListService.GetAllProjectsAsync();
                 Projects.Clear();
-                
+
                 // КРИТИЧЕСКИ ВАЖНО: Создаём копии проектов, чтобы каждый проект в списке был независимым
                 // Это гарантирует, что при открытии проекта используется правильный projectInfo
                 // Сортируем по дате изменения (новые сверху)
@@ -152,13 +152,13 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         // Пропускаем проекты без ID
                         continue;
                     }
-                    
+
                     // КРИТИЧЕСКИ ВАЖНО: Пересчитываем PageCount на основе реальных данных проекта
                     // Загружаем проект из файла и пересчитываем PageCount
                     int actualPageCount = project.PageCount;
                     int actualBookCount = project.BookCount;
                     Project? previewSource = null;
-                    
+
                     if (!string.IsNullOrEmpty(project.FilePath) && File.Exists(project.FilePath))
                     {
                         try
@@ -176,7 +176,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                                 // fully loaded here, so the paths are simply read off it
                                 // rather than re-opened per card.
                                 previewSource = loadedProject;
-                                
+
                                 // Обновляем PageCount в сохранённом ProjectInfo, если он изменился
                                 if (actualPageCount != project.PageCount || actualBookCount != project.BookCount)
                                 {
@@ -194,7 +194,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                             // Игнорируем ошибки загрузки отдельных проектов
                         }
                     }
-                    
+
                     // Создаём копию проекта с правильными данными
                     var projectCopy = new ProjectInfo
                     {
@@ -316,7 +316,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
 
                 var projectService = serviceProvider.GetRequiredService<IProjectService>();
-                
+
                 // КРИТИЧЕСКИ ВАЖНО: Сохраняем ВСЕ данные проекта в локальные переменные СРАЗУ
                 // Это гарантирует, что мы используем правильные данные выбранного проекта
                 // НЕ используем projectInfo напрямую, так как он может быть изменён
@@ -328,33 +328,33 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 var projectStatus = projectInfo.Status;
                 var projectLastModified = projectInfo.LastModified;
                 var projectCreatedDate = projectInfo.CreatedDate;
-                
+
                 // КРИТИЧЕСКИ ВАЖНО: Проверяем, что Id не пустой
                 if (string.IsNullOrEmpty(projectId))
                 {
                     ErrorMessage = $"Ошибка: проект '{projectName}' не имеет Id. Невозможно открыть проект.";
                     return;
                 }
-                
+
                 // КРИТИЧЕСКИ ВАЖНО: Формируем FilePath на основе Id проекта
                 // В новой системе файлы хранятся прямо в папке Projects, формат: {ProjectId}.json
                 var projectsDir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "PhotoBookRenamer",
                     "Projects");
-                
+
                 // Создаём папку, если её нет
                 if (!Directory.Exists(projectsDir))
                 {
                     Directory.CreateDirectory(projectsDir);
                 }
-                
+
                 // ВСЕГДА формируем путь на основе Id - это единственный надежный способ
                 var projectFilePath = Path.Combine(projectsDir, $"{projectId}.json");
-                
+
                 // КРИТИЧЕСКИ ВАЖНО: Загружаем проект из файла
                 Project? project = null;
-                
+
                 // КРИТИЧЕСКИ ВАЖНО: Проверяем существование файла и загружаем проект
                 // ВСЕГДА используем путь, сформированный на основе ID проекта
                 if (System.IO.File.Exists(projectFilePath))
@@ -362,7 +362,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     try
                     {
                         project = await projectService.LoadProjectAsync(projectFilePath);
-                        
+
                         // Если проект не загрузился, создаем новый
                         if (project == null)
                         {
@@ -403,7 +403,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     CreatedDate = projectCreatedDate,
                     LastModified = projectLastModified
                 };
-                
+
                 // КРИТИЧЕСКИ ВАЖНО: Сохраняем данные проекта в замыкание ДО переключения режима
                 // Это гарантирует, что мы используем правильные данные выбранного проекта
                 var capturedProjectId = projectId;
@@ -416,12 +416,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 var capturedProjectCreatedDate = projectCreatedDate;
                 var capturedProjectLastModified = projectLastModified;
                 var capturedProject = project;
-                
+
                 // ОТЛАДКА: Логируем захваченные данные
-                
+
                 // Переключаемся на режим редактирования проекта ПОСЛЕ сохранения данных
                 OpenProjectMode(projectMode);
-                
+
                 // КРИТИЧЕСКИ ВАЖНО: Создаём НОВЫЙ projectInfo из захваченных данных ПЕРЕД асинхронным вызовом
                 // Это гарантирует, что мы используем правильные данные выбранного проекта
                 var finalProjectInfo = new ProjectInfo
@@ -435,7 +435,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     CreatedDate = capturedProjectCreatedDate,
                     LastModified = capturedProjectLastModified
                 };
-                
+
                 // Устанавливаем проект в ViewModel после того, как MainViewModel создаст View
                 // Используем двойной BeginInvoke для гарантии, что View создан
                 System.Windows.Application.Current.Dispatcher.BeginInvoke(
@@ -450,13 +450,13 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                                 if (System.Windows.Application.Current.MainWindow is MainWindow mainWindow)
                                 {
                                     var mainVm = serviceProvider.GetRequiredService<MainViewModel>();
-                                    
+
                                     // КРИТИЧЕСКИ ВАЖНО: Получаем ViewModel напрямую из сервиса, а не из View
                                     // Это гарантирует, что мы используем правильный ViewModel
                                     if (capturedProjectMode == AppMode.UniqueFolders)
                                     {
                                         var uniqueVm = serviceProvider.GetRequiredService<UniqueFoldersViewModel>();
-                                        
+
                                         // КРИТИЧЕСКИ ВАЖНО: Создаём ЕЩЁ ОДИН НОВЫЙ projectInfo из захваченных данных
                                         // НЕ используем finalProjectInfo, так как он может быть изменён
                                         // ВСЕГДА используем захваченные данные напрямую
@@ -472,14 +472,14 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                                             CreatedDate = capturedProjectCreatedDate,
                                             LastModified = capturedProjectLastModified
                                         };
-                                        
+
                                         // КРИТИЧЕСКИ ВАЖНО: Используем захваченные данные и загруженный project
                                         uniqueVm.SetProject(capturedProject, setProjectInfo);
                                     }
                                     else if (capturedProjectMode == AppMode.Combined)
                                     {
                                         var combinedVm = serviceProvider.GetRequiredService<CombinedModeViewModel>();
-                                        
+
                                         // КРИТИЧЕСКИ ВАЖНО: Создаём ЕЩЁ ОДИН НОВЫЙ projectInfo из захваченных данных
                                         var setProjectInfo = new ProjectInfo
                                         {
@@ -493,7 +493,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                                             CreatedDate = capturedProjectCreatedDate,
                                             LastModified = capturedProjectLastModified
                                         };
-                                        
+
                                         combinedVm.SetProject(capturedProject, setProjectInfo);
                                     }
                                 }
