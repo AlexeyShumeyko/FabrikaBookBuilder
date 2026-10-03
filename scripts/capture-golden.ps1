@@ -43,8 +43,21 @@ $fixturesCombined = 'Kombinirovannyy tirazh (test)'
 $skip = @($Skip -split ',' | ForEach-Object { $_.Trim().ToLower() } | Where-Object { $_ })
 
 function Stop-App {
-    Get-Process -Name PhotoBookRenamer -ErrorAction SilentlyContinue | Stop-Process -Force
-    Start-Sleep -Milliseconds 800
+    $running = Get-Process -Name PhotoBookRenamer -ErrorAction SilentlyContinue
+    if (-not $running) { return }
+
+    $running | Stop-Process -Force
+
+    # Wait for the process to actually be gone. A killed WPF window with AllowsTransparency
+    # fades out over a few frames, and a capture taken in that moment catches whatever is
+    # behind it instead of the app's own background - which showed up as a golden baseline
+    # that never matched anything, including itself two minutes later.
+    $deadline = (Get-Date).AddSeconds(20)
+    while ((Get-Date) -lt $deadline) {
+        if (-not (Get-Process -Name PhotoBookRenamer -ErrorAction SilentlyContinue)) { return }
+        Start-Sleep -Milliseconds 250
+    }
+    Write-Warning 'the previous window did not close within 20 s; the capture may include whatever is behind it'
 }
 
 function Invoke-Script([string]$script, [string[]]$arguments) {

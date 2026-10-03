@@ -22,7 +22,6 @@
         SizeChanged="MainWindow_SizeChanged">
 
     <Window.InputBindings>
-        <KeyBinding Key="F1" Command="{Binding OpenHelpCommand}" />
         <KeyBinding Key="D1" Modifiers="Ctrl" Command="{Binding GoToUniqueFoldersCommand}" />
         <KeyBinding Key="D2" Modifiers="Ctrl" Command="{Binding GoToCombinedModeCommand}" />
     </Window.InputBindings>
