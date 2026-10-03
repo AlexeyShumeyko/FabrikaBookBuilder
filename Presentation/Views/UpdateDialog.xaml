@@ -1,79 +1,114 @@
 <Window x:Class="PhotoBookRenamer.Presentation.Views.UpdateDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Обновление доступно"
-        Width="520" SizeToContent="Height"
+        Title="Доступно обновление"
+        Width="560" MaxHeight="760" Height="640"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip" MinWidth="480" MinHeight="440"
         Background="Transparent"
         WindowStyle="None"
         AllowsTransparency="True"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
+        ShowInTaskbar="False"
         FontFamily="{StaticResource UiFont}">
 
-    <Border Background="{StaticResource Surface}" CornerRadius="16"
-            BorderBrush="{StaticResource BorderDefault}" BorderThickness="1">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="50" ShadowDepth="12" Direction="270"
-                              Opacity="0.25" RenderingBias="Quality" Color="#000000" />
-        </Border.Effect>
+    <!-- The same chrome as every other window in the app: the room the shadow falls into,
+         then the surface. This dialog used to draw its own border and shadow, which is why
+         it looked like it came from a different program. -->
+    <Border Style="{StaticResource DialogShadowRoom}">
+        <Border Style="{StaticResource DialogSurface}">
+            <Grid Margin="24,22,24,20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-        <StackPanel Margin="24">
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                <Border Width="36" Height="36" CornerRadius="10" Background="{StaticResource Brand50}"
-                        VerticalAlignment="Center">
-                    <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="15"
-                               Foreground="{StaticResource Brand600}"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" />
-                </Border>
-                <TextBlock Text="Доступно обновление" Style="{StaticResource TextH3}"
-                           Margin="12,0,0,0" VerticalAlignment="Center" />
-            </StackPanel>
+                <!-- Title -->
+                <Grid Grid.Row="0" Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-            <!-- Versions -->
-            <Border Background="{StaticResource Slate50}" BorderBrush="{StaticResource Slate200}"
-                    BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,0,12">
-                <StackPanel>
-                    <TextBlock Text="{Binding CurrentVersionText}" Style="{StaticResource TextCaption}" />
-                    <TextBlock Text="{Binding LatestVersionText}" Style="{StaticResource TextBodyStrong}"
-                               Foreground="{StaticResource Brand600}" Margin="0,4,0,0" />
-                </StackPanel>
-            </Border>
+                    <Border Grid.Column="0" Width="36" Height="36" CornerRadius="10"
+                            Background="{StaticResource Brand50}" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="15"
+                                   Foreground="{StaticResource Brand600}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
 
-            <!-- Release notes -->
-            <Border Background="{StaticResource Slate50}" BorderBrush="{StaticResource Slate200}"
-                    BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,0,12">
-                <ScrollViewer MaxHeight="140" VerticalScrollBarVisibility="Auto">
-                    <TextBlock Text="{Binding ReleaseNotes}" Style="{StaticResource TextCaption}"
-                               TextWrapping="Wrap" />
-                </ScrollViewer>
-            </Border>
-
-            <!-- Progress -->
-            <StackPanel Margin="0,0,0,4"
-                        Visibility="{Binding IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Grid Margin="0,0,0,6">
-                    <TextBlock Text="Загрузка обновления" Style="{StaticResource TextCaption}" />
-                    <TextBlock Text="{Binding DownloadProgressText}" Style="{StaticResource TextCaption}"
-                               Foreground="{StaticResource Brand600}" HorizontalAlignment="Right" />
+                    <TextBlock Grid.Column="1" Margin="12,0,0,0" Style="{StaticResource TextH3}"
+                               Text="Доступно обновление" VerticalAlignment="Center" />
                 </Grid>
-                <!-- Mode=OneWay: ProgressBar.Value is TwoWay by default. -->
-                <ProgressBar Value="{Binding DownloadProgress, Mode=OneWay}" Maximum="100" />
-            </StackPanel>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
-                <Button Style="{StaticResource SecondaryButton}"
-                        AutomationProperties.Name="Отложить"
-                        Content="Отложить" Margin="0,0,8,0"
-                        Command="{Binding PostponeCommand}" />
-                <Button Style="{StaticResource PrimaryButton}"
-                        AutomationProperties.Name="Обновить"
-                        IsDefault="True" IsEnabled="{Binding CanUpdate}"
-                        Command="{Binding UpdateCommand}"
-                        Visibility="{Binding IsDownloading, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                    <TextBlock Text="Обновить" Foreground="White" />
-                </Button>
-            </StackPanel>
-        </StackPanel>
+                <!-- Versions: one line, the current one quiet and the new one the point -->
+                <Border Grid.Row="1" Background="{StaticResource Slate50}"
+                        BorderBrush="{StaticResource Slate200}" BorderThickness="1"
+                        CornerRadius="12" Padding="12,10" Margin="0,0,0,12">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding CurrentVersionText}"
+                                   Style="{StaticResource TextCaption}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="&#x2192;" Margin="10,0,10,0" FontSize="12"
+                                   FontFamily="{StaticResource UiFont}"
+                                   Foreground="{StaticResource Slate400}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding LatestVersionText}"
+                                   Style="{StaticResource TextBodyStrong}"
+                                   Foreground="{StaticResource Brand600}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <!--
+                  The release text, and only the release text. ReleaseNotesFormatter renders
+                  it and removes what does not belong in front of a user: markdown marks,
+                  links and GitHub's automatically generated block with the author's account.
+                -->
+                <Border Grid.Row="2" Background="{StaticResource Slate50}"
+                        BorderBrush="{StaticResource Slate200}" BorderThickness="1"
+                        CornerRadius="12" Padding="14">
+                    <FlowDocumentScrollViewer Document="{Binding Notes}"
+                                              VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled" />
+                </Border>
+
+                <!-- Download progress, in place of the buttons while it runs -->
+                <StackPanel Grid.Row="3" Margin="0,14,0,0"
+                            Visibility="{Binding IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid Margin="0,0,0,6">
+                        <TextBlock Text="Загрузка обновления" Style="{StaticResource TextCaption}" />
+                        <TextBlock Text="{Binding DownloadProgressText}" Style="{StaticResource TextCaption}"
+                                   Foreground="{StaticResource Brand600}" HorizontalAlignment="Right" />
+                    </Grid>
+                    <!-- Mode=OneWay: ProgressBar.Value is TwoWay by default. -->
+                    <ProgressBar Value="{Binding DownloadProgress, Mode=OneWay}" Maximum="100" />
+                </StackPanel>
+
+                <Grid Grid.Row="3" Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Room for the buttons; hidden while downloading. -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                Visibility="{Binding IsDownloading, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                        <Button Style="{StaticResource SecondaryButton}"
+                                AutomationProperties.Name="Отложить"
+                                Content="Отложить" Margin="0,0,8,0"
+                                Command="{Binding PostponeCommand}" />
+                        <Button Style="{StaticResource PrimaryButton}"
+                                AutomationProperties.Name="Обновить"
+                                IsDefault="True" IsEnabled="{Binding CanUpdate}"
+                                Command="{Binding UpdateCommand}">
+                            <TextBlock Text="Обновить" Foreground="White" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
     </Border>
 </Window>

@@ -344,7 +344,11 @@ jobs:
           ${{ env.INSTALLER_ZIP }}
         draft: false
         prerelease: false
-        generate_release_notes: true
+        # The body must be exactly what we wrote. With this on, GitHub appended its own
+        # "What's Changed" block: commit messages, the author's account name and links to
+        # the repository. The app shows this body in the update dialog, so every client of
+        # the program was being pointed at the developer's GitHub. Our notes are the notes.
+        generate_release_notes: false
 
     - name: Update previous releases with new installer
       run: |
