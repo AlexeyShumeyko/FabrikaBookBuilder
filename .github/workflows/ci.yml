@@ -9,6 +9,7 @@ name: CI (dev only)
 on:
   push:
     branches:
+      - 'integration/**'
       - 'feature/**'
       - 'fix/**'
       - 'hotfix/**'
@@ -18,6 +19,7 @@ on:
   pull_request:
     branches:
       - master
+      - 'integration/**'
 
 env:
   DOTNET_VERSION: '8.0.x'
