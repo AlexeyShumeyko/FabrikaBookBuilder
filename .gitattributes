@@ -1,7 +1,11 @@
 ###############################################################################
 # Set default behavior to automatically normalize line endings.
+#
+# eol=crlf is added on purpose: .editorconfig pins the working copy to CRLF, and without
+# it a clone on a machine with autocrlf=false would come out with LF and the formatting
+# gate in CI would fail for a reason that has nothing to do with the code.
 ###############################################################################
-* text=auto
+* text=auto eol=crlf
 
 ###############################################################################
 # Set default behavior for command prompt diff.
