@@ -1,0 +1,34 @@
+<!--
+  The adapters: the disk, JSON, image headers, the log, GitHub releases.
+
+  Every interface implemented here is declared in PhotoBook.Application, so the dependency
+  points one way only - this project knows the scenarios, the scenarios do not know this
+  project. That is what makes the engine change a matter of adding a project rather than of
+  unpicking the code: nothing in here mentions WPF, and a scan for System.Windows,
+  System.Drawing, Windows.Forms and Microsoft.Win32 across this folder is part of the
+  definition of done.
+
+  net8.0 for the same reason as the layer above it. The WPF-specific adapters - choosing a
+  folder, drawing, the update dialog - live in the shell, where the engine is.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>PhotoBookRenamer.Infrastructure</RootNamespace>
+    <Description>Disk, JSON, image headers, log, release feed. No user interface.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
+    <PackageReference Include="Octokit" Version="13.0.1" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PhotoBook.Application\PhotoBook.Application.csproj" />
+    <ProjectReference Include="..\PhotoBook.Core\PhotoBook.Core.csproj" />
+  </ItemGroup>
+
+</Project>

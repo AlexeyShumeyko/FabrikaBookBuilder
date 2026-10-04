@@ -1,4 +1,5 @@
 using System;
+using PhotoBookRenamer.Application;
 using Microsoft.Extensions.Logging;
 
 namespace PhotoBookRenamer.Infrastructure

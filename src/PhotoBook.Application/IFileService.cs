@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace PhotoBookRenamer.Infrastructure
+namespace PhotoBookRenamer.Application
 {
     /// <summary>
     /// Reading and writing files.

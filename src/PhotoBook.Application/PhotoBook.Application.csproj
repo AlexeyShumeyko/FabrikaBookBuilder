@@ -1,0 +1,26 @@
+<!--
+  Scenarios and ports. What the program does, and what it needs from the machine to do it.
+
+  net8.0, no packages, no Windows: this project is where the answer to "would this compile
+  and run on Linux" is supposed to be "yes, and that is a deliberate state of affairs rather
+  than an accident". Anything that needs a disk, a network, an image library or a window is
+  declared here as an interface and implemented in Infrastructure or in the shell.
+
+  The name differs from the namespace inside it (PhotoBookRenamer.Application). The product
+  was renamed from PhotoBookRenamer to Fabrika BookBuilder Studio; the namespaces were left
+  alone so that no view, no resource and no serialised file had to be touched for a rename.
+  Unifying the namespaces is a separate, mechanical step.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>PhotoBookRenamer.Application</RootNamespace>
+    <Description>Use cases and ports. No technologies.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PhotoBook.Core\PhotoBook.Core.csproj" />
+  </ItemGroup>
+
+</Project>
