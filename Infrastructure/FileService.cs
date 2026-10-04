@@ -1,26 +1,37 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Win32;
+
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PhotoBookRenamer.Infrastructure
 {
+    /// <summary>
+    /// Reading and writing files, and nothing else.
+    ///
+    /// <para>
+    /// This class used to open three windows: a folder browser twice, and a folder dialog with
+    /// a typed name. None of the three had a caller, and all three pulled Windows Forms and
+    /// the main window into the file layer. Choosing where photographs come from is a
+    /// question for a person, so it now lives in the shell behind
+    /// <see cref="PhotoBook.Application.IPickFiles"/>.
+    /// </para>
+    /// </summary>
     public class FileService : IFileService
     {
         private static readonly string[] JpegExtensions = { ".jpg", ".jpeg", ".JPG", ".JPEG" };
 
-        public async Task<List<string>> GetJpegFilesAsync(string folderPath)
+        public Task<List<string>> GetJpegFilesAsync(string folderPath)
         {
-            return await Task.Run(() =>
+            return Task.Run(() =>
             {
-                if (!Directory.Exists(folderPath))
+                if (string.IsNullOrEmpty(folderPath) || !System.IO.Directory.Exists(folderPath))
                 {
                     return new List<string>();
                 }
 
-                var allFiles = Directory.GetFiles(folderPath);
+                var allFiles = System.IO.Directory.GetFiles(folderPath);
                 var jpegFiles = allFiles.Where(IsJpegFile).OrderBy(f => f).ToList();
 
                 return jpegFiles;
@@ -48,12 +59,11 @@ namespace PhotoBookRenamer.Infrastructure
 
                 var folderFileCounts = new Dictionary<string, int>();
 
-                // Проверяем каждую папку
                 foreach (var folder in folderPaths)
                 {
-                    var folderName = Path.GetFileName(folder);
+                    var folderName = System.IO.Path.GetFileName(folder);
 
-                    if (!Directory.Exists(folder))
+                    if (!System.IO.Directory.Exists(folder))
                     {
                         return new ValidationResult
                         {
@@ -66,8 +76,7 @@ namespace PhotoBookRenamer.Infrastructure
                     var files = await GetJpegFilesAsync(folder);
                     folderFileCounts[folder] = files.Count;
 
-                    // Проверяем, что все файлы - JPG (используем уже полученный список)
-                    var allFiles = Directory.GetFiles(folder);
+                    var allFiles = System.IO.Directory.GetFiles(folder);
                     var nonJpegFiles = allFiles.Where(f => !IsJpegFile(f)).ToList();
 
                     if (nonJpegFiles.Any())
@@ -91,11 +100,8 @@ namespace PhotoBookRenamer.Infrastructure
                     }
                 }
 
-                // Проверяем, что все папки содержат одинаковое количество файлов
-                // Используем количество файлов, которое встречается у большинства папок
                 if (folderFileCounts.Count > 1)
                 {
-                    // Группируем по количеству файлов и находим группу с наибольшим количеством папок
                     var groupsByCount = folderFileCounts
                         .GroupBy(kvp => kvp.Value)
                         .OrderByDescending(g => g.Count())
@@ -110,19 +116,16 @@ namespace PhotoBookRenamer.Infrastructure
                     if (problemFolders.Any())
                     {
                         var problemFolder = problemFolders.First();
-                        var folderName = Path.GetFileName(problemFolder.Key);
-                        var expectedCount = majorityCount;
-                        var actualCount = problemFolder.Value;
-
-                        var errorMessage = $"❌ Количество файлов в папке \"{folderName}\" не совпадает с большинством папок.\n\n" +
-                                          $"Ожидается: {expectedCount} файлов (как у {majorityFolders.Count} из {folderFileCounts.Count} папок)\n" +
-                                          $"Найдено: {actualCount} файлов\n\n" +
-                                          $"Удалите проблемную папку из списка и попробуйте снова.";
+                        var folderName = System.IO.Path.GetFileName(problemFolder.Key);
 
                         return new ValidationResult
                         {
                             IsValid = false,
-                            ErrorMessage = errorMessage,
+                            ErrorMessage =
+                                $"❌ Количество файлов в папке \"{folderName}\" не совпадает с большинством папок.\n\n" +
+                                $"Ожидается: {majorityCount} файлов (как у {majorityFolders.Count} из {folderFileCounts.Count} папок)\n" +
+                                $"Найдено: {problemFolder.Value} файлов\n\n" +
+                                $"Удалите проблемную папку из списка и попробуйте снова.",
                             ProblemFolder = problemFolder.Key
                         };
                     }
@@ -132,106 +135,24 @@ namespace PhotoBookRenamer.Infrastructure
             });
         }
 
-        public Task<string?> SelectFoldersAsync()
-        {
-            return Task.Run(() =>
-            {
-                var dialog = new System.Windows.Forms.FolderBrowserDialog
-                {
-                    Description = "Выберите папки с фотографиями",
-                    UseDescriptionForTitle = true
-                };
-
-                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    return dialog.SelectedPath;
-                }
-
-                return null;
-            });
-        }
-
-        public Task<string?> SelectOutputFolderAsync(string? defaultPath = null)
-        {
-            return Task.Run(() =>
-            {
-                var dialog = new System.Windows.Forms.FolderBrowserDialog
-                {
-                    Description = "Выберите папку для сохранения",
-                    SelectedPath = defaultPath ?? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
-                };
-
-                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    return dialog.SelectedPath;
-                }
-
-                return null;
-            });
-        }
-
-        public Task<string?> SelectOutputFolderWithNameAsync(string? defaultPath = null, string? defaultFolderName = null)
-        {
-            return System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-            {
-                var dialog = new Presentation.Dialogs.FolderNameDialog(
-                    defaultPath ?? Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-                    defaultFolderName);
-                dialog.Owner = System.Windows.Application.Current.MainWindow;
-
-                if (dialog.ShowDialog() == true && dialog.SelectedPath != null && dialog.FolderName != null)
-                {
-                    var fullPath = Path.Combine(dialog.SelectedPath, dialog.FolderName);
-                    return fullPath;
-                }
-
-                return null;
-            }).Task;
-        }
-
-        public Task<string[]?> SelectFilesAsync()
-        {
-            return Task.Run(() =>
-            {
-                var dialog = new Microsoft.Win32.OpenFileDialog
-                {
-                    Filter = "JPEG файлы|*.jpg;*.jpeg;*.JPG;*.JPEG",
-                    Multiselect = true,
-                    Title = "Выберите JPEG файлы"
-                };
-
-                if (dialog.ShowDialog() == true)
-                {
-                    return dialog.FileNames;
-                }
-
-                return null;
-            });
-        }
-
         public async Task CopyFileAsync(string source, string destination)
         {
             await Task.Run(() =>
             {
-                var destDir = Path.GetDirectoryName(destination);
-                if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir))
+                var destDir = System.IO.Path.GetDirectoryName(destination);
+                if (!string.IsNullOrEmpty(destDir) && !System.IO.Directory.Exists(destDir))
                 {
-                    Directory.CreateDirectory(destDir);
+                    System.IO.Directory.CreateDirectory(destDir);
                 }
 
-                File.Copy(source, destination, overwrite: true);
+                System.IO.File.Copy(source, destination, overwrite: true);
             });
         }
 
         public bool IsJpegFile(string filePath)
         {
-            var ext = Path.GetExtension(filePath);
+            var ext = System.IO.Path.GetExtension(filePath);
             return JpegExtensions.Contains(ext);
         }
     }
 }
-
-
-
-
-

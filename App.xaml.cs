@@ -122,6 +122,7 @@ namespace PhotoBookRenamer
             services.AddSingleton<IFileService, FileService>();
             services.AddSingleton<IImageService, ImageService>();
             services.AddSingleton<IThumbnailProvider, ThumbnailProvider>();
+            services.AddSingleton<IPickFiles, Presentation.Services.WpfFilePicker>();
             services.AddSingleton<IExportService, ExportService>();
             services.AddSingleton<IUpdateService, UpdateService>();
             services.AddSingleton<ILoggingService, LoggingService>();

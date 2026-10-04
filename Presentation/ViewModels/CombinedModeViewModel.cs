@@ -22,6 +22,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
     public class CombinedModeViewModel : ViewModelBase
     {
         private readonly IFileService _fileService;
+        private readonly IPickFiles _files;
         private readonly IImageService _imageService;
         private readonly IThumbnailProvider _thumbnails;
         private readonly IExportService _exportService;
@@ -40,6 +41,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         public CombinedModeViewModel(
             IFileService fileService,
+            IPickFiles files,
             IImageService imageService,
             IThumbnailProvider thumbnails,
             IExportService exportService,
@@ -48,6 +50,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             IProjectListService projectListService)
         {
             _fileService = fileService;
+            _files = files;
             _imageService = imageService;
             _thumbnails = thumbnails;
             _exportService = exportService;
@@ -775,7 +778,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 // IsLoading is raised AFTER the picker, not around it. The picker is its own
                 // progress indicator, and the veil used to cover the whole window while it
                 // was open - which is where the owner saw a grey background appear.
-                var files = await _fileService.SelectFilesAsync();
+                var files = await _files.PickImagesAsync();
 
                 if (files == null || files.Length == 0)
                     return;
@@ -1838,7 +1841,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             try
             {
-                var files = await _fileService.SelectFilesAsync();
+                var files = await _files.PickImagesAsync();
                 if (files == null || files.Length == 0) return;
 
                 var file = files.FirstOrDefault(f => _fileService.IsJpegFile(f));
