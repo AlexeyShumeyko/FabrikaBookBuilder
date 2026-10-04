@@ -4,9 +4,9 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 
-namespace PhotoBookRenamer.Domain
+namespace PhotoBook.Core
 {
-    public class Book : ViewModelBase
+    public class Book : ObservableObject
     {
         private string? _folderPath;
         private string? _name;

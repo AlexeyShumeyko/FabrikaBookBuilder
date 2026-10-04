@@ -10,7 +10,7 @@ using Microsoft.Win32;
 using PhotoBookRenamer.Presentation.ViewModels;
 
 // "Page" exists both as our domain entity and as a WPF control; the entity always wins here.
-using Page = PhotoBookRenamer.Domain.Page;
+using Page = PhotoBook.Core.Page;
 
 namespace PhotoBookRenamer.Presentation.Views
 {
@@ -65,7 +65,7 @@ namespace PhotoBookRenamer.Presentation.Views
             if (sender is not FrameworkElement element) return;
             // The row is bound to a file entry, not to a bare path: the name, the pixel
             // size and the status are all shown from the same object.
-            if (element.DataContext is not Domain.PhotoFileInfo file) return;
+            if (element.DataContext is not PhotoFileInfo file) return;
             if (!File.Exists(file.Path)) return;
 
             DragDrop.DoDragDrop(element, file.Path, DragDropEffects.Copy);

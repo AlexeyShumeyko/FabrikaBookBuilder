@@ -3,7 +3,8 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
-using PhotoBookRenamer.Domain;
+using PhotoBook.Core;
+using PhotoBookRenamer.Presentation.ViewModels;
 
 namespace PhotoBookRenamer.Presentation.Converters
 {

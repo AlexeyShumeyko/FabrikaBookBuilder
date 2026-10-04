@@ -27,14 +27,19 @@
 
   <ItemGroup>
     <!--
-      The project sits in the repository root, and the SDK globs every .cs file below it -
-      so the moment tests\ appeared, the application started compiling the test sources and
-      failing on [Fact]. Excluded explicitly here; the exclusion disappears in wave 1 when
-      this code becomes its own project under src\.
+      The project sits in the repository root, and the SDK globs every .cs file below it.
+      tests\ and src\ are therefore excluded from the application and reached through
+      project references instead. Without this the application starts compiling other
+      projects' sources - which is how a test project once ended up in the shipped build.
     -->
     <Compile Remove="tests\**" />
+    <Compile Remove="src\**" />
     <Page Remove="tests\**" />
     <Resource Remove="tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="src\PhotoBook.Core\PhotoBook.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
