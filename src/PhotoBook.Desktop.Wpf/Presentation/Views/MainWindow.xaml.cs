@@ -3,7 +3,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using Microsoft.Extensions.DependencyInjection;
 using PhotoBook.Core;
 using PhotoBookRenamer.Presentation.ViewModels;
 
@@ -65,30 +64,32 @@ namespace PhotoBookRenamer.Presentation.Views
         {
             if (!Keyboard.IsKeyDown(Key.LeftCtrl)) return;
 
-            var unique = TryGet<UniqueFoldersViewModel>();
-            var combined = TryGet<CombinedModeViewModel>();
             bool shift = Keyboard.IsKeyDown(Key.LeftShift);
             AppMode mode = _viewModel.CurrentMode;
+
+            // The editor on screen, or null on the list and the mode screen - the same
+            // object the shell built, found through the shell instead of the container.
+            var editor = _viewModel.ActiveEditor;
 
             switch (e.Key)
             {
                 case Key.O when mode == AppMode.Combined && !shift:
-                    combined?.LoadFilesCommand.Execute(null);
+                    editor?.LoadSourceCommand.Execute(null);
                     e.Handled = true;
                     break;
 
                 case Key.O when mode == AppMode.UniqueFolders && shift:
-                    unique?.LoadFoldersCommand.Execute(null);
+                    editor?.LoadSourceCommand.Execute(null);
                     e.Handled = true;
                     break;
 
                 case Key.S when shift && mode == AppMode.UniqueFolders:
-                    unique?.ExportWithFolderCommand.Execute(null);
+                    editor?.ExportWithFolderCommand.Execute(null);
                     e.Handled = true;
                     break;
 
                 case Key.S when shift && mode == AppMode.Combined:
-                    combined?.ExportWithFolderCommand.Execute(null);
+                    editor?.ExportWithFolderCommand.Execute(null);
                     e.Handled = true;
                     break;
 
@@ -103,29 +104,27 @@ namespace PhotoBookRenamer.Presentation.Views
                     break;
 
                 case Key.E when mode == AppMode.UniqueFolders:
-                    unique?.ResetProjectCommand.Execute(null);
+                    editor?.ResetProjectCommand.Execute(null);
                     e.Handled = true;
                     break;
 
                 case Key.E when mode == AppMode.Combined:
-                    combined?.ResetProjectCommand.Execute(null);
+                    editor?.ResetProjectCommand.Execute(null);
                     e.Handled = true;
                     break;
 
                 case Key.Z when mode == AppMode.UniqueFolders:
-                    unique?.UndoCommand.Execute(null);
+                    editor?.UndoCommand.Execute(null);
                     e.Handled = true;
                     break;
 
                 case Key.Y when mode == AppMode.UniqueFolders:
-                    unique?.RedoCommand.Execute(null);
+                    editor?.RedoCommand.Execute(null);
                     e.Handled = true;
                     break;
             }
         }
 
-        private static T? TryGet<T>() where T : class
-            => ((App)System.Windows.Application.Current).GetServiceProvider()?.GetRequiredService<T>();
 
         // ------------------------------------------------------------------
         //  Header actions
@@ -134,15 +133,7 @@ namespace PhotoBookRenamer.Presentation.Views
         /// <summary>"Выбор папок" in Unique Folders, "Загрузить фото" in Combined.</summary>
         private void OnChooseSourceClick(object sender, RoutedEventArgs e)
         {
-            switch (_viewModel.CurrentMode)
-            {
-                case AppMode.UniqueFolders:
-                    TryGet<UniqueFoldersViewModel>()?.LoadFoldersCommand.Execute(null);
-                    break;
-                case AppMode.Combined:
-                    TryGet<CombinedModeViewModel>()?.LoadFilesCommand.Execute(null);
-                    break;
-            }
+            _viewModel.ActiveEditor?.LoadSourceCommand.Execute(null);
         }
 
         /// <summary>
@@ -154,15 +145,7 @@ namespace PhotoBookRenamer.Presentation.Views
 
         private void OnExportClick(object sender, RoutedEventArgs e)
         {
-            switch (_viewModel.CurrentMode)
-            {
-                case AppMode.UniqueFolders:
-                    TryGet<UniqueFoldersViewModel>()?.ExportCommand.Execute(null);
-                    break;
-                case AppMode.Combined:
-                    TryGet<CombinedModeViewModel>()?.ExportCommand.Execute(null);
-                    break;
-            }
+            _viewModel.ActiveEditor?.ExportCommand.Execute(null);
         }
 
         // ------------------------------------------------------------------
@@ -234,18 +217,8 @@ namespace PhotoBookRenamer.Presentation.Views
         {
             bool saved = false;
 
-            switch (_viewModel.CurrentMode)
-            {
-                case AppMode.UniqueFolders:
-                    var unique = TryGet<UniqueFoldersViewModel>();
-                    if (unique != null) saved = await unique.QuickSaveAsync();
-                    break;
-
-                case AppMode.Combined:
-                    var combined = TryGet<CombinedModeViewModel>();
-                    if (combined != null) saved = await combined.QuickSaveAsync();
-                    break;
-            }
+            if (_viewModel.ActiveEditor is { } editor)
+                saved = await editor.QuickSaveAsync();
 
             // Export does its own navigation through ProjectExported; save has none of
             // its own, and QuickSaveAsync reports whether anything was written.

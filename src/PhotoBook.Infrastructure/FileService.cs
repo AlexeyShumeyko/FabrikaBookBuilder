@@ -1,10 +1,7 @@
 using System.Collections.Generic;
-using PhotoBookRenamer.Application;
 using System.Linq;
 using System.Threading.Tasks;
-
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using PhotoBookRenamer.Application;
 
 namespace PhotoBookRenamer.Infrastructure
 {

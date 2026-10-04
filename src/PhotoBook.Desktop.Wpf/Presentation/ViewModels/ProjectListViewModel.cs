@@ -7,7 +7,6 @@ using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.DependencyInjection;
 using PhotoBook.Core;
 using PhotoBookRenamer.Application;
 using PhotoBookRenamer.Presentation.Views;
@@ -17,13 +16,20 @@ namespace PhotoBookRenamer.Presentation.ViewModels
     public class ProjectListViewModel : ViewModelBase
     {
         private readonly IProjectListService _projectListService;
+        private readonly IProjectRepository _projects;
+        private readonly IShellNavigator _navigator;
         private bool _isLoading;
         private string? _errorMessage;
         private ProjectInfo? _selectedProject;
 
-        public ProjectListViewModel(IProjectListService projectListService)
+        public ProjectListViewModel(
+            IProjectListService projectListService,
+            IProjectRepository projects,
+            IShellNavigator navigator)
         {
             _projectListService = projectListService;
+            _projects = projects;
+            _navigator = navigator;
             Projects = new ObservableCollection<ProjectInfo>();
 
             LoadProjectsCommand = new AsyncRelayCommand(LoadProjectsAsync);
@@ -88,15 +94,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    // MainViewModel is a singleton and is already the MainWindow's
-                    // DataContext, so flipping the mode is enough. Re-assigning
-                    // DataContext here used to rebuild the persistent header.
-                    var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                    var mainVm = serviceProvider?.GetRequiredService<MainViewModel>();
-                    if (mainVm != null)
-                    {
-                        mainVm.CurrentMode = value;
-                    }
+                    // Flipping the shell's mode is enough: the shell is the MainWindow's
+                    // DataContext, and re-assigning that used to rebuild the persistent
+                    // header on every visit.
+                    _navigator.CurrentMode = value;
                 });
             }
         }
@@ -110,9 +111,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                var mainVm = serviceProvider?.GetRequiredService<MainViewModel>();
-                mainVm?.OpenProject(mode);
+                _navigator.OpenProject(mode);
             });
         }
 
@@ -130,14 +129,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             try
             {
-                var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                if (serviceProvider == null)
-                {
-                    IsLoading = false;
-                    return;
-                }
 
-                var repository = serviceProvider.GetRequiredService<IProjectRepository>();
                 var projects = await _projectListService.GetAllProjectsAsync();
                 Projects.Clear();
 
@@ -163,7 +155,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     {
                         try
                         {
-                            var loadedProject = await repository.LoadAsync(project.FilePath);
+                            var loadedProject = await _projects.LoadAsync(project.FilePath);
                             if (loadedProject != null && loadedProject.Books != null && loadedProject.Books.Count > 0)
                             {
                                 // КРИТИЧЕСКИ ВАЖНО: PageCount - это количество разворотов в одной книге, а не сумма по всем книгам
@@ -309,13 +301,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             try
             {
-                var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                if (serviceProvider == null)
-                {
-                    return;
-                }
-
-                var repository = serviceProvider.GetRequiredService<IProjectRepository>();
 
                 // КРИТИЧЕСКИ ВАЖНО: Сохраняем ВСЕ данные проекта в локальные переменные СРАЗУ
                 // Это гарантирует, что мы используем правильные данные выбранного проекта
@@ -361,7 +346,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     try
                     {
-                        project = await repository.LoadAsync(projectFilePath);
+                        project = await _projects.LoadAsync(projectFilePath);
 
                         // Если проект не загрузился, создаем новый
                         if (project == null)
@@ -447,55 +432,36 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                             System.Windows.Threading.DispatcherPriority.Loaded,
                             new System.Action(() =>
                             {
-                                if (System.Windows.Application.Current.MainWindow is MainWindow mainWindow)
+                                if (System.Windows.Application.Current.MainWindow is MainWindow)
                                 {
-                                    var mainVm = serviceProvider.GetRequiredService<MainViewModel>();
+                                    // The shell decides which editor owns the mode; this
+                                    // list asks rather than deciding for itself.
+                                    var editor = _navigator.EditorFor(capturedProjectMode);
 
-                                    // КРИТИЧЕСКИ ВАЖНО: Получаем ViewModel напрямую из сервиса, а не из View
-                                    // Это гарантирует, что мы используем правильный ViewModel
-                                    if (capturedProjectMode == AppMode.UniqueFolders)
+                                    // Both editors were handed an identical ProjectInfo,
+                                    // which is why these two branches used to be the same code
+                                    // with one line different. The shell knows which editor
+                                    // owns the mode, so there is only one branch left.
+                                    if (editor == null) return;
+
+                                    // КРИТИЧЕСКИ ВАЖНО: Создаём ЕЩЁ ОДИН НОВЫЙ projectInfo из захваченных данных
+                                    // НЕ используем finalProjectInfo, так как он может быть изменён
+                                    // ВСЕГДА используем захваченные данные напрямую
+                                    var setProjectInfo = new ProjectInfo
                                     {
-                                        var uniqueVm = serviceProvider.GetRequiredService<UniqueFoldersViewModel>();
+                                        Id = capturedProjectId, // ВСЕГДА используем ID из захваченных данных
+                                        Name = capturedProjectName,
+                                        FilePath = capturedProjectFilePath,
+                                        Mode = capturedProjectMode,
+                                        BookCount = capturedProjectBookCount,
+                                        PageCount = capturedProjectPageCount,
+                                        Status = capturedProjectStatus,
+                                        CreatedDate = capturedProjectCreatedDate,
+                                        LastModified = capturedProjectLastModified
+                                    };
 
-                                        // КРИТИЧЕСКИ ВАЖНО: Создаём ЕЩЁ ОДИН НОВЫЙ projectInfo из захваченных данных
-                                        // НЕ используем finalProjectInfo, так как он может быть изменён
-                                        // ВСЕГДА используем захваченные данные напрямую
-                                        var setProjectInfo = new ProjectInfo
-                                        {
-                                            Id = capturedProjectId, // ВСЕГДА используем ID из захваченных данных
-                                            Name = capturedProjectName,
-                                            FilePath = capturedProjectFilePath,
-                                            Mode = capturedProjectMode,
-                                            BookCount = capturedProjectBookCount,
-                                            PageCount = capturedProjectPageCount,
-                                            Status = capturedProjectStatus,
-                                            CreatedDate = capturedProjectCreatedDate,
-                                            LastModified = capturedProjectLastModified
-                                        };
-
-                                        // КРИТИЧЕСКИ ВАЖНО: Используем захваченные данные и загруженный project
-                                        uniqueVm.SetProject(capturedProject, setProjectInfo);
-                                    }
-                                    else if (capturedProjectMode == AppMode.Combined)
-                                    {
-                                        var combinedVm = serviceProvider.GetRequiredService<CombinedModeViewModel>();
-
-                                        // КРИТИЧЕСКИ ВАЖНО: Создаём ЕЩЁ ОДИН НОВЫЙ projectInfo из захваченных данных
-                                        var setProjectInfo = new ProjectInfo
-                                        {
-                                            Id = capturedProjectId,
-                                            Name = capturedProjectName,
-                                            FilePath = capturedProjectFilePath,
-                                            Mode = capturedProjectMode,
-                                            BookCount = capturedProjectBookCount,
-                                            PageCount = capturedProjectPageCount,
-                                            Status = capturedProjectStatus,
-                                            CreatedDate = capturedProjectCreatedDate,
-                                            LastModified = capturedProjectLastModified
-                                        };
-
-                                        combinedVm.SetProject(capturedProject, setProjectInfo);
-                                    }
+                                    // КРИТИЧЕСКИ ВАЖНО: Используем захваченные данные и загруженный project
+                                    editor.SetProject(capturedProject, setProjectInfo);
                                 }
                             }));
                     }));

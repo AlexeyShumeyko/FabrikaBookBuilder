@@ -49,6 +49,13 @@ public class Win7 {
     // and it did, here. A dialog has a title; a tooltip does not.
     [DllImport("user32.dll")] private static extern int GetWindowTextLength(IntPtr h);
     [DllImport("user32.dll")] private static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
+    public static string Title(IntPtr h) {
+        int n = GetWindowTextLength(h);
+        if (n <= 0) return "";
+        var sb = new System.Text.StringBuilder(n + 1);
+        GetWindowText(h, sb, sb.Capacity);
+        return sb.ToString();
+    }
     public static bool HasTitle(IntPtr h) {
         int n = GetWindowTextLength(h);
         if (n <= 0) return false;
@@ -166,12 +173,29 @@ try {
         $apply.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
     }
 
-    function Wait-Dialog([int]$seconds = 12) {
+    # The window title of the confirmation dialog - ConfirmDialog.xaml sets it to
+# "Подтверждение", so every question in the app answers to the same name.
+$confirmTitle = 'Подтверждение'
+
+function Wait-Dialog([int]$seconds = 12) {
         $deadline = (Get-Date).AddSeconds($seconds)
         while ((Get-Date) -lt $deadline) {
             $proc.Refresh()
             if ($proc.HasExited) { throw 'the app died while the structure question was open' }
-            foreach ($h in [Win7]::Visible($proc.Id)) { if ($h -ne $hwnd -and [Win7]::HasTitle($h)) { return $h } }
+            # A question is the confirmation dialog, named - not "another window".
+            # HasTitle() already excludes the WPF tooltip, which is a top-level window
+            # too, but the update window has a title as well and it is not a question:
+            # while the feed reported the library version instead of the program's,
+            # every launch opened it, and this script duly reported that growing the run
+            # asked something. Both that bug and the looseness of this check are fixed;
+            # naming the window keeps the next one from hiding here.
+            foreach ($h in [Win7]::Visible($proc.Id)) {
+                if ($h -eq $hwnd) { continue }
+                $title = [Win7]::Title($h)
+                if ([string]::IsNullOrEmpty($title)) { continue }
+                if ($title -eq $confirmTitle) { return $h }
+                Write-Host ("  another window is open, and is not the question: [" + $title + "]")
+            }
             Start-Sleep -Milliseconds 400
         }
         return [intptr]::Zero
