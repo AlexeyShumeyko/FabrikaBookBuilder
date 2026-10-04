@@ -15,7 +15,7 @@ namespace PhotoBookRenamer.Infrastructure
     /// a typed name. None of the three had a caller, and all three pulled Windows Forms and
     /// the main window into the file layer. Choosing where photographs come from is a
     /// question for a person, so it now lives in the shell behind
-    /// <see cref="PhotoBook.Application.IPickFiles"/>.
+    /// <see cref="PhotoBookRenamer.Application.IPickFiles"/>.
     /// </para>
     /// </summary>
     public class FileService : IFileService
