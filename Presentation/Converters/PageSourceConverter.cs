@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
-using PhotoBookRenamer.Domain;
+using PhotoBook.Core;
 
 namespace PhotoBookRenamer.Presentation.Converters
 {

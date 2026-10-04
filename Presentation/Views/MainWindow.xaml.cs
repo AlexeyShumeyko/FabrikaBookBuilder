@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Extensions.DependencyInjection;
-using PhotoBookRenamer.Domain;
+using PhotoBook.Core;
 using PhotoBookRenamer.Presentation.ViewModels;
 
 namespace PhotoBookRenamer.Presentation.Views

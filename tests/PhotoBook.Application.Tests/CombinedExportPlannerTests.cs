@@ -1,5 +1,5 @@
 using PhotoBookRenamer.Application;
-using PhotoBookRenamer.Domain;
+using PhotoBook.Core;
 
 namespace PhotoBook.Application.Tests;
 

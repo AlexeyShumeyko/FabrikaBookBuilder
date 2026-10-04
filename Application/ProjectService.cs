@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using PhotoBookRenamer.Domain;
+using PhotoBook.Core;
 using PhotoBookRenamer.Infrastructure;
 
 namespace PhotoBookRenamer.Application

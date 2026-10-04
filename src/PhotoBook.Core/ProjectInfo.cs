@@ -1,9 +1,8 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
-using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace PhotoBookRenamer.Domain
+namespace PhotoBook.Core
 {
     public enum ProjectStatus
     {

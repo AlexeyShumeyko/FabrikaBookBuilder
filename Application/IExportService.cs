@@ -1,4 +1,4 @@
-using PhotoBookRenamer.Domain;
+using PhotoBook.Core;
 using System.Threading.Tasks;
 
 namespace PhotoBookRenamer.Application

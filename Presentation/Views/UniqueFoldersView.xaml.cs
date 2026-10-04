@@ -6,11 +6,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using PhotoBookRenamer.Domain;
+using PhotoBook.Core;
 using PhotoBookRenamer.Presentation.ViewModels;
 
 // "Page" exists both as our domain entity and as a WPF control; the entity always wins here.
-using Page = PhotoBookRenamer.Domain.Page;
+using Page = PhotoBook.Core.Page;
 
 namespace PhotoBookRenamer.Presentation.Views
 {

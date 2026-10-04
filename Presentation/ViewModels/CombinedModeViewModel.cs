@@ -9,7 +9,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
-using PhotoBookRenamer.Domain;
+using PhotoBook.Core;
 using PhotoBookRenamer.Application;
 using PhotoBookRenamer.Infrastructure;
 using PhotoBookRenamer.Presentation.Views;
@@ -525,7 +525,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
             }
 
-            bool IsRunWide(Domain.Page page)
+            bool IsRunWide(PhotoBook.Core.Page page)
             {
                 if (string.IsNullOrEmpty(page.SourcePath)) return false;
                 return runWide.TryGetValue(page.Index, out string? path) &&
@@ -1064,7 +1064,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// and safer than re-reading the file, and it is how a run of shared spreads gets
         /// the right frame in every book at once.
         /// </summary>
-        private static void CopyDimensions(Domain.Page from, Domain.Page to)
+        private static void CopyDimensions(PhotoBook.Core.Page from, PhotoBook.Core.Page to)
         {
             if (!from.HasDimensions || to.HasDimensions) return;
             if (!string.Equals(from.SourcePath, to.SourcePath, StringComparison.OrdinalIgnoreCase)) return;
@@ -1081,7 +1081,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// the "frames did not adapt" symptom. Fire-and-forget, exactly like the thumbnail
         /// load beside it: the photo appears at once and the frame follows a moment later.
         /// </summary>
-        private async Task FillSlotDimensionsAsync(Domain.Page? page)
+        private async Task FillSlotDimensionsAsync(PhotoBook.Core.Page? page)
         {
             if (page == null || page.HasDimensions || string.IsNullOrEmpty(page.SourcePath)) return;
 
@@ -1105,7 +1105,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             }
         }
 
-        public void DropFileOnSlot(Domain.Page page, string filePath, DropAction action, List<Book>? selectedBooks = null)
+        public void DropFileOnSlot(PhotoBook.Core.Page page, string filePath, DropAction action, List<Book>? selectedBooks = null)
         {
             if (page == null || string.IsNullOrEmpty(filePath))
             {
@@ -1139,7 +1139,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 foreach (var book in Books)
                 {
-                    Domain.Page? targetPage = null;
+                    PhotoBook.Core.Page? targetPage = null;
                     if (page.IsCover)
                     {
                         targetPage = book.Cover;
@@ -1165,7 +1165,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 foreach (var book in selectedBooks)
                 {
-                    Domain.Page? targetPage = null;
+                    PhotoBook.Core.Page? targetPage = null;
                     if (page.IsCover)
                     {
                         targetPage = book.Cover;

@@ -1,7 +1,8 @@
 <UserControl x:Class="PhotoBookRenamer.Presentation.Views.CombinedModeView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:models="clr-namespace:PhotoBookRenamer.Domain"
+             xmlns:models="clr-namespace:PhotoBook.Core;assembly=PhotoBook.Core"
+    xmlns:files="clr-namespace:PhotoBookRenamer.Presentation.ViewModels"
              FontFamily="{StaticResource UiFont}"
              HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
              UseLayoutRounding="True" SnapsToDevicePixels="True"
@@ -369,7 +370,7 @@
                                     </ItemsPanelTemplate>
                                 </ListBox.ItemsPanel>
                                 <ListBox.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type models:PhotoFileInfo}">
+                                    <DataTemplate DataType="{x:Type files:PhotoFileInfo}">
                                         <Border Margin="0,0,0,2"
                                                 PreviewMouseLeftButtonDown="OnFileItemMouseDown"
                                                 ToolTip="{Binding Path}">

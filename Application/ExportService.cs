@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using PhotoBookRenamer.Domain;
+using PhotoBook.Core;
 using PhotoBookRenamer.Infrastructure;
 
 namespace PhotoBookRenamer.Application

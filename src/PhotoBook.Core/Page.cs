@@ -1,9 +1,9 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace PhotoBookRenamer.Domain
+namespace PhotoBook.Core
 {
-    public class Page : ViewModelBase
+    public class Page : ObservableObject
     {
         private string? _sourcePath;
         private string? _thumbnailPath;

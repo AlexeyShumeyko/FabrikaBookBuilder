@@ -2,9 +2,9 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 
-namespace PhotoBookRenamer.Domain
+namespace PhotoBook.Core
 {
-    public class Project : ViewModelBase
+    public class Project : ObservableObject
     {
         private AppMode _mode;
         private string? _outputFolder;

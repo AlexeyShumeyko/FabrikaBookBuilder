@@ -9,7 +9,7 @@ namespace PhotoBookRenamer.Presentation.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             // КРИТИЧЕСКИ ВАЖНО: Теперь получаем Page напрямую, а не int
-            if (value is PhotoBookRenamer.Domain.Page page)
+            if (value is PhotoBook.Core.Page page)
             {
                 // Обложка без номера
                 if (page.IsCover)

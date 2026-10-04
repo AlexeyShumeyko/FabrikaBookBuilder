@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using PhotoBookRenamer.Domain;
+using PhotoBook.Core;
 
 namespace PhotoBookRenamer.Application
 {

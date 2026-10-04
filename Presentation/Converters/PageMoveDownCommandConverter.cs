@@ -4,7 +4,7 @@ using System.Linq;
 using System.Windows.Data;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
-using PhotoBookRenamer.Domain;
+using PhotoBook.Core;
 
 namespace PhotoBookRenamer.Presentation.Converters
 {
