@@ -35,12 +35,12 @@ public class ProjectCompatibilityTests : IDisposable
         return path;
     }
 
-    private static ProjectService Service() => new(new FileService(), new ImageService());
+    private static IProjectRepository Repository() => new ProjectRepository(new ImageService());
 
     [Fact]
     public async Task Opens_a_project_written_by_1_1_1()
     {
-        var project = await Service().LoadProjectAsync(SamplePath());
+        var project = await Repository().LoadAsync(SamplePath());
 
         Assert.NotNull(project);
         Assert.Equal(AppMode.UniqueFolders, project!.Mode);
@@ -50,7 +50,7 @@ public class ProjectCompatibilityTests : IDisposable
     [Fact]
     public async Task Reads_cyrillic_names_written_as_unicode_escapes()
     {
-        var project = await Service().LoadProjectAsync(SamplePath());
+        var project = await Repository().LoadAsync(SamplePath());
 
         Assert.Equal("Альбом 01", project!.Books[0].Name);
         Assert.Equal("Альбом 02", project.Books[1].Name);
@@ -59,7 +59,7 @@ public class ProjectCompatibilityTests : IDisposable
     [Fact]
     public async Task Keeps_the_cover_out_of_the_spreads()
     {
-        var project = await Service().LoadProjectAsync(SamplePath());
+        var project = await Repository().LoadAsync(SamplePath());
         var book = project!.Books[0];
 
         Assert.Equal("000-cover.jpg", Path.GetFileName(book.Cover!.SourcePath!));
@@ -70,7 +70,7 @@ public class ProjectCompatibilityTests : IDisposable
     [Fact]
     public async Task Keeps_an_empty_slot_as_an_empty_slot()
     {
-        var project = await Service().LoadProjectAsync(SamplePath());
+        var project = await Repository().LoadAsync(SamplePath());
         var second = project!.Books[1];
 
         Assert.Equal(2, second.Pages.Count);
@@ -81,7 +81,7 @@ public class ProjectCompatibilityTests : IDisposable
     [Fact]
     public async Task Keeps_the_books_in_their_order()
     {
-        var project = await Service().LoadProjectAsync(SamplePath());
+        var project = await Repository().LoadAsync(SamplePath());
 
         Assert.Equal(1, project!.Books[0].BookIndex);
         Assert.Equal(2, project.Books[1].BookIndex);
@@ -90,12 +90,12 @@ public class ProjectCompatibilityTests : IDisposable
     [Fact]
     public async Task A_project_survives_a_save_and_a_reload_unchanged()
     {
-        var loaded = await Service().LoadProjectAsync(SamplePath());
+        var loaded = await Repository().LoadAsync(SamplePath());
         Assert.NotNull(loaded);
 
         var saved = Path.Combine(_root, "saved.json");
-        await Service().SaveProjectAsync(loaded!, saved);
-        var reloaded = await Service().LoadProjectAsync(saved);
+        await Repository().SaveAsync(loaded!, saved);
+        var reloaded = await Repository().LoadAsync(saved);
 
         Assert.NotNull(reloaded);
         Assert.Equal(loaded!.Books.Count, reloaded!.Books.Count);
@@ -115,7 +115,7 @@ public class ProjectCompatibilityTests : IDisposable
     {
         // The sample points at files that do not exist here, so the sources are rewritten to
         // files that do. The names are decided by the loaded project, not by the rewrite.
-        var project = await Service().LoadProjectAsync(SamplePath());
+        var project = await Repository().LoadAsync(SamplePath());
         Assert.NotNull(project);
 
         var sources = new Dictionary<string, string>();

@@ -1,33 +1,21 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using PhotoBook.Core;
 using PhotoBookRenamer.Infrastructure;
 
 namespace PhotoBookRenamer.Application
 {
-    internal class BookData
-    {
-        public string? FolderPath { get; set; }
-        public string? Name { get; set; }
-        public Page? Cover { get; set; }
-        public int BookIndex { get; set; }
-        public List<Page>? Pages { get; set; }
-    }
-
-    internal class ProjectData
-    {
-        public AppMode Mode { get; set; }
-        public string? OutputFolder { get; set; }
-        public List<BookData>? Books { get; set; }
-        public List<string>? AvailableFiles { get; set; }
-    }
-
+    /// <summary>
+    /// Building a project out of folders, and remembering what it looked like a moment ago.
+    /// </summary>
+    /// <remarks>
+    /// Storing a project is not here any more - that is <see cref="IProjectRepository"/>,
+    /// which owns the file format. This class used to do both, and used to read and write
+    /// files itself with <c>System.IO.File</c>, which is why the layer that decides what a
+    /// project is also knew where projects are kept.
+    /// </remarks>
     public class ProjectService : IProjectService
     {
         private readonly IFileService _fileService;
@@ -98,175 +86,10 @@ namespace PhotoBookRenamer.Application
             }
 
             // Кадр карточек формируется по реальным размерам фото, поэтому они нужны
-            // сразу при создании проекта. DetectCoverAsync выше уже прочитал заголовки
-            // всех файлов, здесь попадаем в кэш ImageService - диск не трогаем дважды.
-            await FillImageDimensionsAsync(project);
+            // сразу при создании проекта.
+            await ProjectImageSizes.FillMissingAsync(project, _imageService);
 
             return project;
-        }
-
-        /// <summary>
-        /// Fills <see cref="Page.ImageWidth"/> / <see cref="Page.ImageHeight"/> from the
-        /// files on disk, for pages that do not have them yet, and re-derives each book's
-        /// card frame.
-        ///
-        /// Only the file header is read (ImageSharp <c>Identify</c>) and ImageService
-        /// caches the result, so a project saved by this version never pays for it again.
-        /// Older project files simply fill in on first open.
-        /// </summary>
-        private async Task FillImageDimensionsAsync(Project project)
-        {
-            if (project?.Books == null) return;
-
-            var pending = new List<Page>();
-            foreach (var book in project.Books)
-            {
-                if (book.Cover != null && !book.Cover.HasDimensions) pending.Add(book.Cover);
-                foreach (var page in book.Pages)
-                    if (page != null && !page.HasDimensions) pending.Add(page);
-            }
-
-            if (pending.Count > 0)
-            {
-                await Task.WhenAll(pending.Select(async page =>
-                {
-                    var (width, height) = await _imageService.GetImageDimensionsAsync(page.SourcePath ?? string.Empty);
-                    page.ImageWidth = width;
-                    page.ImageHeight = height;
-                }));
-
-                foreach (var book in project.Books)
-                    book.UpdatePageSlots();
-            }
-        }
-
-        public async Task SaveProjectAsync(Project project, string filePath)
-        {
-            try
-            {
-                var directory = Path.GetDirectoryName(filePath);
-                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                }
-
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-
-                var json = JsonSerializer.Serialize(project, options);
-
-                await File.WriteAllTextAsync(filePath, json);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Ошибка сохранения проекта: {ex.Message}", ex);
-            }
-        }
-
-        public async Task<Project?> LoadProjectAsync(string filePath)
-        {
-            try
-            {
-                if (!File.Exists(filePath))
-                {
-                    return null;
-                }
-
-                var json = await File.ReadAllTextAsync(filePath);
-
-                if (string.IsNullOrWhiteSpace(json))
-                {
-                    return null;
-                }
-
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    DefaultIgnoreCondition = JsonIgnoreCondition.Never
-                };
-
-                var projectData = JsonSerializer.Deserialize<ProjectData>(json, options);
-
-                Project? project = null;
-                if (projectData != null)
-                {
-                    project = new Project
-                    {
-                        Mode = projectData.Mode,
-                        OutputFolder = projectData.OutputFolder
-                    };
-
-                    if (projectData.Books != null && projectData.Books.Count > 0)
-                    {
-                        foreach (var bookData in projectData.Books)
-                        {
-                            var book = new Book
-                            {
-                                FolderPath = bookData.FolderPath,
-                                Name = bookData.Name,
-                                Cover = bookData.Cover,
-                                BookIndex = bookData.BookIndex
-                            };
-
-                            if (bookData.Pages != null && bookData.Pages.Count > 0)
-                            {
-                                foreach (var page in bookData.Pages)
-                                {
-                                    book.Pages.Add(page);
-                                }
-                            }
-
-                            // Обновляем слоты страниц после добавления всех страниц
-                            book.UpdatePageSlots();
-
-                            project.Books.Add(book);
-                        }
-                    }
-
-                    // Добавляем доступные файлы
-                    if (projectData.AvailableFiles != null)
-                    {
-                        foreach (var file in projectData.AvailableFiles)
-                        {
-                            project.AvailableFiles.Add(file);
-                        }
-                    }
-                }
-
-                // ВАЖНО: После десериализации нужно убедиться, что все коллекции правильно инициализированы
-                if (project != null)
-                {
-                    if (project.Books != null && project.Books.Count > 0)
-                    {
-                        // Проверяем каждую книгу
-                        foreach (var book in project.Books)
-                        {
-                            // Pages должна быть инициализирована конструктором или десериализацией
-                            if (book.Pages == null)
-                            {
-                                // Это критическая ошибка - пропускаем эту книгу
-                                continue;
-                            }
-
-                            // Убеждаемся, что слоты страниц обновлены после десериализации
-                            book.UpdatePageSlots();
-                        }
-                    }
-
-                    // Проекты, сохранённые до появления размеров, получают их при первом
-                    // открытии - и дальше они лежат в файле проекта.
-                    await FillImageDimensionsAsync(project);
-                }
-
-                return project;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Ошибка загрузки проекта: {ex.Message}", ex);
-            }
         }
 
         public void SaveState(Project project)
@@ -309,10 +132,3 @@ namespace PhotoBookRenamer.Application
         }
     }
 }
-
-
-
-
-
-
-

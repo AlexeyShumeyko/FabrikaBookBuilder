@@ -28,6 +28,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private readonly IExportService _exportService;
         private readonly ILoggingService _loggingService;
         private readonly IProjectService _projectService;
+        private readonly IProjectRepository _projects;
         private readonly IProjectListService _projectListService;
         private Project? _project;
         private ProjectInfo? _currentProjectInfo;
@@ -47,6 +48,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             IExportService exportService,
             ILoggingService loggingService,
             IProjectService projectService,
+            IProjectRepository projects,
             IProjectListService projectListService)
         {
             _fileService = fileService;
@@ -56,6 +58,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             _exportService = exportService;
             _loggingService = loggingService;
             _projectService = projectService;
+            _projects = projects;
             _projectListService = projectListService;
 
             AvailableFiles = new ObservableCollection<string>();
@@ -1385,7 +1388,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             if (project == null && !string.IsNullOrEmpty(projectFilePath) && File.Exists(projectFilePath))
             {
-                project = await _projectService.LoadProjectAsync(projectFilePath);
+                project = await _projects.LoadAsync(projectFilePath);
             }
 
             if (project == null)
@@ -1637,7 +1640,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
 
                 var filePath = Path.Combine(projectsDir, $"{projectId}.json");
-                await _projectService.SaveProjectAsync(Project, filePath);
+                await _projects.SaveAsync(Project, filePath);
 
                 if (!string.IsNullOrEmpty(ProjectName))
                 {
@@ -2136,7 +2139,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
 
                 var filePath = Path.Combine(projectsDir, $"{projectId}.json");
-                await _projectService.SaveProjectAsync(Project, filePath);
+                await _projects.SaveAsync(Project, filePath);
 
                 if (!string.IsNullOrEmpty(ProjectName))
                 {

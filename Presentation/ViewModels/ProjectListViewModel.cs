@@ -137,7 +137,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     return;
                 }
 
-                var projectService = serviceProvider.GetRequiredService<IProjectService>();
+                var repository = serviceProvider.GetRequiredService<IProjectRepository>();
                 var projects = await _projectListService.GetAllProjectsAsync();
                 Projects.Clear();
 
@@ -163,7 +163,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     {
                         try
                         {
-                            var loadedProject = await projectService.LoadProjectAsync(project.FilePath);
+                            var loadedProject = await repository.LoadAsync(project.FilePath);
                             if (loadedProject != null && loadedProject.Books != null && loadedProject.Books.Count > 0)
                             {
                                 // КРИТИЧЕСКИ ВАЖНО: PageCount - это количество разворотов в одной книге, а не сумма по всем книгам
@@ -315,7 +315,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     return;
                 }
 
-                var projectService = serviceProvider.GetRequiredService<IProjectService>();
+                var repository = serviceProvider.GetRequiredService<IProjectRepository>();
 
                 // КРИТИЧЕСКИ ВАЖНО: Сохраняем ВСЕ данные проекта в локальные переменные СРАЗУ
                 // Это гарантирует, что мы используем правильные данные выбранного проекта
@@ -361,7 +361,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     try
                     {
-                        project = await projectService.LoadProjectAsync(projectFilePath);
+                        project = await repository.LoadAsync(projectFilePath);
 
                         // Если проект не загрузился, создаем новый
                         if (project == null)

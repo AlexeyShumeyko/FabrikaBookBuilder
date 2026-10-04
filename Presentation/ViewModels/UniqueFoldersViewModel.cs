@@ -23,6 +23,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private readonly IImageService _imageService;
         private readonly IThumbnailProvider _thumbnails;
         private readonly IProjectService _projectService;
+        private readonly IProjectRepository _projects;
         private readonly IExportService _exportService;
         private readonly ILoggingService _loggingService;
         private readonly IProjectListService _projectListService;
@@ -98,6 +99,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             IImageService imageService,
             IThumbnailProvider thumbnails,
             IProjectService projectService,
+            IProjectRepository projects,
             IExportService exportService,
             ILoggingService loggingService,
             IProjectListService projectListService)
@@ -107,6 +109,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             _imageService = imageService;
             _thumbnails = thumbnails;
             _projectService = projectService;
+            _projects = projects;
             _exportService = exportService;
             _loggingService = loggingService;
             _projectListService = projectListService;
@@ -1175,7 +1178,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 var projectFilePath = Path.Combine(projectsDir, $"{projectId}.json");
 
                 // Сохраняем проект в файл
-                await _projectService.SaveProjectAsync(Project, projectFilePath);
+                await _projects.SaveAsync(Project, projectFilePath);
 
                 // Обновляем информацию о проекте
                 if (CurrentProjectInfo != null)
