@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.DependencyInjection;
 using PhotoBook.Core;
 using PhotoBookRenamer.Application;
 using PhotoBookRenamer.Presentation.Views;
@@ -19,7 +18,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
     /// transient MainViewModel and overwrote <c>MainWindow.DataContext</c>,
     /// which would have torn the header down on every navigation.
     /// </summary>
-    public class MainViewModel : ViewModelBase
+    public class MainViewModel : ViewModelBase, IShellNavigator
     {
         private readonly UniqueFoldersViewModel _uniqueFolders;
         private readonly CombinedModeViewModel _combinedMode;
@@ -36,10 +35,19 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// </summary>
         private AppMode? _openProjectMode;
 
-        public MainViewModel(UniqueFoldersViewModel uniqueFolders, CombinedModeViewModel combinedMode)
+        private readonly IProjectListService _projectListService;
+        private readonly IProjectRepository _projects;
+
+        public MainViewModel(
+            UniqueFoldersViewModel uniqueFolders,
+            CombinedModeViewModel combinedMode,
+            IProjectListService projectListService,
+            IProjectRepository projects)
         {
             _uniqueFolders = uniqueFolders;
             _combinedMode = combinedMode;
+            _projectListService = projectListService;
+            _projects = projects;
 
             // The editor VMs are singletons, so they outlive every view swap. Listening
             // to them keeps the header's project name / enabled states in sync.
@@ -60,6 +68,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             _uniqueFolders.ProjectExported += (_, _) => EndSession();
             _combinedMode.ProjectExported += (_, _) => EndSession();
 
+            // "Back" from either editor lands here too. The editors cannot be given a
+            // reference to this object: it is built out of them, so that would be a
+            // circle the container cannot resolve. They say what they want instead.
+            _uniqueFolders.BackToProjectListRequested += () => EndSession();
+            _combinedMode.BackToProjectListRequested += () => EndSession();
+
             // Legacy names kept for the old Ctrl+1 / Ctrl+2 bindings.
             SwitchToUniqueFoldersCommand = GoToModeSelectCommand;
             SwitchToCombinedModeCommand = GoToModeSelectCommand;
@@ -67,15 +81,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             // По умолчанию показываем список всех проектов
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                if (serviceProvider != null)
-                {
-                    var projectListService = serviceProvider.GetRequiredService<IProjectListService>();
-                    var projectListVm = new ProjectListViewModel(projectListService);
-                    CurrentView = new ProjectListView(projectListVm);
-                    _currentMode = AppMode.ProjectList;
-                    OnPropertyChanged(nameof(CurrentMode));
-                }
+                var projectListVm = NewProjectListViewModel();
+                CurrentView = new ProjectListView(projectListVm);
+                _currentMode = AppMode.ProjectList;
+                OnPropertyChanged(nameof(CurrentMode));
             });
         }
 
@@ -161,9 +170,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                if (serviceProvider == null) return;
-
                 switch (_currentMode)
                 {
                     case AppMode.StartScreen:
@@ -171,8 +177,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         break;
 
                     case AppMode.ProjectList:
-                        var projectListService = serviceProvider.GetRequiredService<IProjectListService>();
-                        var projectListVm = new ProjectListViewModel(projectListService);
+                        var projectListVm = NewProjectListViewModel();
                         CurrentView = new ProjectListView(projectListVm);
                         // Обновляем список проектов при возврате
                         projectListVm.LoadProjectsCommand.Execute(null);
@@ -196,13 +201,23 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         //  Header state
         // ------------------------------------------------------------------
 
-        /// <summary>The editor VM for the current screen, or null on list / mode-select.</summary>
-        public object? ActiveEditor => _currentMode switch
+        /// <summary>
+        /// A fresh list, wired with what it needs. Built per visit rather than kept: it
+        /// exists to show the list as it is at the moment it is opened.
+        /// </summary>
+        private ProjectListViewModel NewProjectListViewModel()
+            => new(_projectListService, _projects, this);
+
+        /// <summary>The editor that owns a mode, or null for the list and the mode screen.</summary>
+        public IProjectEditor? EditorFor(AppMode mode) => mode switch
         {
             AppMode.UniqueFolders => _uniqueFolders,
             AppMode.Combined => _combinedMode,
             _ => null
         };
+
+        /// <summary>The editor on the current screen, or null on list / mode-select.</summary>
+        public IProjectEditor? ActiveEditor => EditorFor(_currentMode);
 
         public string ProjectTitle => _currentMode switch
         {

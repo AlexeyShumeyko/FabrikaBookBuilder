@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using PhotoBookRenamer.Application;
@@ -39,9 +40,19 @@ namespace PhotoBookRenamer.Infrastructure
             _httpClient.Timeout = TimeSpan.FromMinutes(10);
         }
 
+        /// <summary>
+        /// The running version of the PROGRAM, three numbers.
+        /// </summary>
+        /// <remarks>
+        /// Read from the entry assembly, not from the assembly this class happens to live in.
+        /// While the update feed was inside the executable those were the same assembly; after
+        /// the layers became separate projects it stopped being, and this method answered
+        /// "1.0.0" forever - the library's own version - so every launch offered an update
+        /// that was already installed. The version of the program belongs to the program.
+        /// </remarks>
         public string GetCurrentVersion()
         {
-            var version = typeof(UpdateService).Assembly.GetName().Version;
+            var version = (Assembly.GetEntryAssembly() ?? typeof(UpdateService).Assembly).GetName().Version;
             return $"{version.Major}.{version.Minor}.{version.Build}";
         }
 

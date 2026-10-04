@@ -7,16 +7,14 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.DependencyInjection;
 using PhotoBook.Core;
-using PhotoBookRenamer.Application;
 using PhotoBookRenamer.Application;
 using PhotoBookRenamer.Infrastructure;
 using PhotoBookRenamer.Presentation.Views;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
 {
-    public class UniqueFoldersViewModel : ViewModelBase
+    public class UniqueFoldersViewModel : ViewModelBase, IProjectEditor
     {
         private readonly IFileService _fileService;
         private readonly IPickFiles _files;
@@ -137,7 +135,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
 
                 // Возвращаемся на главную страницу со списком проектов
-                CurrentMode = AppMode.ProjectList;
+                RequestBackToProjectList();
             });
             SaveProjectCommand = new AsyncRelayCommand(SaveAndCloseAsync);
             DeleteBookCommand = new RelayCommand<Book>(DeleteBook);
@@ -178,24 +176,25 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             };
         }
 
-        private AppMode CurrentMode
+        /// <summary>
+        /// Asks the shell to go back to the project list. Raised rather than routed
+        /// through the shell object: this editor is created before the shell exists, so
+        /// a direct reference would be circular, and a lookup at the moment of the click
+        /// would be a failure that shows up as a button that does nothing.
+        /// </summary>
+        public event Action? BackToProjectListRequested;
+
+        private void RequestBackToProjectList()
         {
-            set
-            {
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    // MainViewModel is a singleton and is already the MainWindow's
-                    // DataContext, so flipping the mode is enough. Re-assigning
-                    // DataContext here used to rebuild the persistent header.
-                    var serviceProvider = ((App)System.Windows.Application.Current).GetServiceProvider();
-                    var mainVm = serviceProvider?.GetRequiredService<MainViewModel>();
-                    if (mainVm != null)
-                    {
-                        mainVm.CurrentMode = value;
-                    }
-                });
-            }
+            // An export finishes on a background thread, and the shell changes the
+            // screen, so the request is marshalled to the UI thread.
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                BackToProjectListRequested?.Invoke());
         }
+
+        AppMode IProjectEditor.Mode => AppMode.UniqueFolders;
+
+        ICommand IProjectEditor.LoadSourceCommand => LoadFoldersCommand;
 
         private string? _projectName;
 
@@ -422,9 +421,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 return;
             }
 
-            // The ViewModel's own CurrentMode setter goes through MainViewModel, which
-            // drops the project session - the mode tab goes back out with it.
-            CurrentMode = AppMode.ProjectList;
+            // The shell drops the project session on the way back - the mode tab goes
+            // back out with it.
+            RequestBackToProjectList();
         }
 
         /// <summary>

@@ -1,3 +1,4 @@
+using System.Reflection;
 using PhotoBookRenamer.Application;
 using PhotoBookRenamer.Infrastructure;
 
@@ -21,6 +22,23 @@ public class UpdateFeedTests
         Assert.False(string.IsNullOrWhiteSpace(version));
         Assert.Equal(3, version.Split('.').Length);
         Assert.All(version.Split('.'), part => Assert.True(int.TryParse(part, out _), $"not a number: {part}"));
+    }
+
+    [Fact]
+    public void The_version_is_the_running_program_not_the_assembly_that_asks_for_updates()
+    {
+        // The feed lives in a library now, and a library is versioned on its own - 1.0.0.0
+        // by default. Reading its own assembly instead of the program's made every launch
+        // offer an update that was already installed, because 1.0.0 is older than any
+        // release. Under the test host the entry assembly is the host, so this asserts the
+        // contract rather than a literal number: whatever program is running, the feed
+        // reports that program's version.
+        var entry = Assembly.GetEntryAssembly();
+        Assert.NotNull(entry);
+
+        var expected = entry!.GetName().Version;
+
+        Assert.Equal($"{expected.Major}.{expected.Minor}.{expected.Build}", Feed().GetCurrentVersion());
     }
 
     [Fact]

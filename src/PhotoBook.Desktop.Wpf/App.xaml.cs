@@ -17,7 +17,12 @@ namespace PhotoBookRenamer
     {
         private ServiceProvider? _serviceProvider;
 
-        public IServiceProvider? GetServiceProvider() => _serviceProvider;
+        // There is deliberately no accessor for the container. Every screen and view
+        // model used to reach the shell through one, which is how a lookup ended up
+        // inside a click handler: it works until it does not, and it fails by doing
+        // nothing. Dependencies now arrive through constructors and the shell is
+        // asked for what it knows. If a new caller needs the container, that is the
+        // question to answer here rather than in the caller.
 
         /// <summary>
         /// Dumps WPF data-binding diagnostics to %TEMP%\PhotoBookRenamer\binding.log when
