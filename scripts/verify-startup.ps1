@@ -24,7 +24,7 @@ $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 
 try {
-    $exe = Join-Path $root "bin\$Configuration\net8.0-windows\PhotoBookRenamer.exe"
+    $exe = Join-Path $root "src\PhotoBook.Desktop.Wpf\bin\$Configuration\net8.0-windows\PhotoBookRenamer.exe"
     if (-not (Test-Path $exe)) {
         Write-Host "FAIL: exe not found at $exe"
         exit 1

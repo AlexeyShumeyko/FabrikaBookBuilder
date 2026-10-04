@@ -1,18 +1,19 @@
 <!--
   The shell: windows, dialogs, view models, converters - and the composition root in App.xaml.cs.
 
-  This project is the only one that knows WPF exists. It references the two layers below it
-  and nothing above, so a rule that belongs in PhotoBook.Application or
-  PhotoBook.Infrastructure cannot be quietly implemented here.
+  This project is the only one that knows WPF exists. It references the layers below it and
+  nothing above, so a rule that belongs in PhotoBook.Application or PhotoBook.Infrastructure
+  cannot be quietly implemented here. When the Avalonia shell arrives it replaces this
+  project rather than adding to it, and the two layers below must not change to allow that.
 
-  The project sits in the repository root and the SDK globs every .cs file below it, which is
-  why src\ and tests\ are excluded below: without that the shell would start compiling the
-  other projects' sources. When the shell moves into src\ of its own (roadmap step 1.5b)
-  those exclusions become unnecessary and can go.
+  AssemblyName stays PhotoBookRenamer. The installer, the desktop and quick-launch
+  shortcuts, the auto-updater and the published layout all refer to that name, and so do the
+  verification scripts in scripts\ - which is why they carry the path to this project rather
+  than a path of their own.
 
-  AssemblyName stays PhotoBookRenamer. The installer, the shortcut, the auto-updater and the
-  published layout all refer to that name; RootNamespace stays with it so the generated
-  Application class still matches x:Class="PhotoBookRenamer.App" in App.xaml.
+  RootNamespace stays with it so the generated Application class still matches
+  x:Class="PhotoBookRenamer.App" in App.xaml. Changing either of the two is a change to the
+  shipped layout, not a rename.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
 
@@ -36,22 +37,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!--
-      The project sits in the repository root, and the SDK globs every .cs file below it.
-      tests\ and src\ are therefore excluded from the shell and reached through project
-      references instead. Without this the shell starts compiling other projects' sources -
-      which is how a test project once ended up in the shipped build.
-    -->
-    <Compile Remove="tests\**" />
-    <Compile Remove="src\**" />
-    <Page Remove="tests\**" />
-    <Resource Remove="tests\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="src\PhotoBook.Application\PhotoBook.Application.csproj" />
-    <ProjectReference Include="src\PhotoBook.Core\PhotoBook.Core.csproj" />
-    <ProjectReference Include="src\PhotoBook.Infrastructure\PhotoBook.Infrastructure.csproj" />
+    <ProjectReference Include="..\PhotoBook.Application\PhotoBook.Application.csproj" />
+    <ProjectReference Include="..\PhotoBook.Core\PhotoBook.Core.csproj" />
+    <ProjectReference Include="..\PhotoBook.Infrastructure\PhotoBook.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

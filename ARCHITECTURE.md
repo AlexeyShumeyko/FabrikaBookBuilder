@@ -29,11 +29,9 @@ PhotoBookRenamer.sln
 ```
 
 Из этого списка существуют `PhotoBook.Core`, `PhotoBook.Application`,
-`PhotoBook.Infrastructure` и `PhotoBook.Application.Tests`. Оболочка пока собрана в
-`PhotoBookRenamer.csproj` в корне репозитория — это тот же самый проект, что станет
-`PhotoBook.Desktop.Wpf`; имя сборки `PhotoBookRenamer` сохраняется, потому что от него
-зависят установщик, ярлык и автообновление.
-
+`PhotoBook.Infrastructure`, `PhotoBook.Desktop.Wpf` и `PhotoBook.Application.Tests`.
+Имя сборки оболочки осталось `PhotoBookRenamer`: от него зависят установщик, ярлык,
+автообновление и пути к exe в `scripts\`.
 Имя проекта и пространство имён внутри него расходятся: `PhotoBook.Application` содержит
 `PhotoBookRenamer.Application`. Продукт переименован, а пространства имён оставлены как
 есть, чтобы не трогать ни одно представление, ни один ресурс и ни один сериализованный

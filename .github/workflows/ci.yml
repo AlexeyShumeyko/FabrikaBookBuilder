@@ -63,7 +63,7 @@ jobs:
 
     - name: Report version
       run: |
-        $version = (Select-Xml -Path "PhotoBookRenamer.csproj" -XPath "//Version").Node.InnerText
+        $version = (Select-Xml -Path "src\PhotoBook.Desktop.Wpf\PhotoBook.Desktop.Wpf.csproj" -XPath "//Version").Node.InnerText
         Write-Host "Version in csproj: $version"
         Write-Host "Note: the version is only published to customers when this code is merged into master."
 

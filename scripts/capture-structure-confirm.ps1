@@ -39,6 +39,12 @@ public class Win5 {
     [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr h);
     [DllImport("user32.dll")] private static extern IntPtr GetWindow(IntPtr h, uint cmd);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowTextW(IntPtr h, System.Text.StringBuilder s, int max);
+    public static string Title(IntPtr h) {
+        var sb = new System.Text.StringBuilder(512);
+        GetWindowTextW(h, sb, sb.Capacity);
+        return sb.ToString();
+    }
 
     public static IntPtr[] Visible(int pid) {
         var f = new List<IntPtr>();
@@ -54,6 +60,13 @@ public class Win5 {
     }
 }
 "@
+
+# The window title this dialog carries. Anything else on screen is a different
+# The text on the button that confirms this dialog. A window is identified by
+# what it contains rather than by its caption: these windows draw their own
+# chrome and Win32 reports an empty title for them, so a caption check would
+# match nothing - or, worse, the wrong window.
+$confirmLabel = 'Уменьшить'
 
 function Find-ByName($rootEl, [string]$label, [string]$typeName) {
     $ct = [System.Windows.Automation.ControlType]::$typeName
@@ -75,7 +88,7 @@ if (Get-Process -Name PhotoBookRenamer -ErrorAction SilentlyContinue) { throw 'c
 
 $proc = $null
 try {
-    $exe = Join-Path $root 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+    $exe = Join-Path $root 'src\PhotoBook.Desktop.Wpf\bin\Release\net8.0-windows\PhotoBookRenamer.exe'
     $proc = Start-Process -FilePath $exe -PassThru
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
@@ -152,6 +165,7 @@ try {
     }
 
     $dlg = [intptr]::Zero
+    $seen = 0
     $deadline = (Get-Date).AddSeconds(25)
     while ((Get-Date) -lt $deadline -and $dlg -eq [intptr]::Zero) {
         $proc.Refresh()
@@ -161,13 +175,18 @@ try {
         # the scan correct if the app ever relaunches itself.
         $ownerPid = 0
         [void][Win5]::GetWindowThreadProcessId($hwnd, [ref]$ownerPid)
-        foreach ($h in [Win5]::Visible($ownerPid)) { if ($h -ne $hwnd) { $dlg = $h; break } }
+        foreach ($h in [Win5]::Visible($ownerPid)) {
+            if ($h -eq $hwnd) { continue }
+            $seen++
+            $candidate = [System.Windows.Automation.AutomationElement]::FromHandle($h)
+            if ($null -ne (Find-ByName $candidate $confirmLabel 'Button')) { $dlg = $h; break }
+        }
         if ($dlg -eq [intptr]::Zero) { Start-Sleep -Milliseconds 500 }
     }
     if ($dlg -eq [intptr]::Zero) {
         Write-Host "launched pid $($proc.Id), main hwnd $hwnd, exited=$($proc.HasExited)"
         Write-Host "visible top-level windows: $([Win5]::Visible($proc.Id).Count)"
-        throw 'the confirmation never appeared'
+        throw ('the confirmation never appeared; other top-level windows of the app: ' + $seen)
     }
 
     [void][Win5]::SetForegroundWindow($dlg)

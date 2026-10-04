@@ -128,7 +128,7 @@ function Invoke-Element($el) {
 }
 
 try {
-    $exe = Join-Path $root 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+    $exe = Join-Path $root 'src\PhotoBook.Desktop.Wpf\bin\Release\net8.0-windows\PhotoBookRenamer.exe'
     $proc = Start-Process -FilePath $exe -PassThru
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {

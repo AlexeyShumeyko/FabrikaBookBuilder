@@ -67,7 +67,7 @@ $labelSpreads = [char]0x0420 + [char]0x0430 + [char]0x0437 + [char]0x0432 + [cha
 if (Get-Process -Name PhotoBookRenamer -ErrorAction SilentlyContinue) { throw 'close the app first' }
 $proc = $null
 try {
-    $exe = Join-Path (Split-Path -Parent $PSScriptRoot) 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+    $exe = Join-Path (Split-Path -Parent $PSScriptRoot) 'src\PhotoBook.Desktop.Wpf\bin\Release\net8.0-windows\PhotoBookRenamer.exe'
     $proc = Start-Process -FilePath $exe -PassThru
     $deadline = (Get-Date).AddSeconds(60)
     while ((Get-Date) -lt $deadline) {
