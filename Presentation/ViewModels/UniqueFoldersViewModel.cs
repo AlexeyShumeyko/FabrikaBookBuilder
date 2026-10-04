@@ -19,6 +19,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
     public class UniqueFoldersViewModel : ViewModelBase
     {
         private readonly IFileService _fileService;
+        private readonly IPickFiles _files;
         private readonly IImageService _imageService;
         private readonly IThumbnailProvider _thumbnails;
         private readonly IProjectService _projectService;
@@ -93,6 +94,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         public UniqueFoldersViewModel(
             IFileService fileService,
+            IPickFiles files,
             IImageService imageService,
             IThumbnailProvider thumbnails,
             IProjectService projectService,
@@ -101,6 +103,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             IProjectListService projectListService)
         {
             _fileService = fileService;
+            _files = files;
             _imageService = imageService;
             _thumbnails = thumbnails;
             _projectService = projectService;
@@ -739,7 +742,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             if (book == null) return;
 
             var files = await _fileService.GetJpegFilesAsync(book.FolderPath!);
-            var selectedFiles = await _fileService.SelectFilesAsync();
+            var selectedFiles = await _files.PickImagesAsync();
 
             if (selectedFiles != null && selectedFiles.Length > 0)
             {
