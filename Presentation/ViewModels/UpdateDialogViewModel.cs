@@ -7,13 +7,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBookRenamer.Application;
-using PhotoBookRenamer.Infrastructure;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
 {
     public class UpdateDialogViewModel : ViewModelBase
     {
-        private readonly IUpdateService _updateService;
+        private readonly IUpdateFeed _updates;
         private string _currentVersionText = "";
         private string _latestVersionText = "";
         private System.Windows.Documents.FlowDocument _notes =
@@ -23,10 +22,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private string _downloadProgressText = "";
         private bool _canUpdate = true;
 
-        public UpdateDialogViewModel(IUpdateService updateService, string latestVersion, string? releaseNotes)
+        public UpdateDialogViewModel(IUpdateFeed updates, string latestVersion, string? releaseNotes)
         {
-            _updateService = updateService;
-            CurrentVersionText = $"Текущая версия: {_updateService.GetCurrentVersion()}";
+            _updates = updates;
+            CurrentVersionText = $"Текущая версия: {_updates.GetCurrentVersion()}";
             LatestVersionText = $"Новая версия: {latestVersion}";
             // Rendered once, here: the dialog binds a document, not the raw markdown.
             // ReleaseNotesFormatter also drops what does not belong in front of a user -
@@ -100,7 +99,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 DownloadProgress = 0;
                 DownloadProgressText = "Подготовка...";
 
-                var downloadUrl = await _updateService.GetDownloadUrlAsync();
+                var downloadUrl = await _updates.GetDownloadUrlAsync();
                 if (string.IsNullOrEmpty(downloadUrl))
                 {
                     MessageBox.Show("Не удалось получить ссылку для загрузки обновления.",
@@ -116,15 +115,22 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     DownloadProgressText = $"Загружено: {percent:F1}%";
                 });
 
-                var success = await _updateService.DownloadAndInstallUpdateAsync(downloadUrl, progress);
+                var installer = await _updates.DownloadInstallerAsync(downloadUrl, progress);
 
-                if (!success)
+                if (installer == null)
                 {
                     MessageBox.Show("Не удалось загрузить или установить обновление.",
                         "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     IsDownloading = false;
                     CanUpdate = true;
+                    return;
                 }
+
+                // The installer is running and will replace the files of this installation.
+                // Ending the session is the shell's decision, not the feed's: the feed
+                // knows where the update came from, and nothing about this window.
+                await Task.Delay(1000);
+                System.Windows.Application.Current.Shutdown();
             }
             catch (Exception ex)
             {

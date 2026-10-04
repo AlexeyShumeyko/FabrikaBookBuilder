@@ -1,4 +1,3 @@
-using PhotoBook.Application;
 using System;
 using System.Collections.Concurrent;
 using System.Globalization;
@@ -8,6 +7,7 @@ using System.Text;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using PhotoBookRenamer.Application;
 
 namespace PhotoBookRenamer.Presentation.Converters
 {

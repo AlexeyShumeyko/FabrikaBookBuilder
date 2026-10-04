@@ -2,7 +2,7 @@ using PhotoBookRenamer.Application;
 using PhotoBook.Core;
 using PhotoBookRenamer.Infrastructure;
 
-namespace PhotoBook.Application.Tests;
+namespace PhotoBookRenamer.Application.Tests;
 
 /// <summary>
 /// A project written by version 1.1.1 has to open in every later version and export the

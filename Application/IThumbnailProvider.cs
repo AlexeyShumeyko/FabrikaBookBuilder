@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-namespace PhotoBook.Application
+namespace PhotoBookRenamer.Application
 {
     /// <summary>
     /// Reduced copies of photographs, for the interface to draw.

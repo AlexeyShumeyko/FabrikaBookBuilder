@@ -1,4 +1,3 @@
-using PhotoBook.Application;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -80,7 +79,7 @@ namespace PhotoBookRenamer
                 {
                     await Task.Delay(2000); // Ждем 2 секунды после запуска приложения
 
-                    var updateService = _serviceProvider.GetRequiredService<IUpdateService>();
+                    var updateService = _serviceProvider.GetRequiredService<IUpdateFeed>();
                     var hasUpdate = await updateService.CheckForUpdatesAsync();
                     if (hasUpdate)
                     {
@@ -124,7 +123,7 @@ namespace PhotoBookRenamer
             services.AddSingleton<IThumbnailProvider, ThumbnailProvider>();
             services.AddSingleton<IPickFiles, Presentation.Services.WpfFilePicker>();
             services.AddSingleton<IExportService, ExportService>();
-            services.AddSingleton<IUpdateService, UpdateService>();
+            services.AddSingleton<IUpdateFeed, UpdateService>();
             services.AddSingleton<ILoggingService, LoggingService>();
             services.AddSingleton<IProjectService, ProjectService>();
             services.AddSingleton<IProjectListService, ProjectListService>();

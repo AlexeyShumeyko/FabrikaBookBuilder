@@ -1,4 +1,3 @@
-using PhotoBook.Application;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using PhotoBook.Core;
+using PhotoBookRenamer.Application;
 using PhotoBookRenamer.Application;
 using PhotoBookRenamer.Infrastructure;
 using PhotoBookRenamer.Presentation.Views;

@@ -4,7 +4,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace PhotoBook.Application
+namespace PhotoBookRenamer.Application
 {
     /// <summary>
     /// Where a reduced copy of a photograph lives.
