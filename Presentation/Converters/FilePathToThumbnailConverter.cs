@@ -1,3 +1,4 @@
+using PhotoBook.Application;
 using System;
 using System.Collections.Concurrent;
 using System.Globalization;
@@ -52,8 +53,6 @@ namespace PhotoBookRenamer.Presentation.Converters
         private const int MaxCached = 400;
 
         private static readonly ConcurrentDictionary<string, BitmapSource?> Cache = new(StringComparer.OrdinalIgnoreCase);
-        private static readonly ConcurrentDictionary<string, string> Hashes = new(StringComparer.OrdinalIgnoreCase);
-
         public object Convert(object value, Type targetType, object? parameter, CultureInfo culture)
         {
             PhotoBookRenamer.Presentation.PerfPhase.Count("FilePathToThumbnailConverter");
@@ -79,11 +78,9 @@ namespace PhotoBookRenamer.Presentation.Converters
 
         private static BitmapSource? Load(string filePath, int decode)
         {
-            string thumbPath = Path.Combine(
-                Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails",
-                GetFilePathHash(filePath) + "_thumb.jpg");
+            var existing = ThumbnailStore.GetExistingPath(filePath);
 
-            if (File.Exists(thumbPath))
+            if (existing != null)
             {
                 try
                 {
@@ -92,7 +89,7 @@ namespace PhotoBookRenamer.Presentation.Converters
                     var bitmap = new BitmapImage();
                     bitmap.BeginInit();
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.UriSource = new Uri(thumbPath, UriKind.Absolute);
+                    bitmap.UriSource = new Uri(existing, UriKind.Absolute);
                     bitmap.EndInit();
                     bitmap.Freeze();
                     return bitmap;
@@ -125,25 +122,6 @@ namespace PhotoBookRenamer.Presentation.Converters
             }
         }
 
-        /// <summary>
-        /// A stable per-path id, computed once. Sixteen hex characters of SHA-256 is more
-        /// than enough to keep two photos with the same file name apart, and it is what
-        /// the thumbnail files on disk are named after - so the name cannot change.
-        /// </summary>
-        private static string GetFilePathHash(string filePath)
-        {
-            if (Hashes.TryGetValue(filePath, out var known)) return known;
-
-            string hash;
-            using (var sha256 = SHA256.Create())
-            {
-                var bytes = Encoding.UTF8.GetBytes(filePath);
-                hash = BitConverter.ToString(sha256.ComputeHash(bytes)).Replace("-", "").Substring(0, 16);
-            }
-
-            Hashes[filePath] = hash;
-            return hash;
-        }
 
         /// <summary>
         /// Drops the decoded bitmaps. Called where the program already drops the slot
@@ -152,7 +130,6 @@ namespace PhotoBookRenamer.Presentation.Converters
         public static void ClearCache()
         {
             Cache.Clear();
-            Hashes.Clear();
         }
 
         public object ConvertBack(object value, Type targetType, object? parameter, CultureInfo culture)
