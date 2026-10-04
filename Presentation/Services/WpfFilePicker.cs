@@ -1,8 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
+using PhotoBookRenamer.Application;
 
 using Microsoft.Win32;
-using PhotoBook.Application;
 
 namespace PhotoBookRenamer.Presentation.Services
 {

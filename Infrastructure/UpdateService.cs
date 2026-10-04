@@ -1,19 +1,34 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
+using PhotoBookRenamer.Application;
 using Octokit;
 
 namespace PhotoBookRenamer.Infrastructure
 {
-    public class UpdateService : IUpdateService
+    /// <summary>
+    /// The update feed on GitHub Releases.
+    ///
+    /// <para>
+    /// Behaviour is unchanged from the version that was verified end to end: a release that
+    /// cannot be reached is reported as "no update" rather than as an exception, the download
+    /// goes to a temporary folder, an archive is unpacked and the installer inside it is
+    /// started with the rights it asks for. What changed is the last step - this class used
+    /// to close the program itself, which is why the layer that talks to GitHub could not be
+    /// built without a user interface. It now returns the installer and lets the shell decide
+    /// to leave.
+    /// </para>
+    /// </summary>
+    public class UpdateService : IUpdateFeed
     {
         private readonly GitHubClient _client;
         private readonly HttpClient _httpClient;
+
         private const string Owner = "AlexeyShumeyko";
         private const string Repo = "FabrikaBookBuilder";
 
@@ -26,7 +41,7 @@ namespace PhotoBookRenamer.Infrastructure
 
         public string GetCurrentVersion()
         {
-            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            var version = typeof(UpdateService).Assembly.GetName().Version;
             return $"{version.Major}.{version.Minor}.{version.Build}";
         }
 
@@ -80,31 +95,23 @@ namespace PhotoBookRenamer.Infrastructure
             try
             {
                 var releases = await _client.Repository.Release.GetLatest(Owner, Repo);
-                var version = releases.TagName.TrimStart('v');
 
-                // Ищем ZIP файл с установщиком (приоритет на файл без версии, затем с версией)
                 foreach (var asset in releases.Assets)
                 {
                     if (asset.Name == "BookBuilder-Studio-Setup.zip")
-                    {
                         return asset.BrowserDownloadUrl;
-                    }
                 }
 
                 foreach (var asset in releases.Assets)
                 {
                     if (asset.Name.Contains("BookBuilder-Studio-Setup") && asset.Name.EndsWith(".zip"))
-                    {
                         return asset.BrowserDownloadUrl;
-                    }
                 }
 
                 foreach (var asset in releases.Assets)
                 {
                     if (asset.Name.Contains("BookBuilder-Studio-Setup") && asset.Name.EndsWith(".exe"))
-                    {
                         return asset.BrowserDownloadUrl;
-                    }
                 }
 
                 return null;
@@ -115,7 +122,10 @@ namespace PhotoBookRenamer.Infrastructure
             }
         }
 
-        public async Task<bool> DownloadAndInstallUpdateAsync(string downloadUrl, IProgress<double>? progress = null)
+        public async Task<string?> DownloadInstallerAsync(
+            string downloadUrl,
+            IProgress<double>? progress = null,
+            CancellationToken cancellationToken = default)
         {
             try
             {
@@ -126,28 +136,27 @@ namespace PhotoBookRenamer.Infrastructure
                 }
                 Directory.CreateDirectory(tempDir);
 
-                // Определяем расширение файла из URL
                 var isZip = downloadUrl.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
                 var isExe = downloadUrl.EndsWith(".exe", StringComparison.OrdinalIgnoreCase);
                 var extension = isZip ? ".zip" : (isExe ? ".exe" : ".zip");
                 var filePath = Path.Combine(tempDir, $"update{extension}");
 
-                // Загружаем файл
-                using (var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead))
+                using (var response = await _httpClient.GetAsync(
+                           downloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken))
                 {
                     response.EnsureSuccessStatusCode();
                     var totalBytes = response.Content.Headers.ContentLength ?? 0L;
                     var downloadedBytes = 0L;
 
                     using (var fileStream = new FileStream(filePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.None))
-                    using (var contentStream = await response.Content.ReadAsStreamAsync())
+                    using (var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken))
                     {
                         var buffer = new byte[8192];
                         int bytesRead;
 
-                        while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                        while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
                         {
-                            await fileStream.WriteAsync(buffer, 0, bytesRead);
+                            await fileStream.WriteAsync(buffer, 0, bytesRead, cancellationToken);
                             downloadedBytes += bytesRead;
 
                             if (totalBytes > 0 && progress != null)
@@ -159,87 +168,59 @@ namespace PhotoBookRenamer.Infrastructure
                     }
                 }
 
-                // Если это ZIP - распаковываем и ищем EXE установщик
                 if (isZip)
                 {
                     var extractPath = Path.Combine(tempDir, "extracted");
                     Directory.CreateDirectory(extractPath);
                     ZipFile.ExtractToDirectory(filePath, extractPath);
 
-                    // Ищем EXE установщик в распакованном архиве
                     var installerExe = Directory.GetFiles(extractPath, "*.exe", SearchOption.AllDirectories)
                         .FirstOrDefault(f => Path.GetFileName(f).Contains("BookBuilder-Studio-Setup"));
 
-                    if (installerExe != null && File.Exists(installerExe))
+                    if (installerExe != null)
                     {
-                        var processInfo = new System.Diagnostics.ProcessStartInfo
-                        {
-                            FileName = installerExe,
-                            UseShellExecute = true,
-                            Verb = "runas" // Запуск от имени администратора
-                        };
-
-                        System.Diagnostics.Process.Start(processInfo);
-
-                        // Закрываем текущее приложение
-                        await Task.Delay(1000);
-                        System.Windows.Application.Current.Shutdown();
-
-                        return true;
+                        return StartElevated(installerExe);
                     }
 
                     var installerPath = Path.Combine(extractPath, "install.bat");
                     if (File.Exists(installerPath))
                     {
-                        var processInfo = new System.Diagnostics.ProcessStartInfo
+                        var info = new ProcessStartInfo
                         {
                             FileName = installerPath,
                             WorkingDirectory = extractPath,
                             UseShellExecute = true,
-                            Verb = "runas" // Запуск от имени администратора
+                            Verb = "runas"
                         };
-
-                        System.Diagnostics.Process.Start(processInfo);
-
-                        // Закрываем текущее приложение
-                        await Task.Delay(1000);
-                        System.Windows.Application.Current.Shutdown();
-
-                        return true;
+                        Process.Start(info);
+                        return installerPath;
                     }
                 }
 
-                // Если это EXE установщик - запускаем напрямую
                 if (isExe)
                 {
-                    var processInfo = new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = filePath,
-                        UseShellExecute = true,
-                        Verb = "runas" // Запуск от имени администратора
-                    };
-
-                    System.Diagnostics.Process.Start(processInfo);
-
-                    // Закрываем текущее приложение
-                    await Task.Delay(1000);
-                    System.Windows.Application.Current.Shutdown();
-
-                    return true;
+                    return StartElevated(filePath);
                 }
 
-                return false;
+                return null;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Ошибка при загрузке обновления: {ex.Message}");
-                return false;
+                Debug.WriteLine($"Не удалось загрузить обновление: {ex.Message}");
+                return null;
             }
+        }
+
+        private static string StartElevated(string path)
+        {
+            var info = new ProcessStartInfo
+            {
+                FileName = path,
+                UseShellExecute = true,
+                Verb = "runas"
+            };
+            Process.Start(info);
+            return path;
         }
     }
 }
-
-
-
-
-

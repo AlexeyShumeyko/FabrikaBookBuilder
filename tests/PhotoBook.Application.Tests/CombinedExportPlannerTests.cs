@@ -1,7 +1,7 @@
 using PhotoBookRenamer.Application;
 using PhotoBook.Core;
 
-namespace PhotoBook.Application.Tests;
+namespace PhotoBookRenamer.Application.Tests;
 
 /// <summary>
 /// The combined run's file set. 000 means "this position is the default for every book",

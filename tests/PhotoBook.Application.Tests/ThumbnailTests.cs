@@ -1,10 +1,9 @@
-using PhotoBook.Application;
 using PhotoBookRenamer.Infrastructure;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace PhotoBook.Application.Tests;
+namespace PhotoBookRenamer.Application.Tests;
 
 /// <summary>
 /// Where a reduced copy lives, and that one is produced. The formula in particular used to be

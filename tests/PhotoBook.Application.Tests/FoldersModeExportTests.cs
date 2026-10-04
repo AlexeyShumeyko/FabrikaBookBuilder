@@ -1,7 +1,7 @@
 using PhotoBookRenamer.Application;
 using PhotoBookRenamer.Infrastructure;
 
-namespace PhotoBook.Application.Tests;
+namespace PhotoBookRenamer.Application.Tests;
 
 /// <summary>
 /// The folders mode export, end to end: real files in a temporary directory, real copies,
