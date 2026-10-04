@@ -1,0 +1,74 @@
+# Editor and formatter settings, shared by every tool that reads this file: Visual Studio,
+# Rider, `dotnet format` and Roslyn's analyzers. A rule that is only written in a document
+# is a rule that stops being applied the first time somebody uses a different editor.
+#
+# The formatting section describes what the repository already does. `dotnet format
+# --verify-no-changes` is a CI gate, so every rule below has to hold for the code as it
+# stands - a rule nobody follows is a gate that fails for no reason.
+#
+# Rules that are meant to be raised later are listed at the end of the file, commented out.
+
+root = true
+
+# ---------------------------------------------------------------------------- files
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{json,yml,yaml,props,targets,csproj,sln}]
+indent_size = 2
+
+[*.{xaml,resx}]
+indent_size = 2
+
+[*.{png,jpg,jpeg,gif,ico,zip,exe,dll,pdb,woff,woff2,ttf}]
+insert_final_newline = false
+trim_trailing_whitespace = false
+charset = unset
+
+[*.md]
+# A trailing pair of spaces is a line break in Markdown, so it must survive.
+trim_trailing_whitespace = false
+
+[*.ps1]
+indent_size = 4
+
+[*.sh]
+indent_size = 2
+
+# ---------------------------------------------------------------------------- C#
+
+[*.cs]
+
+# Naming. Nothing here deviates from the defaults yet; they are written down so that a
+# later change to one of them is a visible decision.
+dotnet_naming_rule.private_fields_underscore.severity = suggestion
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = underscore_prefix
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.underscore_prefix.required_prefix = _
+dotnet_naming_style.underscore_prefix.capitalization = camel_case
+
+# Async. A call that is deliberately not awaited has to say so, and Background.Run is the
+# only sanctioned way in this codebase.
+dotnet_diagnostic.CS4014.severity = warning
+
+# --------------------------------------------------------------------- to raise later
+#
+# The rules below are off until the code satisfies them. Each one becomes a CI gate in the
+# same commit that makes the code comply.
+#
+# CA1062        validate arguments of public methods - Domain and Application first
+# CA2007        ConfigureAwait on library code
+# CA1305       specify IFormatProvider
+# IDE0055       formatting (the `dotnet format` gate covers it)
+# dotnet_diagnostic.CA1848.severity = warning      use LoggerMessage delegates
+# dotnet_diagnostic.CA2007.severity = warning
+# dotnet_diagnostic.CA1305.severity = warning

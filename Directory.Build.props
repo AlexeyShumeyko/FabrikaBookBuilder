@@ -1,0 +1,38 @@
+<!--
+  Build settings shared by every project in the repository.
+
+  They live here rather than in the individual project files so that a new project starts
+  from the same rules as the existing ones instead of from whatever was in its template.
+
+  Two of them are not cosmetic:
+
+  LangVersion    pinned, so the compiler does not change behaviour when a machine installs
+                 a different SDK. The SDK itself is pinned in global.json.
+  Nullable       the code is already annotated; this keeps it on for anything added later.
+-->
+<Project>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <Deterministic>true</Deterministic>
+    <NeutralLanguage>ru-RU</NeutralLanguage>
+    <Company>Фотопринт</Company>
+    <Product>Fabrika BookBuilder Studio</Product>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      .NET analyzers are on by default for net8.0 and currently report nothing: all 95
+      warnings in the solution are compiler warnings about nullability and async
+      discipline (CS8602, CS8603, CS8604, CS4014, CS1998, CS0168, CS0169, CS8618, CS8625).
+
+      TreatWarningsAsErrors stays off until that list is empty. Turning it on first would
+      mean either ignoring the new warnings - which makes the setting a lie - or stopping
+      work on the 95. It is switched on as the warnings are fixed, one area at a time, and
+      the roadmap carries it as its own step.
+    -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>
