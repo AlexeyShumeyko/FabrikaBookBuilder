@@ -1,3 +1,4 @@
+using PhotoBook.Application;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -19,6 +20,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
     {
         private readonly IFileService _fileService;
         private readonly IImageService _imageService;
+        private readonly IThumbnailProvider _thumbnails;
         private readonly IProjectService _projectService;
         private readonly IExportService _exportService;
         private readonly ILoggingService _loggingService;
@@ -92,6 +94,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         public UniqueFoldersViewModel(
             IFileService fileService,
             IImageService imageService,
+            IThumbnailProvider thumbnails,
             IProjectService projectService,
             IExportService exportService,
             ILoggingService loggingService,
@@ -99,6 +102,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             _fileService = fileService;
             _imageService = imageService;
+            _thumbnails = thumbnails;
             _projectService = projectService;
             _exportService = exportService;
             _loggingService = loggingService;
@@ -340,13 +344,13 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     if (book.Cover != null)
                     {
-                        book.Cover.ThumbnailPath = _imageService.GetThumbnailPath(book.Cover.SourcePath ?? string.Empty);
+                        book.Cover.ThumbnailPath = _thumbnails.GetExistingPath(book.Cover.SourcePath ?? string.Empty);
                     }
 
                     foreach (var page in book.Pages)
                     {
                         if (page != null)
-                            page.ThumbnailPath = _imageService.GetThumbnailPath(page.SourcePath ?? string.Empty);
+                            page.ThumbnailPath = _thumbnails.GetExistingPath(page.SourcePath ?? string.Empty);
                     }
                 }
 
@@ -362,7 +366,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 // остаются пустыми серыми рамками до пересохранения проекта.
                 Background.Run(async () =>
                 {
-                    await _imageService.LoadThumbnailsAsync(allImagePaths!);
+                    await _thumbnails.EnsureAsync(allImagePaths!);
                     await Presentation.Converters.PageSourceConverter.PrewarmAsync(allImagePaths!);
 
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -371,7 +375,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         {
                             if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
                             {
-                                var thumb = _imageService.GetThumbnailPath(book.Cover.SourcePath!);
+                                var thumb = _thumbnails.GetExistingPath(book.Cover.SourcePath!);
                                 if (thumb != null && book.Cover.ThumbnailPath != thumb)
                                 {
                                     book.Cover.ThumbnailPath = thumb;
@@ -381,7 +385,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                             foreach (var page in book.Pages.Where(p => !string.IsNullOrEmpty(p.SourcePath)))
                             {
-                                var thumb = _imageService.GetThumbnailPath(page.SourcePath!);
+                                var thumb = _thumbnails.GetExistingPath(page.SourcePath!);
                                 if (thumb != null && page.ThumbnailPath != thumb)
                                 {
                                     page.ThumbnailPath = thumb;
@@ -659,12 +663,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
                     {
-                        var thumbDir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails");
-                        // КРИТИЧЕСКИ ВАЖНО: Используем хэш полного пути для создания уникального имени миниатюры
-                        // Это предотвращает конфликты при одинаковых именах файлов в разных папках
-                        var filePathHash = _imageService.GetFilePathHash(book.Cover.SourcePath);
-                        var thumbName = $"{filePathHash}_thumb.jpg";
-                        var thumbPath = Path.Combine(thumbDir, thumbName);
+                        var thumbPath = ThumbnailStore.GetPath(book.Cover.SourcePath);
 
                         // Устанавливаем путь к миниатюре только если она уже существует
                         if (File.Exists(thumbPath))
@@ -675,12 +674,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                     foreach (var page in book.Pages.Where(p => !string.IsNullOrEmpty(p.SourcePath)))
                     {
-                        var thumbDir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails");
-                        // КРИТИЧЕСКИ ВАЖНО: Используем хэш полного пути для создания уникального имени миниатюры
-                        // Это предотвращает конфликты при одинаковых именах файлов в разных папках
-                        var filePathHash = _imageService.GetFilePathHash(page.SourcePath);
-                        var thumbName = $"{filePathHash}_thumb.jpg";
-                        var thumbPath = Path.Combine(thumbDir, thumbName);
+                        var thumbPath = ThumbnailStore.GetPath(page.SourcePath);
 
                         // Устанавливаем путь к миниатюре только если она уже существует
                         if (File.Exists(thumbPath))
@@ -699,7 +693,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 // Загружаем миниатюры в фоне, чтобы не блокировать UI
                 Background.Run(async () =>
                 {
-                    await _imageService.LoadThumbnailsAsync(allImagePaths!);
+                    await _thumbnails.EnsureAsync(allImagePaths!);
                     // Обновляем ThumbnailPath для всех страниц и обложек после загрузки миниатюр
                     // Используем Dispatcher для обновления UI на правильном потоке
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -708,10 +702,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         {
                             if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
                             {
-                                var thumbDir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails");
-                                var filePathHash = _imageService.GetFilePathHash(book.Cover.SourcePath);
-                                var thumbName = $"{filePathHash}_thumb.jpg";
-                                var thumbPath = Path.Combine(thumbDir, thumbName);
+                                var thumbPath = ThumbnailStore.GetPath(book.Cover.SourcePath);
 
                                 if (File.Exists(thumbPath) && book.Cover.ThumbnailPath != thumbPath)
                                 {
@@ -721,10 +712,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                             foreach (var page in book.Pages.Where(p => !string.IsNullOrEmpty(p.SourcePath)))
                             {
-                                var thumbDir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails");
-                                var filePathHash = _imageService.GetFilePathHash(page.SourcePath);
-                                var thumbName = $"{filePathHash}_thumb.jpg";
-                                var thumbPath = Path.Combine(thumbDir, thumbName);
+                                var thumbPath = ThumbnailStore.GetPath(page.SourcePath);
 
                                 if (File.Exists(thumbPath) && page.ThumbnailPath != thumbPath)
                                 {
@@ -1130,24 +1118,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             if (string.IsNullOrEmpty(page.SourcePath)) return;
 
-            var thumbDir = Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails");
-            if (!Directory.Exists(thumbDir))
-            {
-                Directory.CreateDirectory(thumbDir);
-            }
+            var thumbPath = ThumbnailStore.GetPath(page.SourcePath);
 
-            // КРИТИЧЕСКИ ВАЖНО: Используем хэш полного пути для создания уникального имени миниатюры
-            // Это предотвращает конфликты при одинаковых именах файлов в разных папках
-            var filePathHash = _imageService.GetFilePathHash(page.SourcePath);
-            var thumbName = $"{filePathHash}_thumb.jpg";
-            var thumbPath = Path.Combine(thumbDir, thumbName);
-
-            if (!File.Exists(thumbPath))
-            {
-                await _imageService.CreateThumbnailAsync(page.SourcePath, thumbPath);
-            }
-
-            page.ThumbnailPath = thumbPath;
+            page.ThumbnailPath = await _thumbnails.GetOrCreateAsync(page.SourcePath) ?? thumbPath;
         }
 
         /// <summary>

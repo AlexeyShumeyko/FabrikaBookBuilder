@@ -1,3 +1,4 @@
+using PhotoBook.Application;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -120,6 +121,7 @@ namespace PhotoBookRenamer
             // Services
             services.AddSingleton<IFileService, FileService>();
             services.AddSingleton<IImageService, ImageService>();
+            services.AddSingleton<IThumbnailProvider, ThumbnailProvider>();
             services.AddSingleton<IExportService, ExportService>();
             services.AddSingleton<IUpdateService, UpdateService>();
             services.AddSingleton<ILoggingService, LoggingService>();

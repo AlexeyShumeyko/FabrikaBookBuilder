@@ -1,3 +1,4 @@
+using PhotoBook.Application;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -22,6 +23,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
     {
         private readonly IFileService _fileService;
         private readonly IImageService _imageService;
+        private readonly IThumbnailProvider _thumbnails;
         private readonly IExportService _exportService;
         private readonly ILoggingService _loggingService;
         private readonly IProjectService _projectService;
@@ -39,6 +41,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         public CombinedModeViewModel(
             IFileService fileService,
             IImageService imageService,
+            IThumbnailProvider thumbnails,
             IExportService exportService,
             ILoggingService loggingService,
             IProjectService projectService,
@@ -46,6 +49,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             _fileService = fileService;
             _imageService = imageService;
+            _thumbnails = thumbnails;
             _exportService = exportService;
             _loggingService = loggingService;
             _projectService = projectService;
@@ -791,7 +795,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         }
                     }
 
-                    Background.Run(async () => await _imageService.LoadThumbnailsAsync(AvailableFiles), "load thumbnails");
+                    Background.Run(async () => await _thumbnails.EnsureAsync(AvailableFiles), "load thumbnails");
                 }
                 finally
                 {
@@ -1420,12 +1424,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         // One helper owns the thumbnail's path now. It used to be rebuilt
                         // inline here, once per mode, which is three copies of one formula.
                         if (book.Cover != null)
-                            book.Cover.ThumbnailPath = _imageService.GetThumbnailPath(book.Cover.SourcePath ?? string.Empty);
+                            book.Cover.ThumbnailPath = _thumbnails.GetExistingPath(book.Cover.SourcePath ?? string.Empty);
 
                         foreach (var page in book.Pages)
                         {
                             if (page != null)
-                                page.ThumbnailPath = _imageService.GetThumbnailPath(page.SourcePath ?? string.Empty);
+                                page.ThumbnailPath = _thumbnails.GetExistingPath(page.SourcePath ?? string.Empty);
                         }
                     }
 
@@ -1487,7 +1491,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             }
             if (AvailableFiles.Any())
             {
-                Background.Run(async () => await _imageService.LoadThumbnailsAsync(AvailableFiles), "load thumbnails");
+                Background.Run(async () => await _thumbnails.EnsureAsync(AvailableFiles), "load thumbnails");
             }
 
             UpdateExportCommands();
@@ -1514,7 +1518,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             try
             {
-                await _imageService.LoadThumbnailsAsync(imagePaths);
+                await _thumbnails.EnsureAsync(imagePaths);
             }
             catch (Exception ex)
             {
@@ -1538,7 +1542,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     {
                         if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
                         {
-                            var thumb = _imageService.GetThumbnailPath(book.Cover.SourcePath!);
+                            var thumb = _thumbnails.GetExistingPath(book.Cover.SourcePath!);
                             if (thumb != null && book.Cover.ThumbnailPath != thumb)
                             {
                                 book.Cover.ThumbnailPath = thumb;
@@ -1548,7 +1552,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                         foreach (var page in book.Pages.Where(p => p != null && !string.IsNullOrEmpty(p.SourcePath)))
                         {
-                            var thumb = _imageService.GetThumbnailPath(page.SourcePath!);
+                            var thumb = _thumbnails.GetExistingPath(page.SourcePath!);
                             if (thumb != null && page.ThumbnailPath != thumb)
                             {
                                 page.ThumbnailPath = thumb;
@@ -2218,7 +2222,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             var paths = AvailableFiles.ToList();
             Background.Run(async () =>
             {
-                await _imageService.LoadThumbnailsAsync(paths);
+                await _thumbnails.EnsureAsync(paths);
                 Presentation.Converters.PageSourceConverter.ClearCache();
                 Presentation.Converters.FilePathToThumbnailConverter.ClearCache();
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
