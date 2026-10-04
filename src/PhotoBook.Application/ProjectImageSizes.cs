@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using PhotoBook.Core;
-using PhotoBookRenamer.Infrastructure;
 
 namespace PhotoBookRenamer.Application
 {
@@ -16,14 +15,19 @@ namespace PhotoBookRenamer.Application
     /// read, and ImageService caches the answer, so a project saved by this version never
     /// pays for it twice.
     /// </remarks>
-    internal static class ProjectImageSizes
+    /// <para>
+    /// Public because the callers are in two different assemblies and the alternative is a
+    /// duplication: the rules here and the repository that stores the file.
+    /// </para>
+    /// </remarks>
+    public static class ProjectImageSizes
     {
         /// <summary>
         /// Fills <see cref="Page.ImageWidth"/> / <see cref="Page.ImageHeight"/> from the files
         /// on disk for pages that do not have them yet, and re-derives each book's card frame.
         /// A project that already knows its sizes is not touched, and not read from disk.
         /// </summary>
-        internal static async Task FillMissingAsync(Project? project, IImageService images)
+        public static async Task FillMissingAsync(Project? project, IImageService images)
         {
             if (project?.Books == null) return;
 

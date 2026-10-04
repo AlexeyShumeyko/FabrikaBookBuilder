@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-namespace PhotoBookRenamer.Infrastructure
+namespace PhotoBookRenamer.Application
 {
     /// <summary>
     /// What a photograph says about itself. Reduced copies are a separate concern, behind

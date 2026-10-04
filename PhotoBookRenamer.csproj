@@ -1,3 +1,19 @@
+<!--
+  The shell: windows, dialogs, view models, converters - and the composition root in App.xaml.cs.
+
+  This project is the only one that knows WPF exists. It references the two layers below it
+  and nothing above, so a rule that belongs in PhotoBook.Application or
+  PhotoBook.Infrastructure cannot be quietly implemented here.
+
+  The project sits in the repository root and the SDK globs every .cs file below it, which is
+  why src\ and tests\ are excluded below: without that the shell would start compiling the
+  other projects' sources. When the shell moves into src\ of its own (roadmap step 1.5b)
+  those exclusions become unnecessary and can go.
+
+  AssemblyName stays PhotoBookRenamer. The installer, the shortcut, the auto-updater and the
+  published layout all refer to that name; RootNamespace stays with it so the generated
+  Application class still matches x:Class="PhotoBookRenamer.App" in App.xaml.
+-->
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
@@ -17,20 +33,14 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
-    <PackageReference Include="System.IO.Abstractions" Version="19.2.69" />
-    <PackageReference Include="Octokit" Version="13.0.1" />
   </ItemGroup>
-
 
   <ItemGroup>
     <!--
       The project sits in the repository root, and the SDK globs every .cs file below it.
-      tests\ and src\ are therefore excluded from the application and reached through
-      project references instead. Without this the application starts compiling other
-      projects' sources - which is how a test project once ended up in the shipped build.
+      tests\ and src\ are therefore excluded from the shell and reached through project
+      references instead. Without this the shell starts compiling other projects' sources -
+      which is how a test project once ended up in the shipped build.
     -->
     <Compile Remove="tests\**" />
     <Compile Remove="src\**" />
@@ -39,7 +49,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="src\PhotoBook.Application\PhotoBook.Application.csproj" />
     <ProjectReference Include="src\PhotoBook.Core\PhotoBook.Core.csproj" />
+    <ProjectReference Include="src\PhotoBook.Infrastructure\PhotoBook.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -75,4 +87,3 @@
   </ItemGroup>
 
 </Project>
-

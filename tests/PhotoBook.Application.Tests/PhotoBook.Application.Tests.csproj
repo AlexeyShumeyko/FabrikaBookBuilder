@@ -3,18 +3,18 @@
   <!--
     Tests for the use cases and the rules they rely on.
 
-    The reference points at the application project because the split into
-    PhotoBook.Core / Application / Infrastructure has not happened yet. When it does, this
-    reference is repointed at PhotoBook.Application and nothing else here changes - which is
-    the point of naming the project after the layer it tests rather than after the
-    solution it happens to sit in.
+    The project is named after the layer it tests, and since the split into
+    PhotoBook.Core / Application / Infrastructure it references those projects directly
+    rather than the shell. It is net8.0 with no UseWPF for the same reason: if a test ever
+    needs a window, the build says so, and the windowed test is written deliberately instead
+    of arriving by accident because a reference reached the executable.
 
-    net8.0-windows, not net8.0: the application project is a WPF executable on that
-    framework, and a test project has to match what it references.
+    Not every adapter can be avoided - the thumbnail pass, the project file, the file layer
+    and image headers are all tested against the real implementations, because a stand-in
+    for the disk would only test the stand-in.
   -->
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
@@ -31,12 +31,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\PhotoBookRenamer.csproj" />
+    <ProjectReference Include="..\..\src\PhotoBook.Application\PhotoBook.Application.csproj" />
+    <ProjectReference Include="..\..\src\PhotoBook.Core\PhotoBook.Core.csproj" />
+    <ProjectReference Include="..\..\src\PhotoBook.Infrastructure\PhotoBook.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
-    <!-- System.IO is not in the implicit set for a UseWPF project, and the export tests
+    <!-- System.IO is not in the implicit set for a class library, and the export tests
          are entirely about files on disk. -->
     <Using Include="System.IO" />
   </ItemGroup>

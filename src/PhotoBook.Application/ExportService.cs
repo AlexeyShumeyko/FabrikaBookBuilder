@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using PhotoBook.Core;
-using PhotoBookRenamer.Infrastructure;
 
 namespace PhotoBookRenamer.Application
 {
