@@ -14,7 +14,7 @@ on:
     branches:
       - master
     # Docs/CI-only merges do not need a release, and a release always requires
-    # a version bump in PhotoBookRenamer.csproj, which is NOT ignored here.
+    # a version bump in src\PhotoBook.Desktop.Wpf\PhotoBook.Desktop.Wpf.csproj, which is NOT ignored here.
     # So this can never skip a real release - it only avoids a guaranteed-to-fail
     # run when only documentation or workflow files changed.
     paths-ignore:
@@ -92,7 +92,7 @@ jobs:
     - name: Get version from project
       id: get_version
       run: |
-        $version = (Select-Xml -Path "PhotoBookRenamer.csproj" -XPath "//Version").Node.InnerText
+        $version = (Select-Xml -Path "src\PhotoBook.Desktop.Wpf\PhotoBook.Desktop.Wpf.csproj" -XPath "//Version").Node.InnerText
         Write-Host "Version from csproj: $version"
         echo "VERSION=$version" >> $env:GITHUB_ENV
         echo "VERSION=$version" >> $env:GITHUB_OUTPUT
@@ -126,7 +126,7 @@ jobs:
 
         foreach ($r in $releases) {
           if ($r.tag_name -eq "v$version") {
-            Write-Error "Release v$version already exists. Bump <Version> in PhotoBookRenamer.csproj before pushing to master."
+            Write-Error "Release v$version already exists. Bump <Version> in src\PhotoBook.Desktop.Wpf\PhotoBook.Desktop.Wpf.csproj before pushing to master."
             exit 1
           }
         }
@@ -166,10 +166,10 @@ jobs:
         # died on exactly that, with a message about a missing file and no hint that the
         # icon was the cause. Copy it explicitly and fail here, loudly, if it is nowhere.
         if (-not (Test-Path ".\publish\icon.ico")) {
-          Copy-Item ".\icon.ico" ".\publish\icon.ico" -Force
+          Copy-Item ".\src\PhotoBook.Desktop.Wpf\icon.ico" ".\publish\icon.ico" -Force
         }
         if (-not (Test-Path ".\publish\icon.ico")) {
-          Write-Error "icon.ico is in neither the publish output nor the repository root"
+          Write-Error "icon.ico is in neither the publish output nor the shell project"
           exit 1
         }
     - name: Install Inno Setup

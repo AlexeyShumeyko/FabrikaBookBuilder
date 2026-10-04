@@ -107,7 +107,7 @@ if ($index -gt 0) {
 }
 
 
-$exe = Join-Path $root 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+$exe = Join-Path $root 'src\PhotoBook.Desktop.Wpf\bin\Release\net8.0-windows\PhotoBookRenamer.exe'
 $proc = Start-Process -FilePath $exe -PassThru
 $mainHwnd = [intptr]::Zero
 

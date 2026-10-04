@@ -40,7 +40,7 @@ public static class Probe {
 
 Get-Process PhotoBookRenamer -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 1
-$exe = Join-Path (Split-Path -Parent $PSScriptRoot) 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+$exe = Join-Path (Split-Path -Parent $PSScriptRoot) 'src\PhotoBook.Desktop.Wpf\bin\Release\net8.0-windows\PhotoBookRenamer.exe'
 $proc = Start-Process -FilePath $exe -PassThru
 
 $hwnd = [IntPtr]::Zero
