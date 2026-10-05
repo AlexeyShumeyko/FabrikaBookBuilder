@@ -18,7 +18,7 @@ namespace PhotoBookRenamer.Infrastructure
     /// else's job: see <see cref="ThumbnailProvider"/>.
     /// </para>
     /// </summary>
-    public class ImageService : IImageService
+    internal class ImageService : IImageService
     {
         private readonly Dictionary<string, (int Width, int Height)> _dimensionCache = new();
         private readonly object _cacheLock = new();

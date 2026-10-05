@@ -15,7 +15,7 @@ namespace PhotoBookRenamer.Application
     /// files itself with <c>System.IO.File</c>, which is why the layer that decides what a
     /// project is also knew where projects are kept.
     /// </remarks>
-    public class ProjectService : IProjectService
+    internal class ProjectService : IProjectService
     {
         private readonly IFileService _fileService;
         private readonly IImageService _imageService;

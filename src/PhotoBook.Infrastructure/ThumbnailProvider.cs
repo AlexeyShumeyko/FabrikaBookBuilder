@@ -44,7 +44,7 @@ namespace PhotoBookRenamer.Infrastructure
     /// memory - and into none of them once the machine is not idle.
     /// </para>
     /// </summary>
-    public class ThumbnailProvider : IThumbnailProvider
+    internal class ThumbnailProvider : IThumbnailProvider
     {
         /// <summary>Larger side of a reduced copy. A card cell is about 190 px tall.</summary>
         public const int MaxSize = 500;

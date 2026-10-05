@@ -9,7 +9,7 @@ using PhotoBook.Core;
 
 namespace PhotoBookRenamer.Application
 {
-    public class ProjectListService : IProjectListService
+    internal class ProjectListService : IProjectListService
     {
         private readonly string _projectsDirectory;
         private readonly string _projectsListPath;

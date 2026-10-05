@@ -25,7 +25,7 @@ namespace PhotoBookRenamer.Infrastructure
     /// to leave.
     /// </para>
     /// </summary>
-    public class UpdateService : IUpdateFeed
+    internal class UpdateService : IUpdateFeed
     {
         private readonly GitHubClient _client;
         private readonly HttpClient _httpClient;
