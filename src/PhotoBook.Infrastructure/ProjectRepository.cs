@@ -18,7 +18,7 @@ namespace PhotoBookRenamer.Infrastructure
     /// free to change. tests\PhotoBook.Application.Tests\ProjectCompatibilityTests.cs opens a
     /// copy of that file and fails if it stops opening.
     /// </remarks>
-    public class ProjectRepository : IProjectRepository
+    internal class ProjectRepository : IProjectRepository
     {
         private readonly IImageService _imageService;
 

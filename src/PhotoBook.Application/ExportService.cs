@@ -7,7 +7,7 @@ using PhotoBook.Core;
 
 namespace PhotoBookRenamer.Application
 {
-    public class ExportService : IExportService
+    internal class ExportService : IExportService
     {
         private readonly IFileService _fileService;
 

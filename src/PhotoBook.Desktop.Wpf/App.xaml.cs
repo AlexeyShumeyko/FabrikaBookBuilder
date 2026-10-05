@@ -122,22 +122,20 @@ namespace PhotoBookRenamer
                 builder.SetMinimumLevel(LogLevel.Information);
             });
 
-            // Services
-            services.AddSingleton<IFileService, FileService>();
-            services.AddSingleton<IImageService, ImageService>();
-            services.AddSingleton<IThumbnailProvider, ThumbnailProvider>();
+            // The two layers below assemble themselves: each knows what implements its
+            // ports, and the implementations are internal, so this is the only place in
+            // the program that could name a concrete one - and it no longer does.
+            services.AddPhotoBookApplication();
+            services.AddPhotoBookInfrastructure();
+
+            // The shell's own adapter: choosing a file needs a window, so it lives here.
             services.AddSingleton<IPickFiles, Presentation.Services.WpfFilePicker>();
-            services.AddSingleton<IExportService, ExportService>();
-            services.AddSingleton<IUpdateFeed, UpdateService>();
-            services.AddSingleton<ILoggingService, LoggingService>();
-            services.AddSingleton<IProjectService, ProjectService>();
-            services.AddSingleton<IProjectRepository, ProjectRepository>();
-            services.AddSingleton<IProjectListService, ProjectListService>();
 
             // ViewModels
-            // MainViewModel MUST be a singleton: it owns the persistent top bar and is
-            // resolved by the child ViewModels to switch screens. As a transient it was
-            // re-created on every navigation, which tore the header down each time.
+            // MainViewModel MUST be a singleton: it owns the persistent top bar, which has
+            // to survive every screen change. As a transient it was re-created on every
+            // navigation, which tore the header down each time. The editors are singletons
+            // for the same reason - their editing state has to outlive a view swap.
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<UniqueFoldersViewModel>();
             services.AddSingleton<CombinedModeViewModel>();

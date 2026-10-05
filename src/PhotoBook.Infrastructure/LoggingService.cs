@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace PhotoBookRenamer.Infrastructure
 {
-    public class LoggingService : ILoggingService
+    internal class LoggingService : ILoggingService
     {
         private readonly ILogger<LoggingService> _logger;
 

@@ -1,10 +1,14 @@
 <!--
   Scenarios and ports. What the program does, and what it needs from the machine to do it.
 
-  net8.0, no packages, no Windows: this project is where the answer to "would this compile
-  and run on Linux" is supposed to be "yes, and that is a deliberate state of affairs rather
-  than an accident". Anything that needs a disk, a network, an image library or a window is
-  declared here as an interface and implemented in Infrastructure or in the shell.
+  net8.0, no Windows: this project is where the answer to "would this compile and run on
+  Linux" is supposed to be "yes, and that is a deliberate state of affairs rather than an
+  accident". Anything that needs a disk, a network, an image library or a window is declared
+  here as an interface and implemented in Infrastructure or in the shell.
+
+  The only package is the dependency-injection abstractions, and it is there so this layer
+  can say how it is assembled - see ApplicationServices. The implementations it registers
+  are internal, which is what stops a view from constructing one.
 
   The name differs from the namespace inside it (PhotoBookRenamer.Application). The product
   was renamed from PhotoBookRenamer to Fabrika BookBuilder Studio; the namespaces were left
@@ -18,6 +22,10 @@
     <RootNamespace>PhotoBookRenamer.Application</RootNamespace>
     <Description>Use cases and ports. No technologies.</Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PhotoBook.Core\PhotoBook.Core.csproj" />

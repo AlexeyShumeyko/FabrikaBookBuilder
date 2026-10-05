@@ -16,7 +16,7 @@ namespace PhotoBookRenamer.Infrastructure
     /// <see cref="PhotoBookRenamer.Application.IPickFiles"/>.
     /// </para>
     /// </summary>
-    public class FileService : IFileService
+    internal class FileService : IFileService
     {
         private static readonly string[] JpegExtensions = { ".jpg", ".jpeg", ".JPG", ".JPEG" };
 
