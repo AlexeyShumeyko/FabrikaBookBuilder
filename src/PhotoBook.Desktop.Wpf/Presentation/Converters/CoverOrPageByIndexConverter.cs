@@ -10,9 +10,9 @@ namespace PhotoBookRenamer.Presentation.Converters
 {
     public class CoverOrPageByIndexConverter : IMultiValueConverter
     {
-        // КРИТИЧЕСКИ ВАЖНО: Кэш привязан к конкретной странице, а не к пути файла
-        // Это позволяет одному файлу использоваться в разных слотах без конфликтов
-        // Ключ: "BookIndex_PageIndex" -> BitmapImage
+        // Keyed by slot and page, never by file path: the same photograph may stand
+        // in several slots at once, and a cache keyed by path would hand one slot's
+        // copy to another.
         private static readonly Dictionary<string, BitmapImage> _imageCache = new();
         private static readonly object _cacheLock = new();
 
@@ -60,12 +60,10 @@ namespace PhotoBookRenamer.Presentation.Converters
                     return null;
                 }
 
-                // КРИТИЧЕСКИ ВАЖНО: Используем миниатюру, если она есть, для ускорения загрузки
                 var imagePath = targetPage.SourcePath;
                 var thumbnailPath = targetPage.ThumbnailPath;
                 var cacheKey = $"{slotIndex}_{imagePath}";
 
-                // КРИТИЧЕСКИ ВАЖНО: Сначала пытаемся использовать миниатюру, если она есть
                 if (!string.IsNullOrEmpty(thumbnailPath) && System.IO.File.Exists(thumbnailPath))
                 {
                     var thumbCacheKey = $"thumb_{slotIndex}_{thumbnailPath}";
@@ -104,8 +102,9 @@ namespace PhotoBookRenamer.Presentation.Converters
                     }
                 }
 
-                // КРИТИЧЕСКИ ВАЖНО: Всегда проверяем актуальный SourcePath страницы перед использованием кэша
-                // Если SourcePath изменился, игнорируем кэш и загружаем заново
+                // The cache is only good while the page still points at the same
+                // photograph. A slot that was reassigned would otherwise keep showing
+                // the bitmap of whatever used to stand there.
                 lock (_cacheLock)
                 {
                     // Удаляем старые записи кэша для этого slotIndex (если SourcePath изменился)

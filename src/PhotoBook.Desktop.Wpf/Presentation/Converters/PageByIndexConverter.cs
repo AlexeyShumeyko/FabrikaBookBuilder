@@ -24,9 +24,9 @@ namespace PhotoBookRenamer.Presentation.Converters
                     var page = pagesWithoutCover[index];
                     string? imagePath = null;
 
-                    // Используем ThumbnailPath, если он есть, иначе SourcePath
-                    // КРИТИЧЕСКИ ВАЖНО: Если миниатюры нет, используем SourcePath
-                    // Это временно загрузит полное изображение, но миниатюра будет создана при необходимости
+                    // The preview when there is one, the original otherwise. The second
+                    // is slower and heavier, but an empty frame tells the photographer
+                    // nothing about whether the slot is filled.
                     if (!string.IsNullOrEmpty(page.ThumbnailPath) && System.IO.File.Exists(page.ThumbnailPath))
                     {
                         imagePath = page.ThumbnailPath;

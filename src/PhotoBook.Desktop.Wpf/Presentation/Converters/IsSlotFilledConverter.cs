@@ -22,9 +22,9 @@ namespace PhotoBookRenamer.Presentation.Converters
                 }
                 else
                 {
-                    // Иначе проверяем страницу по индексу
-                    // КРИТИЧЕСКИ ВАЖНО: Ищем страницу по Index, а не по позиции в списке!
-                    // index - это slotIndex (1, 2, 3, 4...), который соответствует Page.Index
+                    // Matched by Page.Index rather than by position in the list: the
+                    // number here is the slot the photographer sees, and it is not
+                    // where the page happens to sit.
                     var page = pages.FirstOrDefault(p => !p.IsCover && p.Index == index);
 
                     if (page != null)

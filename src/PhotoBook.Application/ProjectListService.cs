@@ -30,8 +30,9 @@ namespace PhotoBookRenamer.Application
 
         public ProjectListService()
         {
-            // КРИТИЧЕСКИ ВАЖНО: Используем LocalApplicationData, а не путь к программе
-            // Это гарантирует, что проекты сохраняются в правильном месте независимо от расположения программы
+            // Under the user's own profile rather than beside the executable: the program
+            // is installed once for everyone, and the projects belong to the person who
+            // made them.
             var appDataPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "PhotoBookRenamer",
@@ -87,7 +88,6 @@ namespace PhotoBookRenamer.Application
             {
                 var projects = await ReadAllProjects_NoLock();
 
-                // КРИТИЧЕСКИ ВАЖНО: Валидация и исправление проектов
                 var validatedProjects = new List<ProjectInfo>();
                 var usedIds = new HashSet<string>();
                 bool repaired = false;
@@ -215,11 +215,10 @@ namespace PhotoBookRenamer.Application
 
         /// <summary>
         /// Сохраняет информацию о проекте в список проектов
-        /// КРИТИЧЕСКИ ВАЖНО: Обновляет только проект с соответствующим ID
+        /// Updates the entry carrying the same Id and leaves every other one alone.
         /// </summary>
         public async Task<bool> SaveProjectInfoAsync(ProjectInfo projectInfo)
         {
-            // КРИТИЧЕСКИ ВАЖНО: Проверяем, что ID установлен
             if (string.IsNullOrEmpty(projectInfo.Id))
             {
                 return false;
@@ -233,7 +232,6 @@ namespace PhotoBookRenamer.Application
 
                 var allProjects = await ReadAllProjects_NoLock();
 
-                // КРИТИЧЕСКИ ВАЖНО: Ищем проект ТОЛЬКО по ID
                 var existingIndex = allProjects.FindIndex(p => p.Id == projectId);
 
                 if (existingIndex >= 0)
@@ -344,8 +342,9 @@ namespace PhotoBookRenamer.Application
                 if (projectInfo != null)
                 {
                     projectInfo.BookCount = project.Books?.Count ?? 0;
-                    // КРИТИЧЕСКИ ВАЖНО: PageCount - это количество разворотов в одной книге, а не сумма по всем книгам
-                    // Во всех книгах должно быть одинаковое количество разворотов
+                    // PageCount is the spreads in ONE book, not the sum over all of them.
+                    // Every book in a run has the same number, which is what makes the
+                    // number on the card worth reading.
                     projectInfo.PageCount = project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
                     projectInfo.Status = DetermineStatus(project);
                     projectInfo.LastModified = DateTime.Now;
@@ -372,7 +371,6 @@ namespace PhotoBookRenamer.Application
         /// </summary>
         private async Task WriteAllProjects_NoLock(List<ProjectInfo> projects)
         {
-            // КРИТИЧЕСКИ ВАЖНО: Убеждаемся, что у всех проектов есть правильный ID и FilePath
             foreach (var project in projects)
             {
                 if (string.IsNullOrEmpty(project.Id))

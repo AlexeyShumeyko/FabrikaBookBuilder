@@ -152,6 +152,16 @@ try {
     }
     if ($null -eq $edit) { throw 'the visible rename text box did not appear' }
 
+    # The card order on screen and the order in the index are not the same list, and this
+    # test renames whatever it opens. It has already renamed two of the owner's projects
+    # that way: it clicked card N while the index held a different project at N. So the
+    # name is checked HERE, before a single character is typed. Opening the wrong card is
+    # harmless. Editing it is not.
+    $boxName = $edit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value
+    if ($boxName -ne $originalName) {
+        throw ("the rename box reads '$boxName' but the index says '$originalName' - the cards and the index disagree, and this test will not rename a project it did not create")
+    }
+
     $vp = $edit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
     $vp.SetValue($newName)
     Start-Sleep -Milliseconds 500
