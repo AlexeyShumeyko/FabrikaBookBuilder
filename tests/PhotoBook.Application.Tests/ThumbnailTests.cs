@@ -177,14 +177,17 @@ public sealed class ThumbnailTests : IDisposable
     }
 
     [Fact]
-    public async Task A_batch_stops_when_it_is_cancelled()
+    public async Task A_batch_that_was_cancelled_before_it_started_does_no_work()
     {
         var paths = new List<string>();
+        var thumbnails = new List<string>();
         for (int i = 0; i < 30; i++)
         {
             var p = Jpeg($"cancel-{i:D2}.jpg", 2400, 1600);
             paths.Add(p);
-            _written.Add(ThumbnailStore.GetPath(p));
+            var thumb = ThumbnailStore.GetPath(p);
+            thumbnails.Add(thumb);
+            _written.Add(thumb);
         }
 
         using var cts = new CancellationTokenSource();
@@ -193,8 +196,24 @@ public sealed class ThumbnailTests : IDisposable
         var provider = new ThumbnailProvider();
         await provider.EnsureAsync(paths, cancellationToken: cts.Token);
 
-        // Nothing is asserted about the result: a cancelled batch may have produced some
-        // copies before it stopped. What matters is that it returned instead of continuing
-        // through 30 photographs nobody is waiting for.
+        // This is the case the editors rely on when somebody opens a project and goes
+        // straight back: the preparation is superseded before it starts, and thirty
+        // photographs nobody is waiting for must stay untouched. Decoding each of them is
+        // about a tenth of a second, so "it stopped early" would still be seconds of work.
+        Assert.All(thumbnails, path => Assert.False(File.Exists(path), $"written despite the cancellation: {path}"));
+    }
+
+    [Fact]
+    public async Task A_cancelled_batch_returns_instead_of_throwing()
+    {
+        var paths = new List<string> { Jpeg("quiet.jpg", 400, 300) };
+        _written.Add(ThumbnailStore.GetPath(paths[0]));
+
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Stopping early is a normal outcome, not a failure. If it threw, every caller would
+        // have to distinguish "cancelled" from "failed" to keep the error log meaningful.
+        await new ThumbnailProvider().EnsureAsync(paths, cancellationToken: cts.Token);
     }
 }

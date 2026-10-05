@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -184,8 +185,44 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// </summary>
         public event Action? BackToProjectListRequested;
 
+
+        /// <summary>
+        /// Prepares what the next screen will need: reduced copies and decoded bitmaps.
+        /// Measured on twenty books it is the longest thing the program does, and nobody
+        /// is waiting for it - the window is already usable while it runs. So it is
+        /// cancelled the moment it stops being wanted: a new preparation supersedes it,
+        /// and leaving the project or resetting it cancels it outright.
+        /// </summary>
+        private CancellationTokenSource? _preparation;
+
+        private CancellationToken BeginPreparation()
+        {
+            StopPreparation();
+            _preparation = new CancellationTokenSource();
+            return _preparation.Token;
+        }
+
+        internal void StopPreparation()
+        {
+            var previous = _preparation;
+            _preparation = null;
+            if (previous == null) return;
+            try
+            {
+                previous.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Already gone: nothing was running.
+            }
+            finally
+            {
+                previous.Dispose();
+            }
+        }
         private void RequestBackToProjectList()
         {
+            StopPreparation();
             // An export finishes on a background thread, and the shell changes the
             // screen, so the request is marshalled to the UI thread.
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -369,10 +406,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 // PrewarmAndWarmThumbnailsAsync (CombinedModeViewModel): без декодирования
                 // вне UI-потока первый ренвер читает 18 МБ JPEG прямо в разметке, и слоты
                 // остаются пустыми серыми рамками до пересохранения проекта.
+                var preparation = BeginPreparation();
                 Background.Run(async () =>
                 {
-                    await _thumbnails.EnsureAsync(allImagePaths!);
-                    await Presentation.Converters.PageSourceConverter.PrewarmAsync(allImagePaths!);
+                    await _thumbnails.EnsureAsync(allImagePaths!, cancellationToken: preparation);
+                    await Presentation.Converters.PageSourceConverter.PrewarmAsync(allImagePaths!, preparation);
 
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
@@ -696,9 +734,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     .ToList();
 
                 // Загружаем миниатюры в фоне, чтобы не блокировать UI
+                var preparation = BeginPreparation();
                 Background.Run(async () =>
                 {
-                    await _thumbnails.EnsureAsync(allImagePaths!);
+                    await _thumbnails.EnsureAsync(allImagePaths!, cancellationToken: preparation);
                     // Обновляем ThumbnailPath для всех страниц и обложек после загрузки миниатюр
                     // Используем Dispatcher для обновления UI на правильном потоке
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -883,6 +922,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         private void ResetProject()
         {
+            // Starting over: whatever was being prepared for the previous project is not
+            // wanted any more.
+            StopPreparation();
             Project = null;
             Books.Clear();
             // The project record has to go too. This ViewModel is a singleton, so keeping
