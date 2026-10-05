@@ -259,19 +259,16 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         public async void SetProject(Project? project, ProjectInfo projectInfo)
         {
-            // КРИТИЧЕСКИ ВАЖНО: Сначала очищаем предыдущее состояние проекта
-            // Это гарантирует, что при открытии нового проекта не останется данных от предыдущего
             Books.Clear();
             Project = null;
             // НЕ сбрасываем CurrentProjectInfo здесь - он будет установлен ниже
             ProjectName = null;
             ErrorMessage = null;
             _projectService.ClearHistory();
-            // КРИТИЧЕСКИ ВАЖНО: Очищаем кэш изображений при смене проекта для предотвращения утечек памяти
             Presentation.Converters.PageSourceConverter.ClearCache();
 
-            // КРИТИЧЕСКИ ВАЖНО: Сохраняем ВСЕ данные проекта в локальные переменные СРАЗУ
-            // Это гарантирует, что мы используем правильные данные для этого проекта
+            // Everything about the project is read now, before the first await: the list
+            // that handed this over may re-sort or reload its cards while this runs.
             var projectId = projectInfo.Id ?? string.Empty;
             var projectName = projectInfo.Name ?? string.Empty;
             var projectFilePath = projectInfo.FilePath ?? string.Empty;
@@ -286,8 +283,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 projectId = Guid.NewGuid().ToString();
             }
 
-            // КРИТИЧЕСКИ ВАЖНО: Создаём НОВЫЙ projectInfo с правильными данными из локальных переменных
-            // Это гарантирует, что CurrentProjectInfo имеет правильный Id и не будет изменён
             var projectInfoCopy = new ProjectInfo
             {
                 Id = projectId, // ВСЕГДА используем ID из локальной переменной
@@ -314,7 +309,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 // Убеждаемся, что режим правильный
                 project.Mode = projectInfo.Mode;
 
-                // КРИТИЧЕСКИ ВАЖНО: После десериализации нужно инициализировать AllSlots для каждой книги
+                // A project written before spreads carried slots needs them recomputed,
+                // because the slot frame is what assigns each spread its export file name.
                 if (project.Books != null && project.Books.Count > 0)
                 {
                     foreach (var book in project.Books)
@@ -329,8 +325,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
             }
 
-            // КРИТИЧЕСКИ ВАЖНО: Сначала синхронизируем Books с Project.Books ДО установки Project
-            // Это гарантирует, что книги не будут потеряны при установке Project
+            // Books and Project.Books must hold the same books in the same order: the
+            // view binds to Books, the save walks Project.Books, and a mismatch loses
+            // spreads silently.
             Books.Clear();
             if (project != null && project.Books != null)
             {
@@ -344,8 +341,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             // Устанавливаем проект ПОСЛЕ синхронизации Books
             Project = project;
 
-            // КРИТИЧЕСКИ ВАЖНО: Дополнительно убеждаемся, что Books синхронизированы с Project.Books
-            // Это нужно на случай, если setter Project очистил Books
             if (Project != null && Project.Books != null && Books.Count != Project.Books.Count)
             {
                 Books.Clear();
@@ -355,10 +350,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
             }
 
-            // КРИТИЧЕСКИ ВАЖНО: Обновляем PageCount на основе реальных данных проекта
             if (Project != null && CurrentProjectInfo != null)
             {
-                // КРИТИЧЕСКИ ВАЖНО: PageCount - это количество разворотов в одной книге, а не сумма по всем книгам
+                // PageCount is the spreads in ONE book, not the sum over all of them -
+                // every book in a run has the same number.
                 CurrentProjectInfo.PageCount = Project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
                 CurrentProjectInfo.BookCount = Project.Books?.Count ?? 0;
                 // Сохраняем обновлённую информацию в фоне
@@ -689,16 +684,16 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     Project = await _projectService.CreateProjectFromFoldersAsync(folders);
                     _projectService.SaveState(Project);
 
-                    // КРИТИЧЕСКИ ВАЖНО: НЕ создаем новый ProjectInfo при загрузке папок
-                    // ProjectInfo должен быть создан только при создании проекта через StartScreenView
-                    // Если CurrentProjectInfo == null, значит проект был создан неправильно
-                    // В этом случае просто продолжаем работу без сохранения в список
-                    // Пользователь должен будет сохранить проект вручную через кнопку "Сохранить проект"
+                    // Loading folders must not create a project record. A record belongs to
+                    // "new project" or to the list, and inventing one here put an empty card into
+                    // the owner's list. The project has no record until the photographer saves
+                    // it from the panel, which is the normal way to use it.
                 }
 
-                // КРИТИЧЕСКИ ВАЖНО: НЕ загружаем все миниатюры сразу - это потребляет слишком много памяти
-                // Миниатюры будут загружаться лениво при отображении через конвертеры
-                // Устанавливаем ThumbnailPath только если миниатюра уже существует
+                // Folders just added get the previews that already exist, attached right
+                // away so the cards are filled when the list is drawn. The ones that are
+                // missing are built by the background pass below: doing it here would
+                // cost the UI thread a second per photograph.
                 var booksToLoad = Project.Books.Where(b =>
                     newFolders.Contains(b.FolderPath ?? "")).ToList();
 
@@ -727,7 +722,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     }
                 }
 
-                // КРИТИЧЕСКИ ВАЖНО: Загружаем недостающие миниатюры в фоне для всех загруженных книг
                 var allImagePaths = Project.Books
                     .SelectMany(b => b.Pages.Select(p => p.SourcePath).Concat(new[] { b.Cover?.SourcePath }))
                     .Where(p => !string.IsNullOrEmpty(p))

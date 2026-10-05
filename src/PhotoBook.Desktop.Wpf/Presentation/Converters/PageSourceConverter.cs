@@ -11,11 +11,10 @@ using PhotoBook.Core;
 
 namespace PhotoBookRenamer.Presentation.Converters
 {
-    // КРИТИЧЕСКИ ВАЖНО: Новый конвертер, который получает Page напрямую
-    // Это исключает проблемы с неправильным DataContext в MultiBinding
     public class PageSourceConverter : IValueConverter
     {
-        // Кэш для BitmapImage - критически важно для производительности
+        // One decoded copy shared by every element that shows the same photograph:
+        // a hundred slots must not decode a hundred copies.
         private static readonly Dictionary<string, BitmapImage> _imageCache = new();
         private static readonly object _cacheLock = new();
 
@@ -152,8 +151,6 @@ namespace PhotoBookRenamer.Presentation.Converters
         /// </summary>
         private static BitmapImage? Load(string imagePath, string? thumbnailPath = null)
         {
-            // КРИТИЧЕСКИ ВАЖНО: Сначала пытаемся использовать миниатюру, если она есть
-            // Это значительно ускоряет загрузку и снижает потребление памяти
             if (!string.IsNullOrEmpty(thumbnailPath) && File.Exists(thumbnailPath))
             {
                 var fromThumb = TryDecode(thumbnailPath, $"thumb_{thumbnailPath}", null);
@@ -183,11 +180,11 @@ namespace PhotoBookRenamer.Presentation.Converters
                 bitmap.BeginInit();
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
                 bitmap.CreateOptions = BitmapCreateOptions.None;
-                // КРИТИЧЕСКИ ВАЖНО: размер декодируемого изображения ограничен, но задаётся
-                // ТОЛЬКО DecodePixelWidth. Если задать обе стороны, WPF растягивает картинку
-                // ровно в эти размеры и пропорции теряются: фото выглядит вытянутым и
-                // искажённым. С одной стороной вторая считается по пропорциям оригинала.
-                // 600px хватает с запасом для карточки 190px высотой.
+                // DecodePixelWidth only, deliberately. Setting both dimensions makes
+                // WPF stretch the bitmap to exactly that size and the proportions are
+                // lost - the photograph comes out distorted. With one dimension the
+                // other follows the original's aspect ratio. 600px is ample for a
+                // card 190px high.
                 if (decodeWidth.HasValue) bitmap.DecodePixelWidth = decodeWidth.Value;
                 bitmap.UriSource = new Uri(source, UriKind.Absolute);
                 bitmap.EndInit();
