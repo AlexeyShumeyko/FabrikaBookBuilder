@@ -13,7 +13,7 @@
 # Usage: pwsh -File scripts\clean-test-projects.ps1 [-WhatIf] [-Names TR-test,'* (test)']
 
 param(
-    [string[]]$Names = @('TR-test', 'Testovyy*', 'Kombinirovannyy*'),
+    [string[]]$Names = @('TR-test', 'Testovyy*', 'Kombinirovannyy*', 'Big order*', 'Rename-check'),
     [switch]$WhatIf
 )
 

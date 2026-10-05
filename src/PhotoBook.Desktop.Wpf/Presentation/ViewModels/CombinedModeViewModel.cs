@@ -226,8 +226,44 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// </summary>
         public event Action? BackToProjectListRequested;
 
+
+        /// <summary>
+        /// Prepares what the next screen will need: reduced copies and decoded bitmaps.
+        /// Measured on twenty books it is the longest thing the program does, and nobody
+        /// is waiting for it - the window is already usable while it runs. So it is
+        /// cancelled the moment it stops being wanted: a new preparation supersedes it,
+        /// and leaving the project or resetting it cancels it outright.
+        /// </summary>
+        private CancellationTokenSource? _preparation;
+
+        private CancellationToken BeginPreparation()
+        {
+            StopPreparation();
+            _preparation = new CancellationTokenSource();
+            return _preparation.Token;
+        }
+
+        internal void StopPreparation()
+        {
+            var previous = _preparation;
+            _preparation = null;
+            if (previous == null) return;
+            try
+            {
+                previous.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Already gone: nothing was running.
+            }
+            finally
+            {
+                previous.Dispose();
+            }
+        }
         private void RequestBackToProjectList()
         {
+            StopPreparation();
             // An export finishes on a background thread, and the shell changes the
             // screen, so the request is marshalled to the UI thread.
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -800,7 +836,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         }
                     }
 
-                    Background.Run(async () => await _thumbnails.EnsureAsync(AvailableFiles), "load thumbnails");
+                    var preparation = BeginPreparation();
+                    Background.Run(async () => await _thumbnails.EnsureAsync(AvailableFiles, cancellationToken: preparation), "load thumbnails");
                 }
                 finally
                 {
@@ -1482,6 +1519,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 app.Dispatcher.BeginInvoke(new Action(() => { PerfPhase.CountElements("at ContextIdle (dispatcher empty)"); PerfPhase.Write("open combined project"); }), System.Windows.Threading.DispatcherPriority.ContextIdle);
             }
 
+            // One preparation for this load, shared by both passes below. A second token
+            // would cancel the first one the moment it starts, and the prewarm of a project
+            // that also has loose files would never get past the first photograph.
+            var preparation = BeginPreparation();
             if (Project?.Books != null && Project.Books.Any())
             {
                 var allImagePaths = Project.Books
@@ -1491,12 +1532,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                 if (allImagePaths.Any())
                 {
-                    Background.Run(() => PrewarmAndWarmThumbnailsAsync(allImagePaths!), "prewarm thumbnails");
+                    Background.Run(() => PrewarmAndWarmThumbnailsAsync(allImagePaths!, preparation), "prewarm thumbnails");
                 }
             }
             if (AvailableFiles.Any())
             {
-                Background.Run(async () => await _thumbnails.EnsureAsync(AvailableFiles), "load thumbnails");
+                Background.Run(async () => await _thumbnails.EnsureAsync(AvailableFiles, cancellationToken: preparation), "load thumbnails");
             }
 
             UpdateExportCommands();
@@ -1519,11 +1560,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// Nothing here can lose work: it only adds thumbnails and bitmap cache entries, and
         /// every step is individually wrapped so a failure leaves the previous behaviour.
         /// </summary>
-        private async Task PrewarmAndWarmThumbnailsAsync(List<string> imagePaths)
+        private async Task PrewarmAndWarmThumbnailsAsync(List<string> imagePaths, CancellationToken preparation)
         {
             try
             {
-                await _thumbnails.EnsureAsync(imagePaths);
+                await _thumbnails.EnsureAsync(imagePaths, cancellationToken: preparation);
             }
             catch (Exception ex)
             {
@@ -1532,7 +1573,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             try
             {
-                await Presentation.Converters.PageSourceConverter.PrewarmAsync(imagePaths);
+                await Presentation.Converters.PageSourceConverter.PrewarmAsync(imagePaths, preparation);
             }
             catch (Exception ex)
             {
@@ -2225,9 +2266,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             if (AvailableFiles.Count == 0) return;
 
             var paths = AvailableFiles.ToList();
+            var preparation = BeginPreparation();
             Background.Run(async () =>
             {
-                await _thumbnails.EnsureAsync(paths);
+                await _thumbnails.EnsureAsync(paths, cancellationToken: preparation);
                 Presentation.Converters.PageSourceConverter.ClearCache();
                 Presentation.Converters.FilePathToThumbnailConverter.ClearCache();
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>

@@ -103,7 +103,19 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 if (value is AppMode.UniqueFolders or AppMode.Combined && !CanEnterMode(value))
                     return;
 
+                // Remember where the user was: the screen being left is the one that was
+                // preparing something for itself, and nobody is looking at it any more.
+                var leaving = _currentMode;
+
                 if (!SetProperty(ref _currentMode, value)) return;
+
+                // Stopping that preparation is the difference between leaving a project in
+                // a second and leaving it in half a minute of decoding for a screen that is
+                // no longer on show. The editors ask for this themselves when they finish a
+                // save or an export; this is the other direction, the person clicking
+                // "Мои проекты" with the mouse.
+                if (leaving != value && leaving is AppMode.UniqueFolders or AppMode.Combined)
+                    StopPreparationOf(leaving);
 
                 // Leaving an editor by tab or shortcut also ends the session, otherwise
                 // the mode tab would stay enabled with no project behind it.
@@ -207,6 +219,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// </summary>
         private ProjectListViewModel NewProjectListViewModel()
             => new(_projectListService, _projects, this);
+
+        private void StopPreparationOf(AppMode mode)
+        {
+            if (mode == AppMode.UniqueFolders) _uniqueFolders.StopPreparation();
+            else if (mode == AppMode.Combined) _combinedMode.StopPreparation();
+        }
 
         /// <summary>The editor that owns a mode, or null for the list and the mode screen.</summary>
         public IProjectEditor? EditorFor(AppMode mode) => mode switch

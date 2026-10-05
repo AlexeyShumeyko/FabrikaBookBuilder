@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
@@ -60,8 +61,23 @@ namespace PhotoBookRenamer.Presentation.Converters
         ///
         /// Nothing here can make a render worse: a file that fails to decode is simply left
         /// out of the cache, and the converter falls back to reading it itself as before.
+        ///
+        /// <para>
+        /// Cancellable, because this is preparation rather than a result: it is measured in
+        /// tens of seconds for a full run, and a photographer who opens a project and goes
+        /// back does not want it any more. The token is checked before every photograph
+        /// rather than once at the start, because one 18 MB scan takes long enough that a
+        /// check only between batches would keep a core busy for seconds after the user left.
+        /// </para>
+        ///
+        /// <para>
+        /// Stopping early returns normally rather than throwing, which is what
+        /// <see cref="IThumbnailProvider.EnsureAsync"/> does as well: a preparation that was
+        /// no longer needed did not fail, and writing that into the error log every time
+        /// somebody navigates away would train a reader to ignore the log.
+        /// </para>
         /// </summary>
-        public static async Task PrewarmAsync(IEnumerable<string>? filePaths)
+        public static async Task PrewarmAsync(IEnumerable<string>? filePaths, CancellationToken cancellationToken = default)
         {
             var list = filePaths?.Where(p => !string.IsNullOrEmpty(p))
                                  .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -72,6 +88,11 @@ namespace PhotoBookRenamer.Presentation.Converters
             {
                 foreach (var path in list)
                 {
+                    // Deliberately not passed to Task.Run: a token that is already cancelled
+                    // would make the delegate never run and the task come back cancelled,
+                    // which is a throw in disguise.
+                    if (cancellationToken.IsCancellationRequested) return;
+
                     try { Load(path); }
                     catch { /* recorded inside Load */ }
                 }
