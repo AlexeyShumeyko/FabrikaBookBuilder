@@ -151,38 +151,6 @@
                         </Button>
                     </StackPanel>
 
-                    <Button Style="{StaticResource SecondaryButton}" Click="OnChooseSourceClick"
-                            AutomationProperties.Name="Выбрать источник"
-                            Visibility="{Binding ShowSourcePicker, Converter={StaticResource BooleanToVisibilityConverter}}"
-                            Margin="0,0,8,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE8C0;" FontFamily="{StaticResource IconFont}" FontSize="12"
-                                       Foreground="{StaticResource Slate400}" />
-                            <TextBlock Text="{Binding SourcePickerLabel}" Margin="6,0,0,0" />
-                        </StackPanel>
-                    </Button>
-
-                    <Button Style="{StaticResource SecondaryButton}" Click="OnSaveClick"
-                            AutomationProperties.Name="Сохранить" Margin="0,0,8,0"
-                            IsEnabled="{Binding CanSave}"
-                            Visibility="{Binding ShowProjectActions, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE74E;" FontFamily="{StaticResource IconFont}" FontSize="12"
-                                       Foreground="{StaticResource Slate400}" />
-                            <TextBlock Text="Сохранить" Margin="6,0,0,0" />
-                        </StackPanel>
-                    </Button>
-
-                    <Button Style="{StaticResource PrimaryButton}" Click="OnExportClick"
-                            AutomationProperties.Name="Экспорт" IsEnabled="{Binding CanExport}"
-                            Visibility="{Binding ShowProjectActions, Converter={StaticResource BooleanToVisibilityConverter}}"
-                            Margin="0,0,12,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="13" Foreground="White" />
-                            <TextBlock Text="Экспорт" Margin="6,0,0,0" Foreground="White" />
-                        </StackPanel>
-                    </Button>
-
                     <!--
                         Theme / help / contacts. Placed in the header on purpose: the owner
                         wants the finished-product silhouette visible, and these three are

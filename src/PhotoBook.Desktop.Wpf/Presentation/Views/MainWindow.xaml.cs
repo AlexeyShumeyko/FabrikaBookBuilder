@@ -125,29 +125,6 @@ namespace PhotoBookRenamer.Presentation.Views
             }
         }
 
-
-        // ------------------------------------------------------------------
-        //  Header actions
-        // ------------------------------------------------------------------
-
-        /// <summary>"Выбор папок" in Unique Folders, "Загрузить фото" in Combined.</summary>
-        private void OnChooseSourceClick(object sender, RoutedEventArgs e)
-        {
-            _viewModel.ActiveEditor?.LoadSourceCommand.Execute(null);
-        }
-
-        /// <summary>
-        /// Saves and then closes the project session. The editor is a working copy of one
-        /// project: once it is saved the user is done with it, so the header takes them
-        /// back to the project list, which reloads and shows the new state.
-        /// </summary>
-        private async void OnSaveClick(object sender, RoutedEventArgs e) => await SaveCurrentProjectAsync();
-
-        private void OnExportClick(object sender, RoutedEventArgs e)
-        {
-            _viewModel.ActiveEditor?.ExportCommand.Execute(null);
-        }
-
         // ------------------------------------------------------------------
         //  Header stubs: theme, help, contacts
         // ------------------------------------------------------------------

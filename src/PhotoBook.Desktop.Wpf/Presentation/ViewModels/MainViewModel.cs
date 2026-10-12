@@ -259,32 +259,16 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// The top bar keeps only navigation and undo. Loading photos lives in the file
         /// list, saving and exporting in the project panel - the same split the unique
         /// mode uses, so the two screens do not teach the user two different habits.
+        ///
+        /// That used to be expressed as three visibility flags that were permanently
+        /// false. The buttons they drove stayed in the markup, collapsed, waiting for a
+        /// condition that could never arrive: a property whose value is a constant is not
+        /// a switch, and the comment above it described a state the product has moved on
+        /// from. The buttons and the flags are gone; the editors own their own actions.
         /// </summary>
-        public bool ShowSourcePicker => false;
-
-        /// <summary>Context label: Unique Folders picks folders, Combined picks photos.</summary>
-        public string SourcePickerLabel => _currentMode == AppMode.Combined ? "Загрузить фото" : "Выбор папок";
-
-        public bool CanSave => ActiveEditor != null;
-
-        public bool CanExport => _currentMode switch
-        {
-            AppMode.UniqueFolders => _uniqueFolders.Project?.IsValid ?? false,
-            AppMode.Combined => _combinedMode.Project?.IsValid ?? false,
-            _ => false
-        };
-
         public bool ShowUndoRedo => _currentMode == AppMode.UniqueFolders;
         public bool CanUndo => ShowUndoRedo && _uniqueFolders.UndoCommand.CanExecute(null);
         public bool CanRedo => ShowUndoRedo && _uniqueFolders.RedoCommand.CanExecute(null);
-
-        /// <summary>
-        /// "Сохранить" and "Экспорт" in the header bar. Hidden everywhere except Combined:
-        /// on the project list and the mode screen they were dead buttons, and in Unique
-        /// Folders both moved into the project panel, which is now the one place a user
-        /// looks for them.
-        /// </summary>
-        public bool ShowProjectActions => false;
 
         /// <summary>
         /// The two mode tabs stay in the header but are only clickable while their
@@ -313,16 +297,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             OnPropertyChanged(nameof(ActiveEditor));
             OnPropertyChanged(nameof(ProjectTitle));
             OnPropertyChanged(nameof(HasOpenProject));
-            OnPropertyChanged(nameof(ShowSourcePicker));
-            OnPropertyChanged(nameof(SourcePickerLabel));
-            OnPropertyChanged(nameof(CanSave));
-            OnPropertyChanged(nameof(CanExport));
             OnPropertyChanged(nameof(ShowUndoRedo));
             OnPropertyChanged(nameof(CanUndo));
             OnPropertyChanged(nameof(CanRedo));
             OnPropertyChanged(nameof(CanOpenUniqueFoldersTab));
             OnPropertyChanged(nameof(CanOpenCombinedTab));
-            OnPropertyChanged(nameof(ShowProjectActions));
         }
 
         // ------------------------------------------------------------------
