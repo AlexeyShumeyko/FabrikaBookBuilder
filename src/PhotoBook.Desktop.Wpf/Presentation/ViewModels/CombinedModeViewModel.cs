@@ -221,10 +221,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         private void Project_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(Project.IsValid))
-            {
-                UpdateExportCommands();
-            }
+            if (e.PropertyName != nameof(Project.IsValid)) return;
+
+            // The domain raises this from whatever thread touched the book, and an automatic
+            // save that resumed on the thread pool touches it there. Re-asking a command
+            // from off the UI thread throws, and the save is what was unwinding.
+            OnUiThread(UpdateExportCommands);
         }
 
         private void UpdateExportCommands()

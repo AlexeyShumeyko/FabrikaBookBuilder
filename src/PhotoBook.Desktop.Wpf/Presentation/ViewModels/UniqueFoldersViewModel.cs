@@ -159,16 +159,25 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 if (e.PropertyName == nameof(Project))
                 {
-                    OnPropertyChanged(nameof(CanExport));
-                    OnPropertyChanged(nameof(BooksSummary));
-                    if (ExportCommand is AsyncRelayCommand exportCmd)
-                        exportCmd.NotifyCanExecuteChanged();
-                    if (ExportWithFolderCommand is AsyncRelayCommand exportFolderCmd)
-                        exportFolderCmd.NotifyCanExecuteChanged();
+                    // SetProject is async and may be handed a project from a continuation, so
+                    // this can arrive off the UI thread - where a command cannot be re-asked.
+                    OnUiThread(() =>
+                    {
+                        OnPropertyChanged(nameof(CanExport));
+                        OnPropertyChanged(nameof(BooksSummary));
+                        if (ExportCommand is AsyncRelayCommand exportCmd)
+                            exportCmd.NotifyCanExecuteChanged();
+                        if (ExportWithFolderCommand is AsyncRelayCommand exportFolderCmd)
+                            exportFolderCmd.NotifyCanExecuteChanged();
+                    });
                 }
-                if (e.PropertyName == nameof(CurrentProjectInfo) && SaveProjectCommand is AsyncRelayCommand saveCmd)
+                if (e.PropertyName == nameof(CurrentProjectInfo))
                 {
-                    saveCmd.NotifyCanExecuteChanged();
+                    OnUiThread(() =>
+                    {
+                        if (SaveProjectCommand is AsyncRelayCommand saveCmd)
+                            saveCmd.NotifyCanExecuteChanged();
+                    });
                 }
             };
         }
