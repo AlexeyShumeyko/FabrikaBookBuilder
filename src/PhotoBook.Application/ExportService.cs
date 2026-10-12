@@ -21,13 +21,13 @@ namespace PhotoBookRenamer.Application
             return $"{bookIndex:D3}-{fileIndex:D2}.jpg";
         }
 
-        public async Task<bool> ExportProjectAsync(Project project, string outputFolder)
+        public async Task<Result> ExportProjectAsync(Project project, string outputFolder)
             => await ExportProjectAsync(project, outputFolder, new ExportOptions());
 
-        public async Task<bool> ExportProjectAsync(Project project, string outputFolder, ExportOptions options)
+        public async Task<Result> ExportProjectAsync(Project project, string outputFolder, ExportOptions options)
         {
             if (project == null || string.IsNullOrWhiteSpace(outputFolder))
-                return false;
+                return Result.Fail("Не выбран проект или папка для выгрузки.");
 
             options ??= new ExportOptions();
 
@@ -98,7 +98,7 @@ namespace PhotoBookRenamer.Application
                 }
 
                 if (work.Count == 0)
-                    return true;
+                    return Result.Ok();
 
                 var completed = 0;
                 var gate = new object();
@@ -113,11 +113,14 @@ namespace PhotoBookRenamer.Application
                     }
                 }));
 
-                return true;
+                return Result.Ok();
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+                // The reason used to be thrown away here: the photographer was told to check
+                // that the folder is writable, whatever had actually gone wrong, and the
+                // journal had nothing either.
+                return Result.Fail($"Не удалось скопировать файлы: {ex.Message}");
             }
         }
 

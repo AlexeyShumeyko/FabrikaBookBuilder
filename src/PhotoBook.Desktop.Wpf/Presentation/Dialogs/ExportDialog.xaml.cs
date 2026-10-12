@@ -246,20 +246,22 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                     Progress = new Progress<double>(ReportProgress)
                 };
 
-                bool ok = await _exportService.ExportProjectAsync(_project, TargetFolder, options);
+                var export = await _exportService.ExportProjectAsync(_project, TargetFolder, options);
 
-                _exportSucceeded = ok;
-                ExportedFolder = ok ? TargetFolder : string.Empty;
+                _exportSucceeded = export.IsSuccess;
+                ExportedFolder = export.IsSuccess ? TargetFolder : string.Empty;
 
-                if (!ok)
+                if (!export.IsSuccess)
                 {
+                    // What actually went wrong, rather than advice about a folder that may
+                    // well not be the reason.
                     MessageBox.Show(
-                        "Не удалось скопировать файлы. Проверьте, что папка доступна для записи, и попробуйте снова.",
+                        export.Error,
                         "Ошибка экспорта", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
 
                 // OK closes the dialog; Cancel does not.
-                DialogResult = ok;
+                DialogResult = export.IsSuccess;
             }
             catch (Exception ex)
             {

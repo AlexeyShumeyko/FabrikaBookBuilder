@@ -39,6 +39,18 @@ public sealed class FoldersModeExportTests : IDisposable
         return path;
     }
 
+    /// <summary>
+    /// A failure has to arrive with a reason. The old API returned a bare false and
+    /// the caller told the photographer to check that the folder was writable, whatever
+    /// had actually gone wrong - so a test that only checked the false proved nothing.
+    /// </summary>
+    private static void AssertFails(PhotoBookRenamer.Application.Result result, string what)
+    {
+        Assert.False(result.IsSuccess);
+        Assert.False(string.IsNullOrWhiteSpace(result.Error),
+            $"a failure ({what}) must carry a reason a person can act on");
+    }
+
     private static ExportService Service() => TestProject.Service();
 
     [Fact]
@@ -49,7 +61,7 @@ public sealed class FoldersModeExportTests : IDisposable
         var project = TestProject.Folders(TestProject.Book(1, cover, spread));
 
         var output = OutputFolder("out");
-        Assert.True(await Service().ExportProjectAsync(project, output));
+        Assert.True((await Service().ExportProjectAsync(project, output)).IsSuccess);
 
         var files = Directory.GetFiles(output).Select(Path.GetFileName).OrderBy(n => n).ToArray();
         Assert.Equal(new[] { "001-00.jpg", "001-01.jpg" }, files);
@@ -92,7 +104,7 @@ public sealed class FoldersModeExportTests : IDisposable
 
         var output = OutputFolder("out");
         var options = new ExportOptions { PerBookSubfolders = true };
-        Assert.True(await Service().ExportProjectAsync(project, output, options));
+        Assert.True((await Service().ExportProjectAsync(project, output, options)).IsSuccess);
 
         var folders = Directory.GetDirectories(output).Select(Path.GetFileName).OrderBy(n => n).ToArray();
         Assert.Equal(new[] { "001 Book 1", "002 Book 2" }, folders);
@@ -118,8 +130,8 @@ public sealed class FoldersModeExportTests : IDisposable
     {
         var project = TestProject.Folders(TestProject.Book(1, Source("c.jpg")));
 
-        Assert.False(await Service().ExportProjectAsync(project, string.Empty));
-        Assert.False(await Service().ExportProjectAsync(project, "   "));
+        AssertFails(await Service().ExportProjectAsync(project, string.Empty), "empty folder");
+        AssertFails(await Service().ExportProjectAsync(project, "   "), "blank folder");
     }
 
     [Fact]
@@ -130,6 +142,6 @@ public sealed class FoldersModeExportTests : IDisposable
 
         // The service answers with false: an export that cannot run is an expected outcome
         // here, not an exception the caller has to catch.
-        Assert.False(await Service().ExportProjectAsync(project, output));
+        AssertFails(await Service().ExportProjectAsync(project, output), "no writable folder");
     }
 }

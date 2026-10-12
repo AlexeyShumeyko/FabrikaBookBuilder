@@ -144,7 +144,7 @@ public class ProjectCompatibilityTests : IDisposable
 
         var output = Path.Combine(_root, "out");
         Directory.CreateDirectory(output);
-        Assert.True(await TestProject.Service().ExportProjectAsync(project, output));
+        Assert.True((await TestProject.Service().ExportProjectAsync(project, output)).IsSuccess);
 
         var written = Directory.GetFiles(output).Select(Path.GetFileName).OrderBy(n => n).ToArray();
         Assert.Equal(
