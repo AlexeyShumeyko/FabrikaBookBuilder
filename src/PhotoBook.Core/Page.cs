@@ -30,7 +30,6 @@ namespace PhotoBook.Core
                     MarkImageOk();
                     ImageErrorPath = null;
 
-                    // Уведомляем об изменении IsEmpty при изменении SourcePath
                     OnPropertyChanged(nameof(IsEmpty));
                     OnPropertyChanged(nameof(SlotLabel));
                     OnPropertyChanged(nameof(IsSlotLabelAccent));

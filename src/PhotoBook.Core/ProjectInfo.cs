@@ -4,11 +4,17 @@ using System.Text.Json.Serialization;
 
 namespace PhotoBook.Core
 {
+    /// <summary>How far the project has been taken.</summary>
     public enum ProjectStatus
     {
-        NotFilled,      // Не заполнен
-        Ready,          // Готов
-        SuccessfullyCompleted  // Успешно завершён
+        /// <summary>A book still has an empty slot.</summary>
+        NotFilled,
+
+        /// <summary>Every slot filled, nothing exported yet.</summary>
+        Ready,
+
+        /// <summary>Every slot filled, and the output folder is still there.</summary>
+        SuccessfullyCompleted
     }
 
     public class ProjectInfo : ObservableObject
@@ -30,12 +36,12 @@ namespace PhotoBook.Core
             get => _id;
             set
             {
-                // При десериализации из JSON value может быть null или пустым
+                // A record can carry an empty or null id, and the file name IS the id, so
+                // one of those would point the whole project at nothing.
                 if (string.IsNullOrEmpty(value))
                 {
                     value = Guid.NewGuid().ToString();
                 }
-                // Используем прямое присваивание для поля, чтобы избежать проблем с десериализацией
                 _id = value;
                 OnPropertyChanged();
             }

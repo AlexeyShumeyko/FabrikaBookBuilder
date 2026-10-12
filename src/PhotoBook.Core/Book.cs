@@ -20,11 +20,10 @@ namespace PhotoBook.Core
         {
             Pages = new ObservableCollection<Page>();
             Pages.CollectionChanged += Pages_CollectionChanged;
-            _isValid = false; // Инициализируем значение
-            _allSlots.Add(0); // Обложка всегда есть
+            _isValid = false;
+            _allSlots.Add(0); // slot 0 is the cover, and a book always has one
             UpdatePageSlots();
 
-            // Подписываемся на изменения обложки, если она уже установлена
             if (_cover != null)
             {
                 _cover.PropertyChanged += Page_PropertyChanged;
@@ -33,7 +32,6 @@ namespace PhotoBook.Core
 
         private void Page_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            // Уведомляем об изменении Cover или Pages, чтобы обновить биндинги
             if (e.PropertyName == nameof(Page.SourcePath) || e.PropertyName == nameof(Page.ThumbnailPath) || e.PropertyName == nameof(Page.IsEmpty))
             {
                 OnPropertyChanged(nameof(Cover));
@@ -45,7 +43,6 @@ namespace PhotoBook.Core
 
         private void Pages_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            // Отписываемся от удаленных страниц
             if (e.OldItems != null)
             {
                 foreach (Page page in e.OldItems)
@@ -54,7 +51,6 @@ namespace PhotoBook.Core
                 }
             }
 
-            // Подписываемся на добавленные страницы
             if (e.NewItems != null)
             {
                 foreach (Page page in e.NewItems)
@@ -64,7 +60,6 @@ namespace PhotoBook.Core
             }
 
             UpdatePageSlots();
-            // Уведомляем об изменении коллекции Pages для обновления конвертеров
             OnPropertyChanged(nameof(Pages));
             UpdateIsValid();
         }
@@ -72,19 +67,18 @@ namespace PhotoBook.Core
         public void UpdatePageSlots()
         {
             var pagesWithoutCover = Pages.Where(p => !p.IsCover).ToList();
-            // Создаем слоты для разворотов (Pages - это развороты)
+            // A "page" in this model is a two-page spread, and that is what a slot holds.
             var newSlots = Enumerable.Range(1, pagesWithoutCover.Count).ToList();
 
-            // Обновляем коллекцию слотов страниц
             _pageSlots.Clear();
             foreach (var slot in newSlots)
             {
                 _pageSlots.Add(slot);
             }
 
-            // Обновляем коллекцию всех слотов (обложка + развороты)
+            // The display list is the cover followed by the spreads.
             _allSlots.Clear();
-            _allSlots.Add(0); // Обложка
+            _allSlots.Add(0);
             foreach (var slot in newSlots)
             {
                 _allSlots.Add(slot);
@@ -93,7 +87,7 @@ namespace PhotoBook.Core
             _allSlotsPages.Clear();
             if (Cover != null)
             {
-                _allSlotsPages.Add(Cover); // Обложка
+                _allSlotsPages.Add(Cover);
             }
             foreach (var page in pagesWithoutCover.OrderBy(p => p.Index))
             {
@@ -226,7 +220,6 @@ namespace PhotoBook.Core
             get => _cover;
             set
             {
-                // Отписываемся от старой обложки
                 if (_cover != null)
                 {
                     _cover.PropertyChanged -= Page_PropertyChanged;
@@ -234,13 +227,12 @@ namespace PhotoBook.Core
 
                 if (SetProperty(ref _cover, value))
                 {
-                    // Подписываемся на новую обложку
                     if (_cover != null)
                     {
                         _cover.PropertyChanged += Page_PropertyChanged;
                     }
-                    UpdatePageSlots(); // Обновляем слоты при изменении обложки
-                    UpdateIsValid(); // Обновляем IsValid при изменении обложки
+                    UpdatePageSlots();
+                    UpdateIsValid();
                 }
             }
         }
@@ -270,7 +262,7 @@ namespace PhotoBook.Core
 
         public ObservableCollection<int> PageSlots => _pageSlots;
 
-        // Коллекция для отображения: обложка (0) + страницы (1, 2, 3...)
+        // What the view binds to: the cover at 0, then the spreads at 1, 2, 3...
         public ObservableCollection<int> AllSlots => _allSlots;
         public ObservableCollection<Page> AllSlotsPages => _allSlotsPages;
 
@@ -280,7 +272,6 @@ namespace PhotoBook.Core
         {
             get
             {
-                // Вычисляем значение каждый раз при обращении
                 return Cover != null && !Cover.IsEmpty && Pages.All(p => !p.IsEmpty);
             }
         }

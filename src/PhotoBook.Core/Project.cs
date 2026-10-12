@@ -21,7 +21,6 @@ namespace PhotoBook.Core
 
         private void Books_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            // Отписываемся от удаленных книг
             if (e.OldItems != null)
             {
                 foreach (Book book in e.OldItems)
@@ -30,7 +29,6 @@ namespace PhotoBook.Core
                 }
             }
 
-            // Подписываемся на добавленные книги
             if (e.NewItems != null)
             {
                 foreach (Book book in e.NewItems)
@@ -55,7 +53,6 @@ namespace PhotoBook.Core
             var newValue = Books.Count > 0 && Books.All(b => b.IsValid);
             if (SetProperty(ref _isValid, newValue, nameof(IsValid)))
             {
-                // Уведомляем об изменении IsValid
             }
         }
 
