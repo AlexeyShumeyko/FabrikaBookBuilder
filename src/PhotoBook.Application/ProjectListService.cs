@@ -40,7 +40,6 @@ namespace PhotoBookRenamer.Application
             _projectsDirectory = appDataPath;
             _projectsListPath = Path.Combine(_projectsDirectory, "projects.json");
 
-            // Создаём папку, если её нет
             if (!Directory.Exists(_projectsDirectory))
             {
                 try
@@ -55,7 +54,7 @@ namespace PhotoBookRenamer.Application
         }
 
         /// <summary>
-        /// Получает путь к файлу проекта по его ID
+        /// The file a project lives in, named after its Id.
         /// </summary>
         private string GetProjectFilePath(string projectId)
         {
@@ -63,7 +62,7 @@ namespace PhotoBookRenamer.Application
         }
 
         /// <summary>
-        /// Загружает список всех проектов из projects.json
+        /// Every project recorded in the index under one mode.
         /// </summary>
         public async Task<List<ProjectInfo>> GetProjectsAsync(AppMode mode)
         {
@@ -79,7 +78,7 @@ namespace PhotoBookRenamer.Application
         }
 
         /// <summary>
-        /// Загружает список всех проектов из projects.json
+        /// Every project recorded in the index, whatever mode it is in.
         /// </summary>
         public async Task<List<ProjectInfo>> GetAllProjectsAsync()
         {
@@ -94,7 +93,8 @@ namespace PhotoBookRenamer.Application
 
                 foreach (var project in projects)
                 {
-                    // Если Id пустой или дублируется, генерируем новый уникальный
+                    // An Id that is empty or already taken is replaced - two projects sharing
+                    // one file name would mean one of them silently disappears.
                     if (string.IsNullOrEmpty(project.Id) || usedIds.Contains(project.Id))
                     {
                         string newId;
@@ -107,7 +107,8 @@ namespace PhotoBookRenamer.Application
                     }
                     usedIds.Add(project.Id);
 
-                    // ВСЕГДА формируем FilePath на основе Id
+                    // The file path is derived from the Id every time rather than trusted from the
+                    // record: a record whose path drifted from its Id would be read and never found.
                     string expected = GetProjectFilePath(project.Id);
                     if (project.FilePath != expected)
                     {
@@ -118,9 +119,8 @@ namespace PhotoBookRenamer.Application
                     validatedProjects.Add(project);
                 }
 
-                // Сохраняем исправленный список, только если правки действительно были.
-                // Раньше здесь сравнение шло по Name, из-за чего перезапись происходила
-                // почти при каждом чтении.
+                // Written back only when something was actually repaired. The comparison
+                // used to be made on Name, which rewrote the file on almost every read.
                 if (repaired)
                 {
                     await WriteAllProjects_NoLock(validatedProjects);
@@ -145,7 +145,6 @@ namespace PhotoBookRenamer.Application
         {
             if (!File.Exists(_projectsListPath))
             {
-                // Попытка миграции старых проектов
                 await MigrateOldProjectsAsync();
                 if (!File.Exists(_projectsListPath))
                 {
@@ -168,7 +167,7 @@ namespace PhotoBookRenamer.Application
         }
 
         /// <summary>
-        /// Создает новый проект с уникальным GUID
+        /// A new project, with an Id of its own.
         /// </summary>
         public async Task<ProjectInfo?> CreateProjectAsync(AppMode mode, string name)
         {
@@ -177,7 +176,6 @@ namespace PhotoBookRenamer.Application
             {
                 var allProjects = await ReadAllProjects_NoLock();
 
-                // Генерируем уникальный ID
                 string projectId;
                 do
                 {
@@ -214,7 +212,7 @@ namespace PhotoBookRenamer.Application
         }
 
         /// <summary>
-        /// Сохраняет информацию о проекте в список проектов
+        /// Writes the record of one project into the index.
         /// Updates the entry carrying the same Id and leaves every other one alone.
         /// </summary>
         public async Task<bool> SaveProjectInfoAsync(ProjectInfo projectInfo)
@@ -238,16 +236,15 @@ namespace PhotoBookRenamer.Application
                 {
                     var existing = allProjects[existingIndex];
 
-                    // Обновляем существующий проект. PageCount и CreatedDate переносим из
-                    // записи индекса: их нет в том объекте, который присылают редакторы
-                    // (там только то, что изменилось), и раньше они молча обнулялись -
-                    // в карточке проекта пропадало число страниц, а сортировка по дате
-                    // создания съезжала.
+                    // PageCount and CreatedDate are carried over from the old record:
+                    // the editors send only what changed, so without this the two were
+                    // quietly zeroed - the card lost its page count and the list stopped
+                    // sorting by creation date.
                     allProjects[existingIndex] = new ProjectInfo
                     {
-                        Id = projectId, // ВСЕГДА используем оригинальный ID
+                        Id = projectId, // the Id the record was found by
                         Name = projectInfo.Name,
-                        FilePath = projectFilePath, // ВСЕГДА формируем на основе ID
+                        FilePath = projectFilePath,
                         Mode = projectInfo.Mode,
                         BookCount = projectInfo.BookCount,
                         PageCount = projectInfo.PageCount > 0 ? projectInfo.PageCount : existing.PageCount,
@@ -258,7 +255,6 @@ namespace PhotoBookRenamer.Application
                 }
                 else
                 {
-                    // Если проект не найден, добавляем новый
                     projectInfo.FilePath = projectFilePath;
                     projectInfo.LastModified = DateTime.Now;
                     if (projectInfo.CreatedDate == default) projectInfo.CreatedDate = DateTime.Now;
@@ -270,7 +266,6 @@ namespace PhotoBookRenamer.Application
             }
             catch (Exception ex)
             {
-                // Логируем ошибку для отладки
                 return false;
             }
             finally
@@ -280,7 +275,7 @@ namespace PhotoBookRenamer.Application
         }
 
         /// <summary>
-        /// Удаляет проект из списка и удаляет его файл
+        /// Takes the project off the list and deletes its file.
         /// </summary>
         public async Task<bool> DeleteProjectAsync(ProjectInfo projectInfo)
         {
@@ -303,7 +298,6 @@ namespace PhotoBookRenamer.Application
                 allProjects.Remove(projectToDelete);
                 await WriteAllProjects_NoLock(allProjects);
 
-                // Удаляем файл проекта
                 var projectFilePath = GetProjectFilePath(projectInfo.Id);
                 if (File.Exists(projectFilePath))
                 {
@@ -323,13 +317,12 @@ namespace PhotoBookRenamer.Application
         }
 
         /// <summary>
-        /// Обновляет информацию о проекте на основе загруженного Project
+        /// Rewrites the record from the project that was just loaded, and returns it.
         /// </summary>
         public async Task<ProjectInfo?> UpdateProjectInfoAsync(Project project, string filePath)
         {
             try
             {
-                // Извлекаем ID из пути к файлу
                 var fileName = Path.GetFileNameWithoutExtension(filePath);
                 if (string.IsNullOrEmpty(fileName))
                 {
@@ -393,7 +386,7 @@ namespace PhotoBookRenamer.Application
         }
 
         /// <summary>
-        /// Определяет статус проекта
+        /// How far the project has been filled in.
         /// </summary>
         private ProjectStatus DetermineStatus(Project project)
         {
@@ -418,7 +411,7 @@ namespace PhotoBookRenamer.Application
         }
 
         /// <summary>
-        /// Миграция старых проектов в новую систему
+        /// Brings projects written by older versions into the current layout.
         /// </summary>
         private async Task MigrateOldProjectsAsync()
         {
@@ -426,7 +419,6 @@ namespace PhotoBookRenamer.Application
             {
                 var migratedProjects = new List<ProjectInfo>();
 
-                // Ищем старые файлы проектов по режимам
                 foreach (AppMode mode in Enum.GetValues(typeof(AppMode)))
                 {
                     if (mode == AppMode.StartScreen || mode == AppMode.ProjectList)
@@ -451,13 +443,11 @@ namespace PhotoBookRenamer.Application
                                 {
                                     foreach (var oldProject in oldProjects)
                                     {
-                                        // Если у старого проекта нет ID, генерируем новый
                                         if (string.IsNullOrEmpty(oldProject.Id))
                                         {
                                             oldProject.Id = Guid.NewGuid().ToString();
                                         }
 
-                                        // Формируем правильный FilePath
                                         oldProject.FilePath = GetProjectFilePath(oldProject.Id);
 
                                         migratedProjects.Add(oldProject);
@@ -467,13 +457,12 @@ namespace PhotoBookRenamer.Application
                         }
                         catch
                         {
-                            // Игнорируем ошибки миграции
                         }
                     }
                 }
 
-                // Сохраняем мигрированные проекты. Вызывается только из
-                // ReadAllProjects_NoLock, то есть гейт уже удерживается.
+                // Reached only from ReadAllProjects_NoLock, so the gate is already held
+                // and taking it again here would deadlock.
                 if (migratedProjects.Count > 0)
                 {
                     await WriteAllProjects_NoLock(migratedProjects);
@@ -481,7 +470,6 @@ namespace PhotoBookRenamer.Application
             }
             catch
             {
-                // Игнорируем ошибки миграции
             }
         }
     }

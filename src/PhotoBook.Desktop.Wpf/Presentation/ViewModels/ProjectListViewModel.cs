@@ -37,7 +37,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             OpenProjectCommand = new RelayCommand<ProjectInfo>(OpenProject);
             DeleteProjectCommand = new AsyncRelayCommand<ProjectInfo>(DeleteProjectAsync, CanDeleteProject);
 
-            // Загружаем проекты при создании
             // CollectionChanged -> ProjectsCount, so "N проектов" and the empty state
             // re-evaluate. See the remark on ProjectsCount.
             Projects.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ProjectsCount));
@@ -139,7 +138,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     if (string.IsNullOrEmpty(project.Id))
                     {
-                        // Пропускаем проекты без ID
                         continue;
                     }
 
@@ -166,12 +164,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                                 // rather than re-opened per card.
                                 previewSource = loadedProject;
 
-                                // Обновляем PageCount в сохранённом ProjectInfo, если он изменился
                                 if (actualPageCount != project.PageCount || actualBookCount != project.BookCount)
                                 {
                                     project.PageCount = actualPageCount;
                                     project.BookCount = actualBookCount;
-                                    // Сохраняем обновлённую информацию в фоне
                                     Background.Run(
                                         async () => await _projectListService.SaveProjectInfoAsync(project),
                                         "save project index");
@@ -180,14 +176,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         }
                         catch
                         {
-                            // Игнорируем ошибки загрузки отдельных проектов
                         }
                     }
 
-                    // Создаём копию проекта с правильными данными
                     var projectCopy = new ProjectInfo
                     {
-                        Id = project.Id, // ВСЕГДА используем оригинальный ID
+                        Id = project.Id,
                         Name = project.Name,
                         FilePath = project.FilePath,
                         Mode = project.Mode,
@@ -268,7 +262,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         private void CreateProject()
         {
-            // Переходим на страницу выбора режима
             CurrentMode = AppMode.StartScreen;
         }
 
@@ -278,7 +271,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 var projectInfoCopy = new ProjectInfo
                 {
-                    Id = projectInfo.Id, // ВСЕГДА используем оригинальный ID
+                    Id = projectInfo.Id,
                     Name = projectInfo.Name,
                     FilePath = projectInfo.FilePath,
                     Mode = projectInfo.Mode,
@@ -319,13 +312,13 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     "PhotoBookRenamer",
                     "Projects");
 
-                // Создаём папку, если её нет
                 if (!Directory.Exists(projectsDir))
                 {
                     Directory.CreateDirectory(projectsDir);
                 }
 
-                // ВСЕГДА формируем путь на основе Id - это единственный надежный способ
+                // Built from the Id rather than taken from the record: the two have been
+                // seen to disagree, and the wrong one means the project cannot be opened.
                 var projectFilePath = Path.Combine(projectsDir, $"{projectId}.json");
 
                 Project? project = null;
@@ -336,12 +329,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     {
                         project = await _projects.LoadAsync(projectFilePath);
 
-                        // Если проект не загрузился, создаем новый
                         if (project == null)
                         {
                             project = new Project { Mode = projectMode };
                         }
-                        // Если Books null (не должно быть), создаем новый проект
                         else if (project.Books == null)
                         {
                             project = new Project { Mode = projectMode };
@@ -349,23 +340,21 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        // Если ошибка загрузки, показываем ошибку и создаем пустой проект
                         ErrorMessage = $"Ошибка загрузки проекта из файла {projectFilePath}: {ex.Message}";
                         project = new Project { Mode = projectMode };
                     }
                 }
                 else
                 {
-                    // Если файла нет, создаем пустой проект
-                    // Это может быть новый проект, который еще не был сохранен
+                    // No file yet means a project made here and not saved.
                     project = new Project { Mode = projectMode };
                 }
 
                 var projectInfoCopy = new ProjectInfo
                 {
-                    Id = projectId, // ВСЕГДА используем ID из выбранного проекта (из локальной переменной)
+                    Id = projectId,
                     Name = projectName,
-                    FilePath = projectFilePath, // ВСЕГДА формируем на основе ID
+                    FilePath = projectFilePath,
                     Mode = projectMode,
                     BookCount = projectBookCount,
                     PageCount = projectPageCount,
@@ -387,14 +376,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 var capturedProjectLastModified = projectLastModified;
                 var capturedProject = project;
 
-                // ОТЛАДКА: Логируем захваченные данные
-
-                // Переключаемся на режим редактирования проекта ПОСЛЕ сохранения данных
+                // The screen changes hands only after the record has been written.
                 OpenProjectMode(projectMode);
 
                 var finalProjectInfo = new ProjectInfo
                 {
-                    Id = capturedProjectId, // ВСЕГДА используем ID из захваченных данных
+                    Id = capturedProjectId,
                     Name = capturedProjectName,
                     FilePath = capturedProjectFilePath,
                     Mode = capturedProjectMode,
@@ -404,13 +391,13 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     LastModified = capturedProjectLastModified
                 };
 
-                // Устанавливаем проект в ViewModel после того, как MainViewModel создаст View
-                // Используем двойной BeginInvoke для гарантии, что View создан
+                // The editor is handed its project only once MainViewModel has built the
+                // view. Two dispatches, not one: the first is after the view exists, the
+                // second after it has finished loading and its bindings are live.
                 System.Windows.Application.Current.Dispatcher.BeginInvoke(
                     System.Windows.Threading.DispatcherPriority.Loaded,
                     new System.Action(() =>
                     {
-                        // Еще один BeginInvoke для гарантии, что View полностью инициализирован
                         System.Windows.Application.Current.Dispatcher.BeginInvoke(
                             System.Windows.Threading.DispatcherPriority.Loaded,
                             new System.Action(() =>
@@ -429,7 +416,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                                     var setProjectInfo = new ProjectInfo
                                     {
-                                        Id = capturedProjectId, // ВСЕГДА используем ID из захваченных данных
+                                        Id = capturedProjectId,
                                         Name = capturedProjectName,
                                         FilePath = capturedProjectFilePath,
                                         Mode = capturedProjectMode,
