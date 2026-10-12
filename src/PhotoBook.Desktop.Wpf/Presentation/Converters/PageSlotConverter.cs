@@ -16,7 +16,6 @@ namespace PhotoBookRenamer.Presentation.Converters
                 var pagesWithoutCover = pages.Where(p => !p.IsCover).ToList();
                 var count = pagesWithoutCover.Count;
 
-                // Создаем список индексов от 1 до count
                 return Enumerable.Range(1, count).ToList();
             }
 

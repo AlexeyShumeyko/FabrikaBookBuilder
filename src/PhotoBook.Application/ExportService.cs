@@ -79,14 +79,14 @@ namespace PhotoBookRenamer.Application
                             }
                         }
 
-                        // Копируем обложку
                         if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
                         {
                             work.Add((book.Cover.SourcePath,
                                       Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, 0), usedNames))));
                         }
 
-                        // Копируем страницы (сортируем по индексу для правильного порядка)
+                        // Ordered by index: the order on disk has to be the order in the book, and
+                        // the list is not kept in it.
                         var pageIndex = 1;
                         foreach (var page in book.Pages.Where(p => !p.IsEmpty).OrderBy(p => p.Index))
                         {

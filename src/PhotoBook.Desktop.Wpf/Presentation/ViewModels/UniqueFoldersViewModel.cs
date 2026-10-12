@@ -279,7 +279,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             var projectInfoCopy = new ProjectInfo
             {
-                Id = projectId, // ВСЕГДА используем ID из локальной переменной
+                Id = projectId,
                 Name = projectName,
                 FilePath = projectFilePath,
                 Mode = projectMode,
@@ -927,7 +927,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             var pagesWithoutCover = book.Pages.Where(p => !p.IsCover).ToList();
             var pageIndex = pagesWithoutCover.IndexOf(page);
-            if (pageIndex <= 0) return; // Уже на первой позиции
+            if (pageIndex <= 0) return;
 
             _projectService.SaveState(Project!);
 
@@ -950,7 +950,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             var pagesWithoutCover = book.Pages.Where(p => !p.IsCover).ToList();
             var pageIndex = pagesWithoutCover.IndexOf(page);
-            if (pageIndex >= pagesWithoutCover.Count - 1) return; // Уже на последней позиции
+            if (pageIndex >= pagesWithoutCover.Count - 1) return;
 
             _projectService.SaveState(Project!);
 
@@ -988,7 +988,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                 // Page numbers start at 1 but the list carries the cover first, so the
                 // position in the list is the page number.
-                var targetIndexInCollection = targetPageNumber; // Позиция после обложки
+                var targetIndexInCollection = targetPageNumber; // the cover sits at 0, so the spread number IS the position
 
                 if (currentIndex == targetIndexInCollection)
                 {

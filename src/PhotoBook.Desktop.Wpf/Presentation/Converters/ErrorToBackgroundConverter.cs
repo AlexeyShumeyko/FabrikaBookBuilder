@@ -11,9 +11,8 @@ namespace PhotoBookRenamer.Presentation.Converters
         {
             if (value is bool hasError && hasError)
             {
-                // Более заметный красный фон
                 return new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(255, 235, 235)); // #FFEBEB - светло-красный
+            System.Windows.Media.Color.FromRgb(255, 235, 235));
             }
             return System.Windows.Media.Brushes.Transparent;
         }

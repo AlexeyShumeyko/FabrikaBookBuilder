@@ -12,13 +12,11 @@ namespace PhotoBookRenamer.Presentation.Converters
         {
             if (value is Book book)
             {
-                // Проверяем, что обложка заполнена
                 if (book.Cover == null || string.IsNullOrEmpty(book.Cover.SourcePath))
                 {
                     return false;
                 }
 
-                // Проверяем, что все страницы заполнены
                 var pagesWithoutCover = book.Pages.Where(p => !p.IsCover).ToList();
                 if (pagesWithoutCover.Count == 0)
                 {

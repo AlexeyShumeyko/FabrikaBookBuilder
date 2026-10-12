@@ -20,7 +20,7 @@ namespace PhotoBookRenamer.Presentation.Views
             {
                 try
                 {
-                    // Пытаемся загрузить иконку из разных мест
+                    // Two places, in order: beside the executable, and inside the package.
                     var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icon.ico");
 
                     if (File.Exists(iconPath))
@@ -35,7 +35,6 @@ namespace PhotoBookRenamer.Presentation.Views
                     }
                     else
                     {
-                        // Пытаемся загрузить как ресурс
                         try
                         {
                             var uri = new Uri("pack://application:,,,/icon.ico", UriKind.Absolute);
@@ -45,13 +44,11 @@ namespace PhotoBookRenamer.Presentation.Views
                         }
                         catch
                         {
-                            // Если не удалось загрузить, оставляем пустым
                         }
                     }
                 }
                 catch
                 {
-                    // Игнорируем ошибки загрузки
                 }
             }
         }

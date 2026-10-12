@@ -27,7 +27,6 @@ namespace PhotoBookRenamer.Presentation.Converters
         private static readonly string ErrorLogPath = Path.Combine(
             Path.GetTempPath(), "PhotoBookRenamer", "image-errors.log");
 
-        // Метод для очистки кэша конкретного файла.
         public static void ClearCacheForFile(string filePath)
         {
             if (string.IsNullOrEmpty(filePath)) return;
@@ -38,7 +37,6 @@ namespace PhotoBookRenamer.Presentation.Converters
             }
         }
 
-        // Метод для очистки всего кэша
         public static void ClearCache()
         {
             lock (_cacheLock)
@@ -101,7 +99,8 @@ namespace PhotoBookRenamer.Presentation.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             PhotoBookRenamer.Presentation.PerfPhase.Count("PageSourceConverter");
-            // Это обеспечивает обратную совместимость
+            // The same converter is asked for a Page in one binding and for a plain path in
+            // another; both have to keep working.
             string? imagePath = null;
             string? thumbnailPath = null;
 
@@ -112,22 +111,20 @@ namespace PhotoBookRenamer.Presentation.Converters
 
             if (value is Page page)
             {
-                // Если передан объект Page, используем ThumbnailPath если он есть
                 thumbnailPath = page.ThumbnailPath;
                 imagePath = page.SourcePath;
             }
             else if (value is string path)
             {
-                // Если передан string, используем его как SourcePath
                 imagePath = path;
             }
             else
             {
-                // Неизвестный тип - это может быть нормально для некоторых биндингов
+                // Anything else means the binding passed something this converter does not
+                // read. An empty cell is a better answer than an exception in the middle of a render.
                 return null;
             }
 
-            // Пустой SourcePath - это нормально для пустых ячеек
             if (string.IsNullOrEmpty(imagePath))
             {
                 return null;
@@ -157,7 +154,6 @@ namespace PhotoBookRenamer.Presentation.Converters
                 if (fromThumb != null) return fromThumb;
             }
 
-            // Если миниатюра не найдена или не загрузилась, загружаем полное изображение
             if (!File.Exists(imagePath))
             {
                 Log(imagePath, "file not found");

@@ -98,7 +98,6 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             UpdateSelectedFoldersList();
             LoadDrives();
 
-            // Валидируем существующие папки при загрузке только если есть папки
             if (_selectedFolders.Count > 0)
             {
                 _ = ValidateFoldersAsync();
@@ -155,7 +154,6 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                 }
                 catch
                 {
-                    // Игнорируем ошибки
                 }
             }
         }
@@ -190,7 +188,6 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                     return;
                 }
 
-                // Сохраняем текущий путь в историю перед переходом
                 if (!string.IsNullOrEmpty(_currentPath) && _currentPath != path)
                 {
                     _navigationHistory.Push(_currentPath);
@@ -215,7 +212,6 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                         {
                             try
                             {
-                                // Проверяем доступность папки
                                 var test = Directory.GetDirectories(d);
                                 return true;
                             }
@@ -240,18 +236,17 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                 }
                 catch (UnauthorizedAccessException)
                 {
-                    // Нет доступа к папке
                     folders.Clear();
                 }
                 catch (Exception ex)
                 {
-                    // Другие ошибки
                     MessageBox.Show($"Ошибка доступа к папке: {ex.Message}", "Ошибка",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                     folders.Clear();
                 }
 
-                // Всегда устанавливаем источник данных, даже если список пуст
+                // Set even when the folder holds nothing readable - that is what clears what
+                // the list was showing before.
                 FoldersListBox.ItemsSource = folders;
             }
             catch (Exception ex)
@@ -268,11 +263,8 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             {
                 try
                 {
-                    // Открываем папку и показываем её содержимое
                     LoadFolders(node.FullPath);
 
-                    // Обновляем навигацию - добавляем текущую папку в историю или обновляем выделение
-                    // Можно также добавить кнопку "Назад" для навигации
                 }
                 catch (Exception ex)
                 {
@@ -284,7 +276,6 @@ namespace PhotoBookRenamer.Presentation.Dialogs
 
         private void FoldersListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Можно добавить предпросмотр или другую логику при выборе
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
@@ -293,7 +284,6 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             {
                 var previousPath = _navigationHistory.Pop();
                 LoadFolders(previousPath);
-                // Убираем текущий путь из истории, так как мы вернулись назад
                 if (_navigationHistory.Count > 0 && _navigationHistory.Peek() == _currentPath)
                 {
                     _navigationHistory.Pop();
@@ -342,7 +332,6 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             SelectedFoldersListBox.ItemsSource = _selectedFoldersInfo;
             OkButton.IsEnabled = _selectedFolders.Count > 0;
 
-            // Обновляем состояние кнопки удалить
             UpdateRemoveButtonState();
         }
 
@@ -386,7 +375,8 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                 return;
             }
 
-            // Финальная валидация перед закрытием
+            // The selection is checked again on the way out: a folder that has emptied
+            // itself since it was added must not be accepted.
             var validationResult = await _fileService.ValidateFoldersDetailedAsync(_selectedFolders);
             if (!validationResult.IsValid)
             {
@@ -410,7 +400,6 @@ namespace PhotoBookRenamer.Presentation.Dialogs
 
             if (_selectedFolders.Count == 0)
             {
-                // Сбрасываем ошибки для всех папок
                 foreach (var folderInfo in _selectedFoldersInfo)
                 {
                     folderInfo.HasError = false;
@@ -419,7 +408,6 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                 return;
             }
 
-            // Сначала сбрасываем все ошибки
             foreach (var folderInfo in _selectedFoldersInfo)
             {
                 folderInfo.HasError = false;
@@ -434,7 +422,6 @@ namespace PhotoBookRenamer.Presentation.Dialogs
                 ErrorBorder.Visibility = Visibility.Visible;
                 OkButton.IsEnabled = false;
 
-                // Подсвечиваем проблемную папку
                 if (!string.IsNullOrEmpty(validationResult.ProblemFolder))
                 {
                     var problemFolder = _selectedFoldersInfo.FirstOrDefault(f =>

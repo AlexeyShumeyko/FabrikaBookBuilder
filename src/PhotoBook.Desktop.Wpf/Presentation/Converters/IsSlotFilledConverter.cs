@@ -15,7 +15,6 @@ namespace PhotoBookRenamer.Presentation.Converters
 
             if (values[0] is Page cover && values[1] is System.Collections.ObjectModel.ObservableCollection<Page> pages && values[2] is int index)
             {
-                // Если индекс 0 - проверяем обложку
                 if (index == 0)
                 {
                     return !string.IsNullOrEmpty(cover.SourcePath);

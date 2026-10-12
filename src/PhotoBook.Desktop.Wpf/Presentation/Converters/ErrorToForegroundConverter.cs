@@ -11,9 +11,9 @@ namespace PhotoBookRenamer.Presentation.Converters
         {
             if (value is bool hasError && hasError)
             {
-                return new SolidColorBrush(Color.FromRgb(211, 47, 47)); // #D32F2F красный
+                return new SolidColorBrush(Color.FromRgb(211, 47, 47));
             }
-            return new SolidColorBrush(Color.FromRgb(74, 74, 74)); // #4A4A4A темно-серый
+            return new SolidColorBrush(Color.FromRgb(74, 74, 74));
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

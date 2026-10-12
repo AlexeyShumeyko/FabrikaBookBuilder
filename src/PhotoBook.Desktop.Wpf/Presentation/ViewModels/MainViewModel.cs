@@ -78,7 +78,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             SwitchToUniqueFoldersCommand = GoToModeSelectCommand;
             SwitchToCombinedModeCommand = GoToModeSelectCommand;
 
-            // По умолчанию показываем список всех проектов
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 var projectListVm = NewProjectListViewModel();
@@ -191,12 +190,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     case AppMode.ProjectList:
                         var projectListVm = NewProjectListViewModel();
                         CurrentView = new ProjectListView(projectListVm);
-                        // Обновляем список проектов при возврате
                         projectListVm.LoadProjectsCommand.Execute(null);
                         break;
 
                     case AppMode.UniqueFolders:
-                        // ViewModel - Singleton, поэтому состояние редактирования сохраняется
+                        // One shell, one editor instance per mode: switching away and back finds the
+                        // editor as it was left.
                         CurrentView = new UniqueFoldersView(_uniqueFolders);
                         break;
 

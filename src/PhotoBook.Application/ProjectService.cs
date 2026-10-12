@@ -54,8 +54,7 @@ namespace PhotoBookRenamer.Application
                     }
                 };
 
-                // Обложка НЕ добавляется в Pages, она только в свойстве Cover
-                // Добавляем только страницы (не обложку)
+                // The cover is not one of the pages: it lives in Cover, and the spreads start at 1.
                 var pageIndex = 1;
                 foreach (var file in files.Where(f => f != coverPath).OrderBy(f => f))
                 {
@@ -72,20 +71,18 @@ namespace PhotoBookRenamer.Application
                 return book;
             }));
 
-            // Добавляем все книги в проект
             foreach (var book in books)
             {
                 project.Books.Add(book);
             }
 
-            // Устанавливаем индексы книг
             for (int i = 0; i < project.Books.Count; i++)
             {
                 project.Books[i].BookIndex = i + 1;
             }
 
-            // Кадр карточек формируется по реальным размерам фото, поэтому они нужны
-            // сразу при создании проекта.
+            // The card layout is built from the real sizes of the photographs, so they are
+            // read here rather than on the first draw.
             await ProjectImageSizes.FillMissingAsync(project, _imageService);
 
             return project;
@@ -97,17 +94,15 @@ namespace PhotoBookRenamer.Application
 
             var clone = project.Clone();
             _undoStack.Push(clone);
-            _redoStack.Clear(); // Очищаем redo при новом действии
+            _redoStack.Clear();
         }
 
         public Project? Undo(Project currentProject)
         {
             if (!CanUndo || currentProject == null) return null;
 
-            // Сохраняем текущее состояние в redo
             _redoStack.Push(currentProject.Clone());
 
-            // Восстанавливаем предыдущее состояние
             var previousState = _undoStack.Pop();
             return previousState;
         }
@@ -116,10 +111,8 @@ namespace PhotoBookRenamer.Application
         {
             if (!CanRedo || currentProject == null) return null;
 
-            // Сохраняем текущее состояние в undo
             _undoStack.Push(currentProject.Clone());
 
-            // Восстанавливаем следующее состояние
             var nextState = _redoStack.Pop();
             return nextState;
         }

@@ -17,7 +17,7 @@ namespace PhotoBookRenamer.Presentation.Converters
                 values[1] is int pageNumber)
             {
                 var pagesWithoutCover = pages.Where(p => !p.IsCover).ToList();
-                var index = pageNumber - 1; // pageNumber начинается с 1, индекс с 0
+                var index = pageNumber - 1; // the page number starts at 1, the index at 0
 
                 if (index >= 0 && index < pagesWithoutCover.Count)
                 {
@@ -40,13 +40,14 @@ namespace PhotoBookRenamer.Presentation.Converters
                     {
                         try
                         {
-                            // Создаем новый BitmapImage с кэшированием отключенным для обновления
+                            // CacheOption.OnLoad reads and closes the file, which is what
+                            // makes the bitmap freezable and therefore shareable between threads.
                             var bitmap = new BitmapImage();
                             bitmap.BeginInit();
                             bitmap.CacheOption = BitmapCacheOption.OnLoad;
                             bitmap.UriSource = new Uri(imagePath);
                             bitmap.EndInit();
-                            bitmap.Freeze(); // Замораживаем для потокобезопасности
+                            bitmap.Freeze(); // frozen, so a background thread may hand it to the UI thread
                             return bitmap;
                         }
                         catch

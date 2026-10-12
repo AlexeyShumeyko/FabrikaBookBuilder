@@ -16,7 +16,6 @@ namespace PhotoBookRenamer.Presentation.Converters
         private static readonly Dictionary<string, BitmapImage> _imageCache = new();
         private static readonly object _cacheLock = new();
 
-        // Метод для очистки кэша конкретной страницы
         public static void ClearCacheForPage(int bookIndex, int pageIndex)
         {
             var key = $"{bookIndex}_{pageIndex}";
@@ -26,7 +25,6 @@ namespace PhotoBookRenamer.Presentation.Converters
             }
         }
 
-        // Метод для очистки всего кэша
         public static void ClearCache()
         {
             lock (_cacheLock)
@@ -44,14 +42,14 @@ namespace PhotoBookRenamer.Presentation.Converters
             {
                 Page? targetPage = null;
 
-                // Определяем целевую страницу
                 if (slotIndex == 0)
                 {
                     targetPage = cover;
                 }
                 else
                 {
-                    // Ищем страницу по Index (slotIndex соответствует Page.Index)
+                    // Matched by Page.Index rather than by position: the number here is the
+                    // slot the photographer sees, not where the page sits in the book.
                     targetPage = pages.FirstOrDefault(p => !p.IsCover && p.Index == slotIndex);
                 }
 
@@ -68,7 +66,6 @@ namespace PhotoBookRenamer.Presentation.Converters
                 {
                     var thumbCacheKey = $"thumb_{slotIndex}_{thumbnailPath}";
 
-                    // Проверяем кэш для миниатюры
                     lock (_cacheLock)
                     {
                         if (_imageCache.TryGetValue(thumbCacheKey, out var cachedThumbnail))
@@ -77,7 +74,6 @@ namespace PhotoBookRenamer.Presentation.Converters
                         }
                     }
 
-                    // Загружаем миниатюру
                     try
                     {
                         var bitmap = new BitmapImage();
@@ -88,7 +84,6 @@ namespace PhotoBookRenamer.Presentation.Converters
                         bitmap.EndInit();
                         bitmap.Freeze();
 
-                        // Сохраняем в кэш
                         lock (_cacheLock)
                         {
                             _imageCache[thumbCacheKey] = bitmap;
@@ -98,7 +93,6 @@ namespace PhotoBookRenamer.Presentation.Converters
                     }
                     catch
                     {
-                        // Продолжаем загрузку полного изображения
                     }
                 }
 
@@ -107,7 +101,6 @@ namespace PhotoBookRenamer.Presentation.Converters
                 // the bitmap of whatever used to stand there.
                 lock (_cacheLock)
                 {
-                    // Удаляем старые записи кэша для этого slotIndex (если SourcePath изменился)
                     var keysToRemove = new List<string>();
                     foreach (var key in _imageCache.Keys)
                     {
@@ -121,10 +114,8 @@ namespace PhotoBookRenamer.Presentation.Converters
                         _imageCache.Remove(key);
                     }
 
-                    // Проверяем кэш для текущего SourcePath
                     if (_imageCache.TryGetValue(cacheKey, out var cachedBitmap))
                     {
-                        // Дополнительная проверка: убеждаемся, что SourcePath страницы все еще соответствует
                         if (targetPage.SourcePath == imagePath)
                         {
                             return cachedBitmap;
@@ -132,7 +123,6 @@ namespace PhotoBookRenamer.Presentation.Converters
                     }
                 }
 
-                // Загружаем новое изображение
                 try
                 {
                     var bitmap = new BitmapImage();
@@ -140,13 +130,12 @@ namespace PhotoBookRenamer.Presentation.Converters
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.CreateOptions = BitmapCreateOptions.None;
                     bitmap.DecodePixelWidth = 600;
-                    // Только DecodePixelWidth: обе стороны растянули бы фото,
-                    // вторая считается по пропорциям оригинала.
+                    // DecodePixelWidth alone: giving both sides a size would stretch the photograph,
+                    // while the second side follows the proportions of the original.
                     bitmap.UriSource = new Uri(imagePath, UriKind.Absolute);
                     bitmap.EndInit();
                     bitmap.Freeze();
 
-                    // Сохраняем в кэш
                     lock (_cacheLock)
                     {
                         _imageCache[cacheKey] = bitmap;

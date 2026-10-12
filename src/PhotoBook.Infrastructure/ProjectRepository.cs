@@ -106,7 +106,6 @@ namespace PhotoBookRenamer.Infrastructure
                                 }
                             }
 
-                            // Слоты страниц пересчитываются после того, как страницы добавлены
                             book.UpdatePageSlots();
 
                             project.Books.Add(book);
@@ -122,27 +121,25 @@ namespace PhotoBookRenamer.Infrastructure
                     }
                 }
 
-                // ВАЖНО: После десериализации нужно убедиться, что все коллекции правильно инициализированы
                 if (project != null)
                 {
                     if (project.Books != null && project.Books.Count > 0)
                     {
                         foreach (var book in project.Books)
                         {
-                            // Pages должна быть инициализирована конструктором или десериализацией
                             if (book.Pages == null)
                             {
-                                // Это критическая ошибка - пропускаем эту книгу
+                                // A book with no page list can neither be shown nor saved. Skipping it
+                                // keeps the rest of the run usable.
                                 continue;
                             }
 
-                            // Убеждаемся, что слоты страниц обновлены после десериализации
                             book.UpdatePageSlots();
                         }
                     }
 
-                    // Проекты, сохранённые до появления размеров, получают их при первом
-                    // открытии - и дальше они лежат в файле проекта.
+                    // Projects saved before the sizes existed get them on first open, and they
+                    // stay in the project file from then on.
                     await ProjectImageSizes.FillMissingAsync(project, _imageService);
                 }
 

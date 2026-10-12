@@ -77,12 +77,11 @@ namespace PhotoBookRenamer
             ConfigureServices(services);
             _serviceProvider = services.BuildServiceProvider();
 
-            // Проверка обновлений в фоне
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await Task.Delay(2000); // Ждем 2 секунды после запуска приложения
+                    await Task.Delay(2000); // let the window come up before the check begins
 
                     var updateService = _serviceProvider.GetRequiredService<IUpdateFeed>();
                     var hasUpdate = await updateService.CheckForUpdatesAsync();
@@ -104,7 +103,7 @@ namespace PhotoBookRenamer
                 }
                 catch (Exception ex)
                 {
-                    // Логируем ошибки, но не показываем пользователю
+                    // A failed update check is not worth interrupting the photographer for.
                     System.Diagnostics.Debug.WriteLine($"Ошибка проверки обновлений: {ex.Message}");
                 }
             });

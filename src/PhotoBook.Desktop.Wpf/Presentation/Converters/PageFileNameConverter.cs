@@ -16,7 +16,6 @@ namespace PhotoBookRenamer.Presentation.Converters
                 values[1] is System.Collections.ObjectModel.ObservableCollection<Page> pages &&
                 values[2] is int slotIndex)
             {
-                // Если индекс 0 - возвращаем имя файла обложки
                 if (slotIndex == 0)
                 {
                     if (!string.IsNullOrEmpty(cover.SourcePath))
@@ -34,10 +33,9 @@ namespace PhotoBookRenamer.Presentation.Converters
                 }
                 else
                 {
-                    // Иначе возвращаем имя файла страницы по индексу
-                    // slotIndex - это номер разворота (1, 2, 3, 4...)
+                    // slotIndex is the spread number the photographer sees: 1, 2, 3...
                     var pagesWithoutCover = pages.Where(p => !p.IsCover).ToList();
-                    var pageIndex = slotIndex - 1; // slotIndex начинается с 1, индекс с 0
+                    var pageIndex = slotIndex - 1;
 
                     if (pageIndex >= 0 && pageIndex < pagesWithoutCover.Count)
                     {

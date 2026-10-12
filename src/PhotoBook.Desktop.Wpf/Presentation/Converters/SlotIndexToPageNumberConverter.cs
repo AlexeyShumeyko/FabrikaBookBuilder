@@ -10,7 +10,6 @@ namespace PhotoBookRenamer.Presentation.Converters
         {
             if (value is PhotoBook.Core.Page page)
             {
-                // Обложка без номера
                 if (page.IsCover)
                 {
                     return string.Empty;
