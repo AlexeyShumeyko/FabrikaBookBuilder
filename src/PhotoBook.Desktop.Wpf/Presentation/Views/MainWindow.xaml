@@ -201,7 +201,7 @@
                     </Button>
                     <Button Style="{StaticResource IconButton}" Click="OnHelpClick"
                             AutomationProperties.Name="Помощь" Margin="6,0,0,0"
-                            ToolTip="Помощь — в разработке">
+                            ToolTip="Помощь и журнал работы программы">
                         <TextBlock Text="&#xE897;" FontFamily="{StaticResource IconFont}" FontSize="14" />
                     </Button>
                     <Button Style="{StaticResource IconButton}" Click="OnContactsClick"

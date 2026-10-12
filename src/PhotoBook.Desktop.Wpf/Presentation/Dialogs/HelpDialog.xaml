@@ -1,0 +1,105 @@
+<Window x:Class="PhotoBookRenamer.Presentation.Dialogs.HelpDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Помощь"
+        SizeToContent="Height" Width="520"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="Transparent"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        ShowInTaskbar="False"
+        FontFamily="{StaticResource UiFont}">
+
+    <!--
+        The stub of the help section, and the seed of the real one.
+
+        What a customer can be given TODAY is the journal: the program records every failure
+        in one file, and without that file an answer to "it did not work" is a guess. So the
+        dialog says two things - what is being prepared, and where the journal is - and offers
+        one click to open the folder it is in.
+    -->
+    <Border Style="{StaticResource DialogShadowRoom}">
+        <Border Style="{StaticResource DialogSurface}">
+            <StackPanel Margin="24,22,24,20">
+
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Width="36" Height="36"
+                            CornerRadius="10" Background="{StaticResource Brand50}"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="&#xE897;" FontFamily="{StaticResource IconFont}"
+                                   FontSize="15" Foreground="{StaticResource Brand600}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource TextH3}" Text="Помощь" />
+                        <TextBlock Style="{StaticResource TextCaption}" Margin="0,2,0,0"
+                                   Foreground="{StaticResource Slate500}"
+                                   Text="Раздел готовится и появится в ближайших обновлениях" />
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Style="{StaticResource TextBody}"
+                           Foreground="{StaticResource Slate600}" TextWrapping="Wrap"
+                           LineHeight="20" Margin="48,0,0,0"
+                           Text="Здесь будет полное описание программы: что делает каждая функция, как устроена работа с проектом, ответы на частые вопросы и сведения о том, что программа делает с фотографиями и где их хранит." />
+
+                <Border Height="1" Background="{StaticResource Slate100}" Margin="0,18,0,16" />
+
+                <TextBlock Style="{StaticResource TextBody}" Foreground="{StaticResource Slate700}"
+                           TextWrapping="Wrap" LineHeight="20" Margin="48,0,0,0"
+                           Text="Пока раздела нет, вот что поможет быстрее:" />
+
+                <Border Margin="48,10,0,0" Padding="14,12"
+                        Background="{StaticResource Slate50}"
+                        CornerRadius="8" BorderBrush="{StaticResource Slate100}"
+                        BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource TextBody}" FontWeight="SemiBold"
+                                   Foreground="{StaticResource Slate700}"
+                                   Text="Если что-то не сработало" />
+                        <TextBlock Style="{StaticResource TextCaption}" Margin="0,4,0,0"
+                                   Foreground="{StaticResource Slate500}" TextWrapping="Wrap"
+                                   LineHeight="18"
+                                   Text="Программа записывает каждую ошибку в один файл. Приложите его к обращению в поддержку - по нему будет видно, что именно произошло." />
+
+                        <Border Height="1" Background="{StaticResource Slate200}" Margin="0,12,0,10" />
+
+                        <TextBlock Style="{StaticResource TextCaption}"
+                                   Foreground="{StaticResource Slate500}" Text="Журнал:" />
+                        <!-- A read-only box rather than a label with a "copy" button beside
+                             it: a ghost button on white paper is invisible until you know it is
+                             there, and a box can be selected and copied without being told. -->
+                        <TextBox x:Name="JournalPathText" Margin="0,4,0,0"
+                                 IsReadOnly="True" TextWrapping="Wrap"
+                                 FontFamily="Consolas" FontSize="12"
+                                 Padding="8,6" BorderThickness="1" BorderBrush="{StaticResource Slate200}"
+                                 Background="{StaticResource BackgroundCard}"
+                                 Foreground="{StaticResource Slate700}" />
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Margin="48,12,0,0">
+                    <Button Style="{StaticResource SecondaryButton}" Click="OnOpenFolderClick"
+                            AutomationProperties.Name="Открыть папку с журналом" HorizontalAlignment="Left"
+                            Content="Открыть папку с журналом" />
+                </StackPanel>
+
+                <Border Height="1" Background="{StaticResource Slate100}" Margin="0,18,0,16" />
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Style="{StaticResource PrimaryButton}" Click="OnCloseClick"
+                            AutomationProperties.Name="Понятно" Content="Понятно"
+                            IsDefault="True" IsCancel="True" MinWidth="104" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Border>
+</Window>

@@ -166,9 +166,19 @@ namespace PhotoBookRenamer.Presentation.Views
             "Тема оформления",
             "Светлая и тёмная темы появятся в следующих обновлениях.\n\nПока программа работает в светлой теме.");
 
-        private void OnHelpClick(object sender, RoutedEventArgs e) => SayInDevelopment(
-            "Помощь",
-            "Раздел помощи готовится к переработке.\n\nОн будет доступен из этой кнопки и по клавише F1.");
+        /// <summary>
+        /// The full help section - every function, the answers, what the program does with
+        /// the photographs - is planned for after 2.0.0, together with the theme and contacts
+        /// buttons. Until then this window says what is coming and hands over the journal,
+        /// which is the one thing a customer can act on today.
+        /// </summary>
+        private void OnHelpClick(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Dialogs.HelpDialog();
+            var owner = System.Windows.Application.Current?.MainWindow;
+            if (owner != null && !ReferenceEquals(owner, dialog)) dialog.Owner = owner;
+            dialog.ShowDialog();
+        }
 
         private void OnContactsClick(object sender, RoutedEventArgs e) => SayInDevelopment(
             "Контакты",
