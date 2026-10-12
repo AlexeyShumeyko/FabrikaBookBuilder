@@ -83,7 +83,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 if (SetProperty(ref _currentProjectInfo, value))
                 {
-                    // Обновляем команду сохранения при изменении CurrentProjectInfo
                     if (SaveProjectCommand is AsyncRelayCommand saveCmd)
                     {
                         saveCmd.NotifyCanExecuteChanged();
@@ -120,22 +119,19 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             ExportWithFolderCommand = new AsyncRelayCommand(ExportWithFolderAsync, () => Project?.IsValid ?? false);
             BackCommand = new AsyncRelayCommand(async () =>
             {
-                // При выходе назад проверяем, нужно ли удалить пустой проект
                 if (CurrentProjectInfo != null)
                 {
-                    // Проверяем, был ли проект сохранён в файл
                     var wasSaved = !string.IsNullOrEmpty(CurrentProjectInfo.FilePath) &&
                                    System.IO.File.Exists(CurrentProjectInfo.FilePath);
 
-                    // Если проект не был сохранён в файл и пустой, удаляем его из списка
-                    // Это предотвращает создание пустых проектов в списке
+                    // Nothing was saved and there is nothing in it, so it goes: an empty
+                    // project in the list is a card that opens onto nothing.
                     if (!wasSaved && (Project == null || Project.Books == null || Project.Books.Count == 0))
                     {
                         await _projectListService.DeleteProjectAsync(CurrentProjectInfo);
                     }
                 }
 
-                // Возвращаемся на главную страницу со списком проектов
                 RequestBackToProjectList();
             });
             SaveProjectCommand = new AsyncRelayCommand(SaveAndCloseAsync);
@@ -158,7 +154,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 OnPropertyChanged(nameof(BooksSummary));
             };
 
-            // Обновляем команды при изменении проекта
             PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(Project))
@@ -261,7 +256,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             Books.Clear();
             Project = null;
-            // НЕ сбрасываем CurrentProjectInfo здесь - он будет установлен ниже
             ProjectName = null;
             ErrorMessage = null;
             _projectService.ClearHistory();
@@ -295,18 +289,15 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 LastModified = projectLastModified
             };
 
-            // Сохраняем ссылку на копию projectInfo
             CurrentProjectInfo = projectInfoCopy;
             ProjectName = projectInfoCopy.Name;
 
-            // Устанавливаем проект
             if (project == null)
             {
                 project = new Project { Mode = projectInfo.Mode };
             }
             else
             {
-                // Убеждаемся, что режим правильный
                 project.Mode = projectInfo.Mode;
 
                 // A project written before spreads carried slots needs them recomputed,
@@ -315,10 +306,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     foreach (var book in project.Books)
                     {
-                        // Убеждаемся, что Pages инициализирована (должна быть после десериализации)
+                        // A project written before Pages was filled in comes back with them null.
                         if (book.Pages != null)
                         {
-                            // Обновляем слоты страниц после десериализации
                             book.UpdatePageSlots();
                         }
                     }
@@ -331,14 +321,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             Books.Clear();
             if (project != null && project.Books != null)
             {
-                // Добавляем ВСЕ книги в коллекцию для отображения (даже если их 0)
                 foreach (var book in project.Books)
                 {
                     Books.Add(book);
                 }
             }
 
-            // Устанавливаем проект ПОСЛЕ синхронизации Books
             Project = project;
 
             if (Project != null && Project.Books != null && Books.Count != Project.Books.Count)
@@ -356,25 +344,22 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 // every book in a run has the same number.
                 CurrentProjectInfo.PageCount = Project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
                 CurrentProjectInfo.BookCount = Project.Books?.Count ?? 0;
-                // Сохраняем обновлённую информацию в фоне
                 Background.Run(
                     async () => await _projectListService.SaveProjectInfoAsync(projectInfo),
                     "save project index");
             }
 
-            // Уведомляем UI об обновлении
             OnPropertyChanged(nameof(Books));
             OnPropertyChanged(nameof(Project));
             OnPropertyChanged(nameof(ProjectName));
 
-            // Обновляем команду сохранения после установки проекта
             if (SaveProjectCommand is AsyncRelayCommand saveCmd)
             {
                 saveCmd.NotifyCanExecuteChanged();
             }
 
-            // Сначала привязываем уже существующие миниатюры: путь миниатюры теперь считает
-            // один помощник, а не три копии одной формулы в двух ViewModel.
+            // Previews that already exist are attached first: the path is computed by one
+            // helper now, rather than by three copies of the same formula in two view models.
             if (Project != null && Project.Books != null && Project.Books.Count > 0)
             {
                 foreach (var book in Project.Books)
@@ -396,11 +381,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     .Where(p => !string.IsNullOrEmpty(p))
                     .ToList();
 
-                // Фоновая подготовка: сначала недостающие миниатюры, затем декодирование
-                // вне UI-потока, затем обновление слотов. Смысл и порядок описаны в
-                // PrewarmAndWarmThumbnailsAsync (CombinedModeViewModel): без декодирования
-                // вне UI-потока первый ренвер читает 18 МБ JPEG прямо в разметке, и слоты
-                // остаются пустыми серыми рамками до пересохранения проекта.
+                // Preparation, in this order: the previews that are missing, then the
+                // decoding away from the UI thread, then the slots. The reasoning is in
+                // PrewarmAndWarmThumbnailsAsync (CombinedModeViewModel) - without it the
+                // first render reads an 18 MB JPEG from inside the layout and the slots
+                // stay empty grey frames until the project is saved and reopened.
                 var preparation = BeginPreparation();
                 Background.Run(async () =>
                 {
@@ -460,7 +445,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         }
 
         /// <summary>
-        /// Сохраняет только название проекта без полного сохранения проекта и без переключения режима
+        /// Writes the name only: no project file, no change of screen.
         /// </summary>
         public async System.Threading.Tasks.Task SaveProjectNameOnlyAsync()
         {
@@ -471,12 +456,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             try
             {
-                // Обновляем название в CurrentProjectInfo
                 CurrentProjectInfo.Name = ProjectName;
                 CurrentProjectInfo.LastModified = DateTime.Now;
 
-                // Сохраняем только информацию о проекте (без полного сохранения проекта)
-                await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
             }
             catch (Exception ex)
             {
@@ -579,14 +561,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             try
             {
-                // Получаем список уже загруженных папок
                 var existingFolders = Project?.Books
                     .Where(b => !string.IsNullOrEmpty(b.FolderPath))
                     .Select(b => b.FolderPath!)
                     .ToList() ?? new List<string>();
 
-                // Показываем диалог выбора папок с множественным выбором
-                // Валидация выполняется внутри диалога
                 var dialog = new Presentation.Dialogs.MultiFolderBrowserDialog(_fileService, existingFolders);
                 dialog.Owner = System.Windows.Application.Current.MainWindow;
                 if (dialog.ShowDialog() != true)
@@ -597,7 +576,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 var folders = dialog.SelectedFolders;
                 if (folders.Count == 0)
                 {
-                    // Если все папки удалены, очищаем проект
                     if (Project != null && existingFolders.Count > 0)
                     {
                         Project.Books.Clear();
@@ -607,20 +585,17 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     return;
                 }
 
-                // Находим папки, которые были удалены из списка
                 var removedFolders = existingFolders.Except(folders).ToList();
 
-                // Если есть уже загруженные папки, добавляем только новые
                 var newFolders = folders.Except(existingFolders).ToList();
 
-                // Если нет новых папок и нет удаленных, ничего не делаем
                 if (newFolders.Count == 0 && removedFolders.Count == 0 && existingFolders.Count > 0)
                 {
-                    // Пользователь не добавил новых папок и не удалил существующие
                     return;
                 }
 
-                // Валидация уже выполнена в диалоге, но проверим еще раз для безопасности
+                // The dialog already validated the folders; checked again because a file
+                // can disappear between the two moments.
                 var validationResult = await _fileService.ValidateFoldersDetailedAsync(folders);
                 if (!validationResult.IsValid)
                 {
@@ -635,14 +610,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                 IsLoading = true;
 
-                // Первое действие с данными создаёт запись проекта — до этого момента
-                // вкладка могла быть открыта без какого-либо проекта вообще.
+                // The first thing done with the folders creates the project record: until
+                // now the tab could be open with no project behind it at all.
                 await EnsureProjectInfoAsync();
 
-                // Если проект уже существует
                 if (Project != null && existingFolders.Count > 0)
                 {
-                    // Удаляем книги для удаленных папок
                     if (removedFolders.Count > 0)
                     {
                         var booksToRemove = Project.Books
@@ -659,7 +632,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         _projectService.SaveState(Project);
                     }
 
-                    // Добавляем новые книги
                     if (newFolders.Count > 0)
                     {
                         var newProject = await _projectService.CreateProjectFromFoldersAsync(newFolders);
@@ -672,7 +644,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                         _projectService.SaveState(Project);
                     }
 
-                    // Пересчитываем индексы книг
                     for (int i = 0; i < Project.Books.Count; i++)
                     {
                         Project.Books[i].BookIndex = i + 1;
@@ -680,7 +651,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
                 else
                 {
-                    // Создаем новый проект из папок
                     Project = await _projectService.CreateProjectFromFoldersAsync(folders);
                     _projectService.SaveState(Project);
 
@@ -703,7 +673,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     {
                         var thumbPath = ThumbnailStore.GetPath(book.Cover.SourcePath);
 
-                        // Устанавливаем путь к миниатюре только если она уже существует
                         if (File.Exists(thumbPath))
                         {
                             book.Cover.ThumbnailPath = thumbPath;
@@ -714,7 +683,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     {
                         var thumbPath = ThumbnailStore.GetPath(page.SourcePath);
 
-                        // Устанавливаем путь к миниатюре только если она уже существует
                         if (File.Exists(thumbPath))
                         {
                             page.ThumbnailPath = thumbPath;
@@ -727,13 +695,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     .Where(p => !string.IsNullOrEmpty(p))
                     .ToList();
 
-                // Загружаем миниатюры в фоне, чтобы не блокировать UI
                 var preparation = BeginPreparation();
                 Background.Run(async () =>
                 {
                     await _thumbnails.EnsureAsync(allImagePaths!, cancellationToken: preparation);
-                    // Обновляем ThumbnailPath для всех страниц и обложек после загрузки миниатюр
-                    // Используем Dispatcher для обновления UI на правильном потоке
+                    // The slots learn their preview paths here, on the UI thread, because
+                    // that is the thread the binding reads from.
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
                         foreach (var book in Project.Books)
@@ -907,7 +874,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             Books.Remove(book);
             Project.Books.Remove(book);
 
-            // Пересчитываем индексы книг
             for (int i = 0; i < Project.Books.Count; i++)
             {
                 Project.Books[i].BookIndex = i + 1;
@@ -959,23 +925,19 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             var book = Books.FirstOrDefault(b => b.Pages.Contains(page));
             if (book == null) return;
 
-            // Находим индекс страницы в коллекции (исключая обложку)
             var pagesWithoutCover = book.Pages.Where(p => !p.IsCover).ToList();
             var pageIndex = pagesWithoutCover.IndexOf(page);
             if (pageIndex <= 0) return; // Уже на первой позиции
 
             _projectService.SaveState(Project!);
 
-            // Перемещаем страницу в коллекции (влево - на позицию раньше)
             var currentIndex = book.Pages.IndexOf(page);
             var targetIndex = currentIndex - 1;
 
-            // Убеждаемся, что не перемещаем на позицию обложки
             if (targetIndex >= 0 && !book.Pages[targetIndex].IsCover)
             {
                 book.Pages.Move(currentIndex, targetIndex);
                 UpdatePageDisplayIndices(book);
-                // PageSlots обновится автоматически через CollectionChanged
             }
         }
 
@@ -986,23 +948,19 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             var book = Books.FirstOrDefault(b => b.Pages.Contains(page));
             if (book == null) return;
 
-            // Находим индекс страницы в коллекции (исключая обложку)
             var pagesWithoutCover = book.Pages.Where(p => !p.IsCover).ToList();
             var pageIndex = pagesWithoutCover.IndexOf(page);
             if (pageIndex >= pagesWithoutCover.Count - 1) return; // Уже на последней позиции
 
             _projectService.SaveState(Project!);
 
-            // Перемещаем страницу в коллекции (вправо - на позицию позже)
             var currentIndex = book.Pages.IndexOf(page);
             var targetIndex = currentIndex + 1;
 
-            // Убеждаемся, что не выходим за границы
             if (targetIndex < book.Pages.Count)
             {
                 book.Pages.Move(currentIndex, targetIndex);
                 UpdatePageDisplayIndices(book);
-                // PageSlots обновится автоматически через CollectionChanged
             }
         }
 
@@ -1026,29 +984,24 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                 _projectService.SaveState(Project!);
 
-                // Находим текущую позицию страницы в коллекции
                 var currentIndex = book.Pages.IndexOf(page);
 
-                // Находим целевую позицию в коллекции (targetPageNumber, так как обложка на позиции 0)
-                // Страницы начинаются с 1, но в коллекции они идут после обложки (индекс 1, 2, 3...)
+                // Page numbers start at 1 but the list carries the cover first, so the
+                // position in the list is the page number.
                 var targetIndexInCollection = targetPageNumber; // Позиция после обложки
 
                 if (currentIndex == targetIndexInCollection)
                 {
-                    // Страница уже на нужной позиции
                     return;
                 }
 
-                // Удаляем страницу из текущей позиции
                 book.Pages.RemoveAt(currentIndex);
 
-                // Если удалили элемент до целевой позиции, нужно скорректировать индекс
                 if (currentIndex < targetIndexInCollection)
                 {
                     targetIndexInCollection--;
                 }
 
-                // Вставляем на новую позицию
                 if (targetIndexInCollection <= book.Pages.Count)
                 {
                     book.Pages.Insert(targetIndexInCollection, page);
@@ -1059,13 +1012,11 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
 
                 UpdatePageDisplayIndices(book);
-                // PageSlots обновится автоматически через CollectionChanged
             }
         }
 
         private void UpdatePageDisplayIndices(Book book)
         {
-            // Обновляем DisplayIndex на основе позиции в коллекции (исключая обложку)
             var displayIndex = 1;
             foreach (var p in book.Pages.Where(p => !p.IsCover))
             {
@@ -1212,10 +1163,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                 var projectFilePath = Path.Combine(projectsDir, $"{projectId}.json");
 
-                // Сохраняем проект в файл
                 await _projects.SaveAsync(Project, projectFilePath);
 
-                // Обновляем информацию о проекте
                 if (CurrentProjectInfo != null)
                 {
                     CurrentProjectInfo.FilePath = projectFilePath;
@@ -1226,8 +1175,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     CurrentProjectInfo.LastModified = DateTime.Now;
                 }
 
-                // Сохраняем обновленную информацию о проекте в список
-                if (CurrentProjectInfo != null)
                 {
                     await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
                 }
@@ -1235,7 +1182,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             catch (Exception ex)
             {
                 _loggingService.LogError("Ошибка автоматического сохранения проекта", ex);
-                // Не показываем ошибку пользователю при автоматическом сохранении
             }
         }
 

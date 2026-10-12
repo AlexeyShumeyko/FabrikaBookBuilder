@@ -824,8 +824,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 IsLoading = true;
                 try
                 {
-                    // Первое действие с данными создаёт запись проекта — до этого момента
-                    // вкладка могла быть открыта без какого-либо проекта вообще.
+                    // The first thing done with the files creates the project record: until now the
+                    // tab could be open with no project behind it at all.
                     await EnsureProjectInfoAsync();
 
                     foreach (var file in files)
@@ -1629,7 +1629,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 return;
             }
 
-            // Инициализируем Project, если его нет
+            // A project is created before its files arrive; this is where it starts.
             if (Project == null)
             {
                 Project = new Project { Mode = AppMode.Combined };
@@ -1654,21 +1654,19 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     CurrentProjectInfo.Name = ProjectName;
                 }
 
-                // Синхронизируем Books с Project.Books
+                // Books must mirror Project.Books: the view binds to Books, the save walks Project.Books.
                 Project.Books.Clear();
                 foreach (var book in Books)
                 {
                     Project.Books.Add(book);
                 }
 
-                // Синхронизируем AvailableFiles
                 Project.AvailableFiles.Clear();
                 foreach (var file in AvailableFiles)
                 {
                     Project.AvailableFiles.Add(file);
                 }
 
-                // Сохраняем проект
                 var projectsDir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "PhotoBookRenamer",
@@ -2153,21 +2151,19 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     CurrentProjectInfo.Name = ProjectName;
                 }
 
-                // Синхронизируем Books с Project.Books
+                // Books must mirror Project.Books: the view binds to Books, the save walks Project.Books.
                 Project.Books.Clear();
                 foreach (var book in Books)
                 {
                     Project.Books.Add(book);
                 }
 
-                // Синхронизируем AvailableFiles
                 Project.AvailableFiles.Clear();
                 foreach (var file in AvailableFiles)
                 {
                     Project.AvailableFiles.Add(file);
                 }
 
-                // Сохраняем проект
                 var projectsDir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "PhotoBookRenamer",
