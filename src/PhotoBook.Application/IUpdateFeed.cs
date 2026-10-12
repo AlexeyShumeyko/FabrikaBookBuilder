@@ -28,7 +28,7 @@ namespace PhotoBookRenamer.Application
         string GetCurrentVersion();
 
         /// <summary>True when the newest available version is greater than the running one.</summary>
-        Task<bool> CheckForUpdatesAsync();
+        Task<Result<bool>> CheckForUpdatesAsync();
 
         /// <summary>The newest available version without its leading "v", or null.</summary>
         Task<string?> GetLatestVersionAsync();

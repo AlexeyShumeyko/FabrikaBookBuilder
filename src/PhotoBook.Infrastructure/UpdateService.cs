@@ -56,22 +56,27 @@ namespace PhotoBookRenamer.Infrastructure
             return $"{version.Major}.{version.Minor}.{version.Build}";
         }
 
-        public async Task<bool> CheckForUpdatesAsync()
+        public async Task<Result<bool>> CheckForUpdatesAsync()
         {
             try
             {
                 var latest = await GetLatestVersionAsync();
                 if (string.IsNullOrEmpty(latest))
-                    return false;
+                    return Result<bool>.Fail("Сервер обновлений не ответил номером версии.");
 
                 var currentVersion = new Version(GetCurrentVersion());
                 var latestVersion = new Version(latest);
 
-                return latestVersion > currentVersion;
+                // "There is nothing newer" is an answer, not a failure: it is the common
+                // case, and it must not read like a problem.
+                return Result<bool>.Ok(latestVersion > currentVersion);
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+                // Used to be a silent false: no window opened, nothing said why, nothing was
+                // written down. A customer on a locked network could not tell that apart
+                // from being up to date.
+                return Result<bool>.Fail($"Не удалось проверить обновления: {ex.Message}");
             }
         }
 

@@ -182,14 +182,15 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 try
                 {
-                    var success = await _projectListService.DeleteProjectAsync(projectInfo);
-                    if (success)
+                    var deleted = await _projectListService.DeleteProjectAsync(projectInfo);
+                    if (deleted.IsSuccess)
                     {
                         Projects.Remove(projectInfo);
                     }
                     else
                     {
-                        ErrorMessage = "Не удалось удалить проект";
+                        // What went wrong, not a fixed sentence that could have been anything.
+                        ErrorMessage = deleted.Error;
                     }
                 }
                 catch (Exception ex)

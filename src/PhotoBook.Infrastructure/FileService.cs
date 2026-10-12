@@ -36,12 +36,6 @@ namespace PhotoBookRenamer.Infrastructure
             });
         }
 
-        public async Task<bool> ValidateFoldersAsync(List<string> folderPaths)
-        {
-            var result = await ValidateFoldersDetailedAsync(folderPaths);
-            return result.IsValid;
-        }
-
         public async Task<ValidationResult> ValidateFoldersDetailedAsync(List<string> folderPaths)
         {
             return await Task.Run(async () =>

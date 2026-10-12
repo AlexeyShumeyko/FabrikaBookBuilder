@@ -15,7 +15,6 @@ namespace PhotoBookRenamer.Application
     {
         Task<List<string>> GetJpegFilesAsync(string folderPath);
 
-        Task<bool> ValidateFoldersAsync(List<string> folderPaths);
 
         Task<ValidationResult> ValidateFoldersDetailedAsync(List<string> folderPaths);
 

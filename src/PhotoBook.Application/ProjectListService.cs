@@ -13,6 +13,7 @@ namespace PhotoBookRenamer.Application
     {
         private readonly string _projectsDirectory;
         private readonly string _projectsListPath;
+        private readonly ILoggingService _logging;
 
         /// <summary>
         /// Every read-modify-write of projects.json goes through this gate.
@@ -28,8 +29,13 @@ namespace PhotoBookRenamer.Application
         /// </summary>
         private readonly SemaphoreSlim _indexGate = new(1, 1);
 
-        public ProjectListService()
+        /// <param name="logging">
+        /// The index is the one file six call sites write without looking at the answer, so a failed
+        /// write has to be recorded here or it is recorded nowhere.
+        /// </param>
+        public ProjectListService(ILoggingService logging)
         {
+            _logging = logging;
             // Under the user's own profile rather than beside the executable: the program
             // is installed once for everyone, and the projects belong to the person who
             // made them.
@@ -215,11 +221,11 @@ namespace PhotoBookRenamer.Application
         /// Writes the record of one project into the index.
         /// Updates the entry carrying the same Id and leaves every other one alone.
         /// </summary>
-        public async Task<bool> SaveProjectInfoAsync(ProjectInfo projectInfo)
+        public async Task<Result> SaveProjectInfoAsync(ProjectInfo projectInfo)
         {
             if (string.IsNullOrEmpty(projectInfo.Id))
             {
-                return false;
+                return Result.Fail("У проекта нет идентификатора, поэтому его запись некуда сохранить.");
             }
 
             await _indexGate.WaitAsync();
@@ -262,11 +268,14 @@ namespace PhotoBookRenamer.Application
                 }
 
                 await WriteAllProjects_NoLock(allProjects);
-                return true;
+                return Result.Ok();
             }
             catch (Exception ex)
             {
-                return false;
+                // The variable was named and then ignored: the reason existed here and was
+                // thrown away, six call sites away from anyone who could have read it.
+                _logging.LogError("Не удалось сохранить запись проекта в списке", ex);
+                return Result.Fail($"Не удалось сохранить запись проекта: {ex.Message}");
             }
             finally
             {
@@ -277,11 +286,11 @@ namespace PhotoBookRenamer.Application
         /// <summary>
         /// Takes the project off the list and deletes its file.
         /// </summary>
-        public async Task<bool> DeleteProjectAsync(ProjectInfo projectInfo)
+        public async Task<Result> DeleteProjectAsync(ProjectInfo projectInfo)
         {
             if (string.IsNullOrEmpty(projectInfo?.Id))
             {
-                return false;
+                return Result.Fail("У проекта нет идентификатора, поэтому его нельзя удалить.");
             }
 
             await _indexGate.WaitAsync();
@@ -292,7 +301,7 @@ namespace PhotoBookRenamer.Application
 
                 if (projectToDelete == null)
                 {
-                    return false;
+                    return Result.Fail("Проекта нет в списке - возможно, его удалили в другом окне.");
                 }
 
                 allProjects.Remove(projectToDelete);
@@ -304,11 +313,12 @@ namespace PhotoBookRenamer.Application
                     File.Delete(projectFilePath);
                 }
 
-                return true;
+                return Result.Ok();
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+                _logging.LogError("Не удалось удалить проект из списка", ex);
+                return Result.Fail($"Не удалось удалить проект: {ex.Message}");
             }
             finally
             {

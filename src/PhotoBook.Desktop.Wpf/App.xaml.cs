@@ -84,8 +84,8 @@ namespace PhotoBookRenamer
                     await Task.Delay(2000); // let the window come up before the check begins
 
                     var updateService = _serviceProvider.GetRequiredService<IUpdateFeed>();
-                    var hasUpdate = await updateService.CheckForUpdatesAsync();
-                    if (hasUpdate)
+                    var update = await updateService.CheckForUpdatesAsync();
+                    if (update.IsSuccess && update.Value)
                     {
                         System.Windows.Application.Current.Dispatcher.Invoke(async () =>
                         {
