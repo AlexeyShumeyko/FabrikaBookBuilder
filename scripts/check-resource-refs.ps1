@@ -5,7 +5,10 @@
 # window appears or as soon as that view is opened. This has happened repeatedly in
 # this project, so every reference is checked mechanically.
 #
-# Keys are resolved from Styles/*.xaml, which is what App.xaml merges application-wide.
+# Keys are resolved from the application's own dictionaries, which is what AppStyles.xaml
+# merges application-wide. The path was <root>\Styles, which does not exist - the styles
+# live under the WPF project - so this script never once checked anything: Get-ChildItem
+# threw on the missing directory and the check was silently absent from the verification.
 # Locally declared keys inside a view (e.g. inside its own <Window.Resources>) are also
 # collected, so a key that is locally scoped but used globally is reported correctly.
 #
@@ -41,7 +44,9 @@ function Get-ImplicitKeys([string]$path) {
 
 # --- keys available application-wide ----------------------------------------
 $defined = New-Object System.Collections.Generic.HashSet[string]
-foreach ($f in Get-ChildItem (Join-Path $root 'Styles') -Filter '*.xaml' -File) {
+$styleDir = Join-Path $root 'src\PhotoBook.Desktop.Wpf\Styles'
+if (-not (Test-Path $styleDir)) { throw "no style dictionary directory at $styleDir" }
+foreach ($f in Get-ChildItem $styleDir -Filter '*.xaml' -File) {
     foreach ($k in Get-DefinedKeys $f.FullName) { [void]$defined.Add($k) }
     foreach ($k in Get-ImplicitKeys $f.FullName) { [void]$defined.Add($k) }
 }

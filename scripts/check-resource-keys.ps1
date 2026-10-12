@@ -17,12 +17,20 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-$styleDir = Join-Path $root 'Styles'
+# Was Join-Path $root 'Styles', which does not exist - the dictionaries live under the
+# WPF project - so Get-ChildItem threw and this check had never actually run.
+$styleDir = Join-Path $root 'src\PhotoBook.Desktop.Wpf\Styles'
+if (-not (Test-Path $styleDir)) { throw "no style dictionary directory at $styleDir" }
 
 $dictionaries = Get-ChildItem -Path $styleDir -Filter '*.xaml' -File
 if (-not $dictionaries) { Write-Host 'no resource dictionaries found'; exit 0 }
 
 $problems = 0
+
+# Where each key lives. Since Theme.xaml was split by concern, the same key can now end up
+# in two files: that is not a crash, but the dictionary merged last silently wins, which
+# is exactly the kind of thing that makes a style look wrong with no error anywhere.
+$owner = @{}
 
 foreach ($file in $dictionaries) {
     $text = [System.IO.File]::ReadAllText($file.FullName, [System.Text.Encoding]::UTF8)
@@ -43,14 +51,26 @@ foreach ($file in $dictionaries) {
     else {
         Write-Host ("ok         {0}  ({1} keys)" -f $file.Name, $keys.Count)
     }
+
+    foreach ($k in ($keys | Select-Object -Unique)) {
+        if ($owner.ContainsKey($k)) { $owner[$k] += ', ' + $file.Name }
+        else { $owner[$k] = $file.Name }
+    }
 }
+
+$shadowed = @($owner.Keys | Where-Object { $owner[$_].Contains(', ') })
+foreach ($k in ($shadowed | Sort-Object)) {
+    Write-Host ("SHADOWED   x:Key='{0}' defined in {1} - the last one merged wins" -f $k, $owner[$k])
+}
+if ($shadowed.Count -gt 0) { $problems++ }
 
 if ($problems -gt 0) {
     Write-Host ''
-    Write-Host "FAIL: $problems dictionary/dictionaries with duplicate x:Key."
-    Write-Host 'The app will crash at startup with XamlParseException.'
+    Write-Host "FAIL: $problems problem(s) with x:Key."
+    Write-Host 'A duplicate inside one dictionary crashes at startup with XamlParseException;'
+    Write-Host 'the same key in two dictionaries does not crash, it silently shadows.'
     exit 1
 }
 
 Write-Host ''
-Write-Host 'PASS: no duplicate x:Key in any resource dictionary.'
+Write-Host 'PASS: no x:Key is declared twice, in one dictionary or across several.'

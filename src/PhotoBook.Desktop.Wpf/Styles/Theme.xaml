@@ -817,7 +817,6 @@
     <Style x:Key="FluentBodyMedium"    TargetType="TextBlock" BasedOn="{StaticResource TextXs}" />
     <Style x:Key="FluentCaptionStyle"  TargetType="TextBlock" BasedOn="{StaticResource TextCaption}" />
     <Style x:Key="FluentTitleStyle"    TargetType="TextBlock" BasedOn="{StaticResource TextXlBold}" />
-    <Style x:Key="HelpNavButtonStyle"  TargetType="Button" BasedOn="{StaticResource SecondaryButton}" />
     <Style x:Key="NavButtonStyle" TargetType="Button" BasedOn="{StaticResource GhostButton}" />
 
 </ResourceDictionary>

@@ -61,6 +61,16 @@ jobs:
     - name: Check formatting
       run: dotnet format ${{ env.SOLUTION_FILE }} --verify-no-changes --verbosity minimal
 
+    # Both of these sat in the repository for a long time and had never once run: they
+    # looked for dictionaries in <repo>\Styles while the dictionaries live in the WPF
+    # project, so Get-ChildItem threw on a directory that is not there. A check that has
+    # never run looks exactly like a check that passes, which is worse than not having it.
+    - name: "Resource dictionaries: no x:Key declared twice"
+      run: pwsh -File scripts/check-resource-keys.ps1
+
+    - name: "Resource dictionaries: every StaticResource resolves"
+      run: pwsh -File scripts/check-resource-refs.ps1
+
     - name: Report version
       run: |
         $version = (Select-Xml -Path "src\PhotoBook.Desktop.Wpf\PhotoBook.Desktop.Wpf.csproj" -XPath "//Version").Node.InnerText
