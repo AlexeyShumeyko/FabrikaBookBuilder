@@ -148,7 +148,7 @@ for ($b = 1; $b -le $Books; $b++) {
     # -MissingPhoto points the first spread of the first book at a file that is not there,
     # with its real size. That is the case a cell used to swallow: an empty grey frame with a
     # caption, indistinguishable from an empty slot. The cell has to say the file cannot be
-    # read, and the reason has to land in the image-errors log.
+# read, and the reason has to land in the journal next to the projects.
     if ($fill -and $MissingPhoto -and $b -eq 1 -and $pages.Count -ge 1) {
         $ghost = Join-Path $dir ("no-such-photo-{0}.jpg" -f $b)
         $pages[0].sourcePath = $ghost

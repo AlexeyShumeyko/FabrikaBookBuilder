@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using PhotoBookRenamer.Application;
 
 namespace PhotoBookRenamer.Presentation
 {
@@ -66,25 +67,8 @@ namespace PhotoBookRenamer.Presentation
 
         private static void Report(string what, Exception ex)
         {
-            try
-            {
-                string line =
-                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  background '{what}' failed: {ex.GetType().Name}: {ex.Message}";
-                System.IO.File.AppendAllText(LogPath(), line + Environment.NewLine);
-            }
-            catch
-            {
-                // Nothing left to do: the program must not die over its own diagnostics.
-            }
-        }
-
-        private static string LogPath()
-        {
-            string dir = System.IO.Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "PhotoBookRenamer");
-            System.IO.Directory.CreateDirectory(dir);
-            return System.IO.Path.Combine(dir, "background-errors.log");
+            Application.Journal.Write(
+                JournalLevel.Error, "background", $"'{what}' failed", ex);
         }
     }
 }

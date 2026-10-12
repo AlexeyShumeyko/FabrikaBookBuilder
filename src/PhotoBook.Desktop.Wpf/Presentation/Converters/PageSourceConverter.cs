@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
 using PhotoBook.Core;
+using PhotoBookRenamer.Application;
 
 namespace PhotoBookRenamer.Presentation.Converters
 {
@@ -24,8 +25,6 @@ namespace PhotoBookRenamer.Presentation.Converters
         /// photos fell off on the first open" stayed a mystery: the failures were swallowed
         /// here, in a converter, with nowhere to look afterwards.
         /// </summary>
-        private static readonly string ErrorLogPath = Path.Combine(
-            Path.GetTempPath(), "PhotoBookRenamer", "image-errors.log");
 
         public static void ClearCacheForFile(string filePath)
         {
@@ -202,17 +201,8 @@ namespace PhotoBookRenamer.Presentation.Converters
 
         private static void Log(string path, string reason)
         {
-            try
-            {
-                var dir = Path.GetDirectoryName(ErrorLogPath);
-                if (dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
-                File.AppendAllText(ErrorLogPath,
-                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  {path}  ->  {reason}{Environment.NewLine}");
-            }
-            catch
-            {
-                // A log that cannot be written is not worth failing a render over.
-            }
+            Application.Journal.Write(
+                JournalLevel.Warning, "image", $"{path}  ->  {reason}");
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

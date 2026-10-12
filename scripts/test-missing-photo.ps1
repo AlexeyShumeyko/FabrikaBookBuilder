@@ -1,6 +1,6 @@
 ﻿# Proves two things about a filled slot whose photo cannot be read:
 #   - the cell SAYS so instead of looking like an empty slot;
-#   - the reason lands in %TEMP%\PhotoBookRenamer\image-errors.log.
+#   - the reason lands in the journal next to the projects, where support can be sent it.
 #
 # The fixture points one spread at a file that does not exist (make-combined-fixture
 # -MissingPhoto), so nothing of the owner's is touched. The red pixels of the warning are
@@ -74,9 +74,9 @@ try {
     $fixtureId = $Matches[1]
     Write-Host "fixture ${fixtureId}: 1 book, 2 spreads, spread 1 points at a file that is not there"
 
-    $logPath = Join-Path $env:TEMP 'PhotoBookRenamer\image-errors.log'
-    if (Test-Path $logPath) { Remove-Item $logPath -Force }
-
+    $logPath = Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\journal.log'
+    # Only the lines this run writes are compared: the journal is shared with every other run.
+    $journalBefore = if (Test-Path $logPath) { (Get-Item $logPath).Length } else { 0 }
     $exe = Join-Path $root 'src\PhotoBook.Desktop.Wpf\bin\Release\net8.0-windows\PhotoBookRenamer.exe'
     $proc = Start-Process -FilePath $exe -PassThru
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
@@ -127,11 +127,13 @@ try {
     $bmp.Dispose()
     Write-Host "red pixels in the book area: $red (screenshot: $shot)"
 
-    $logged = (Test-Path $logPath) -and ((Get-Content $logPath -Raw) -match 'no-such-photo')
-    Write-Host "image-errors.log mentions the missing file: $logged"
-
+    $journalText = if ((Test-Path $logPath) -and (Get-Item $logPath).Length -gt $journalBefore) {
+        [System.IO.File]::ReadAllText($logPath).Substring([int]$journalBefore)
+    } else { "" }
+    $logged = $journalText -match 'no-such-photo'
+    Write-Host "journal.log mentions the missing file: $logged"
     if ($red -lt 20) { Write-Host 'FAIL: no warning is visible in the book area'; exit 1 }
-    if (-not $logged) { Write-Host 'FAIL: nothing was written to image-errors.log'; exit 1 }
+    if (-not $logged) { Write-Host 'FAIL: the journal did not record why the photograph could not be read'; exit 1 }
     Write-Host 'PASS: an unreadable photo is announced in the cell and in the log'
     exit 0
 }

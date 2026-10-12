@@ -114,6 +114,11 @@ namespace PhotoBookRenamer
 
         private void ConfigureServices(IServiceCollection services)
         {
+            // One journal, under the user's own profile, next to their projects. Installed
+            // before anything else can fail, because the shell's own static writers cannot be
+            // handed a dependency and this is how they reach the same file as everything else.
+            Diagnostics.InstallJournal();
+
             // Logging
             services.AddLogging(builder =>
             {

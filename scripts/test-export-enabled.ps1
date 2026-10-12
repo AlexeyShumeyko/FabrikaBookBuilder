@@ -102,11 +102,21 @@ $pickerTitle  = 'Выберите фото для слота'
 
 $indexPath = Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\Projects\projects.json'
 
+# The fixture this run works on, made here rather than borrowed. An earlier scenario may have
+# left the shared one incomplete, and blanking a slot in an incomplete run proves nothing:
+# filling one slot would not complete it. Owning the fixture also means nothing outside this
+# run is touched.
+$fixtureId = ''
+$makeLine = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'make-combined-fixture.ps1') | Select-Object -Last 1
+if ($makeLine -notmatch 'id=([0-9a-f\-]+)') { throw "fixture creation failed: $makeLine" }
+$fixtureId = $Matches[1]
+Write-Host "fixture ${fixtureId}: a complete run of its own"
+
 function Get-Fixture {
     $parsed = Get-Content $indexPath -Raw -Encoding UTF8 | ConvertFrom-Json
     $sorted = @($parsed | ForEach-Object { $_ } | Sort-Object { [datetime]$_.lastModified } -Descending)
-    $hit = @($sorted | Where-Object { $_.mode -eq 3 -and $_.name -like 'TR-test*' })[0]
-    if (-not $hit) { throw 'no combined fixture - run make-combined-fixture.ps1 first' }
+    $hit = @($sorted | Where-Object { $_.id -eq $fixtureId })[0]
+    if (-not $hit) { throw "the fixture $fixtureId is not in the index" }
     return @{ Entry = $hit; Card = [array]::IndexOf($sorted, $hit) }
 }
 
@@ -290,4 +300,7 @@ try {
 }
 finally {
     if ($proc -and -not $proc.HasExited) { $proc.Kill() }
+    if ($fixtureId) {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'make-combined-fixture.ps1') -RemoveId $fixtureId | Out-Null
+    }
 }
