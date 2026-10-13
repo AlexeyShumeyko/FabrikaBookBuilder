@@ -12,7 +12,7 @@ namespace PhotoBook.Shell;
 
 public partial class MainWindow : Window
 {
-    /// <summary>Where the owner's real photographs are, for an honest measurement.</summary>
+    /// <summary>Where the real photographs are, for an honest measurement.</summary>
     private static readonly string[] PhotoFolders =
     {
         @"C:\Users\KAIZEN\Desktop\Тесты",
