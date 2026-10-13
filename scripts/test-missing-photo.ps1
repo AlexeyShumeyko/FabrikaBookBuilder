@@ -77,9 +77,14 @@ try {
     $fixtureId = $Matches[1]
     Write-Host "fixture ${fixtureId}: 1 book, 2 spreads, spread 1 points at a file that is not there"
 
-    $logPath = Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\journal.log'
+    # Counted in LINES, not bytes: the journal is UTF-8 and a Russian line is two bytes per
+    # character, so a byte offset read as a character offset lands near the end of the file
+    # instead of at the start of this run. Measured: a byte offset of 4564 into a 4894-byte
+    # file returned 14 characters - "le not found" - and reported the photograph as unlogged
+    # while its own line was sitting there.
+    $journalPath = Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\journal.log'
     # Only the lines this run writes are compared: the journal is shared with every other run.
-    $journalBefore = if (Test-Path $logPath) { (Get-Item $logPath).Length } else { 0 }
+    $journalLinesBefore = if (Test-Path $journalPath) { @(Get-Content $journalPath).Count } else { 0 }
     $exe = Get-AppExe
     $proc = Start-Process -FilePath $exe -PassThru
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
@@ -130,8 +135,8 @@ try {
     $bmp.Dispose()
     Write-Host "red pixels in the book area: $red (screenshot: $shot)"
 
-    $journalText = if ((Test-Path $logPath) -and (Get-Item $logPath).Length -gt $journalBefore) {
-        [System.IO.File]::ReadAllText($logPath).Substring([int]$journalBefore)
+    $journalText = if (Test-Path $journalPath) {
+        (@(Get-Content $journalPath) | Select-Object -Skip $journalLinesBefore) -join "`n"
     } else { "" }
     $logged = $journalText -match 'no-such-photo'
     Write-Host "journal.log mentions the missing file: $logged"
