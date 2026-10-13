@@ -4,6 +4,9 @@ param([int]$Card = 0, [int]$Spreads = 12, [string]$Out = 'doc\shots\probe-struct
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $ErrorActionPreference = 'Stop'
+
+# One place that knows where the built program is.
+. "$PSScriptRoot\common.ps1"
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
 Add-Type -AssemblyName System.Windows.Forms
@@ -67,7 +70,7 @@ $labelSpreads = [char]0x0420 + [char]0x0430 + [char]0x0437 + [char]0x0432 + [cha
 if (Get-Process -Name PhotoBookRenamer -ErrorAction SilentlyContinue) { throw 'close the app first' }
 $proc = $null
 try {
-    $exe = Join-Path (Split-Path -Parent $PSScriptRoot) 'src\PhotoBook.Desktop.Wpf\bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+    $exe = Get-AppExe
     $proc = Start-Process -FilePath $exe -PassThru
     $deadline = (Get-Date).AddSeconds(60)
     while ((Get-Date) -lt $deadline) {

@@ -20,12 +20,18 @@ param(
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Stop'
+
+# One place that knows where the built program is.
+. "$PSScriptRoot\common.ps1"
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 
 try {
-    $exe = Join-Path $root "src\PhotoBook.Desktop.Wpf\bin\$Configuration\net8.0-windows\PhotoBookRenamer.exe"
-    if (-not (Test-Path $exe)) {
+    # Get-AppExe throws when there is no build, so the explicit Test-Path below is the
+    # friendlier second half of the same check: it gets to print where it looked.
+    $exe = try { Get-AppExe -Configuration $Configuration } catch { $null }
+    if (-not $exe -or -not (Test-Path $exe)) {
+        $exe = Join-Path $root "src\PhotoBook.Desktop.Wpf\bin\$Configuration\net8.0-windows\PhotoBookRenamer.exe"
         Write-Host "FAIL: exe not found at $exe"
         exit 1
     }

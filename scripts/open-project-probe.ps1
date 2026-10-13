@@ -10,6 +10,9 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# One place that knows where the built program is.
+. "$PSScriptRoot\common.ps1"
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
 
@@ -40,7 +43,7 @@ public static class Probe {
 
 Get-Process PhotoBookRenamer -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 1
-$exe = Join-Path (Split-Path -Parent $PSScriptRoot) 'src\PhotoBook.Desktop.Wpf\bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+$exe = Get-AppExe
 $proc = Start-Process -FilePath $exe -PassThru
 
 $hwnd = [IntPtr]::Zero

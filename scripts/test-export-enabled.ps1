@@ -32,6 +32,9 @@ param([int]$TimeoutSeconds = 90)
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Stop'
+
+# One place that knows where the built program is.
+. "$PSScriptRoot\common.ps1"
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 
@@ -182,7 +185,7 @@ function Blank-OneSlot {
     return $donor
 }
 
-$exe = Join-Path $root 'src\PhotoBook.Desktop.Wpf\bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+$exe = Get-AppExe
 if (-not (Test-Path $exe)) { throw "no build at $exe" }
 
 $donor = Blank-OneSlot
