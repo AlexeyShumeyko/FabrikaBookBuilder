@@ -9,6 +9,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
+using PhotoBook.Presentation;
 using PhotoBook.Application;
 using PhotoBook.Infrastructure;
 

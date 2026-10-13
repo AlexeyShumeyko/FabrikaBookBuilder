@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
+using PhotoBook.Presentation;
 using PhotoBook.Application;
 
 namespace PhotoBookRenamer.Presentation.ViewModels

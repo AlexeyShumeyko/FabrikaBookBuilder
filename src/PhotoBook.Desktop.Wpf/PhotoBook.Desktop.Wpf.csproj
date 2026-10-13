@@ -38,6 +38,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PhotoBook.Application\PhotoBook.Application.csproj" />
+    <ProjectReference Include="..\PhotoBook.Presentation\PhotoBook.Presentation.csproj" />
     <ProjectReference Include="..\PhotoBook.Core\PhotoBook.Core.csproj" />
     <ProjectReference Include="..\PhotoBook.Infrastructure\PhotoBook.Infrastructure.csproj" />
   </ItemGroup>

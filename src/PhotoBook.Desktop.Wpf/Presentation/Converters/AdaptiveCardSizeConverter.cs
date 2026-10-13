@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using PhotoBook.Core;
+using PhotoBook.Presentation;
 using PhotoBookRenamer.Presentation.ViewModels;
 
 namespace PhotoBookRenamer.Presentation.Converters
@@ -104,7 +105,7 @@ namespace PhotoBookRenamer.Presentation.Converters
                 h > 0d)
                 naturalHeight = h;
 
-            PhotoBookRenamer.Presentation.PerfPhase.Count("fit w=" + (int)Math.Round(available) + " h=" + (int)Math.Round(naturalHeight));
+            PerfPhase.Count("fit w=" + (int)Math.Round(available) + " h=" + (int)Math.Round(naturalHeight));
             double naturalWidth = naturalHeight * aspect;
             double width = FitWidth(available, naturalWidth);
 

@@ -1,4 +1,5 @@
 using System;
+using PhotoBook.Presentation;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PhotoBook.Application;
 using PhotoBook.Infrastructure;
+using PhotoBookRenamer.Presentation;
 using PhotoBookRenamer.Presentation.ViewModels;
 using PhotoBookRenamer.Presentation.Views;
 
@@ -72,6 +74,11 @@ namespace PhotoBookRenamer
             base.OnStartup(e);
 
             EnableBindingTraceIfRequested();
+
+            // Timing and call counts are engine-neutral and live with the view models; walking
+            // a visual tree is not, so the shell teaches them how to do it once, here. Until
+            // this line, the counter would report "no element counter installed".
+            PerfPhase.InstallElementCounter(WpfElementCounter.Count);
 
             var services = new ServiceCollection();
             ConfigureServices(services);

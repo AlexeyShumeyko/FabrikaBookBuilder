@@ -1,0 +1,44 @@
+<!--
+  View models, and the two helpers that belong with them rather than with a window.
+
+  net8.0 and no WPF, deliberately and mechanically: there is no ProjectReference to
+  PhotoBook.Desktop.Wpf here and there cannot be one, because that project is WPF by
+  definition. So this is not a rule the code has to remember - it is a rule the build
+  enforces. Any `using System.Windows;` left behind is a compile error rather than a
+  comment nobody reads, and the compiler prints the whole remaining list at once.
+
+  That is the only reason this project exists. The migration architecture says a view model
+  must not build its own views, show its own dialogs or touch a UI thread, and all three
+  were true here. They are now untrue by construction: the ports they would have reached
+  for (IProjectDialogs, IScreenViewFactory, IDecodedImageCache) are in Application, and
+  the implementations are in whichever shell is running.
+
+  What is here so far, and why:
+    Background  - runs work off the UI thread and logs a failure instead of letting it
+                  kill the process. It is used by every view model and touches nothing but
+                  the journal, so it has no business sitting in a UI project.
+    PerfPhase   - the stopwatch behind "the window hangs for a second and a half". Timings
+                  and call counts are engine-neutral; walking a visual tree is not, so the
+                  shell installs that ability at startup and this class only calls it.
+
+  One package: CommunityToolkit.Mvvm, for SetProperty and RelayCommand. The same one the
+  WPF shell already used, so no view model has to be rewritten to move here.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>PhotoBook.Presentation</RootNamespace>
+    <Description>View models. Engine-neutral by build, not by intention.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PhotoBook.Core\PhotoBook.Core.csproj" />
+    <ProjectReference Include="..\PhotoBook.Application\PhotoBook.Application.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -3,11 +3,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using PhotoBook.Application;
 
-namespace PhotoBookRenamer.Presentation
+namespace PhotoBook.Presentation
 {
     /// <summary>
     /// Runs work in the background without letting it take the program down with it.
-    ///
+    /// </summary>
+    /// <remarks>
     /// <para>
     /// The app is full of fire-and-forget calls - "load the thumbnails", "measure the
     /// photos", "save the index" - and every one of them was written as
@@ -18,14 +19,18 @@ namespace PhotoBookRenamer.Presentation
     /// "unhandled exception" and no dialog. That is not a hypothetical: a
     /// <c>NullReferenceException</c> in the open path did exactly that during this work.
     /// </para>
-    ///
     /// <para>
-    /// So every fire-and-forget call in the ViewModels goes through here. The exception is
+    /// So every fire-and-forget call in the view models goes through here. The exception is
     /// caught, written to the log, and the program carries on - which is the behaviour a
     /// photographer needs: a broken file must not lose the work.
     /// </para>
-    /// </summary>
-    internal static class Background
+    /// <para>
+    /// This used to live in the WPF shell, next to the windows, and used nothing from it.
+    /// Nothing about "do this off the UI thread and tell the log if it fails" is about a UI
+    /// engine, and the Avalonia shell would have needed its own copy of the same class.
+    /// </para>
+    /// </remarks>
+    public static class Background
     {
         /// <summary>
         /// Runs <paramref name="work"/> in the background; a failure is logged, never fatal.

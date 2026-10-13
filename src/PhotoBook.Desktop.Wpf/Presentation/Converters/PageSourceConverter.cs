@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
 using PhotoBook.Core;
+using PhotoBook.Presentation;
 using PhotoBook.Application;
 
 namespace PhotoBookRenamer.Presentation.Converters
@@ -97,7 +98,7 @@ namespace PhotoBookRenamer.Presentation.Converters
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            PhotoBookRenamer.Presentation.PerfPhase.Count("PageSourceConverter");
+            PerfPhase.Count("PageSourceConverter");
             // The same converter is asked for a Page in one binding and for a plain path in
             // another; both have to keep working.
             string? imagePath = null;

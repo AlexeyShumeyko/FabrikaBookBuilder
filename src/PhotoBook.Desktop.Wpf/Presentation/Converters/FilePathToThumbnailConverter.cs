@@ -1,4 +1,5 @@
 using System;
+using PhotoBook.Presentation;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.IO;
@@ -55,7 +56,7 @@ namespace PhotoBookRenamer.Presentation.Converters
         private static readonly ConcurrentDictionary<string, BitmapSource?> Cache = new(StringComparer.OrdinalIgnoreCase);
         public object Convert(object value, Type targetType, object? parameter, CultureInfo culture)
         {
-            PhotoBookRenamer.Presentation.PerfPhase.Count("FilePathToThumbnailConverter");
+            PerfPhase.Count("FilePathToThumbnailConverter");
             if (value is not string filePath || string.IsNullOrEmpty(filePath)) return null!;
 
             // The decode width is part of the key: a 96px tile and a 200px tile are
