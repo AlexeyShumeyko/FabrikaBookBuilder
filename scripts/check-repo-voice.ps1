@@ -29,6 +29,11 @@ Set-Location $root
 # WPF property that sets the shape of the mouse pointer.
 $words = @(
     'агент\w*', 'ИИ', 'ChatGPT', 'GPT\w*', 'нейросет\w*', 'LLM', 'ассистент\w*', 'промпт\w*',
+    # A working note's file name, and anything else shaped like one. The word-boundary rule
+    # below deliberately ignores underscores, which is right for "AI" inside an identifier
+    # and wrong here: "AI_NOTES.md" in a comment is a pointer to the very file this rule is
+    # about, and the first version of this check would have passed it.
+    'AI[_/-][A-Za-z]', 'AI_NOTES', 'AI\.md',
     '(?<![A-Za-z])AI(?![A-Za-z])', '(?<![A-Za-z])owners?(?![A-Za-z])',
     '(?<![A-Za-z])agents?(?![A-Za-z])', '(?<![A-Za-z])assistant(?![A-Za-z])'
 )
