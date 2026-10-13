@@ -1,4 +1,5 @@
 using System.Windows;
+using PhotoBook.Application;
 
 namespace PhotoBookRenamer.Presentation.Dialogs
 {

@@ -378,18 +378,18 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 // Save / discard / stay. Kept as three buttons rather than a two-button
                 // box: "не сохранять" throws work away and "отмена" keeps the user on the
                 // screen, and neither can be inferred from the other.
-                var result = Presentation.Dialogs.AppDialogs.Ask(
+                var result = _dialogs.Ask(
                     "Сохранить перед выходом?",
                     "В проекте есть несохранённые изменения. Сохранить их перед возвратом к списку проектов?",
                     "Сохранить",
                     "Не сохранять");
 
-                if (result == Presentation.Dialogs.ConfirmOutcome.Primary)
+                if (result == ConfirmOutcome.Primary)
                 {
                     await SaveProjectAsync();
                     return;
                 }
-                else if (result == Presentation.Dialogs.ConfirmOutcome.Cancelled)
+                else if (result == ConfirmOutcome.Cancelled)
                 {
                     return;
                 }

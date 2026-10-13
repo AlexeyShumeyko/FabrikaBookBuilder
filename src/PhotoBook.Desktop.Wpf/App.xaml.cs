@@ -134,6 +134,10 @@ namespace PhotoBookRenamer
 
             // The shell's own adapter: choosing a file needs a window, so it lives here.
             services.AddSingleton<IPickFiles, Presentation.Services.WpfFilePicker>();
+            // The shell answers the dialogs port with its own windows. AppDialogs stays a
+            // static factory - creating a WPF window has no instance to hang a constructor
+            // on - and this adapter is the seam that lets a view model be tested without one.
+            services.AddSingleton<IProjectDialogs, Presentation.Dialogs.WpfProjectDialogs>();
 
             // ViewModels
             // MainViewModel MUST be a singleton: it owns the persistent top bar, which has

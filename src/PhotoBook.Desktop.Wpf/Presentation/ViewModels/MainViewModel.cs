@@ -37,13 +37,16 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         private readonly IProjectListService _projectListService;
         private readonly IProjectRepository _projects;
+        private readonly IProjectDialogs _dialogs;
 
         public MainViewModel(
             UniqueFoldersViewModel uniqueFolders,
             CombinedModeViewModel combinedMode,
             IProjectListService projectListService,
-            IProjectRepository projects)
+            IProjectRepository projects,
+            IProjectDialogs dialogs)
         {
+            _dialogs = dialogs;
             _uniqueFolders = uniqueFolders;
             _combinedMode = combinedMode;
             _projectListService = projectListService;
@@ -217,7 +220,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// exists to show the list as it is at the moment it is opened.
         /// </summary>
         private ProjectListViewModel NewProjectListViewModel()
-            => new(_projectListService, _projects, this);
+            => new(_projectListService, _projects, _dialogs, this);
 
         private void StopPreparationOf(AppMode mode)
         {

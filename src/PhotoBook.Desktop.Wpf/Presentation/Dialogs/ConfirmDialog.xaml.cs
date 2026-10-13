@@ -1,20 +1,8 @@
 using System.Windows;
+using PhotoBook.Application;
 
 namespace PhotoBookRenamer.Presentation.Dialogs
 {
-    /// <summary>Which button a three-way question was answered with.</summary>
-    public enum ConfirmOutcome
-    {
-        /// <summary>The primary (right-most, coloured) button.</summary>
-        Primary,
-
-        /// <summary>The secondary button, offered only by a three-way question.</summary>
-        Secondary,
-
-        /// <summary>Cancel, Escape, or the window's X.</summary>
-        Cancelled
-    }
-
     /// <summary>
     /// The app's own "are you sure" window.
     ///

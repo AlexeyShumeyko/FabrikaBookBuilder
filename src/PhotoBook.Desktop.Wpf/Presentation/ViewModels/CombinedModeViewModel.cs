@@ -28,6 +28,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private readonly ILoggingService _loggingService;
         private readonly IProjectRepository _projects;
         private readonly IProjectListService _projectListService;
+        private readonly IProjectDialogs _dialogs;
         private Project? _project;
         private ProjectInfo? _currentProjectInfo;
         private string? _projectName;
@@ -46,7 +47,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             IExportService exportService,
             ILoggingService loggingService,
             IProjectRepository projects,
-            IProjectListService projectListService)
+            IProjectListService projectListService,
+            IProjectDialogs dialogs)
         {
             _fileService = fileService;
             _files = files;
@@ -56,6 +58,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             _loggingService = loggingService;
             _projects = projects;
             _projectListService = projectListService;
+            _dialogs = dialogs;
 
             AvailableFiles = new ObservableCollection<string>();
             Books = new ObservableCollection<Book>();

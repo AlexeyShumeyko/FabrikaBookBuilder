@@ -19,6 +19,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private readonly IProjectListService _projectListService;
         private readonly IProjectRepository _projects;
         private readonly IShellNavigator _navigator;
+        private readonly IProjectDialogs _dialogs;
         private bool _isLoading;
         private string? _errorMessage;
         private ProjectInfo? _selectedProject;
@@ -26,10 +27,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         public ProjectListViewModel(
             IProjectListService projectListService,
             IProjectRepository projects,
+            IProjectDialogs dialogs,
             IShellNavigator navigator)
         {
             _projectListService = projectListService;
             _projects = projects;
+            _dialogs = dialogs;
             _navigator = navigator;
             Projects = new ObservableCollection<ProjectInfo>();
 

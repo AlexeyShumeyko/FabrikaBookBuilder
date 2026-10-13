@@ -224,7 +224,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 $"Уменьшить структуру до {targetBooks} книг по {targetSpreads} разворотов?" +
                 $"\n\nБудет удалено с конца — {string.Join("; ", parts)}.{photoLine}";
 
-            return Presentation.Dialogs.AppDialogs.Confirm(
+            return _dialogs.Confirm(
                 "Уменьшить структуру?",
                 message,
                 "Уменьшить",
