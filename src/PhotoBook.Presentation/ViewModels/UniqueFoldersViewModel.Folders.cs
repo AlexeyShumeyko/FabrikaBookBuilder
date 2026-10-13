@@ -11,9 +11,8 @@ using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Presentation;
 using PhotoBook.Application;
-using PhotoBook.Infrastructure;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>Choosing folders, validating them, and building the run from them.</summary>
     public partial class UniqueFoldersViewModel : ViewModelBase, IProjectEditor

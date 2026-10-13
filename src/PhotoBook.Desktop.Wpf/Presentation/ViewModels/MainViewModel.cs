@@ -1,3 +1,4 @@
+using PhotoBook.Presentation.ViewModels;
 using System;
 using System.ComponentModel;
 using System.Windows;
@@ -232,10 +233,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             => new(_projectListService, _projects, _dialogs, this);
 
         private void StopPreparationOf(AppMode mode)
-        {
-            if (mode == AppMode.UniqueFolders) _uniqueFolders.StopPreparation();
-            else if (mode == AppMode.Combined) _combinedMode.StopPreparation();
-        }
+            => EditorFor(mode)?.StopPreparing();
+
 
         /// <summary>The editor that owns a mode, or null for the list and the mode screen.</summary>
         public IProjectEditor? EditorFor(AppMode mode) => mode switch

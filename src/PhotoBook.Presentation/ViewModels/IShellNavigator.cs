@@ -1,6 +1,6 @@
 using PhotoBook.Core;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>
     /// The way out of a screen: where the user goes next, and which editor a project belongs

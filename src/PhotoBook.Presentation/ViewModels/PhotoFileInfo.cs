@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>
     /// Where a photo stands in the run. Derived from the books, never stored: a photo

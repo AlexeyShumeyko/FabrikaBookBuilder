@@ -12,7 +12,7 @@ using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Application;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>State, commands, and how this screen reaches the shell.</summary>
     public partial class ProjectListViewModel : ViewModelBase

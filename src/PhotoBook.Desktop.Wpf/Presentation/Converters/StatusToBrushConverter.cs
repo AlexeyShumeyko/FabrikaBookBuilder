@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using PhotoBook.Core;
-using PhotoBookRenamer.Presentation.ViewModels;
+using PhotoBook.Presentation.ViewModels;
 
 namespace PhotoBookRenamer.Presentation.Converters
 {

@@ -7,7 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
-using PhotoBookRenamer.Presentation.ViewModels;
+using PhotoBook.Presentation.ViewModels;
 
 // "Page" exists both as our domain entity and as a WPF control; the entity always wins here.
 using Page = PhotoBook.Core.Page;

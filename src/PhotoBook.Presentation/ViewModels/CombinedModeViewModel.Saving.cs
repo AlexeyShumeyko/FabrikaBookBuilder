@@ -11,9 +11,8 @@ using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Presentation;
 using PhotoBook.Application;
-using PhotoBook.Infrastructure;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>Putting the project on disk, loudly or quietly.</summary>
     public partial class CombinedModeViewModel : ViewModelBase, IProjectEditor

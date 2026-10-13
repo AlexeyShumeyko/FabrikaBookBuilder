@@ -13,7 +13,7 @@ using PhotoBook.Core;
 using PhotoBook.Presentation;
 using PhotoBook.Application;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>Showing the saved projects, and removing one.</summary>
     public partial class ProjectListViewModel : ViewModelBase

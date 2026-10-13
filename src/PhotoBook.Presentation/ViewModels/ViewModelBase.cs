@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using PhotoBook.Application;
 using PhotoBook.Core;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>
     /// Base for the view models of the shell. The notification itself comes from

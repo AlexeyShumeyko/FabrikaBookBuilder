@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
-using PhotoBookRenamer.Presentation.ViewModels;
+using PhotoBook.Presentation.ViewModels;
 
 namespace PhotoBookRenamer.Presentation.Views
 {

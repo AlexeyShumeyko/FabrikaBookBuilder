@@ -12,7 +12,7 @@ using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Application;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>Getting from a card on the list into an editor.</summary>
     public partial class ProjectListViewModel : ViewModelBase

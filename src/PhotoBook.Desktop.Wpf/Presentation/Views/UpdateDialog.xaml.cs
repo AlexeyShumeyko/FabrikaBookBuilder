@@ -1,5 +1,6 @@
-using System.Windows;
 using PhotoBookRenamer.Presentation.ViewModels;
+using System.Windows;
+using PhotoBook.Presentation.ViewModels;
 
 namespace PhotoBookRenamer.Presentation.Views
 {

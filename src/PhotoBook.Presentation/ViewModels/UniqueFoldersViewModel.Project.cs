@@ -11,9 +11,8 @@ using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Presentation;
 using PhotoBook.Application;
-using PhotoBook.Infrastructure;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>Taking a project in, handing it back, and saying what state it is in.</summary>
     public partial class UniqueFoldersViewModel : ViewModelBase, IProjectEditor

@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using PhotoBook.Core;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>
     /// The two editors seen as one thing: what the shell's chrome and the project list need
@@ -29,6 +29,23 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         /// <summary>Takes over a project loaded from disk or handed over by a new session.</summary>
         void SetProject(Project? project, ProjectInfo projectInfo);
+
+        /// <summary>
+        /// Stops the work an editor started on its own - measuring photographs, filling in
+        /// thumbnails - because the user is leaving that screen.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// It is here rather than called on the concrete class because "leave this editor" is
+        /// a thing the shell says to an editor, not a thing it knows the internals of. Before,
+        /// the navigator switched on the mode and reached into each type, which meant the shell
+        /// had to be recompiled when an editor changed.
+        /// </para>
+        /// <para>
+        /// The editors keep calling it internally by the shorter name they already used.
+        /// </para>
+        /// </remarks>
+        void StopPreparing();
 
         /// <summary>Saves without asking anything. Answers whether anything was written.</summary>
         Task<bool> QuickSaveAsync();

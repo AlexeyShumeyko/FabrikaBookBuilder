@@ -10,9 +10,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Application;
-using PhotoBook.Infrastructure;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>State, commands, and what the shell asks of an editor.</summary>
     public partial class CombinedModeViewModel : ViewModelBase, IProjectEditor
@@ -270,12 +269,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         private CancellationToken BeginPreparation()
         {
-            StopPreparation();
+            StopPreparing();
             _preparation = new CancellationTokenSource();
             return _preparation.Token;
         }
 
-        internal void StopPreparation()
+        public void StopPreparing()
         {
             var previous = _preparation;
             _preparation = null;
@@ -295,7 +294,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         }
         private void RequestBackToProjectList()
         {
-            StopPreparation();
+            StopPreparing();
             // An export finishes on a background thread, and the shell changes the
             // screen, so the request is marshalled to the UI thread.
             Ui.Invoke(() =>

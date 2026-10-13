@@ -1,8 +1,9 @@
+using PhotoBookRenamer.Presentation.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using PhotoBook.Core;
-using PhotoBookRenamer.Presentation.ViewModels;
+using PhotoBook.Presentation.ViewModels;
 
 namespace PhotoBookRenamer.Presentation.Views
 {

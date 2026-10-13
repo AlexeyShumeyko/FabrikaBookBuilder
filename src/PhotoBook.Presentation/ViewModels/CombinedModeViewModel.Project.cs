@@ -11,9 +11,8 @@ using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Presentation;
 using PhotoBook.Application;
-using PhotoBook.Infrastructure;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>Taking a project in, preparing it, and handing it back.</summary>
     public partial class CombinedModeViewModel : ViewModelBase, IProjectEditor

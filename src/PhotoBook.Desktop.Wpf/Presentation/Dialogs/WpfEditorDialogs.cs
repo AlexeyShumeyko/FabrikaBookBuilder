@@ -12,9 +12,10 @@ namespace PhotoBookRenamer.Presentation.Dialogs
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Owning the window also means setting its owner, which used to be the view model's
-    /// job - a line reading <c>Application.Current.MainWindow</c> in a class that was
-    /// supposed to be about a project. Here it is one line, next to the construction.
+    /// Making a window modal also means tying it to the window it was raised from,
+    /// which used to be the view model's job - a line reading
+    /// <c>Application.Current.MainWindow</c> in a class that was supposed to be about a
+    /// project. Here it is one line, next to the construction.
     /// </para>
     /// <para>
     /// Opening a folder also moved here. The view model used to launch Explorer itself,

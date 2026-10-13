@@ -10,9 +10,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Application;
-using PhotoBook.Infrastructure;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>What changes what is inside a book: covers, spreads, order, undo.</summary>
     public partial class UniqueFoldersViewModel : ViewModelBase, IProjectEditor
@@ -37,7 +36,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             // Starting over: whatever was being prepared for the previous project is not
             // wanted any more.
-            StopPreparation();
+            StopPreparing();
             Project = null;
             Books.Clear();
             // The project record has to go too. This ViewModel is a singleton, so keeping

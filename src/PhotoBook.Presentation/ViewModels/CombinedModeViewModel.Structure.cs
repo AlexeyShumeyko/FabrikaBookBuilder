@@ -11,9 +11,8 @@ using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Presentation;
 using PhotoBook.Application;
-using PhotoBook.Infrastructure;
 
-namespace PhotoBookRenamer.Presentation.ViewModels
+namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>Deciding how many books and spreads the run has, and holding to it.</summary>
     public partial class CombinedModeViewModel : ViewModelBase, IProjectEditor

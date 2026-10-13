@@ -1,3 +1,4 @@
+using PhotoBookRenamer.Presentation.ViewModels;
 using System;
 using PhotoBook.Presentation;
 using System.Diagnostics;
@@ -10,7 +11,7 @@ using Microsoft.Extensions.Logging;
 using PhotoBook.Application;
 using PhotoBook.Infrastructure;
 using PhotoBookRenamer.Presentation;
-using PhotoBookRenamer.Presentation.ViewModels;
+using PhotoBook.Presentation.ViewModels;
 using PhotoBookRenamer.Presentation.Views;
 
 namespace PhotoBookRenamer
