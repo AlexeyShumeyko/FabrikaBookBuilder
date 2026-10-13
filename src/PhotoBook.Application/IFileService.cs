@@ -21,5 +21,13 @@ namespace PhotoBook.Application
         Task CopyFileAsync(string source, string destination);
 
         bool IsJpegFile(string filePath);
+
+        /// <summary>
+        /// Whether a folder is there. The application layer asks this when deciding a
+        /// project's status - a finished run whose output folder has since been deleted is
+        /// not finished - and reaching for <c>System.IO.Directory</c> itself is precisely
+        /// what this port exists to stop.
+        /// </summary>
+        bool DirectoryExists(string path);
     }
 }

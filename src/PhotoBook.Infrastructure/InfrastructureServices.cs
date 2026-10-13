@@ -30,6 +30,7 @@ namespace PhotoBook.Infrastructure
             services.AddSingleton<IUpdateFeed, UpdateService>();
             services.AddSingleton<ILoggingService, LoggingService>();
             services.AddSingleton<IProjectRepository, ProjectRepository>();
+            services.AddSingleton<IProjectIndexStore, ProjectIndexStore>();
 
             return services;
         }

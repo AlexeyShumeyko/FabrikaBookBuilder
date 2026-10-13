@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -145,6 +146,25 @@ namespace PhotoBook.Infrastructure
         {
             var ext = System.IO.Path.GetExtension(filePath);
             return JpegExtensions.Contains(ext);
+        }
+
+        /// <summary>
+        /// Asked by the application layer to tell a finished run from one whose output folder
+        /// has since been deleted. A folder that cannot be reached counts as not there: the
+        /// honest answer for a project is "not finished", not an exception at a menu.
+        /// </summary>
+        public bool DirectoryExists(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return false;
+
+            try
+            {
+                return System.IO.Directory.Exists(path);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 }

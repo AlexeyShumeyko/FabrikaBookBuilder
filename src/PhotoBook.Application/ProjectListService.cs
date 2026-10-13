@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -9,10 +8,20 @@ using PhotoBook.Core;
 
 namespace PhotoBook.Application
 {
+    /// <summary>
+    /// What the project list is: which projects exist, what state each is in, and when a
+    /// record is created, updated or removed.
+    /// </summary>
+    /// <remarks>
+    /// Where the index lives, how it is written and what shape it is on disk are all
+    /// somebody else's business - see <see cref="IProjectIndexStore"/>. This class used to
+    /// assemble the path, create the folder, read and write the file and serialise it, which
+    /// meant the layer that decides what a project is also knew where projects are kept.
+    /// </remarks>
     internal class ProjectListService : IProjectListService
     {
-        private readonly string _projectsDirectory;
-        private readonly string _projectsListPath;
+        private readonly IProjectIndexStore _index;
+        private readonly IFileService _files;
         private readonly ILoggingService _logging;
 
         /// <summary>
@@ -33,39 +42,18 @@ namespace PhotoBook.Application
         /// The index is the one file six call sites write without looking at the answer, so a failed
         /// write has to be recorded here or it is recorded nowhere.
         /// </param>
-        public ProjectListService(ILoggingService logging)
+        public ProjectListService(IProjectIndexStore index, IFileService files, ILoggingService logging)
         {
+            _index = index;
+            _files = files;
             _logging = logging;
-            // Under the user's own profile rather than beside the executable: the program
-            // is installed once for everyone, and the projects belong to the person who
-            // made them.
-            var appDataPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "PhotoBookRenamer",
-                "Projects");
-            _projectsDirectory = appDataPath;
-            _projectsListPath = Path.Combine(_projectsDirectory, "projects.json");
-
-            if (!Directory.Exists(_projectsDirectory))
-            {
-                try
-                {
-                    Directory.CreateDirectory(_projectsDirectory);
-                }
-                catch (Exception ex)
-                {
-                }
-            }
-
         }
 
         /// <summary>
-        /// The file a project lives in, named after its Id.
+        /// The file a project lives in. The store decides the layout of the folder; this
+        /// layer only needs to know where to point the repository and the folder picker.
         /// </summary>
-        private string GetProjectFilePath(string projectId)
-        {
-            return Path.Combine(_projectsDirectory, $"{projectId}.json");
-        }
+        private string GetProjectFilePath(string projectId) => _index.GetProjectFilePath(projectId);
 
         /// <summary>
         /// Every project recorded in the index under one mode.
@@ -149,16 +137,19 @@ namespace PhotoBook.Application
         /// </summary>
         private async Task<List<ProjectInfo>> ReadAllProjects_NoLock()
         {
-            if (!File.Exists(_projectsListPath))
+            var json = await _index.ReadAsync();
+            if (json == null)
             {
+                // No index yet. Older versions kept one file per mode, so give those a
+                // chance to be carried across before deciding the list is empty.
                 await MigrateOldProjectsAsync();
-                if (!File.Exists(_projectsListPath))
+                json = await _index.ReadAsync();
+                if (json == null)
                 {
                     return new List<ProjectInfo>();
                 }
             }
 
-            var json = await File.ReadAllTextAsync(_projectsListPath);
             if (string.IsNullOrWhiteSpace(json))
             {
                 return new List<ProjectInfo>();
@@ -307,11 +298,9 @@ namespace PhotoBook.Application
                 allProjects.Remove(projectToDelete);
                 await WriteAllProjects_NoLock(allProjects);
 
-                var projectFilePath = GetProjectFilePath(projectInfo.Id);
-                if (File.Exists(projectFilePath))
-                {
-                    File.Delete(projectFilePath);
-                }
+                // The entry is off the index either way; the file goes too when it is there.
+                // A project with no file on disk is a half-made project, not a failure.
+                _index.DeleteProjectFile(projectInfo.Id);
 
                 return Result.Ok();
             }
@@ -333,7 +322,12 @@ namespace PhotoBook.Application
         {
             try
             {
-                var fileName = Path.GetFileNameWithoutExtension(filePath);
+                // Qualified on purpose. This is string handling on a path, not a question for the disk -
+                // nothing is opened and nothing is asked of the file system - and the rest of
+                // this class no longer touches System.IO at all. Spelling it out keeps
+                // "using System.IO" out of this file, which is what makes the check that this
+                // layer stays off the disk meaningful instead of noisy.
+                var fileName = System.IO.Path.GetFileNameWithoutExtension(filePath);
                 if (string.IsNullOrEmpty(fileName))
                 {
                     return null;
@@ -367,10 +361,9 @@ namespace PhotoBook.Application
         /// Serializes and writes the whole index. The caller must hold
         /// <see cref="_indexGate"/>.
         ///
-        /// The write goes to a temporary file that then REPLACES the index, because
-        /// File.WriteAllTextAsync truncates the target first: a crash or a concurrent
-        /// reader in that window saw an empty or half-written projects.json, and the
-        /// project list came back empty. File.Move with overwrite is atomic on NTFS.
+        /// The replace itself is the store's business, and it is not a detail: a plain
+        /// truncate-then-write leaves an empty or half-written index to anything that reads
+        /// during the window, and a half-written index reads as an empty project list.
         /// </summary>
         private async Task WriteAllProjects_NoLock(List<ProjectInfo> projects)
         {
@@ -390,9 +383,7 @@ namespace PhotoBook.Application
             };
             var json = JsonSerializer.Serialize(projects, options);
 
-            string tempPath = _projectsListPath + ".tmp";
-            await File.WriteAllTextAsync(tempPath, json);
-            File.Move(tempPath, _projectsListPath, overwrite: true);
+            await _index.WriteAsync(json);
         }
 
         /// <summary>
@@ -409,7 +400,7 @@ namespace PhotoBook.Application
 
             if (allBooksReady)
             {
-                if (!string.IsNullOrEmpty(project.OutputFolder) && Directory.Exists(project.OutputFolder))
+                if (!string.IsNullOrEmpty(project.OutputFolder) && _files.DirectoryExists(project.OutputFolder))
                 {
                     return ProjectStatus.SuccessfullyCompleted;
                 }
@@ -434,12 +425,12 @@ namespace PhotoBook.Application
                     if (mode == AppMode.StartScreen || mode == AppMode.ProjectList)
                         continue;
 
-                    var oldListPath = Path.Combine(_projectsDirectory, $"{mode}_projects.json");
-                    if (File.Exists(oldListPath))
+                    var oldJson = await _index.ReadLegacyAsync(mode.ToString());
+                    if (oldJson != null)
                     {
                         try
                         {
-                            var json = await File.ReadAllTextAsync(oldListPath);
+                            var json = oldJson;
                             if (!string.IsNullOrWhiteSpace(json))
                             {
                                 var options = new JsonSerializerOptions
