@@ -48,7 +48,9 @@ $fileHits = 0
 foreach ($f in $tracked) {
     if (-not (Test-Path $f)) { continue }
     if ($f -notmatch '\.(md|cs|xaml|ps1|yml|yaml|json|props|txt|csproj|sln|editorconfig|gitignore)$') { continue }
-    if ($f -eq 'scripts\check-repo-voice.ps1') { continue }   # this file names them on purpose
+    # This file names the words on purpose: it is the only place in the repository that is
+    # allowed to, because it is the check that forbids them everywhere else.
+    if ($f -like '*check-repo-voice.ps1') { continue }
 
     try { $text = [System.IO.File]::ReadAllText($f, [System.Text.Encoding]::UTF8) } catch { continue }
     if (-not $text) { continue }
