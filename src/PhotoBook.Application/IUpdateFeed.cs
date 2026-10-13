@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     /// <summary>
     /// Whether a newer version exists, and how to get it.

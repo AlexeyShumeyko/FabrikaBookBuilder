@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 
 using Microsoft.Win32;
 

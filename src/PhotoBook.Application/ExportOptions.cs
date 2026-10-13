@@ -1,6 +1,6 @@
 using System;
 
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     /// <summary>
     /// Options for <see cref="IExportService.ExportProjectAsync(Project, string, ExportOptions)"/>.

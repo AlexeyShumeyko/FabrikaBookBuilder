@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
-using PhotoBookRenamer.Infrastructure;
+using PhotoBook.Infrastructure;
 
 namespace PhotoBookRenamer.Presentation.Dialogs
 {

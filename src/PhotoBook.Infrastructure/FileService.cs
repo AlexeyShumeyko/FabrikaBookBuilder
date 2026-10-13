@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 
-namespace PhotoBookRenamer.Infrastructure
+namespace PhotoBook.Infrastructure
 {
     /// <summary>
     /// Reading and writing files, and nothing else.
@@ -13,7 +13,7 @@ namespace PhotoBookRenamer.Infrastructure
     /// a typed name. None of the three had a caller, and all three pulled Windows Forms and
     /// the main window into the file layer. Choosing where photographs come from is a
     /// question for a person, so it now lives in the shell behind
-    /// <see cref="PhotoBookRenamer.Application.IPickFiles"/>.
+    /// <see cref="PhotoBook.Application.IPickFiles"/>.
     /// </para>
     /// </summary>
     internal class FileService : IFileService

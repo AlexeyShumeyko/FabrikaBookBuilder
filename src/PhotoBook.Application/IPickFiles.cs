@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     /// <summary>
     /// Asks the person using the program to choose photographs from disk.

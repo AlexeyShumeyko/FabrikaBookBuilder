@@ -5,12 +5,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
 
-namespace PhotoBookRenamer.Infrastructure
+namespace PhotoBook.Infrastructure
 {
     /// <summary>
     /// Builds reduced copies with ImageSharp, which decodes the whole photograph and then

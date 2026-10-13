@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using PhotoBook.Core;
 
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     /// <summary>
     /// Reading the pixel size of photographs the project does not know yet.

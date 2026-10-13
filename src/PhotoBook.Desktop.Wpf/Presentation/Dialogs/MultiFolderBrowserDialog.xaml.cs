@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using PhotoBookRenamer.Application;
-using PhotoBookRenamer.Infrastructure;
+using PhotoBook.Application;
+using PhotoBook.Infrastructure;
 
 namespace PhotoBookRenamer.Presentation.Dialogs
 {

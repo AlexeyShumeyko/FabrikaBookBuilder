@@ -1,7 +1,7 @@
-using PhotoBookRenamer.Application;
-using PhotoBookRenamer.Infrastructure;
+using PhotoBook.Application;
+using PhotoBook.Infrastructure;
 
-namespace PhotoBookRenamer.Application.Tests;
+namespace PhotoBook.Application.Tests;
 
 /// <summary>
 /// The folders mode export, end to end: real files in a temporary directory, real copies,
@@ -44,7 +44,7 @@ public sealed class FoldersModeExportTests : IDisposable
     /// the caller told the photographer to check that the folder was writable, whatever
     /// had actually gone wrong - so a test that only checked the false proved nothing.
     /// </summary>
-    private static void AssertFails(PhotoBookRenamer.Application.Result result, string what)
+    private static void AssertFails(PhotoBook.Application.Result result, string what)
     {
         Assert.False(result.IsSuccess);
         Assert.False(string.IsNullOrWhiteSpace(result.Error),

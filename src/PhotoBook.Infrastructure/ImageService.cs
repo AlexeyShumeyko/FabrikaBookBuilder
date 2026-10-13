@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 using SixLabors.ImageSharp;
 
-namespace PhotoBookRenamer.Infrastructure
+namespace PhotoBook.Infrastructure
 {
     /// <summary>
     /// Reads what a photograph says about itself: how large it is, and which one in a folder

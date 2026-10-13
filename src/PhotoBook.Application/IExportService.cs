@@ -1,7 +1,7 @@
 using PhotoBook.Core;
 using System.Threading.Tasks;
 
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     public interface IExportService
     {

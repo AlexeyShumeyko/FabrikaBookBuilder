@@ -1,6 +1,6 @@
 using System;
 
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     /// <summary>How serious a journal entry is.</summary>
     public enum JournalLevel

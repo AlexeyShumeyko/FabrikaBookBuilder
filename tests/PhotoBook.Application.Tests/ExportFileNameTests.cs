@@ -1,6 +1,6 @@
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 
-namespace PhotoBookRenamer.Application.Tests;
+namespace PhotoBook.Application.Tests;
 
 /// <summary>
 /// The naming contract. The client's print site accepts KKK-FF.jpg and nothing else, so

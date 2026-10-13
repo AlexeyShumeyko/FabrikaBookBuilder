@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
 using PhotoBook.Core;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 
 namespace PhotoBookRenamer.Presentation.Converters
 {
@@ -201,7 +201,9 @@ namespace PhotoBookRenamer.Presentation.Converters
 
         private static void Log(string path, string reason)
         {
-            Application.Journal.Write(
+            // The class, not a namespace: "Application.Journal" here used to resolve by walking out
+            // of PhotoBookRenamer.Presentation.Converters into the layer's old namespace.
+            Journal.Write(
                 JournalLevel.Warning, "image", $"{path}  ->  {reason}");
         }
 

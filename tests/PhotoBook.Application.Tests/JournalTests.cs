@@ -2,8 +2,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using PhotoBookRenamer.Application;
-using PhotoBookRenamer.Infrastructure;
+using PhotoBook.Application;
+using PhotoBook.Infrastructure;
 using Xunit;
 
 namespace PhotoBook.Application.Tests

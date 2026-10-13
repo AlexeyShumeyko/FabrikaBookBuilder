@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 
 namespace PhotoBookRenamer.Presentation
 {
@@ -67,7 +67,11 @@ namespace PhotoBookRenamer.Presentation
 
         private static void Report(string what, Exception ex)
         {
-            Application.Journal.Write(
+            // The class, not a namespace. A bare "Application.Journal" used to resolve by walking out
+            // of this namespace until it hit PhotoBookRenamer.Application - a namespace that
+            // happened to sit next to the class. It stopped resolving the moment the layer
+            // was renamed to say what it is, which is the point of the rename.
+            Journal.Write(
                 JournalLevel.Error, "background", $"'{what}' failed", ex);
         }
     }

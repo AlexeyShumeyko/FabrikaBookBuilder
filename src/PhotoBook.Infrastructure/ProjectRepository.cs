@@ -5,9 +5,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using PhotoBook.Core;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 
-namespace PhotoBookRenamer.Infrastructure
+namespace PhotoBook.Infrastructure
 {
     /// <summary>
     /// Projects on disk, as JSON.

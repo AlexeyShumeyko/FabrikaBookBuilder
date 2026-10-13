@@ -1,14 +1,14 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     /// <summary>
     /// Reading and writing files.
     ///
     /// <para>
     /// Only the file system. Choosing a file is a question for a person and lives behind
-    /// <see cref="PhotoBookRenamer.Application.IPickFiles"/> in the shell.
+    /// <see cref="PhotoBook.Application.IPickFiles"/> in the shell.
     /// </para>
     /// </summary>
     public interface IFileService

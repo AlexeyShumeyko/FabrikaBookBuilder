@@ -1,9 +1,9 @@
-using PhotoBookRenamer.Infrastructure;
+using PhotoBook.Infrastructure;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace PhotoBookRenamer.Application.Tests;
+namespace PhotoBook.Application.Tests;
 
 /// <summary>
 /// Choosing folders and choosing a cover are the two rules a user hits first: a wrong

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using PhotoBook.Core;
 
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     /// <summary>
     /// Building a project out of folders, and remembering what it looked like a moment ago.

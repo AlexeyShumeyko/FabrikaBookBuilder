@@ -1,6 +1,6 @@
 using System;
 
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     /// <summary>
     /// The way code that cannot be handed a dependency records what went wrong.

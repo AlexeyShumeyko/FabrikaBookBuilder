@@ -7,10 +7,10 @@ using System.Net.Http;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 using Octokit;
 
-namespace PhotoBookRenamer.Infrastructure
+namespace PhotoBook.Infrastructure
 {
     /// <summary>
     /// The update feed on GitHub Releases.

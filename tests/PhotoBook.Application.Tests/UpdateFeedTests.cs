@@ -1,8 +1,8 @@
 using System.Reflection;
-using PhotoBookRenamer.Application;
-using PhotoBookRenamer.Infrastructure;
+using PhotoBook.Application;
+using PhotoBook.Infrastructure;
 
-namespace PhotoBookRenamer.Application.Tests;
+namespace PhotoBook.Application.Tests;
 
 /// <summary>
 /// The update feed, without the network. Two things are worth pinning here because they are

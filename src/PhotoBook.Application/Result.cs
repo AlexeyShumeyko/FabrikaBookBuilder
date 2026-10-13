@@ -1,6 +1,6 @@
 using System;
 
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     /// <summary>
     /// An outcome that carries the reason it failed, for failures the caller is expected to

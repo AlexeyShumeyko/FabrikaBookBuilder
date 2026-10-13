@@ -1,8 +1,8 @@
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 using PhotoBook.Core;
-using PhotoBookRenamer.Infrastructure;
+using PhotoBook.Infrastructure;
 
-namespace PhotoBookRenamer.Application.Tests;
+namespace PhotoBook.Application.Tests;
 
 /// <summary>
 /// Builds the smallest project shape a test needs, so the tests read as statements about

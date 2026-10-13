@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PhotoBook.Core;
 
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     /// <summary>
     /// One file the combined run has to produce.

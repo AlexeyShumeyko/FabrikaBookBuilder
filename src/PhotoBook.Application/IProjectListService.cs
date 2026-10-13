@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using PhotoBook.Core;
 
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     public interface IProjectListService
     {

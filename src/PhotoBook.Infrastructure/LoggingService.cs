@@ -1,8 +1,8 @@
 using System;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 using Microsoft.Extensions.Logging;
 
-namespace PhotoBookRenamer.Infrastructure
+namespace PhotoBook.Infrastructure
 {
     /// <summary>
     /// The editors record through here. It exists so that no view model writes a file,

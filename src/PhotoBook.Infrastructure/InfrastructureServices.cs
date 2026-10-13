@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 
-namespace PhotoBookRenamer.Infrastructure
+namespace PhotoBook.Infrastructure
 {
     /// <summary>
     /// How this layer is put together.

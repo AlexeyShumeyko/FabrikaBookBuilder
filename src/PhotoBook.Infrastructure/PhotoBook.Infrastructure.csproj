@@ -19,7 +19,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>PhotoBookRenamer.Infrastructure</RootNamespace>
+    <RootNamespace>PhotoBook.Infrastructure</RootNamespace>
     <Description>Disk, JSON, image headers, log, release feed. No user interface.</Description>
   </PropertyGroup>
 

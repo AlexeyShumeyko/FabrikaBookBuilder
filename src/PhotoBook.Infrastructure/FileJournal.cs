@@ -1,9 +1,9 @@
 using System;
 using System.IO;
 using System.Text;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 
-namespace PhotoBookRenamer.Infrastructure
+namespace PhotoBook.Infrastructure
 {
     /// <summary>
     /// Writes the journal to one file under the user's own profile, and rotates it so it can

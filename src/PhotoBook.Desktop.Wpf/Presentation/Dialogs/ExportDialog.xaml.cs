@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 using PhotoBook.Core;
 
 namespace PhotoBookRenamer.Presentation.Dialogs

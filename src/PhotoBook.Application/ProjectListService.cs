@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using PhotoBook.Core;
 
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     internal class ProjectListService : IProjectListService
     {

@@ -6,8 +6,8 @@ using System.Windows;
 using System.Windows.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using PhotoBookRenamer.Application;
-using PhotoBookRenamer.Infrastructure;
+using PhotoBook.Application;
+using PhotoBook.Infrastructure;
 using PhotoBookRenamer.Presentation.ViewModels;
 using PhotoBookRenamer.Presentation.Views;
 

@@ -1,4 +1,4 @@
-namespace PhotoBookRenamer.Application
+namespace PhotoBook.Application
 {
     public class ValidationResult
     {

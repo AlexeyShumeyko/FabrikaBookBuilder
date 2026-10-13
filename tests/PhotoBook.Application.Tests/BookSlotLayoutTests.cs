@@ -1,6 +1,6 @@
 using PhotoBook.Core;
 
-namespace PhotoBookRenamer.Application.Tests;
+namespace PhotoBook.Application.Tests;
 
 /// <summary>
 /// The slot layout of a book: which photograph sits where on the card, and what name it

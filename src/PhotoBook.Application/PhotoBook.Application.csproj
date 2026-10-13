@@ -19,7 +19,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>PhotoBookRenamer.Application</RootNamespace>
+    <RootNamespace>PhotoBook.Application</RootNamespace>
     <Description>Use cases and ports. No technologies.</Description>
   </PropertyGroup>
 

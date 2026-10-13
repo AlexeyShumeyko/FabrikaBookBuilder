@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 
-namespace PhotoBookRenamer.Infrastructure
+namespace PhotoBook.Infrastructure
 {
     /// <summary>
     /// How diagnostics are put in place, so the composition root does not name an

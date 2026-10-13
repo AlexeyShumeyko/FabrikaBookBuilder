@@ -5,7 +5,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
-using PhotoBookRenamer.Application;
+using PhotoBook.Application;
 using PhotoBookRenamer.Presentation.Views;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
