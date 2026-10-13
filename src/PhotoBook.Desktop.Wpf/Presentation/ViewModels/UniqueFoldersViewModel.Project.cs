@@ -25,7 +25,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             ProjectName = null;
             ErrorMessage = null;
             _editHistory.ClearHistory();
-            Presentation.Converters.PageSourceConverter.ClearCache();
+            _images.Invalidate(DecodedImageKind.Page);
 
             // Everything about the project is read now, before the first await: the list
             // that handed this over may re-sort or reload its cards while this runs.
@@ -156,7 +156,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 Background.Run(async () =>
                 {
                     await _thumbnails.EnsureAsync(allImagePaths!, cancellationToken: preparation);
-                    await Presentation.Converters.PageSourceConverter.PrewarmAsync(allImagePaths!, preparation);
+                    await _images.PrewarmAsync(allImagePaths!, preparation);
 
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {

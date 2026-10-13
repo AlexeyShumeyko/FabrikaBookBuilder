@@ -48,7 +48,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             ProjectName = null;
             ErrorMessage = null;
             _editHistory.ClearHistory();
-            Presentation.Converters.PageSourceConverter.ClearCache();
+            _images.Invalidate(DecodedImageKind.Page);
         }
 
         private void Undo()

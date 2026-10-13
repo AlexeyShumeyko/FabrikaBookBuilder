@@ -135,6 +135,23 @@ namespace PhotoBookRenamer.Presentation.Converters
             Cache.Clear();
         }
 
+        /// <summary>
+        /// Drops the entry for one file only. The cache is keyed by path, so this is exact
+        /// rather than approximate - which is the whole point: replacing one photograph
+        /// should cost that photograph, not every preview on the screen.
+        /// </summary>
+        /// <remarks>
+        /// Before this existed, replacing a file left its old preview on screen until
+        /// something happened to clear the whole cache. The two caches answer to one
+        /// contract now, and a contract that promises to forget a file cannot answer
+        /// "nothing to do here" for half of itself.
+        /// </remarks>
+        public static void ClearCacheForFile(string filePath)
+        {
+            if (!string.IsNullOrEmpty(filePath))
+                Cache.TryRemove(filePath, out _);
+        }
+
         public object ConvertBack(object value, Type targetType, object? parameter, CultureInfo culture)
             => throw new NotImplementedException();
     }

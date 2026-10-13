@@ -141,6 +141,10 @@ namespace PhotoBookRenamer
             // The navigator says which screen is next; this shell decides what a screen is.
             // The only place left here that knows a screen is a UserControl.
             services.AddSingleton<IScreenViewFactory, Presentation.Views.WpfScreenViewFactory>();
+            // The decoded-image caches belong to the converters, because the converters are
+            // what fill them. This is the addressable side of that, and the first thing a
+            // second engine has to supply of its own.
+            services.AddSingleton<IDecodedImageCache, Presentation.Services.WpfDecodedImageCache>();
 
             // ViewModels
             // MainViewModel MUST be a singleton: it owns the persistent top bar, which has

@@ -11,7 +11,6 @@ using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Application;
 using PhotoBook.Infrastructure;
-using PhotoBookRenamer.Presentation.Converters;
 using PhotoBookRenamer.Presentation.Dialogs;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
@@ -183,8 +182,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             Background.Run(async () =>
             {
                 await _thumbnails.EnsureAsync(paths, cancellationToken: preparation);
-                Presentation.Converters.PageSourceConverter.ClearCache();
-                Presentation.Converters.FilePathToThumbnailConverter.ClearCache();
+                _images.InvalidateAll();
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     foreach (var p in Books)

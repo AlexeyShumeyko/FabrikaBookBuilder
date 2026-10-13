@@ -11,7 +11,6 @@ using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Application;
 using PhotoBook.Infrastructure;
-using PhotoBookRenamer.Presentation.Converters;
 using PhotoBookRenamer.Presentation.Dialogs;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
@@ -27,8 +26,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             AvailableFiles.Clear();
             IsStructureConfirmed = false;
             ErrorMessage = null;
-            Presentation.Converters.PageSourceConverter.ClearCache();
-            Presentation.Converters.FilePathToThumbnailConverter.ClearCache();
+            _images.InvalidateAll();
 
             var projectId = projectInfo.Id ?? string.Empty;
             var projectName = projectInfo.Name ?? string.Empty;
@@ -211,7 +209,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             try
             {
-                await Presentation.Converters.PageSourceConverter.PrewarmAsync(imagePaths, preparation);
+                await _images.PrewarmAsync(imagePaths, preparation);
             }
             catch (Exception ex)
             {

@@ -11,7 +11,6 @@ using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Application;
 using PhotoBook.Infrastructure;
-using PhotoBookRenamer.Presentation.Converters;
 using PhotoBookRenamer.Presentation.Dialogs;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
@@ -108,7 +107,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             if (!string.IsNullOrEmpty(page.SourcePath))
             {
-                Presentation.Converters.PageSourceConverter.ClearCacheForFile(page.SourcePath);
+                _images.InvalidateFile(page.SourcePath);
             }
 
             page.SourcePath = null;
@@ -139,10 +138,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     if (!string.IsNullOrEmpty(page.SourcePath) && page.SourcePath != file)
                     {
-                        Presentation.Converters.PageSourceConverter.ClearCacheForFile(page.SourcePath);
+                        _images.InvalidateFile(page.SourcePath);
                     }
 
-                    Presentation.Converters.PageSourceConverter.ClearCacheForFile(file);
+                    _images.InvalidateFile(file);
                     page.SourcePath = file;
 
                     var book = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
@@ -174,7 +173,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             if (page == null || string.IsNullOrEmpty(page.SourcePath)) return;
 
-            Presentation.Converters.PageSourceConverter.ClearCacheForFile(page.SourcePath);
+            _images.InvalidateFile(page.SourcePath);
 
             var tasks = new List<Task>();
             foreach (var book in Books)
@@ -193,7 +192,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     if (!string.IsNullOrEmpty(targetPage.SourcePath) && targetPage.SourcePath != page.SourcePath)
                     {
-                        Presentation.Converters.PageSourceConverter.ClearCacheForFile(targetPage.SourcePath);
+                        _images.InvalidateFile(targetPage.SourcePath);
                     }
 
                     targetPage.SourcePath = page.SourcePath;

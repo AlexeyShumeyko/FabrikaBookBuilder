@@ -11,7 +11,6 @@ using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Application;
 using PhotoBook.Infrastructure;
-using PhotoBookRenamer.Presentation.Converters;
 using PhotoBookRenamer.Presentation.Dialogs;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
@@ -378,10 +377,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                 if (!string.IsNullOrEmpty(page.SourcePath) && page.SourcePath != filePath)
                 {
-                    Presentation.Converters.PageSourceConverter.ClearCacheForFile(page.SourcePath);
+                    _images.InvalidateFile(page.SourcePath);
                 }
 
-                Presentation.Converters.PageSourceConverter.ClearCacheForFile(filePath);
+                _images.InvalidateFile(filePath);
                 page.SourcePath = filePath;
 
                 if (targetBook != null)
