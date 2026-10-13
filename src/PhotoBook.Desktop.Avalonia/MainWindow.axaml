@@ -1,34 +1,132 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="PhotoBook.Shell.MainWindow"
-        Title="Probe"
-        Width="760" Height="640"
-        FontFamily="Inter" Opened="OnOpened">
+        Title="Fabrika BookBuilder Studio"
+        Width="1520" Height="800"
+        FontFamily="Inter"
+        Background="{DynamicResource AppBackground}"
+        WindowStartupLocation="CenterScreen">
 
-    <!-- The probe shows four numbers and nothing else: can a window come up, does the
-         typeface load, how long a photograph takes to become a tile, and what it costs. -->
-    <Grid Margin="20" RowDefinitions="Auto,Auto,*">
-        <TextBlock Grid.Row="0" FontSize="20" FontWeight="SemiBold"
-                   Text="Wave 3.0 - can this engine do the work the product needs" />
+    <DockPanel LastChildFill="True">
 
-        <TextBlock Grid.Row="1" Margin="0,6,0,14" Foreground="#64748B"
-                   Text="Inter 9/12/14/16/20/24. If these sizes look right, the typeface loaded." />
+        <!-- ================================ header ================================
+             Transcribed from doc\DESIGN_SPEC.md section 1, number by number: padding
+             32/12, logo 36 with radius 12, title 14 bold, PRO badge 10 with padding 6/2
+             and radius 4, tab container padding 4 radius 12, tabs 14/6 radius 8.
+        -->
+        <Border DockPanel.Dock="Top" Padding="32,12"
+                Background="{DynamicResource Surface}"
+                BorderBrush="{DynamicResource Slate200}" BorderThickness="0,0,0,1"
+                BoxShadow="{DynamicResource ShadowSubtle}">
+            <Grid ColumnDefinitions="Auto,*,Auto">
 
-        <ScrollViewer Grid.Row="2">
-            <StackPanel>
-                <TextBlock FontSize="9"  Text="9 px" />
-                <TextBlock FontSize="10" Text="10 px" />
-                <TextBlock FontSize="11" Text="11 px" />
-                <TextBlock FontSize="12" Text="12 px" />
-                <TextBlock FontSize="14" Text="14 px" />
-                <TextBlock FontSize="16" Text="16 px" />
-                <TextBlock FontSize="20" Text="20 px" />
-                <TextBlock FontSize="24" Text="24 px" />
-                <TextBlock Margin="0,16,0,0" FontSize="14"
-                           Foreground="#0F172A" Text="The quick brown fox jumps over the lazy dog" />
-                <Border Height="1" Background="#E2E8F0" Margin="0,14" />
-                <TextBlock x:Name="Report" FontFamily="Consolas" FontSize="12" Text="measuring..." />
-            </StackPanel>
+                <!-- left: logo, then the product name over the open project -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+
+                    <Border Width="36" Height="36" CornerRadius="12" VerticalAlignment="Center">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                <GradientStop Offset="0" Color="{DynamicResource Brand600}" />
+                                <GradientStop Offset="1" Color="{DynamicResource Indigo400}" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="Фабрика Фотокниги" Classes="t14Bold" />
+                            <Border Background="{DynamicResource Brand50}"
+                                    BorderBrush="{DynamicResource Brand100}" BorderThickness="1"
+                                    CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                <TextBlock Text="PRO" Classes="t10"
+                                           Foreground="{DynamicResource Brand600}" />
+                            </Border>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="Проект:" Classes="t12Medium"
+                                       Foreground="{DynamicResource Slate500}" />
+                            <TextBlock Text="—" Classes="t12Semi"
+                                       Foreground="{DynamicResource Slate700}" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- centre: the three screens. Disabled in this step on purpose - step 3.6
+                     is navigation, and a tab that works before there is anything behind it
+                     would be a tab that goes nowhere. -->
+                <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Background="{DynamicResource Slate200At70}" CornerRadius="12" Padding="4">
+                    <StackPanel Orientation="Horizontal">
+                        <ToggleButton Classes="tab" IsChecked="True" IsEnabled="False">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                           Opacity="0.8"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+                                <TextBlock Text="Мои проекты" />
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton Classes="tab" IsEnabled="False">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="&#xE71C;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                           Opacity="0.8"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+                                <TextBlock Text="Выбор режима" />
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton Classes="tab" IsEnabled="False">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                           Opacity="0.8"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+                                <TextBlock Text="Комбинированный" />
+                            </StackPanel>
+                        </ToggleButton>
+                    </StackPanel>
+                </Border>
+
+                <!-- right: the three header buttons. Stubs until the later steps, and the
+                     tooltips say so rather than letting them be discovered. -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Border Width="1" Height="24" Background="{DynamicResource Slate200}"
+                            Margin="0,0,4,0" VerticalAlignment="Center" />
+                    <Button Classes="icon" ToolTip.Tip="Тема оформления — в разработке"
+                            AutomationProperties.Name="Тема оформления">
+                        <TextBlock Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                   Foreground="{DynamicResource Slate400}" />
+                    </Button>
+                    <Button Classes="icon" ToolTip.Tip="Помощь и журнал работы"
+                            AutomationProperties.Name="Помощь">
+                        <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                   Foreground="{DynamicResource Slate600}" />
+                    </Button>
+                    <Button Classes="icon" ToolTip.Tip="Контакты поддержки — в разработке"
+                            AutomationProperties.Name="Контакты">
+                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                   Foreground="{DynamicResource Slate600}" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ================================ body =================================
+             Placeholder. The project screen arrives at step 3.2; this step is only about
+             whether the frame matches the screenshot beside it.
+        -->
+        <ScrollViewer>
+            <Border Margin="32,24" Classes="card" Padding="24">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Каркас окна" Classes="t20Bold" />
+                    <TextBlock Classes="t12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource Slate500}"
+                               Text="Шапка повторяет спецификацию по числам: отступы 32 и 12, логотип 36, заголовок 14, бейдж PRO 10, вкладки 14/6 со скруглением 8, кнопки-иконки 32." />
+                    <TextBlock Classes="t12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource Slate500}"
+                               Text="Две известные разницы с WPF перечислены в Styles\Header.axaml: у активной вкладки нет тени, потому что у ToggleButton нет такого свойства, и заглушка вкладок не серая сама по себе, потому что отключённый элемент в этом движке просто перестаёт реагировать." />
+                </StackPanel>
+            </Border>
         </ScrollViewer>
-    </Grid>
+    </DockPanel>
 </Window>

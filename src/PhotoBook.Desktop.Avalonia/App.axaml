@@ -1,10 +1,33 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="PhotoBook.Shell.App"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             x:Class="PhotoBook.Shell.App">
+
+    <!--
+        Light on purpose. RequestedThemeVariant is left unset because the product has one
+        theme today, and a theme switch with nothing to switch to is a button that lies. It
+        is one line to set once there is a second theme, and the decision is recorded with
+        the rest of the header stubs.
+
+        The palette lives in Tokens.axaml and the type scale in Typography.axaml, included
+        the same way a dictionary is included in any other Avalonia project: as a merged
+        dictionary rather than as loose keys. Keys are not copied into the application - they
+        stay inside their file, so where a value came from stays visible.
+    -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://PhotoBookProbe/Styles/Tokens.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
 
     <Application.Styles>
+        <!--
+            Fluent first, our styles after: the design system is the product's, and the
+            platform's control chrome is only a starting point.
+        -->
         <FluentTheme />
+        <StyleInclude Source="avares://PhotoBookProbe/Styles/Typography.axaml" />
+        <StyleInclude Source="avares://PhotoBookProbe/Styles/Header.axaml" />
     </Application.Styles>
 </Application>

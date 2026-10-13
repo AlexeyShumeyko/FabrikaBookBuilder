@@ -1,0 +1,111 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        The palette, transcribed from the WPF theme so the two shells start from the same
+        numbers. Nothing here is invented: every value is one the design system already uses,
+        so a difference in a screenshot from this point on is a difference in the engine, not
+        in the design.
+
+        Colours are plain Colors rather than brushes. Avalonia will convert a Color wherever a
+        brush is expected, and a Color cannot be mistaken for a frozen brush - which in the
+        WPF theme is how a frozen resource ended up somewhere it could not be unfrozen.
+    -->
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ brand ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <Color x:Key="Brand50">#EEF2FF</Color>
+    <Color x:Key="Brand100">#E0E7FF</Color>
+    <Color x:Key="Brand200">#C7D2FE</Color>
+    <Color x:Key="Brand400">#818CF8</Color>
+    <Color x:Key="Brand500">#6366F1</Color>
+    <Color x:Key="Brand600">#4F46E5</Color>
+    <Color x:Key="Brand700">#4338CA</Color>
+
+    <Color x:Key="Indigo50">#EEF2FF</Color>
+    <Color x:Key="Indigo100">#E0E7FF</Color>
+    <Color x:Key="Indigo400">#818CF8</Color>
+    <Color x:Key="Indigo600">#4F46E5</Color>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ slate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <Color x:Key="Slate50">#F8FAFC</Color>
+    <Color x:Key="Slate100">#F1F5F9</Color>
+    <Color x:Key="Slate200">#E2E8F0</Color>
+    <Color x:Key="Slate300">#CBD5E1</Color>
+    <Color x:Key="Slate400">#94A3B8</Color>
+    <Color x:Key="Slate500">#64748B</Color>
+    <Color x:Key="Slate600">#475569</Color>
+    <Color x:Key="Slate700">#334155</Color>
+    <Color x:Key="Slate800">#1E293B</Color>
+    <Color x:Key="Slate900">#0F172A</Color>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ status ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <Color x:Key="Emerald50">#ECFDF5</Color>
+    <Color x:Key="Emerald100">#D1FAE5</Color>
+    <Color x:Key="Emerald200">#A7F3D0</Color>
+    <Color x:Key="Emerald500">#10B981</Color>
+    <Color x:Key="Emerald600">#059669</Color>
+    <Color x:Key="Emerald700">#047857</Color>
+
+    <Color x:Key="Sky50">#F0F9FF</Color>
+    <Color x:Key="Sky100">#E0F2FE</Color>
+    <Color x:Key="Sky200">#BAE6FD</Color>
+    <Color x:Key="Sky500">#0EA5E9</Color>
+    <Color x:Key="Sky600">#0284C7</Color>
+    <Color x:Key="Sky700">#0369A1</Color>
+
+    <Color x:Key="Amber50">#FFFBEB</Color>
+    <Color x:Key="Amber100">#FEF3C7</Color>
+    <Color x:Key="Amber200">#FDE68A</Color>
+    <Color x:Key="Amber400">#FBBF24</Color>
+    <Color x:Key="Amber500">#F59E0B</Color>
+    <Color x:Key="Amber600">#D97706</Color>
+    <Color x:Key="Amber700">#B45309</Color>
+
+    <Color x:Key="Red50">#FEF2F2</Color>
+    <Color x:Key="Red100">#FEE2E2</Color>
+    <Color x:Key="Red200">#FECACA</Color>
+    <Color x:Key="Red400">#F87171</Color>
+    <Color x:Key="Red500">#EF4444</Color>
+    <Color x:Key="Red600">#DC2626</Color>
+    <Color x:Key="Red700">#B91C1C</Color>
+
+    <!-- Semantic shortcuts, the names the views actually use -->
+    <Color x:Key="AppBackground">#F1F5F9</Color>
+    <Color x:Key="Surface">#FFFFFF</Color>
+    <Color x:Key="SurfaceMuted">#F8FAFC</Color>
+    <Color x:Key="BorderDefault">#E2E8F0</Color>
+    <Color x:Key="TextStrong">#0F172A</Color>
+    <Color x:Key="TextDefault">#1E293B</Color>
+    <Color x:Key="TextMuted">#64748B</Color>
+    <Color x:Key="TextFaint">#94A3B8</Color>
+    <Color x:Key="TextLink">#4F46E5</Color>
+
+    <!--
+        Translucent tints the design uses in more than one place. Avalonia writes colour as
+        AARRGGBB, not the CSS RRGGBBAA, so these are spelled once here rather than guessed
+        at each use - a colour string this engine cannot parse is a crash at startup, not a
+        wrong shade.
+    -->
+    <Color x:Key="Slate200At70">#B3CBD5E1</Color>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ shadows ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!--
+        BoxShadow instead of DropShadowEffect. Blur, depth, direction and colour are copied
+        from the WPF theme; Avalonia expresses them as an offset and a blur rather than as an
+        effect object, and it does not clip the way a WPF effect did inside a transparent
+        window. That difference shows on the dialogs at step 3.5, not on a flat card.
+    -->
+    <BoxShadows x:Key="ShadowSm">0 1 4 0 #0D0F172A</BoxShadows>
+    <BoxShadows x:Key="ShadowSubtle">0 2 8 0 #0D0F172A</BoxShadows>
+    <BoxShadows x:Key="ShadowCard">0 5 25 0 #140F172A</BoxShadows>
+    <BoxShadows x:Key="ShadowHover">0 5 25 0 #1A0F172A</BoxShadows>
+    <BoxShadows x:Key="ShadowModal">0 12 50 0 #40000000</BoxShadows>
+
+    <!-- Radii, because the design system has five of them and they keep reappearing -->
+    <CornerRadius x:Key="RadiusSm">4</CornerRadius>
+    <CornerRadius x:Key="RadiusMd">6</CornerRadius>
+    <CornerRadius x:Key="RadiusLg">8</CornerRadius>
+    <CornerRadius x:Key="RadiusXl">12</CornerRadius>
+    <CornerRadius x:Key="Radius2Xl">16</CornerRadius>
+
+</ResourceDictionary>

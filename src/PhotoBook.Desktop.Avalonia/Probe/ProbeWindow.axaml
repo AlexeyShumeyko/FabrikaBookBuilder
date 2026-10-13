@@ -1,0 +1,45 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PhotoBook.Shell.ProbeWindow"
+        Title="Probe 3.0"
+        Width="760" Height="660"
+        FontFamily="Inter"
+        Background="{DynamicResource AppBackground}"
+        Opened="OnOpened">
+
+    <!--
+        The step 3.0 instrument. It lives beside the product rather than inside it: its only
+        job is to produce four numbers, and keeping it out of the shell means the shell never
+        grows a measuring screen nobody opens. Opened with the probe switch, which is spelt
+        without its leading dashes here because XML will not carry a double dash in a comment.
+    -->
+    <Grid Margin="20" RowDefinitions="Auto,Auto,*,Auto">
+        <TextBlock Grid.Row="0" Classes="t20Bold"
+                   Text="Wave 3.0 - can this engine do the work the product needs" />
+
+        <TextBlock Grid.Row="1" Margin="0,6,0,14" Classes="t12"
+                   Foreground="{DynamicResource Slate500}"
+                   Text="Inter at 9 / 10 / 11 / 12 / 14 / 16 / 20 / 24. If these look right, the typeface loaded." />
+
+        <ScrollViewer Grid.Row="2">
+            <StackPanel>
+                <TextBlock Classes="t9"  Text="9 px" />
+                <TextBlock Classes="t10" Text="10 px" />
+                <TextBlock Classes="t11" Text="11 px" />
+                <TextBlock Classes="t12" Text="12 px" />
+                <TextBlock Classes="t14" Text="14 px" />
+                <TextBlock Classes="t16" Text="16 px" />
+                <TextBlock Classes="t20Bold" Text="20 px" />
+                <TextBlock Classes="t24Bold" Text="24 px" />
+                <TextBlock Margin="0,16,0,0" Classes="t14"
+                           Foreground="{DynamicResource TextStrong}"
+                           Text="The quick brown fox jumps over the lazy dog" />
+                <Border Height="1" Background="{DynamicResource Slate200}" Margin="0,14" />
+                <TextBlock x:Name="Report" FontFamily="Consolas" FontSize="12" Text="measuring..." />
+            </StackPanel>
+        </ScrollViewer>
+
+        <Button Grid.Row="3" Margin="0,14,0,0" HorizontalAlignment="Left"
+                Classes="secondary" Content="Re-measure" Click="OnMeasureClick" />
+    </Grid>
+</Window>

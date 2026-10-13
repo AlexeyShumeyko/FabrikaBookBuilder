@@ -1,0 +1,83 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        The type scale and the surfaces, split from the palette on purpose: a Styles root
+        cannot hold keyed resources, so the colours, shadows and radii live in Tokens.axaml
+        as a ResourceDictionary and this file holds only styles.
+
+        The scale is exactly the one the mockup uses - 9 / 10 / 11 / 12 / 14 / 16 / 18 / 20 /
+        24 - and so are the names, which are t9 / t10 ... rather than a dozen near-duplicates
+        called TextMicro and TextTiny and TextXs. Avalonia styles are addressed by class
+        rather than by key, so the shorter name is also the easier one to read in a view.
+    -->
+
+    <Style Selector="TextBlock">
+        <Setter Property="FontFamily" Value="Inter" />
+        <Setter Property="Foreground" Value="{DynamicResource TextDefault}" />
+    </Style>
+
+    <Style Selector="TextBlock.t9">
+        <Setter Property="FontSize" Value="9" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+    <Style Selector="TextBlock.t10">
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.t11">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Medium" />
+    </Style>
+    <Style Selector="TextBlock.t12">
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="TextBlock.t12Medium">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="Medium" />
+    </Style>
+    <Style Selector="TextBlock.t12Semi">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.t14">
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+    <Style Selector="TextBlock.t14Bold">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+    <Style Selector="TextBlock.t16">
+        <Setter Property="FontSize" Value="16" />
+    </Style>
+    <Style Selector="TextBlock.t16Bold">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+    <Style Selector="TextBlock.t20Bold">
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+    <Style Selector="TextBlock.t24Bold">
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ surfaces ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!--
+        A card is 16 radius, a 1px slate-200 border on white, and a subtle shadow - the
+        same three numbers the design specification gives for every card in the product.
+    -->
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowSubtle}" />
+    </Style>
+
+</Styles>

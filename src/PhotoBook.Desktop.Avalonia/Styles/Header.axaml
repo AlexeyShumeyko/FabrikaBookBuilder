@@ -1,0 +1,88 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Header controls, transcribed from the design specification rather than copied from
+        the WPF theme, because the numbers are the point: a card that is "about right" is a
+        card that is wrong by a number nobody can see in review.
+
+          secondary button   padding 12/8   radius 12   white on a slate-200 border
+          primary button     padding 14/8   radius 12   brand-600, white text
+          tab                padding 14/6   radius 8    12px
+          tab container      padding 4      radius 12
+
+        These live in their own file rather than in the window's own styles so that every
+        screen reuses exactly the same header, which is what makes the two shells comparable
+        at all.
+    -->
+
+    <Style Selector="Button.secondary">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="Button.primary">
+        <Setter Property="Background" Value="{DynamicResource Brand600}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="14,8" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="Button.icon">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="ToggleButton.tab">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="14,6" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="ToggleButton.tab:checked">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brand600}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <!--
+        Difference one of this step, listed rather than fudged: the active tab carries a
+        subtle shadow in the WPF theme. ToggleButton has no BoxShadow property in this
+        engine, so the shadow would have to live on a Border around its content. That is
+        the way to get it, but it is a visible difference against the screenshot beside it
+        and therefore a decision rather than a detail.
+    -->
+
+    <!--
+        Difference two: a disabled tab in the WPF theme is greyed and loses the pointer. Here
+        a disabled ToggleButton simply stops reacting, so the greying is done explicitly -
+        otherwise a disabled tab would look exactly like an enabled one, which is how a
+        person learns to click something that cannot be clicked.
+    -->
+    <Style Selector="ToggleButton.tab:disabled /template/ ContentPresenter">
+        <Setter Property="Opacity" Value="0.45" />
+    </Style>
+
+</Styles>
