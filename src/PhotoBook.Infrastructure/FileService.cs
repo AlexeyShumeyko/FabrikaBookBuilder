@@ -166,5 +166,25 @@ namespace PhotoBook.Infrastructure
                 return false;
             }
         }
+
+        /// <summary>
+        /// Creating a folder can fail for reasons the caller can do nothing about - no
+        /// permission, a path that is a file, a disk that is full. The failure is reported
+        /// when the first file is copied into it, with the folder's own name in the message,
+        /// which is more use than an exception about the folder would be.
+        /// </summary>
+        public void EnsureDirectory(string path)
+        {
+            if (string.IsNullOrEmpty(path) || System.IO.Directory.Exists(path)) return;
+
+            try
+            {
+                System.IO.Directory.CreateDirectory(path);
+            }
+            catch (Exception)
+            {
+                // Deliberately swallowed. See above.
+            }
+        }
     }
 }

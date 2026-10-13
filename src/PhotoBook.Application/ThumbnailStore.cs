@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -32,7 +31,7 @@ namespace PhotoBook.Application
     public static class ThumbnailStore
     {
         private static readonly Lazy<string> DirectoryPath = new(() =>
-            Path.Combine(Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails"));
+            System.IO.Path.Combine(System.IO.Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails"));
 
         /// <summary>Folder holding the reduced copies. Created when something writes into it.</summary>
         public static string Directory => DirectoryPath.Value;
@@ -53,15 +52,17 @@ namespace PhotoBook.Application
 
         /// <summary>The file a reduced copy of this photograph would be written to.</summary>
         public static string GetPath(string sourcePath) =>
-            Path.Combine(Directory, $"{GetHash(sourcePath)}_thumb.jpg");
+            System.IO.Path.Combine(Directory, $"{GetHash(sourcePath)}_thumb.jpg");
 
-        /// <summary>The reduced copy if it already exists, otherwise null. Does not create one.</summary>
-        public static string? GetExistingPath(string sourcePath)
-        {
-            if (string.IsNullOrEmpty(sourcePath)) return null;
-            var path = GetPath(sourcePath);
-            return File.Exists(path) ? path : null;
-        }
+        /// <summary>
+        /// The path a reduced copy would have, whether or not one is there. Callers that
+        /// need to know whether to build one ask the file system themselves: this class only
+        /// knows how to spell the path. It used to answer with File.Exists, which put a file
+        /// system call inside the layer that decides what a project is - the last one of its
+        /// kind after the index store was extracted.
+        /// </summary>
+        public static string? PathOrNull(string sourcePath)
+            => string.IsNullOrEmpty(sourcePath) ? null : GetPath(sourcePath);
 
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> Hashes =
             new(StringComparer.OrdinalIgnoreCase);

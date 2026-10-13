@@ -78,7 +78,10 @@ namespace PhotoBookRenamer.Presentation.Converters
 
         private static BitmapSource? Load(string filePath, int decode)
         {
-            var existing = ThumbnailStore.GetExistingPath(filePath);
+            // Asked here rather than inside ThumbnailStore: this is the shell, which may
+            // touch the disk, and the layer underneath only knows how to spell the path.
+            var candidate = ThumbnailStore.PathOrNull(filePath);
+            var existing = candidate != null && File.Exists(candidate) ? candidate : null;
 
             if (existing != null)
             {

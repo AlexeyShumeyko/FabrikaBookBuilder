@@ -58,14 +58,19 @@ namespace PhotoBook.Infrastructure
             _gate = new SemaphoreSlim(_maxConcurrency, _maxConcurrency);
         }
 
-        public string? GetExistingPath(string sourcePath) => ThumbnailStore.GetExistingPath(sourcePath);
+        public string? GetExistingPath(string sourcePath)
+        {
+            var path = ThumbnailStore.PathOrNull(sourcePath);
+            return path != null && File.Exists(path) ? path : null;
+        }
 
         public async Task<string?> GetOrCreateAsync(string sourcePath, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(sourcePath) || !File.Exists(sourcePath))
                 return null;
 
-            var existing = ThumbnailStore.GetExistingPath(sourcePath);
+            var candidate = ThumbnailStore.PathOrNull(sourcePath);
+            var existing = candidate != null && File.Exists(candidate) ? candidate : null;
             if (existing != null && IsReadable(existing))
                 return existing;
 
@@ -96,7 +101,8 @@ namespace PhotoBook.Infrastructure
 
                     if (!string.IsNullOrEmpty(path) && File.Exists(path))
                     {
-                        var existing = ThumbnailStore.GetExistingPath(path);
+                        var candidate = ThumbnailStore.PathOrNull(path);
+                        var existing = candidate != null && File.Exists(candidate) ? candidate : null;
                         if (existing == null || !IsReadable(existing))
                         {
                             await CreateAsync(path, ThumbnailStore.GetPath(path), cancellationToken)

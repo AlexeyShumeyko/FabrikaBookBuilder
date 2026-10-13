@@ -84,7 +84,10 @@ public sealed class ThumbnailTests : IDisposable
         var expected = ThumbnailStore.GetPath(source);
         if (File.Exists(expected)) File.Delete(expected);
 
-        Assert.Null(ThumbnailStore.GetExistingPath(source));
+        // Asked of the provider, not of the store. ThumbnailStore only knows how to spell
+        // the path - the question "is there already a reduced copy" belongs to the layer that
+        // is allowed to open files, and the provider is that layer.
+        Assert.Null(new ThumbnailProvider().GetExistingPath(source));
     }
 
     // ------------------------------------------------------------------ one is produced

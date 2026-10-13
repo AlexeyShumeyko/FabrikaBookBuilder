@@ -29,5 +29,12 @@ namespace PhotoBook.Application
         /// what this port exists to stop.
         /// </summary>
         bool DirectoryExists(string path);
+
+        /// <summary>
+        /// Creates a folder if it is not already there. The export writes into a folder the
+        /// user picked, which may legitimately not exist yet, and creating it is a decision
+        /// the application layer makes rather than a side effect it should not know about.
+        /// </summary>
+        void EnsureDirectory(string path);
     }
 }

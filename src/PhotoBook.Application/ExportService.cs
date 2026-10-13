@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+
 using System.Linq;
 using System.Threading.Tasks;
 using PhotoBook.Core;
@@ -33,9 +33,9 @@ namespace PhotoBook.Application
 
             try
             {
-                if (!Directory.Exists(outputFolder))
+                if (!_fileService.DirectoryExists(outputFolder))
                 {
-                    Directory.CreateDirectory(outputFolder);
+                    _fileService.EnsureDirectory(outputFolder);
                 }
 
                 // Build the full work list first so progress can be reported by file count
@@ -53,7 +53,7 @@ namespace PhotoBook.Application
                     foreach (var entry in plan.Entries)
                     {
                         work.Add((entry.SourcePath,
-                                  Path.Combine(outputFolder, UniqueName(entry.FileName, usedNames))));
+                                  System.IO.Path.Combine(outputFolder, UniqueName(entry.FileName, usedNames))));
                     }
                 }
                 else
@@ -65,7 +65,7 @@ namespace PhotoBook.Application
 
                         if (options.PerBookSubfolders)
                         {
-                            bookFolder = Path.Combine(outputFolder, SanitizeFolderName($"{bookIndex:D3} {book.Name}"));
+                            bookFolder = System.IO.Path.Combine(outputFolder, SanitizeFolderName($"{bookIndex:D3} {book.Name}"));
 
                             // The per-book folder must exist BEFORE its first file is copied
                             // into it. It is created here rather than left to CopyFileAsync
@@ -73,16 +73,16 @@ namespace PhotoBook.Application
                             // folder is missing fails inside Task.WhenAll - which surfaces as
                             // "could not copy" with no hint about which folder, or as a raw
                             // exception with nothing in the UI to point at.
-                            if (!Directory.Exists(bookFolder))
+                            if (!_fileService.DirectoryExists(bookFolder))
                             {
-                                Directory.CreateDirectory(bookFolder);
+                                _fileService.EnsureDirectory(bookFolder);
                             }
                         }
 
                         if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
                         {
                             work.Add((book.Cover.SourcePath,
-                                      Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, 0), usedNames))));
+                                      System.IO.Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, 0), usedNames))));
                         }
 
                         // Ordered by index: the order on disk has to be the order in the book, and
@@ -91,7 +91,7 @@ namespace PhotoBook.Application
                         foreach (var page in book.Pages.Where(p => !p.IsEmpty).OrderBy(p => p.Index))
                         {
                             work.Add((page.SourcePath!,
-                                      Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, pageIndex), usedNames))));
+                                      System.IO.Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, pageIndex), usedNames))));
                             pageIndex++;
                         }
                     }
@@ -132,13 +132,13 @@ namespace PhotoBook.Application
         {
             if (used.Add(fileName)) return fileName;
 
-            var dir = Path.GetDirectoryName(fileName) ?? string.Empty;
-            var stem = Path.GetFileNameWithoutExtension(fileName);
-            var ext = Path.GetExtension(fileName);
+            var dir = System.IO.Path.GetDirectoryName(fileName) ?? string.Empty;
+            var stem = System.IO.Path.GetFileNameWithoutExtension(fileName);
+            var ext = System.IO.Path.GetExtension(fileName);
 
             for (int i = 2; i < 10_000; i++)
             {
-                var candidate = Path.Combine(dir, $"{stem}-{i}{ext}");
+                var candidate = System.IO.Path.Combine(dir, $"{stem}-{i}{ext}");
                 if (used.Add(candidate)) return candidate;
             }
             return fileName;
@@ -146,7 +146,7 @@ namespace PhotoBook.Application
 
         private static string SanitizeFolderName(string name)
         {
-            var invalid = Path.GetInvalidFileNameChars();
+            var invalid = System.IO.Path.GetInvalidFileNameChars();
             var cleaned = new string(name.Select(c => invalid.Contains(c) ? '_' : c).ToArray()).Trim();
             return string.IsNullOrWhiteSpace(cleaned) ? "Book" : cleaned;
         }
