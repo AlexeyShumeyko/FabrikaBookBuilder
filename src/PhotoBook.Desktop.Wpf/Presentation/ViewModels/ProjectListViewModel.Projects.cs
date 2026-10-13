@@ -11,7 +11,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Application;
-using PhotoBookRenamer.Presentation.Views;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
 {

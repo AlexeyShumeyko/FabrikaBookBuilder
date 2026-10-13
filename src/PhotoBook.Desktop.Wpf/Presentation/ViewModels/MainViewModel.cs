@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Application;
-using PhotoBookRenamer.Presentation.Views;
+using PhotoBook.Application;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
 {
@@ -38,15 +38,18 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private readonly IProjectListService _projectListService;
         private readonly IProjectRepository _projects;
         private readonly IProjectDialogs _dialogs;
+        private readonly IScreenViewFactory _screens;
 
         public MainViewModel(
             UniqueFoldersViewModel uniqueFolders,
             CombinedModeViewModel combinedMode,
             IProjectListService projectListService,
             IProjectRepository projects,
-            IProjectDialogs dialogs)
+            IProjectDialogs dialogs,
+        IScreenViewFactory screens)
         {
             _dialogs = dialogs;
+            _screens = screens;
             _uniqueFolders = uniqueFolders;
             _combinedMode = combinedMode;
             _projectListService = projectListService;
@@ -84,7 +87,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 var projectListVm = NewProjectListViewModel();
-                CurrentView = new ProjectListView(projectListVm);
+                CurrentView = _screens.CreateScreen(AppMode.ProjectList, projectListVm);
                 _currentMode = AppMode.ProjectList;
                 OnPropertyChanged(nameof(CurrentMode));
             });
@@ -179,32 +182,38 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             set => SetProperty(ref _currentView, value);
         }
 
-        /// <summary>Creates the View for <see cref="CurrentMode"/>. Single source of truth.</summary>
+        /// <summary>
+        /// Puts the screen for <see cref="CurrentMode"/> on the window. The navigator decides
+        /// which view model is on screen; the shell's factory decides what that looks like.
+        /// </summary>
+        /// <remarks>
+        /// The pair is chosen here and the screen is built over it, in that order, because
+        /// a project list is rebuilt on every visit: the view model has to exist before
+        /// anything can wrap it.
+        /// </remarks>
         private void BuildView()
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                switch (_currentMode)
+                object? viewModel = _currentMode switch
                 {
-                    case AppMode.StartScreen:
-                        CurrentView = new StartScreenView(this);
-                        break;
+                    AppMode.StartScreen => this,
+                    AppMode.ProjectList => NewProjectListViewModel(),
+                    AppMode.UniqueFolders => _uniqueFolders,
+                    AppMode.Combined => _combinedMode,
+                    _ => null
+                };
 
-                    case AppMode.ProjectList:
-                        var projectListVm = NewProjectListViewModel();
-                        CurrentView = new ProjectListView(projectListVm);
-                        projectListVm.LoadProjectsCommand.Execute(null);
-                        break;
+                // Help has no screen of its own - the help is a dialog - so a mode without
+                // one leaves whatever was on the window untouched, as it always has.
+                if (viewModel != null)
+                {
+                    CurrentView = _screens.CreateScreen(_currentMode, viewModel);
 
-                    case AppMode.UniqueFolders:
-                        // One shell, one editor instance per mode: switching away and back finds the
-                        // editor as it was left.
-                        CurrentView = new UniqueFoldersView(_uniqueFolders);
-                        break;
-
-                    case AppMode.Combined:
-                        CurrentView = new CombinedModeView(_combinedMode);
-                        break;
+                    // Asked for after the view exists, so the cards fill a list that is
+                    // already on the window rather than one that appears a moment later.
+                    if (viewModel is ProjectListViewModel projectList)
+                        projectList.LoadProjectsCommand.Execute(null);
                 }
 
                 RaiseHeaderChanged();

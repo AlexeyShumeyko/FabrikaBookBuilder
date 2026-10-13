@@ -138,6 +138,9 @@ namespace PhotoBookRenamer
             // static factory - creating a WPF window has no instance to hang a constructor
             // on - and this adapter is the seam that lets a view model be tested without one.
             services.AddSingleton<IProjectDialogs, Presentation.Dialogs.WpfProjectDialogs>();
+            // The navigator says which screen is next; this shell decides what a screen is.
+            // The only place left here that knows a screen is a UserControl.
+            services.AddSingleton<IScreenViewFactory, Presentation.Views.WpfScreenViewFactory>();
 
             // ViewModels
             // MainViewModel MUST be a singleton: it owns the persistent top bar, which has
