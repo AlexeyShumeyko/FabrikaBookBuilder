@@ -24,7 +24,8 @@ namespace PhotoBook.Application
         public static IServiceCollection AddPhotoBookApplication(this IServiceCollection services)
         {
             services.AddSingleton<IExportService, ExportService>();
-            services.AddSingleton<IProjectService, ProjectService>();
+            services.AddSingleton<IProjectBuilder, ProjectBuilder>();
+            services.AddSingleton<IEditHistory, EditHistory>();
             services.AddSingleton<IProjectListService, ProjectListService>();
 
             return services;

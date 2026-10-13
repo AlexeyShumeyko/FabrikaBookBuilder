@@ -25,7 +25,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             Project = null;
             ProjectName = null;
             ErrorMessage = null;
-            _projectService.ClearHistory();
+            _editHistory.ClearHistory();
             Presentation.Converters.PageSourceConverter.ClearCache();
 
             // Everything about the project is read now, before the first await: the list

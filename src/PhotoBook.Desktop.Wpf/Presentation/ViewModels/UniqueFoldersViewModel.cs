@@ -22,7 +22,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private readonly IPickFiles _files;
         private readonly IImageService _imageService;
         private readonly IThumbnailProvider _thumbnails;
-        private readonly IProjectService _projectService;
+        private readonly IProjectBuilder _projectBuilder;
+        private readonly IEditHistory _editHistory;
         private readonly IProjectRepository _projects;
         private readonly IExportService _exportService;
         private readonly ILoggingService _loggingService;
@@ -97,7 +98,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             IPickFiles files,
             IImageService imageService,
             IThumbnailProvider thumbnails,
-            IProjectService projectService,
+            IProjectBuilder projectBuilder,
+        IEditHistory editHistory,
             IProjectRepository projects,
             IExportService exportService,
             ILoggingService loggingService,
@@ -107,7 +109,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             _files = files;
             _imageService = imageService;
             _thumbnails = thumbnails;
-            _projectService = projectService;
+            _projectBuilder = projectBuilder;
+            _editHistory = editHistory;
             _projects = projects;
             _exportService = exportService;
             _loggingService = loggingService;
@@ -139,8 +142,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             DeleteBookCommand = new RelayCommand<Book>(DeleteBook);
             ResetProjectCommand = new RelayCommand(ResetProject);
             ResetBookOrderCommand = new RelayCommand<Book>(ResetBookOrder);
-            UndoCommand = new RelayCommand(Undo, () => _projectService.CanUndo);
-            RedoCommand = new RelayCommand(Redo, () => _projectService.CanRedo);
+            UndoCommand = new RelayCommand(Undo, () => _editHistory.CanUndo);
+            RedoCommand = new RelayCommand(Redo, () => _editHistory.CanRedo);
             MovePageUpCommand = new RelayCommand<Page>(MovePageUp);
             MovePageDownCommand = new RelayCommand<Page>(MovePageDown);
             AssignPageNumberCommand = new RelayCommand<Page>(AssignPageNumber);

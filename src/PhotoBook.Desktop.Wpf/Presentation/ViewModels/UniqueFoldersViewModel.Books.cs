@@ -23,7 +23,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             if (book == null || Project == null) return;
 
-            _projectService.SaveState(Project);
+            _editHistory.SaveState(Project);
 
             Books.Remove(book);
             Project.Books.Remove(book);
@@ -48,14 +48,14 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             CurrentProjectInfo = null;
             ProjectName = null;
             ErrorMessage = null;
-            _projectService.ClearHistory();
+            _editHistory.ClearHistory();
             Presentation.Converters.PageSourceConverter.ClearCache();
         }
 
         private void Undo()
         {
             if (Project == null) return;
-            var previousProject = _projectService.Undo(Project);
+            var previousProject = _editHistory.Undo(Project);
             if (previousProject != null)
             {
                 Project = previousProject;
@@ -65,7 +65,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private void Redo()
         {
             if (Project == null) return;
-            var nextProject = _projectService.Redo(Project);
+            var nextProject = _editHistory.Redo(Project);
             if (nextProject != null)
             {
                 Project = nextProject;
@@ -83,7 +83,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             var pageIndex = pagesWithoutCover.IndexOf(page);
             if (pageIndex <= 0) return;
 
-            _projectService.SaveState(Project!);
+            _editHistory.SaveState(Project!);
 
             var currentIndex = book.Pages.IndexOf(page);
             var targetIndex = currentIndex - 1;
@@ -106,7 +106,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             var pageIndex = pagesWithoutCover.IndexOf(page);
             if (pageIndex >= pagesWithoutCover.Count - 1) return;
 
-            _projectService.SaveState(Project!);
+            _editHistory.SaveState(Project!);
 
             var currentIndex = book.Pages.IndexOf(page);
             var targetIndex = currentIndex + 1;
@@ -136,7 +136,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 var targetPageNumber = dialog.SelectedPageNumber.Value;
 
-                _projectService.SaveState(Project!);
+                _editHistory.SaveState(Project!);
 
                 var currentIndex = book.Pages.IndexOf(page);
 
@@ -201,7 +201,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             var oldCover = book.Cover;
 
-            _projectService.SaveState(Project);
+            _editHistory.SaveState(Project);
 
             // The promoted page leaves the spread list and becomes the cover.
             book.Pages.Remove(page);
@@ -252,7 +252,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             if (current.SequenceEqual(sorted)) return;
 
-            _projectService.SaveState(Project);
+            _editHistory.SaveState(Project);
 
             foreach (var p in current) book.Pages.Remove(p);
             foreach (var p in sorted) book.Pages.Add(p);

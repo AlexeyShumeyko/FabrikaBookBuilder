@@ -26,7 +26,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private readonly IThumbnailProvider _thumbnails;
         private readonly IExportService _exportService;
         private readonly ILoggingService _loggingService;
-        private readonly IProjectService _projectService;
         private readonly IProjectRepository _projects;
         private readonly IProjectListService _projectListService;
         private Project? _project;
@@ -46,7 +45,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             IThumbnailProvider thumbnails,
             IExportService exportService,
             ILoggingService loggingService,
-            IProjectService projectService,
             IProjectRepository projects,
             IProjectListService projectListService)
         {
@@ -56,7 +54,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             _thumbnails = thumbnails;
             _exportService = exportService;
             _loggingService = loggingService;
-            _projectService = projectService;
             _projects = projects;
             _projectListService = projectListService;
 

@@ -46,7 +46,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     {
                         Project.Books.Clear();
                         Books.Clear();
-                        _projectService.SaveState(Project);
+                        _editHistory.SaveState(Project);
                     }
                     return;
                 }
@@ -95,19 +95,19 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                             Books.Remove(book);
                         }
 
-                        _projectService.SaveState(Project);
+                        _editHistory.SaveState(Project);
                     }
 
                     if (newFolders.Count > 0)
                     {
-                        var newProject = await _projectService.CreateProjectFromFoldersAsync(newFolders);
+                        var newProject = await _projectBuilder.CreateProjectFromFoldersAsync(newFolders);
                         foreach (var book in newProject.Books)
                         {
                             Project.Books.Add(book);
                             Books.Add(book);
                         }
 
-                        _projectService.SaveState(Project);
+                        _editHistory.SaveState(Project);
                     }
 
                     for (int i = 0; i < Project.Books.Count; i++)
@@ -117,8 +117,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
                 else
                 {
-                    Project = await _projectService.CreateProjectFromFoldersAsync(folders);
-                    _projectService.SaveState(Project);
+                    Project = await _projectBuilder.CreateProjectFromFoldersAsync(folders);
+                    _editHistory.SaveState(Project);
 
                     // Loading folders must not create a project record. A record belongs to
                     // "new project" or to the list, and inventing one here put an empty card into

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,29 +6,28 @@ using PhotoBook.Core;
 namespace PhotoBook.Application
 {
     /// <summary>
-    /// Building a project out of folders, and remembering what it looked like a moment ago.
+    /// Assembles a project out of a list of folders: one book per folder, the cover
+    /// detected, and the card layout measured from the real photograph sizes.
     /// </summary>
     /// <remarks>
-    /// Storing a project is not here any more - that is <see cref="IProjectRepository"/>,
-    /// which owns the file format. This class used to do both, and used to read and write
-    /// files itself with <c>System.IO.File</c>, which is why the layer that decides what a
-    /// project is also knew where projects are kept.
+    /// Only the folders mode builds its projects this way. Combined mode asks the user for
+    /// photographs instead, so it has nothing to call here.
     /// </remarks>
-    internal class ProjectService : IProjectService
+    public interface IProjectBuilder
+    {
+        Task<Project> CreateProjectFromFoldersAsync(List<string> folderPaths);
+    }
+
+    internal class ProjectBuilder : IProjectBuilder
     {
         private readonly IFileService _fileService;
         private readonly IImageService _imageService;
-        private readonly Stack<Project> _undoStack = new();
-        private readonly Stack<Project> _redoStack = new();
 
-        public ProjectService(IFileService fileService, IImageService imageService)
+        public ProjectBuilder(IFileService fileService, IImageService imageService)
         {
             _fileService = fileService;
             _imageService = imageService;
         }
-
-        public bool CanUndo => _undoStack.Count > 0;
-        public bool CanRedo => _redoStack.Count > 0;
 
         public async Task<Project> CreateProjectFromFoldersAsync(List<string> folderPaths)
         {
@@ -86,41 +84,6 @@ namespace PhotoBook.Application
             await ProjectImageSizes.FillMissingAsync(project, _imageService);
 
             return project;
-        }
-
-        public void SaveState(Project project)
-        {
-            if (project == null) return;
-
-            var clone = project.Clone();
-            _undoStack.Push(clone);
-            _redoStack.Clear();
-        }
-
-        public Project? Undo(Project currentProject)
-        {
-            if (!CanUndo || currentProject == null) return null;
-
-            _redoStack.Push(currentProject.Clone());
-
-            var previousState = _undoStack.Pop();
-            return previousState;
-        }
-
-        public Project? Redo(Project currentProject)
-        {
-            if (!CanRedo || currentProject == null) return null;
-
-            _undoStack.Push(currentProject.Clone());
-
-            var nextState = _redoStack.Pop();
-            return nextState;
-        }
-
-        public void ClearHistory()
-        {
-            _undoStack.Clear();
-            _redoStack.Clear();
         }
     }
 }
