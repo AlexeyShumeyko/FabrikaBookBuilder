@@ -152,6 +152,11 @@ namespace PhotoBookRenamer
             // what fill them. This is the addressable side of that, and the first thing a
             // second engine has to supply of its own.
             services.AddSingleton<IDecodedImageCache, Presentation.Services.WpfDecodedImageCache>();
+            // The thread that draws. A view model that changes an entity raises
+            // PropertyChanged on whichever thread it happened to be on, and a command bound to
+            // that property re-reads CanExecute there - which throws, and unwinds whatever
+            // was running. This is where that stops being true.
+            services.AddSingleton<IUiThread, Presentation.Services.WpfUiThread>();
 
             // ViewModels
             // MainViewModel MUST be a singleton: it owns the persistent top bar, which has

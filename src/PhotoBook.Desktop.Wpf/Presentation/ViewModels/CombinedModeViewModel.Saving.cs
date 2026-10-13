@@ -184,7 +184,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 await _thumbnails.EnsureAsync(paths, cancellationToken: preparation);
                 _images.InvalidateAll();
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                await Ui.InvokeAsync(() =>
                 {
                     foreach (var p in Books)
                     {

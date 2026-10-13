@@ -159,7 +159,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     await _thumbnails.EnsureAsync(allImagePaths!, cancellationToken: preparation);
                     await _images.PrewarmAsync(allImagePaths!, preparation);
 
-                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    Ui.Invoke(() =>
                     {
                         foreach (var book in Project.Books)
                         {

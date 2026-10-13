@@ -48,13 +48,15 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             IProjectRepository projects,
             IProjectListService projectListService,
             IProjectDialogs dialogs,
-            IDecodedImageCache images)
+            IDecodedImageCache images,
+            IUiThread ui)
         {
             _fileService = fileService;
             _files = files;
             _imageService = imageService;
             _thumbnails = thumbnails;
             _images = images;
+            Ui = ui;
             _exportService = exportService;
             _loggingService = loggingService;
             _projects = projects;
@@ -227,7 +229,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             // The domain raises this from whatever thread touched the book, and an automatic
             // save that resumed on the thread pool touches it there. Re-asking a command
             // from off the UI thread throws, and the save is what was unwinding.
-            OnUiThread(UpdateExportCommands);
+            RunOnUi(UpdateExportCommands);
         }
 
         private void UpdateExportCommands()
@@ -294,7 +296,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             StopPreparation();
             // An export finishes on a background thread, and the shell changes the
             // screen, so the request is marshalled to the UI thread.
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            Ui.Invoke(() =>
                 BackToProjectListRequested?.Invoke());
         }
 

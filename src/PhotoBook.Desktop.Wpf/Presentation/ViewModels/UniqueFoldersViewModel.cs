@@ -104,13 +104,15 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             IExportService exportService,
             ILoggingService loggingService,
             IProjectListService projectListService,
-            IDecodedImageCache images)
+            IDecodedImageCache images,
+            IUiThread ui)
         {
             _fileService = fileService;
             _files = files;
             _imageService = imageService;
             _thumbnails = thumbnails;
             _images = images;
+            Ui = ui;
             _projectBuilder = projectBuilder;
             _editHistory = editHistory;
             _projects = projects;
@@ -166,7 +168,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 {
                     // SetProject is async and may be handed a project from a continuation, so
                     // this can arrive off the UI thread - where a command cannot be re-asked.
-                    OnUiThread(() =>
+                    RunOnUi(() =>
                     {
                         OnPropertyChanged(nameof(CanExport));
                         OnPropertyChanged(nameof(BooksSummary));
@@ -178,7 +180,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 }
                 if (e.PropertyName == nameof(CurrentProjectInfo))
                 {
-                    OnUiThread(() =>
+                    RunOnUi(() =>
                     {
                         if (SaveProjectCommand is AsyncRelayCommand saveCmd)
                             saveCmd.NotifyCanExecuteChanged();
@@ -235,7 +237,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             StopPreparation();
             // An export finishes on a background thread, and the shell changes the
             // screen, so the request is marshalled to the UI thread.
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            Ui.Invoke(() =>
                 BackToProjectListRequested?.Invoke());
         }
 

@@ -148,13 +148,24 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             // The ViewModel is not the cost: the layout of the slots it just announced is,
             // and that happens after this method returns, inside the next dispatcher pass.
             PerfPhase.Mark("view model done (the layout pass is still to come)");
-            var app = System.Windows.Application.Current;
-            if (app != null)
-            {
-                app.Dispatcher.BeginInvoke(new Action(() => PerfPhase.CountElements("at Render priority (layout done)")), System.Windows.Threading.DispatcherPriority.Render);
-                app.Dispatcher.BeginInvoke(new Action(() => PerfPhase.CountElements("at Background priority")), System.Windows.Threading.DispatcherPriority.Background);
-                app.Dispatcher.BeginInvoke(new Action(() => { PerfPhase.CountElements("at ContextIdle (dispatcher empty)"); PerfPhase.Write("open combined project"); }), System.Windows.Threading.DispatcherPriority.ContextIdle);
-            }
+
+            // The three priorities are the measurement, not decoration: they are the three
+            // moments where "how much has been built" is a different question. Asking for
+            // them by name - rather than by the engine's dispatcher - is what lets a second
+            // shell answer the same three questions on its own schedule.
+            Ui.BeginInvoke(
+                () => PerfPhase.CountElements("at Render priority (layout done)"),
+                UiDispatchPriority.Render);
+            Ui.BeginInvoke(
+                () => PerfPhase.CountElements("at Background priority"),
+                UiDispatchPriority.Background);
+            Ui.BeginInvoke(
+                () =>
+                {
+                    PerfPhase.CountElements("at ContextIdle (dispatcher empty)");
+                    PerfPhase.Write("open combined project");
+                },
+                UiDispatchPriority.ContextIdle);
 
             // One preparation for this load, shared by both passes below. A second token
             // would cancel the first one the moment it starts, and the prewarm of a project
@@ -219,7 +230,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             try
             {
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                Ui.Invoke(() =>
                 {
                     foreach (var book in Books)
                     {

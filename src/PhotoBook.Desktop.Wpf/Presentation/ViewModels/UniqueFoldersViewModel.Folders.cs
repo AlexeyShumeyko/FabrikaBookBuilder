@@ -167,7 +167,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     await _thumbnails.EnsureAsync(allImagePaths!, cancellationToken: preparation);
                     // The slots learn their preview paths here, on the UI thread, because
                     // that is the thread the binding reads from.
-                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    Ui.Invoke(() =>
                     {
                         foreach (var book in Project.Books)
                         {
