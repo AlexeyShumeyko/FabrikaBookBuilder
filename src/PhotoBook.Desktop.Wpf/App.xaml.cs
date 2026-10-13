@@ -168,8 +168,9 @@ namespace PhotoBookRenamer
             // navigation, which tore the header down each time. The editors are singletons
             // for the same reason - their editing state has to outlive a view swap.
             services.AddSingleton<MainViewModel>();
-            services.AddSingleton<UniqueFoldersViewModel>();
-            services.AddSingleton<CombinedModeViewModel>();
+            // The editors live in the shared presentation layer and register themselves, so
+            // a second shell cannot end up with a different set of lifetimes.
+            services.AddPhotoBookPresentation();
 
             // Views
             services.AddTransient<MainWindow>();
