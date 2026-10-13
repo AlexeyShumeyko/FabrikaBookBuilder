@@ -33,6 +33,24 @@
       the roadmap carries it as its own step.
     -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <!--
+      CS0649 is the first class switched on, and it qualifies for that on its own: the
+      solution currently produces none, so switching it on cannot stop today's work, and
+      when one appears it always means a bug rather than a style question - a field that is
+      declared and never assigned, which is null at every use.
+
+      That is not hypothetical. A dependency was added to a view model, the field and the
+      call site were patched and the constructor was not; the build stayed green, the button
+      the field fed did nothing, and the exception went into the task nobody observes. The
+      compiler had been saying "this field is never assigned" the whole time, as a warning,
+      in a build whose gate watches for errors.
+
+      Suppress it locally with #pragma warning disable CS0649 if a field is ever assigned
+      by something the compiler cannot see. Do not widen this to a list - each addition has
+      to come with the measurement that says it is clean today.
+    -->
+    <WarningsAsErrors>$(WarningsAsErrors);CS0649</WarningsAsErrors>
   </PropertyGroup>
 
 </Project>
