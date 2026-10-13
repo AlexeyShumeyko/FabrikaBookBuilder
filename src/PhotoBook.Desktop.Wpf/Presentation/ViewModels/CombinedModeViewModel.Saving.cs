@@ -12,7 +12,6 @@ using PhotoBook.Core;
 using PhotoBook.Presentation;
 using PhotoBook.Application;
 using PhotoBook.Infrastructure;
-using PhotoBookRenamer.Presentation.Dialogs;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
 {

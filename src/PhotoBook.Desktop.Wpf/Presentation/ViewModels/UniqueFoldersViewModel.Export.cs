@@ -27,20 +27,18 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             // ever writing the project file, so a finished project reopened empty.
             await SaveProjectBeforeExportAsync();
 
-            // The options modal owns the copy so it can show a progress bar, and it runs
-            // the export itself. This method only handles the surrounding bookkeeping.
-            var options = new Presentation.Dialogs.ExportDialog(Project, _exportService);
-            options.Owner = System.Windows.Application.Current.MainWindow;
+            // The options window owns the progress bar, so it owns the work; this method
+            // only handles the surrounding bookkeeping. Null comes back when the user stopped
+            // before exporting.
+            var outputFolder = await _editorDialogs.AskToExport(Project);
 
             try
             {
                 // No window veil here: the export dialog shows its own progress, and
                 // a dark wash behind a modal is what we kept reporting as a
                 // grey background leaking in.
-                if (options.ShowDialog() != true || !options.Exported)
+                if (outputFolder == null)
                     return;
-
-                string outputFolder = options.ExportedFolder;
 
                 Project.OutputFolder = outputFolder;
                 if (CurrentProjectInfo != null)
@@ -64,25 +62,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         }
 
         /// <summary>Success modal, with an optional "open the folder" action.</summary>
-        private async Task ShowExportSuccessAsync(string outputFolder)
-        {
-            var dialog = new Presentation.Dialogs.ExportSuccessDialog(outputFolder);
-            dialog.Owner = System.Windows.Application.Current.MainWindow;
-            if (dialog.ShowDialog() == true && dialog.GoToFolder)
-            {
-                await System.Threading.Tasks.Task.Run(() =>
-                {
-                    try
-                    {
-                        System.Diagnostics.Process.Start("explorer.exe", outputFolder);
-                    }
-                    catch
-                    {
-                        // Explorer failing to open is not worth surfacing.
-                    }
-                });
-            }
-        }
+        private Task ShowExportSuccessAsync(string outputFolder) => _editorDialogs.ShowExportSucceeded(outputFolder);
 
         /// <summary>
         /// Ctrl+Shift+S. Same modal as <see cref="ExportAsync"/> - the only difference
@@ -93,18 +73,15 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         {
             if (Project == null) return;
 
-            var options = new Presentation.Dialogs.ExportDialog(Project, _exportService);
-            options.Owner = System.Windows.Application.Current.MainWindow;
+            var outputFolder = await _editorDialogs.AskToExport(Project);
 
             try
             {
                 // No window veil here: the export dialog shows its own progress, and
                 // a dark wash behind a modal is what we kept reporting as a
                 // grey background leaking in.
-                if (options.ShowDialog() != true || !options.Exported)
+                if (outputFolder == null)
                     return;
-
-                string outputFolder = options.ExportedFolder;
 
                 Project.OutputFolder = outputFolder;
                 if (CurrentProjectInfo != null)

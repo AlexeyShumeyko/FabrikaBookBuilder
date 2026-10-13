@@ -157,6 +157,9 @@ namespace PhotoBookRenamer
             // that property re-reads CanExecute there - which throws, and unwinds whatever
             // was running. This is where that stops being true.
             services.AddSingleton<IUiThread, Presentation.Services.WpfUiThread>();
+            // Windows that collect an answer: export options, the folder picker, the page
+            // number. Separate from IProjectDialogs, which asks questions with known answers.
+            services.AddSingleton<IEditorDialogs, Presentation.Dialogs.WpfEditorDialogs>();
 
             // ViewModels
             // MainViewModel MUST be a singleton: it owns the persistent top bar, which has

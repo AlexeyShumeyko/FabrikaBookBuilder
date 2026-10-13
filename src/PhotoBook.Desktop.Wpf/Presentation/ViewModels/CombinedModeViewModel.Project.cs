@@ -12,7 +12,6 @@ using PhotoBook.Core;
 using PhotoBook.Presentation;
 using PhotoBook.Application;
 using PhotoBook.Infrastructure;
-using PhotoBookRenamer.Presentation.Dialogs;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
 {
@@ -272,8 +271,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             // came in by.
             if (await EnsureProjectInfoAsync() == null)
             {
-                System.Windows.MessageBox.Show("Не удалось создать запись проекта.",
-                    "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                _dialogs.Notify("Ошибка", "Не удалось создать запись проекта.", destructive: true);
                 return;
             }
 
@@ -356,8 +354,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             catch (Exception ex)
             {
                 _loggingService.LogError("Ошибка сохранения проекта", ex);
-                System.Windows.MessageBox.Show($"Ошибка сохранения проекта: {ex.Message}",
-                    "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                _dialogs.Notify("Ошибка", $"Ошибка сохранения проекта: {ex.Message}", destructive: true);
             }
             finally
             {

@@ -129,11 +129,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
             if (maxPageNumber == 0) return;
 
-            var dialog = new Presentation.Dialogs.PageNumberDialog(maxPageNumber);
-            dialog.Owner = System.Windows.Application.Current.MainWindow;
-            if (dialog.ShowDialog() == true && dialog.SelectedPageNumber.HasValue)
+            var targetPageNumber = _editorDialogs.AskPageNumber(maxPageNumber);
+            if (targetPageNumber.HasValue)
             {
-                var targetPageNumber = dialog.SelectedPageNumber.Value;
+                var pageNumber = targetPageNumber.Value;
 
                 _editHistory.SaveState(Project!);
 
@@ -141,7 +140,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                 // Page numbers start at 1 but the list carries the cover first, so the
                 // position in the list is the page number.
-                var targetIndexInCollection = targetPageNumber; // the cover sits at 0, so the spread number IS the position
+                var targetIndexInCollection = pageNumber; // the cover sits at 0, so the spread number IS the position
 
                 if (currentIndex == targetIndexInCollection)
                 {

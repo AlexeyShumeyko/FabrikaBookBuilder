@@ -11,7 +11,6 @@ using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Application;
 using PhotoBook.Infrastructure;
-using PhotoBookRenamer.Presentation.Dialogs;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
 {
@@ -23,6 +22,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private readonly IImageService _imageService;
         private readonly IThumbnailProvider _thumbnails;
         private readonly IDecodedImageCache _images;
+        private readonly IEditorDialogs _editorDialogs;
         private readonly IExportService _exportService;
         private readonly ILoggingService _loggingService;
         private readonly IProjectRepository _projects;
@@ -49,7 +49,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             IProjectListService projectListService,
             IProjectDialogs dialogs,
             IDecodedImageCache images,
-            IUiThread ui)
+            IUiThread ui,
+            IEditorDialogs editorDialogs)
         {
             _fileService = fileService;
             _files = files;
@@ -57,6 +58,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             _thumbnails = thumbnails;
             _images = images;
             Ui = ui;
+            _editorDialogs = editorDialogs;
             _exportService = exportService;
             _loggingService = loggingService;
             _projects = projects;

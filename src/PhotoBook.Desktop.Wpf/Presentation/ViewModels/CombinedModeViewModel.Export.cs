@@ -11,7 +11,6 @@ using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Application;
 using PhotoBook.Infrastructure;
-using PhotoBookRenamer.Presentation.Dialogs;
 
 namespace PhotoBookRenamer.Presentation.ViewModels
 {
@@ -41,8 +40,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 var list = string.Join("\n", missingSlots.Take(12));
                 if (missingSlots.Count > 12) list += $"\n... и ещё {missingSlots.Count - 12}";
-                System.Windows.MessageBox.Show($"Не все развороты заполнены:\n\n{list}",
-                    "Предупреждение", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                _dialogs.Notify("Предупреждение", $"Не все развороты заполнены:\n\n{list}");
                 return;
             }
 
@@ -83,9 +81,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     parts.Add("Не заполнены развороты:\n" + list);
                 }
 
-                System.Windows.MessageBox.Show("Перед экспортом необходимо заполнить все обязательные поля:\n\n"
-                                + string.Join("\n\n", parts),
-                    "Предупреждение", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                _dialogs.Notify(
+                    "Предупреждение",
+                    "Перед экспортом необходимо заполнить все обязательные поля:\n\n"
+                                + string.Join("\n\n", parts));
                 return;
             }
 
@@ -107,16 +106,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             // result survive, and it has to happen before anything navigates away.
             await SaveProjectBeforeExportAsync();
 
-            var options = new Presentation.Dialogs.ExportDialog(Project, _exportService);
-            options.Owner = System.Windows.Application.Current.MainWindow;
-
             IsLoading = true;
             try
             {
-                if (options.ShowDialog() != true || !options.Exported)
+                var outputFolder = await _editorDialogs.AskToExport(Project);
+                if (outputFolder == null)
                     return;
-
-                string outputFolder = options.ExportedFolder;
 
                 Project.OutputFolder = outputFolder;
                 if (CurrentProjectInfo != null)
@@ -141,25 +136,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             }
         }
 
-        private async Task ShowExportSuccessAsync(string outputFolder)
-        {
-            var dialog = new Presentation.Dialogs.ExportSuccessDialog(outputFolder);
-            dialog.Owner = System.Windows.Application.Current.MainWindow;
-            if (dialog.ShowDialog() == true && dialog.GoToFolder)
-            {
-                await System.Threading.Tasks.Task.Run(() =>
-                {
-                    try
-                    {
-                        System.Diagnostics.Process.Start("explorer.exe", outputFolder);
-                    }
-                    catch
-                    {
-                        // Explorer failing to open is not worth surfacing.
-                    }
-                });
-            }
-        }
+        private Task ShowExportSuccessAsync(string outputFolder) => _editorDialogs.ShowExportSucceeded(outputFolder);
 
         private void DeleteFile(string? filePath)
         {

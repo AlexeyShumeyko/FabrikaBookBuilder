@@ -32,14 +32,15 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     .Select(b => b.FolderPath!)
                     .ToList() ?? new List<string>();
 
-                var dialog = new Presentation.Dialogs.MultiFolderBrowserDialog(_fileService, existingFolders);
-                dialog.Owner = System.Windows.Application.Current.MainWindow;
-                if (dialog.ShowDialog() != true)
+                // The picker distinguishes "closed without deciding" from "removed every folder", and so
+                // does this call: null is the first, an empty list is the second. Collapsing
+                // them would make "clear the project" quietly do nothing.
+                var folders = _editorDialogs.PickFolders(existingFolders);
+                if (folders == null)
                 {
                     return;
                 }
 
-                var folders = dialog.SelectedFolders;
                 if (folders.Count == 0)
                 {
                     if (Project != null && existingFolders.Count > 0)
@@ -66,11 +67,10 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 if (!validationResult.IsValid)
                 {
                     ErrorMessage = validationResult.ErrorMessage ?? "Ошибка валидации папок.";
-                    System.Windows.MessageBox.Show(
-                        $"Не удалось загрузить папки:\n\n{validationResult.ErrorMessage}\n\nПожалуйста, исправьте ошибки и попробуйте снова.",
+                    _dialogs.Notify(
                         "Ошибка валидации",
-                        System.Windows.MessageBoxButton.OK,
-                        System.Windows.MessageBoxImage.Error);
+                        $"Не удалось загрузить папки:\n\n{validationResult.ErrorMessage}\n\nПожалуйста, исправьте ошибки и попробуйте снова.",
+                        destructive: true);
                     return;
                 }
 

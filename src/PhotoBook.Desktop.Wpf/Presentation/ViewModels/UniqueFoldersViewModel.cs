@@ -22,6 +22,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         private readonly IImageService _imageService;
         private readonly IThumbnailProvider _thumbnails;
         private readonly IDecodedImageCache _images;
+        private readonly IProjectDialogs _dialogs;
+        private readonly IEditorDialogs _editorDialogs;
         private readonly IProjectBuilder _projectBuilder;
         private readonly IEditHistory _editHistory;
         private readonly IProjectRepository _projects;
@@ -105,7 +107,9 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             ILoggingService loggingService,
             IProjectListService projectListService,
             IDecodedImageCache images,
-            IUiThread ui)
+            IUiThread ui,
+            IProjectDialogs dialogs,
+            IEditorDialogs editorDialogs)
         {
             _fileService = fileService;
             _files = files;
@@ -113,6 +117,8 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             _thumbnails = thumbnails;
             _images = images;
             Ui = ui;
+            _dialogs = dialogs;
+            _editorDialogs = editorDialogs;
             _projectBuilder = projectBuilder;
             _editHistory = editHistory;
             _projects = projects;
