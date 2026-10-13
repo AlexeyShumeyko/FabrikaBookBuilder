@@ -27,7 +27,7 @@ $script:RepoRoot = Split-Path -Parent $PSScriptRoot
     test the result with Test-Path themselves, which several of them already do.
 
 .PARAMETER Configuration
-    Release unless asked otherwise - the configuration the owner runs and the one the
+    Release unless asked otherwise - the configuration that ships and the one the
     golden screenshots are taken from.
 #>
 function Get-AppExe {

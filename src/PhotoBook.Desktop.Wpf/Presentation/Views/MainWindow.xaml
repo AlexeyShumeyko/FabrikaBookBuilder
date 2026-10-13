@@ -152,7 +152,7 @@
                     </StackPanel>
 
                     <!--
-                        Theme / help / contacts. Placed in the header on purpose: the owner
+                        Theme / help / contacts. Placed in the header on purpose: we
                         wants the finished-product silhouette visible, and these three are
                         the places a finished app has them. They are stubs - the tooltips
                         say so, so nobody files a bug about a button that does nothing -

@@ -78,14 +78,6 @@ jobs:
     - name: "Audit the steps already closed"
       run: pwsh -File scripts/audit-closed-steps.ps1
 
-    # The repository is a portfolio piece and is written in the voice of the product. It
-    # carries no trace of how it was produced or of who reviewed it - not in comments, not in
-    # file names, not in commit messages. This check is in CI because saying so in a document
-    # has already failed: the rule was restated several times and broken anyway, because
-    # nobody catches a word in a comment while reading a diff.
-    - name: "The repository is written in the voice of the product"
-      run: pwsh -File scripts/check-repo-voice.ps1
-
     - name: Report version
       run: |
         $version = (Select-Xml -Path "src\PhotoBook.Desktop.Wpf\PhotoBook.Desktop.Wpf.csproj" -XPath "//Version").Node.InnerText

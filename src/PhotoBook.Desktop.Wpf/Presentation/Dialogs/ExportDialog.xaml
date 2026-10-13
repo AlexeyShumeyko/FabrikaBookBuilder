@@ -15,7 +15,7 @@
       DialogShadowRoom first, on purpose. A Window with AllowsTransparency has no system
       shadow: WPF paints one with DropShadowEffect, and that effect is drawn INSIDE the
       window's bounds. With the surface flush against the window edge the shadow is cut off
-      square, and what the owner saw as a "grey shadow with corners" is exactly that - the
+      square, and what we saw as a "grey shadow with corners" is exactly that - the
       shadow, clipped, not a separate bug. The margin gives it room to fall into.
     -->
     <Border Style="{StaticResource DialogShadowRoom}">

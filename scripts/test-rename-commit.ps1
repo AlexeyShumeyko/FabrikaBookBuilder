@@ -114,7 +114,7 @@ try {
     for ($i = 0; $i -lt $all.Count; $i++) {
         if ($all[$i].mode -eq 2 -and $all[$i].name -like 'Testovyy*') { $at = $i; break }
     }
-    if ($at -lt 0) { throw 'no folders fixture - run make-test-fixture.ps1 first (this test must not touch the owner''s projects)' }
+    if ($at -lt 0) { throw 'no folders fixture - run make-test-fixture.ps1 first (this test must not touch we''s projects)' }
     $originalName = $all[$at].name
     Write-Host "opening fixture '$originalName' (card $at)"
 

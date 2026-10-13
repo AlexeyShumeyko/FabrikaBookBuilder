@@ -267,7 +267,7 @@
                       in the middle of a square grey box, and the content has 20px of air
                       around it. The first pass had a solid border AND an inset dashed
                       rectangle AND the text almost touching the dashes - three frames for
-                      one control, which is what the owner called ugly.
+                      one control, which is what we called ugly.
                     -->
                     <Border x:Name="DropZone" Grid.Row="1" Margin="0,14,0,0" Cursor="Hand"
                             Background="{StaticResource Slate50}"
@@ -408,7 +408,7 @@
 
                                                 <!-- Free / assigned / shared: one solid colour per
                                                      state, white text on it, no border. Painted
-                                                     like a button, which is what the owner
+                                                     like a button, which is what we
                                                      asked for after three other attempts. -->
                                                 <Border Grid.Column="1" HorizontalAlignment="Right"
                                                         VerticalAlignment="Center" CornerRadius="6" Padding="8,3"
@@ -765,7 +765,7 @@
                                                                 <!--
                                                                   Footer: what this slot is on the left, what you
                                                                   can do with it on the right. "Заменить" is
-                                                                  deliberately NOT here - the owner never asked for
+                                                                  deliberately NOT here - we never asked for
                                                                   it, and clearing the slot covers the same need.
                                                                 -->
                                                                 <Border Grid.Row="1" BorderThickness="0,1,0,0"

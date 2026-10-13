@@ -206,7 +206,7 @@
     <!--
       The surface every custom dialog sits on.
 
-      Two things it has to solve, both of them reported by the owner on the export window:
+      Two things it has to solve, both of them reported by we on the export window:
       a "grey shadow with corners" behind the dialog, and a dialog that melted into the
       application's own background.
 
@@ -775,7 +775,7 @@
 
     <!--
       Loading veil. It used to be a flat #CC0F172A wash over the whole window, which read
-      as a rendering glitch rather than as work in progress - the owner kept reporting it
+      as a rendering glitch rather than as work in progress - we kept reporting it
       as "a grey background leaks in". It was on screen at the worst possible moments too:
       while the Windows file picker was open, and while the export dialog was open showing
       a progress bar of its own.

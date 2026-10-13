@@ -74,7 +74,7 @@
                 <!--
                     A rounded-rectangle chip, not a pill. The mockup's rounded-full outline
                     here was the one shape in the app that belongs to nothing else, and the
-                    owner read it as a stray border rather than a label.
+                    we read it as a stray border rather than a label.
                 -->
                 <Border Background="{StaticResource Brand50}" CornerRadius="8" Padding="10,4"
                         HorizontalAlignment="Center">

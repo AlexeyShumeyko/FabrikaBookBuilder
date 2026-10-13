@@ -162,7 +162,7 @@
                                                 Status chip. Rounded 10 rather than the
                                                 mockup's rounded-md (6): at a 22px height
                                                 a 6px radius still reads as a rectangle
-                                                patch, and the owner asked for more
+                                                patch, and we asked for more
                                                 rounding. Colours come from
                                                 StatusToBrushConverter by role.
                                             -->
