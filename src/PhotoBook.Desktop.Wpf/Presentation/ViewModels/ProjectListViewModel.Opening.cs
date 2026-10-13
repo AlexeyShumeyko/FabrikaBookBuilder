@@ -1,10 +1,12 @@
+using System.Windows.Input;
+// System.Windows.Input is where ICommand lives in every engine, not only WPF -
+// Avalonia kept the name for exactly this reason. Only System.Windows itself is
+// the part that binds to one engine.
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
@@ -106,19 +108,6 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     project = new Project { Mode = projectMode };
                 }
 
-                var projectInfoCopy = new ProjectInfo
-                {
-                    Id = projectId,
-                    Name = projectName,
-                    FilePath = projectFilePath,
-                    Mode = projectMode,
-                    BookCount = projectBookCount,
-                    PageCount = projectPageCount,
-                    Status = projectStatus,
-                    CreatedDate = projectCreatedDate,
-                    LastModified = projectLastModified
-                };
-
                 // Everything is read into locals and one record is built BEFORE the
                 // hand-over is deferred: by the time it runs, the list has moved on.
                 var capturedProjectId = projectId;
@@ -135,58 +124,29 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                 // The screen changes hands only after the record has been written.
                 OpenProjectMode(projectMode);
 
-                var finalProjectInfo = new ProjectInfo
+                // One record for the hand-over, built from the locals because the list has moved on by
+                // the time it arrives. It carries PageCount as well as BookCount: the editor
+                // reads it on arrival, and a record without it arrives as a project claiming
+                // to have no pages - a difference nobody would see until an export came up
+                // short. The index copy written to disk is a separate record on purpose.
+                var editorRecord = new ProjectInfo
                 {
                     Id = capturedProjectId,
                     Name = capturedProjectName,
                     FilePath = capturedProjectFilePath,
                     Mode = capturedProjectMode,
                     BookCount = capturedProjectBookCount,
+                    PageCount = capturedProjectPageCount,
                     Status = capturedProjectStatus,
                     CreatedDate = capturedProjectCreatedDate,
                     LastModified = capturedProjectLastModified
                 };
 
-                // The editor is handed its project only once MainViewModel has built the
-                // view. Two dispatches, not one: the first is after the view exists, the
-                // second after it has finished loading and its bindings are live.
-                System.Windows.Application.Current.Dispatcher.BeginInvoke(
-                    System.Windows.Threading.DispatcherPriority.Loaded,
-                    new System.Action(() =>
-                    {
-                        System.Windows.Application.Current.Dispatcher.BeginInvoke(
-                            System.Windows.Threading.DispatcherPriority.Loaded,
-                            new System.Action(() =>
-                            {
-                                if (System.Windows.Application.Current.MainWindow is MainWindow)
-                                {
-                                    // The shell decides which editor owns the mode; this
-                                    // list asks rather than deciding for itself.
-                                    var editor = _navigator.EditorFor(capturedProjectMode);
-
-                                    // Both editors were handed an identical ProjectInfo,
-                                    // which is why these two branches used to be the same code
-                                    // with one line different. The shell knows which editor
-                                    // owns the mode, so there is only one branch left.
-                                    if (editor == null) return;
-
-                                    var setProjectInfo = new ProjectInfo
-                                    {
-                                        Id = capturedProjectId,
-                                        Name = capturedProjectName,
-                                        FilePath = capturedProjectFilePath,
-                                        Mode = capturedProjectMode,
-                                        BookCount = capturedProjectBookCount,
-                                        PageCount = capturedProjectPageCount,
-                                        Status = capturedProjectStatus,
-                                        CreatedDate = capturedProjectCreatedDate,
-                                        LastModified = capturedProjectLastModified
-                                    };
-
-                                    editor.SetProject(capturedProject, setProjectInfo);
-                                }
-                            }));
-                    }));
+                // The editor is handed its project once the shell has built the view, and
+                // "once the shell has built the view" is the shell's own business: in this
+                // engine it is two dispatches at Loaded priority. The list says what the
+                // editor is going to find and leaves the waiting to whoever owns the window.
+                _navigator.HandProjectToEditor(capturedProject, editorRecord);
             }
             catch (Exception ex)
             {

@@ -1,10 +1,12 @@
+using System.Windows.Input;
+// System.Windows.Input is where ICommand lives in every engine, not only WPF -
+// Avalonia kept the name for exactly this reason. Only System.Windows itself is
+// the part that binds to one engine.
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
@@ -93,16 +95,12 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         private AppMode CurrentMode
         {
-            set
-            {
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    // Flipping the shell's mode is enough: the shell is the MainWindow's
-                    // DataContext, and re-assigning that used to rebuild the persistent
-                    // header on every visit.
-                    _navigator.CurrentMode = value;
-                });
-            }
+            // Flipping the shell's mode is enough: the shell is the window's data
+            // context, and re-assigning that used to rebuild the persistent header on
+            // every visit. No dispatcher here on purpose - the navigator owns the thread
+            // its own state lives on, and a screen that wrapped the call in one was
+            // reaching across a boundary it does not own.
+            set => _navigator.CurrentMode = value;
         }
 
         /// <summary>
@@ -110,13 +108,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// disabled otherwise, so this has to go through OpenProject rather than a plain
         /// CurrentMode change - the setter would refuse it.
         /// </summary>
-        private void OpenProjectMode(AppMode mode)
-        {
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
-            {
-                _navigator.OpenProject(mode);
-            });
-        }
+        private void OpenProjectMode(AppMode mode) => _navigator.OpenProject(mode);
 
     }
 }

@@ -236,6 +236,47 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             _ => null
         };
 
+        /// <summary>
+        /// Hands an opened project to the editor that owns its mode, once that editor can
+        /// receive one.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is the shell's half of the hand-over, and it is the half specific to this
+        /// engine: the editor view is created when the screen changes, and it needs a moment
+        /// after that before its bindings are live and it can be given a project. The wait
+        /// lives here, where the windows are known, rather than in the screen that asked -
+        /// which is what lets that screen be written once and run in either engine.
+        /// </para>
+        /// <para>
+        /// Two dispatches, not one, and that is deliberate. The first runs after the view
+        /// exists; the second runs a Loaded-priority tick later, by which time the bindings are
+        /// live. A single dispatch handed the editor its project before it could see it, and
+        /// the project silently never appeared.
+        /// </para>
+        /// </remarks>
+        public void HandProjectToEditor(Project project, ProjectInfo record)
+        {
+            var dispatcher = System.Windows.Application.Current.Dispatcher;
+
+            dispatcher.BeginInvoke(
+                System.Windows.Threading.DispatcherPriority.Loaded,
+                new Action(() =>
+                {
+                    dispatcher.BeginInvoke(
+                        System.Windows.Threading.DispatcherPriority.Loaded,
+                        new Action(() =>
+                        {
+                            // The shell decides which editor owns the mode; the screen that
+                            // asked does not get to decide for itself.
+                            var editor = EditorFor(record.Mode);
+                            if (editor == null) return;
+
+                            editor.SetProject(project, record);
+                        }));
+                }));
+        }
+
         /// <summary>The editor on the current screen, or null on list / mode-select.</summary>
         public IProjectEditor? ActiveEditor => EditorFor(_currentMode);
 

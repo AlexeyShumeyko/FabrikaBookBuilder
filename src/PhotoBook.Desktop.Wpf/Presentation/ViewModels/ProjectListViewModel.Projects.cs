@@ -1,10 +1,12 @@
+using System.Windows.Input;
+// System.Windows.Input is where ICommand lives in every engine, not only WPF -
+// Avalonia kept the name for exactly this reason. Only System.Windows itself is
+// the part that binds to one engine.
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
