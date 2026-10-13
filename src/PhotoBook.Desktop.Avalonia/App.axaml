@@ -1,5 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="using:PhotoBook.Shell.Converters"
              x:Class="PhotoBook.Shell.App">
 
     <!--
@@ -16,8 +17,22 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceInclude Source="avares://PhotoBookProbe/Styles/Tokens.axaml" />
+                <ResourceInclude Source="avares://PhotoBook.Desktop.Avalonia/Styles/Tokens.axaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!--
+                Converters live in the application rather than in each screen, because a
+                card binds the same four of them and a second copy would be a second table to
+                keep right. Their instances are static: these are pure functions of a value
+                and a parameter, and one per screen would only be more copies of one table.
+            -->
+            <conv:StatusToLabelConverter x:Key="StatusToLabel" />
+            <conv:StatusToBrushConverter x:Key="StatusToBrush" />
+            <conv:AppModeToLabelConverter x:Key="AppModeToLabel" />
+            <conv:LastModifiedTextConverter x:Key="LastModifiedText" />
+            <conv:FilePathToBitmapConverter x:Key="FilePathToBitmap" />
+            <conv:NotEmptyConverter x:Key="NotEmpty" />
+            <conv:CardWidthConverter x:Key="CardWidth" />
         </ResourceDictionary>
     </Application.Resources>
 
@@ -27,7 +42,8 @@
             platform's control chrome is only a starting point.
         -->
         <FluentTheme />
-        <StyleInclude Source="avares://PhotoBookProbe/Styles/Typography.axaml" />
-        <StyleInclude Source="avares://PhotoBookProbe/Styles/Header.axaml" />
+        <StyleInclude Source="avares://PhotoBook.Desktop.Avalonia/Styles/Typography.axaml" />
+        <StyleInclude Source="avares://PhotoBook.Desktop.Avalonia/Styles/Header.axaml" />
+        <StyleInclude Source="avares://PhotoBook.Desktop.Avalonia/Styles/Cards.axaml" />
     </Application.Styles>
 </Application>

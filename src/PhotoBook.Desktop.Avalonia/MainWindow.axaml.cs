@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 
 namespace PhotoBook.Shell;
 
@@ -15,5 +14,18 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+    }
+
+    /// <summary>
+    /// Puts a screen behind the header.
+    /// </summary>
+    /// <remarks>
+    /// The shell decides which screen this is before the window exists, and hands over a
+    /// screen already carrying its view model. The window does not resolve, does not create
+    /// and does not choose - which is the whole point of the navigator sitting outside it.
+    /// </remarks>
+    public void ShowScreen(Control screen)
+    {
+        ScreenHost.Content = screen;
     }
 }

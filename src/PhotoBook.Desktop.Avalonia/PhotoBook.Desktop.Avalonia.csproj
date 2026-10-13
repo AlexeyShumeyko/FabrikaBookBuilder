@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <!--
     The Avalonia shell. Created by wave 3 step 3.0 as a probe: it exists to answer four
@@ -20,12 +20,16 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AssemblyName>PhotoBookProbe</AssemblyName>
+    <AssemblyName>PhotoBook.Desktop.Avalonia</AssemblyName>
     <!--
-      Deliberately NOT PhotoBook.Desktop.Avalonia. Inside a namespace whose last segment is
-      "Avalonia", the bare word Avalonia resolves to that segment rather than to the
-      framework's root namespace, so every Avalonia type in the shell needs global::. The
-      probe hit this on its first build. The shell namespace is PhotoBook.Shell.
+      The namespace is PhotoBook.Shell and deliberately does not end in "Avalonia": inside one,
+      the bare word Avalonia resolves to that segment rather than to the framework's root, and
+      every framework type in the shell would need global::. The probe hit this on its first
+      build.
+
+      The assembly name, though, is the product's name. It was PhotoBookProbe while the shell
+      was a probe, which is the only reason the compiled binary and the avares:// paths said
+      "probe" for something that is now the application.
     -->
     <RootNamespace>PhotoBook.Shell</RootNamespace>
     <!-- The probe is not the product and is not measured by the shipped build. -->
@@ -37,12 +41,14 @@
     <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PhotoBook.Core\PhotoBook.Core.csproj" />
     <ProjectReference Include="..\PhotoBook.Application\PhotoBook.Application.csproj" />
     <ProjectReference Include="..\PhotoBook.Infrastructure\PhotoBook.Infrastructure.csproj" />
+    <ProjectReference Include="..\PhotoBook.Presentation\PhotoBook.Presentation.csproj" />
   </ItemGroup>
 
 </Project>

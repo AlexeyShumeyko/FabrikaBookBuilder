@@ -112,21 +112,11 @@
         </Border>
 
         <!-- ================================ body =================================
-             Placeholder. The project screen arrives at step 3.2; this step is only about
-             whether the frame matches the screenshot beside it.
+             Whatever screen is current. The host is deliberately dumb: it holds an object
+             and puts it on the window, and which screen that is was decided before this
+             window existed. A ContentControl is enough for one screen, and the day it is
+             not, that is when it earns a navigation stack.
         -->
-        <ScrollViewer>
-            <Border Margin="32,24" Classes="card" Padding="24">
-                <StackPanel Spacing="8">
-                    <TextBlock Text="Каркас окна" Classes="t20Bold" />
-                    <TextBlock Classes="t12" TextWrapping="Wrap"
-                               Foreground="{DynamicResource Slate500}"
-                               Text="Шапка повторяет спецификацию по числам: отступы 32 и 12, логотип 36, заголовок 14, бейдж PRO 10, вкладки 14/6 со скруглением 8, кнопки-иконки 32." />
-                    <TextBlock Classes="t12" TextWrapping="Wrap"
-                               Foreground="{DynamicResource Slate500}"
-                               Text="Две известные разницы с WPF перечислены в Styles\Header.axaml: у активной вкладки нет тени, потому что у ToggleButton нет такого свойства, и заглушка вкладок не серая сама по себе, потому что отключённый элемент в этом движке просто перестаёт реагировать." />
-                </StackPanel>
-            </Border>
-        </ScrollViewer>
+        <ContentControl x:Name="ScreenHost" />
     </DockPanel>
 </Window>
