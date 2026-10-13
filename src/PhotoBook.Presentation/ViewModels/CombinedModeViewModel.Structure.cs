@@ -67,7 +67,7 @@ namespace PhotoBook.Presentation.ViewModels
             AvailableFiles.Clear();
         }
 
-        private void GenerateStructure()
+        private async Task GenerateStructure()
         {
             if (!IsStructureConfirmed)
             {
@@ -102,7 +102,7 @@ namespace PhotoBook.Presentation.ViewModels
 
                 // Growing the run is silent, shrinking it is not. Checked before anything
                 // is touched, so cancelling leaves the structure exactly as it was.
-                if (!ConfirmStructureChange(NumberOfBooks, SpreadsPerBook))
+                if (!await ConfirmStructureChange(NumberOfBooks, SpreadsPerBook))
                     return;
 
                 if (NumberOfBooks > currentCount)
@@ -174,7 +174,7 @@ namespace PhotoBook.Presentation.ViewModels
         /// the two fields look harmless until the last spread of a book turns out to be
         /// filled. Removal always happens from the end: the last books, the last spreads.
         /// </summary>
-        private bool ConfirmStructureChange(int targetBooks, int targetSpreads)
+        private async Task<bool> ConfirmStructureChange(int targetBooks, int targetSpreads)
         {
             int booksLost = Books.Count - targetBooks;
             int spreadsLost = Books.Count == 0
@@ -221,7 +221,7 @@ namespace PhotoBook.Presentation.ViewModels
                 $"Уменьшить структуру до {targetBooks} книг по {targetSpreads} разворотов?" +
                 $"\n\nБудет удалено с конца — {string.Join("; ", parts)}.{photoLine}";
 
-            return _dialogs.Confirm(
+            return await _dialogs.ConfirmAsync(
                 "Уменьшить структуру?",
                 message,
                 "Уменьшить",

@@ -173,7 +173,7 @@ namespace PhotoBook.Presentation.ViewModels
         {
             if (projectInfo == null) return;
 
-            var result = _dialogs.Confirm(
+            var result = await _dialogs.ConfirmAsync(
                 "Удалить проект?",
                 $"Проект \"{projectInfo.Name}\" будет удалён вместе со своей структурой.\n\n" +
                 "Фотографии на диске останутся на месте — удаляется только проект.",

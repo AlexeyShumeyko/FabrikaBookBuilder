@@ -195,9 +195,19 @@ Check '2.6' 'один класс конвертера на файл' ($multi.Cou
     ("`n          файлов с несколькими классами: " + ($multi -join ', '))
 
 # --- 2.8 -----------------------------------------------------------------
+# Step 2.8 replaced bare bools with Result<T> in the two layers, so that a failure arrives
+# with its reason instead of as "false". The check is therefore "no bool-returning task".
+#
+# IProjectDialogs is the one exemption, and it is not a loosening. Every method there
+# answers a question whose entire answer IS the boolean: did the user press confirm, did
+# they read it. There is no reason to carry, and Result.Success(true) for "they cancelled"
+# would be a type that claims something can fail when the method cannot.
+#
+# A second exemption has to say which sentence of step 2.8 it is not breaking.
 $bare = @(Get-ChildItem src\PhotoBook.Application, src\PhotoBook.Infrastructure -Recurse -Filter *.cs |
+    Where-Object { $_.Name -ne 'IProjectDialogs.cs' } |
     Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' } |
-    Select-String -Pattern '^\s*Task<\s*bool\s*>|^\s*Task\s+bool\b')
+  Select-String -Pattern '^\s*(public|internal|private|protected)?\s*(static\s+)?(async\s+)?Task<\s*bool\s*>\s+\w+\s*\(')
 Check '2.8' 'нет метода, возвращающего Task<bool> вместо Result' ($bare.Count -eq 0) `
     ("`n          найдено: $($bare.Count)" + $(if ($bare.Count) { "`n          " + (($bare | ForEach-Object { "$($_.Filename):$($_.LineNumber)" }) -join ', ') } else { '' }))
 

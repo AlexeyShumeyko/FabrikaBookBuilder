@@ -70,7 +70,7 @@ namespace PhotoBook.Presentation.ViewModels
 
             LoadFilesCommand = new AsyncRelayCommand(LoadFilesAsync);
             ClearFilesCommand = new RelayCommand(ClearFiles);
-            GenerateStructureCommand = new RelayCommand(GenerateStructure);
+            GenerateStructureCommand = new AsyncRelayCommand(GenerateStructure);
             ConfirmStructureCommand = new RelayCommand(ConfirmStructure, () => NumberOfBooks > 0 && SpreadsPerBook > 0);
             ExportCommand = new AsyncRelayCommand(ExportAsync, () => Project?.IsValid ?? false);
             ExportWithFolderCommand = new AsyncRelayCommand(ExportWithFolderAsync, () => Project?.IsValid ?? false);

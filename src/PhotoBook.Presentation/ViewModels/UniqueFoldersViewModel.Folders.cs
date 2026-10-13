@@ -66,7 +66,7 @@ namespace PhotoBook.Presentation.ViewModels
                 if (!validationResult.IsValid)
                 {
                     ErrorMessage = validationResult.ErrorMessage ?? "Ошибка валидации папок.";
-                    _dialogs.Notify(
+                    await _dialogs.NotifyAsync(
                         "Ошибка валидации",
                         $"Не удалось загрузить папки:\n\n{validationResult.ErrorMessage}\n\nПожалуйста, исправьте ошибки и попробуйте снова.",
                         destructive: true);

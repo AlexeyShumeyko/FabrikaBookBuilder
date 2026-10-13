@@ -270,7 +270,7 @@ namespace PhotoBook.Presentation.ViewModels
             // came in by.
             if (await EnsureProjectInfoAsync() == null)
             {
-                _dialogs.Notify("Ошибка", "Не удалось создать запись проекта.", destructive: true);
+                await _dialogs.NotifyAsync("Ошибка", "Не удалось создать запись проекта.", destructive: true);
                 return;
             }
 
@@ -353,7 +353,7 @@ namespace PhotoBook.Presentation.ViewModels
             catch (Exception ex)
             {
                 _loggingService.LogError("Ошибка сохранения проекта", ex);
-                _dialogs.Notify("Ошибка", $"Ошибка сохранения проекта: {ex.Message}", destructive: true);
+                await _dialogs.NotifyAsync("Ошибка", $"Ошибка сохранения проекта: {ex.Message}", destructive: true);
             }
             finally
             {
@@ -383,7 +383,7 @@ namespace PhotoBook.Presentation.ViewModels
                 // Save / discard / stay. Kept as three buttons rather than a two-button
                 // box: "не сохранять" throws work away and "отмена" keeps the user on the
                 // screen, and neither can be inferred from the other.
-                var result = _dialogs.Ask(
+                var result = await _dialogs.AskAsync(
                     "Сохранить перед выходом?",
                     "В проекте есть несохранённые изменения. Сохранить их перед возвратом к списку проектов?",
                     "Сохранить",

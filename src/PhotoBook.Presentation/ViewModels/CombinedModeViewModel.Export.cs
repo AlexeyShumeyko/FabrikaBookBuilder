@@ -39,7 +39,7 @@ namespace PhotoBook.Presentation.ViewModels
             {
                 var list = string.Join("\n", missingSlots.Take(12));
                 if (missingSlots.Count > 12) list += $"\n... и ещё {missingSlots.Count - 12}";
-                _dialogs.Notify("Предупреждение", $"Не все развороты заполнены:\n\n{list}");
+                await _dialogs.NotifyAsync("Предупреждение", $"Не все развороты заполнены:\n\n{list}");
                 return;
             }
 
@@ -80,7 +80,7 @@ namespace PhotoBook.Presentation.ViewModels
                     parts.Add("Не заполнены развороты:\n" + list);
                 }
 
-                _dialogs.Notify(
+                await _dialogs.NotifyAsync(
                     "Предупреждение",
                     "Перед экспортом необходимо заполнить все обязательные поля:\n\n"
                                 + string.Join("\n\n", parts));
