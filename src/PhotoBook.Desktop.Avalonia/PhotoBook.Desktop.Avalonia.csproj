@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The Avalonia shell. Created by wave 3 step 3.0 as a probe: it exists to answer four
+    questions before any screen is written, not to be the product yet.
+
+      1. Does the window come up, and how fast.
+      2. Does the Inter typeface load and render as it does in the WPF shell.
+      3. Can a full-size photograph be decoded down to a small tile as fast as the WPF shell
+         does it. This is the one that can stop the migration: the whole design rests on never
+         touching the originals.
+      4. What does it cost in memory.
+
+    Target framework matches the three layers below it, on purpose. net10.0 is available on
+    this machine and the template asked for it, but the WPF shell ships as net8.0-windows,
+    the scripts look for that path, and two frameworks in one product buys nothing.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>PhotoBookProbe</AssemblyName>
+    <!--
+      Deliberately NOT PhotoBook.Desktop.Avalonia. Inside a namespace whose last segment is
+      "Avalonia", the bare word Avalonia resolves to that segment rather than to the
+      framework's root namespace, so every Avalonia type in the shell needs global::. The
+      probe hit this on its first build. The shell namespace is PhotoBook.Shell.
+    -->
+    <RootNamespace>PhotoBook.Shell</RootNamespace>
+    <!-- The probe is not the product and is not measured by the shipped build. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PhotoBook.Core\PhotoBook.Core.csproj" />
+    <ProjectReference Include="..\PhotoBook.Application\PhotoBook.Application.csproj" />
+    <ProjectReference Include="..\PhotoBook.Infrastructure\PhotoBook.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
