@@ -1,6 +1,6 @@
 ﻿# Measures the adaptive card sizing instead of trusting it.
 #
-# The owner reported the row filling wrongly in both directions: four cards per row with
+# The we reported the row filling wrongly in both directions: four cards per row with
 # dead space on the right, and - on a smaller monitor - two cards per row with a fifth of
 # the width empty. Neither is visible in a single screenshot, and neither can be checked by
 # reading the code, because the answer depends on a measured width and on rounding.
@@ -12,7 +12,7 @@
 #                row of cards. The book card's own border is the outermost pair, so
 #                (borders / 2) - 1 is the number of cards.
 #   right gap  - the distance from the last card's border to the book card's own right
-#                border. THIS is the number the owner is complaining about: a hole in the
+#                border. THIS is the number we is complaining about: a hole in the
 #                row. A correct fit leaves less than a fifth of one card's step.
 #
 # The book card's right border is found by walking left from the window edge: the first run
@@ -306,7 +306,7 @@ try {
         # A correct fit leaves no more than the gaps that are always there: the last card's
         # right margin (16), the book card's padding (20), its 1px border, and the 12px the
         # sizing rule is allowed to leave. Anything beyond that is a hole in the row - the
-        # thing the owner reported as "a lot of free space".
+        # thing we reported as "a lot of free space".
         $ok = $best.Gap -le 52
         if (-not $ok) { $bad++ }
         Write-Host ("{0,6}  {1,10}  {2,8}  {3,10}  {4}" -f $w, $best.Cards, $best.Step, $best.Gap,

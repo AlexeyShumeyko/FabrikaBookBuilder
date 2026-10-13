@@ -33,7 +33,7 @@ param(
 )
 
 # The harness console runs on code page 866, which turns every Cyrillic string this
-# script prints into "?" and floods the agent context with mojibake. Force UTF-8 on
+# script prints into "?" and floods the console with mojibake. Force UTF-8 on
 # both channels; a child powershell.exe resets these on its own, so it has to be set
 # inside each script rather than once in the caller.
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -272,7 +272,7 @@ try {
     if ($WithDialog) {
         # Open the OS file picker and photograph the WHOLE screen, dialog included. The
         # picker is a modal, so it is the one moment where a veil drawn over our own
-        # window becomes visible - which is how the owner saw a grey background appear.
+        # window becomes visible - which is how we saw a grey background appear.
         $pick = Get-ByName $el 'Загрузить фото' 'Button'
         if ($null -eq $pick) { Write-Host 'FAIL: no load button to open the picker with' }
         else { Invoke-Element $pick; Start-Sleep -Seconds 4 }

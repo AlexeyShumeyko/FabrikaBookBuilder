@@ -12,7 +12,7 @@ namespace PhotoBookRenamer.Presentation.Converters
     /// The fill of a photo's state badge in the file list: ONE saturated colour per state,
     /// white text on top, no border. That is the whole design.
     ///
-    /// The owner asked for it four times and the fourth answer is this one, in his words:
+    /// The we asked for it four times and the fourth answer is this one, in his words:
     /// "like you paint a button". The three that came before it are the reason the roles are
     /// gone rather than extended:
     ///
@@ -37,7 +37,7 @@ namespace PhotoBookRenamer.Presentation.Converters
             // not the PhotoFileInfo it came from. An `is PhotoFileInfo` test therefore never
             // matched, every state fell through to "free", and all three badges were the
             // same grey while their labels said "Общий", "Назначен" and "Свободен". The
-            // owner saw that as "it is outlined and filled with grey" and was right: the
+            // we saw that as "it is outlined and filled with grey" and was right: the
             // colour was grey, always. Both shapes are accepted so the next binding style
             // cannot reintroduce it.
             var usage = value switch

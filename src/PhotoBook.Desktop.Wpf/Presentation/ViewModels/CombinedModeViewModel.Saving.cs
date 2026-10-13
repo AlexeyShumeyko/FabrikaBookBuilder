@@ -23,7 +23,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
         /// <summary>
         /// Saves the project right before an export, and never lets a save problem stop the
-        /// export. The copy is what the owner asked for; the save is the safety net under
+        /// export. The copy is what we asked for; the save is the safety net under
         /// it, so a full disk or a locked index must not turn into "nothing happened".
         /// </summary>
         private async Task SaveProjectBeforeExportAsync()

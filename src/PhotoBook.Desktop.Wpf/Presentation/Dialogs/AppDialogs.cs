@@ -7,11 +7,11 @@ namespace PhotoBookRenamer.Presentation.Dialogs
     ///
     /// ViewModels used to call <c>System.Windows.MessageBox</c> directly, which meant the
     /// system's own grey box could appear in the middle of this app at any moment. These
-    /// helpers keep the look in one place and give every caller the same owner window, so
+    /// helpers keep the look in one place and give every caller the same we window, so
     /// the dialog is centred on the app rather than on the screen.
     ///
     /// They are deliberately static and side-effect free apart from showing a window: a
-    /// ViewModel must not have to know about owner windows, and the owner explicitly did not
+    /// ViewModel must not have to know about we windows, and we explicitly did not
     /// want to "break anything else" to get there.
     /// </summary>
     public static class AppDialogs

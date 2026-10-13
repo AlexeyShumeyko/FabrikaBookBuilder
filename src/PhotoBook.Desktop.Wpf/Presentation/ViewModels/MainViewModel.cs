@@ -11,7 +11,7 @@ using PhotoBookRenamer.Presentation.Views;
 namespace PhotoBookRenamer.Presentation.ViewModels
 {
     /// <summary>
-    /// Navigation hub and owner of the persistent top bar.
+    /// Navigation hub and we of the persistent top bar.
     ///
     /// Registered as a SINGLETON. That matters: the header must survive every
     /// screen change, and previously each child ViewModel resolved its own

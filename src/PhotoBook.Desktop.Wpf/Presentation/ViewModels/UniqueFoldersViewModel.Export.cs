@@ -36,7 +36,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             try
             {
                 // No window veil here: the export dialog shows its own progress, and
-                // a dark wash behind a modal is what the owner kept reporting as a
+                // a dark wash behind a modal is what we kept reporting as a
                 // grey background leaking in.
                 if (options.ShowDialog() != true || !options.Exported)
                     return;
@@ -100,7 +100,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             try
             {
                 // No window veil here: the export dialog shows its own progress, and
-                // a dark wash behind a modal is what the owner kept reporting as a
+                // a dark wash behind a modal is what we kept reporting as a
                 // grey background leaking in.
                 if (options.ShowDialog() != true || !options.Exported)
                     return;

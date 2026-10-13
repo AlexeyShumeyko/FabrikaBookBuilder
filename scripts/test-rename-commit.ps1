@@ -1,7 +1,7 @@
 ﻿# Asserts that renaming a project applies when the user clicks anywhere - not only when
 # the click happens to land on something that takes keyboard focus.
 #
-# The owner reported it in the Unique Folders mode: the new name stuck when they clicked
+# The we reported it in the Unique Folders mode: the new name stuck when they clicked
 # the books area and was silently dropped when they clicked the control panel. LostFocus
 # alone cannot explain "sometimes", because a click only raises it when it lands on a
 # focusable control; the panel background and its labels are not focusable, so the rename
@@ -103,8 +103,8 @@ try {
     [void][Win8]::SetForegroundWindow($proc.MainWindowHandle)
     Start-Sleep -Seconds 3
 
-    # A FIXTURE, never the owner's newest project. This test renames whatever it opens, and
-    # it did exactly that: the owner's "Новый проект 2026-09-27 15:23" came out of it called
+    # A FIXTURE, never our newest project. This test renames whatever it opens, and
+    # it did exactly that: our "Новый проект 2026-09-27 15:23" came out of it called
     # "Rename-check" and had to be renamed back by hand. A test that edits data must only
     # ever touch data it made.
     $indexPath = Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\Projects\projects.json'
@@ -156,7 +156,7 @@ try {
     if ($null -eq $edit) { throw 'the visible rename text box did not appear' }
 
     # The card order on screen and the order in the index are not the same list, and this
-    # test renames whatever it opens. It has already renamed two of the owner's projects
+    # test renames whatever it opens. It has already renamed two of our projects
     # that way: it clicked card N while the index held a different project at N. So the
     # name is checked HERE, before a single character is typed. Opening the wrong card is
     # harmless. Editing it is not.

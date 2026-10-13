@@ -25,7 +25,7 @@ namespace PhotoBookRenamer.Presentation.Converters
     ///
     /// The row is filled, always. There is no cap on how far a card may shrink: the only
     /// limit is <see cref="MinWidth"/>. A leftover bigger than <see cref="MaxLeftover"/> is
-    /// a hole in the layout that the photographer reads as a bug - the owner reported
+    /// a hole in the layout that the photographer reads as a bug - we reported
     /// exactly that, twice: two cards in a row with a fifth of the width empty beside them.
     /// The proportional cap that used to be here (20%) is what produced it.
     ///
@@ -64,7 +64,7 @@ namespace PhotoBookRenamer.Presentation.Converters
         /// <summary>
         /// How much dead space may be left on the right before the cards are scaled down
         /// to win one more per row. A flat few pixels, not a share of a step: a fifth of a
-        /// step is a fifth of the row, and a hole that size is exactly what the owner
+        /// step is a fifth of the row, and a hole that size is exactly what we
         /// reported as "the row does not fill". The design size is kept only when the row
         /// is already flush.
         /// </summary>
@@ -145,7 +145,7 @@ namespace PhotoBookRenamer.Presentation.Converters
             // The floor is the ONLY limit: below it the caption stops being readable, and
             // above it the row is filled whatever that costs. A second, proportional limit
             // used to sit here and it is what left two cards in a row with a fifth of the
-            // width empty - the exact hole the owner reported.
+            // width empty - the exact hole we reported.
             if (target >= MinWidth && target < natural)
                 return target;
 

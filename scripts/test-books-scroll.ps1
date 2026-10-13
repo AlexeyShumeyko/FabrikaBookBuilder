@@ -6,7 +6,7 @@
 #
 # So it drives the real wheel over the book column, compares the pixels before and after,
 # and leaves both screenshots behind - the bottom one has to show the last book, which is
-# the owner's own 29 x 10 case.
+# our own 29 x 10 case.
 #
 # Usage: pwsh -File scripts\test-books-scroll.ps1 [-Books 29] [-Spreads 10]
 #

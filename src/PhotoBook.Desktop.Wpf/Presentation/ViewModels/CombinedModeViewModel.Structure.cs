@@ -29,7 +29,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             {
                 // IsLoading is raised AFTER the picker, not around it. The picker is its own
                 // progress indicator, and the veil used to cover the whole window while it
-                // was open - which is where the owner saw a grey background appear.
+                // was open - which is where we saw a grey background appear.
                 var files = await _files.PickImagesAsync();
 
                 if (files == null || files.Length == 0)
@@ -298,7 +298,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             // One more automatic save, and only here. The structure is the most expensive
             // thing in a run to put back by hand, and setting it is a single deliberate act
             // rather than something done sixty times in a row - so it is written straight
-            // away instead of waiting for a button the owner may never press. Photo
+            // away instead of waiting for a button we may never press. Photo
             // assignment is deliberately NOT auto-saved: that is where "без перебора" comes
             // in, and the export saves the whole project anyway.
             Background.Run(() => SaveStructureAsync(), "save structure");
@@ -313,7 +313,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             }
             catch (Exception ex)
             {
-                // A failed auto-save must never interrupt the work: the owner can still
+                // A failed auto-save must never interrupt the work: we can still
                 // press "Сохранить проект", and the error log keeps the reason.
                 _loggingService.LogError("Не удалось автоматически сохранить проект после изменения структуры", ex);
             }

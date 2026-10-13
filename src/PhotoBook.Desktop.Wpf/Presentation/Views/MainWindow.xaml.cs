@@ -132,7 +132,7 @@ namespace PhotoBookRenamer.Presentation.Views
         /// <summary>
         /// Theme, help and contacts exist as buttons only.
         ///
-        /// The owner asked for the finished silhouette in the header, and for nothing
+        /// The we asked for the finished silhouette in the header, and for nothing
         /// behind the buttons yet: the help section is being reviewed separately and there
         /// is only a light theme, so a switch would promise something that does not exist.
         /// Each one says so in the app's own dialog, in the same style as everything else -
@@ -167,7 +167,7 @@ namespace PhotoBookRenamer.Presentation.Views
         /// <summary>
         /// A click anywhere in the window commits a pending inline project rename.
         ///
-        /// The owner types a new name, clicks "anywhere", and expects it to stick. That
+        /// The we types a new name, clicks "anywhere", and expects it to stick. That
         /// only worked by accident before, and differently in each mode: the editors relied
         /// on the rename box's LostFocus, which only fires when the click lands on
         /// something that takes keyboard focus. Click the books area and it took focus, so

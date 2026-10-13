@@ -17,7 +17,7 @@ param(
 )
 
 # The harness console runs on code page 866, which turns every Cyrillic string this
-# script prints into "?" and floods the agent context with mojibake. Force UTF-8 on
+# script prints into "?" and floods the console with mojibake. Force UTF-8 on
 # both channels; a child powershell.exe resets these on its own, so it has to be set
 # inside each script rather than once in the caller.
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -66,7 +66,7 @@ public class Win3 {
     }
 
     /// <summary>
-    /// The main window: the visible top-level one with no owner. Opening a project destroys
+    /// The main window: the visible top-level one with no we. Opening a project destroys
     /// and recreates the window, so the handle captured at launch is stale afterwards.
     /// </summary>
     public static IntPtr FindTopLevel(uint processId) {

@@ -1,6 +1,6 @@
 ﻿# Screenshots the "shrink the structure" confirmation in the combined mode.
 #
-# The owner asked for it in the app's own design instead of the system MessageBox, and the
+# The we asked for it in the app's own design instead of the system MessageBox, and the
 # dialog is only reachable by making the structure smaller - so the check has to make the
 # structure smaller. It types into the real field instead of calling the ViewModel, because
 # the point of the check is that the field's change reaches the question at all.

@@ -136,7 +136,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
             }
 
             // No spreads at all. The shape resets to the default, and the COVER IS IGNORED
-            // - the owner's rule, and the second half of it: a cover is the one photo whose
+            // - our rule, and the second half of it: a cover is the one photo whose
             // format a run cannot rely on, it is often a scan or a mock-up, and letting it
             // reshape every card in the project was the "обложка меняет размер" complaint.
             // Until a spread arrives the cards stay on the default 16:10.

@@ -117,7 +117,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
                     // A photo with no thumbnail yet has to decode its original - and these
                     // originals are 18 MB print files. Doing that inside the layout pass
                     // freezes the window and leaves slots painted as empty grey boxes, which
-                    // is what the owner saw on a first open. The pass below builds the
+                    // is what we saw on a first open. The pass below builds the
                     // missing thumbnails off the UI thread, hands the decoded bitmaps to the
                     // converter's cache, and then tells the slots to look again.
                 }

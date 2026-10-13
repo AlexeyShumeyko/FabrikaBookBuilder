@@ -35,7 +35,7 @@ namespace PhotoBookRenamer.Presentation.Converters
             // The two modes each own a colour, used everywhere a mode is named: the chip
             // on a project card, the icon on the mode-select cards, the empty states.
             // Sky for the folders mode, the app's indigo for the combined one. The folders
-            // mode was emerald first and the owner rejected it - emerald is "Готов к печати"
+            // mode was emerald first and we rejected it - emerald is "Готов к печати"
             // and the "Структура корректна" tick - and grey second, for the same reason:
             // a mode chip has to stand out, and grey is what every status already is.
             if (role is not null && role.StartsWith("tint", StringComparison.OrdinalIgnoreCase))

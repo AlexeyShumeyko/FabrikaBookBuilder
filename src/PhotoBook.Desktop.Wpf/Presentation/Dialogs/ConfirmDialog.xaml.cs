@@ -20,7 +20,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
     ///
     /// Every confirmation used to be <c>System.Windows.MessageBox</c>, which on Windows 10/11
     /// still draws the Win95-era box: a grey slab, a bevelled edge and a system icon. The
-    /// owner called it out as the one thing in the program that does not belong to it, so
+    /// we called it out as the one thing in the program that does not belong to it, so
     /// this replaces it and <see cref="AppDialogs"/> is how the rest of the code asks.
     ///
     /// A destructive question (delete, discard) is red by default; a neutral one passes

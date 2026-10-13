@@ -52,7 +52,7 @@ namespace PhotoBookRenamer.Presentation.Converters
         /// That is not a micro-optimisation. The постраничка files are portrait scans of
         /// 18-19 MB; decoding four or five of them inside the layout pass freezes the window
         /// for seconds, and a slot whose decode has not produced a bitmap yet paints as an
-        /// empty grey box - which is exactly what the owner reported as "the photo cells fell
+        /// empty grey box - which is exactly what we reported as "the photo cells fell
         /// off on the first open, and a save plus reopen brought them back".
         ///
         /// Nothing here can make a render worse: a file that fails to decode is simply left

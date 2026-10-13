@@ -41,7 +41,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
         /// THE RULE, and the reason it is stated this precisely: a photo is run-wide at a
         /// position only if EVERY other book has that same photo AT THAT SAME POSITION.
         /// Counting "this file appears somewhere in two books" is not the same thing, and
-        /// the owner reported the difference as a bug: a photograph pasted into spread 4 of
+        /// we reported the difference as a bug: a photograph pasted into spread 4 of
         /// one book, when another book happened to use it at spread 2, was labelled
         /// "Разворот 4 (общий)" and lost its "Во все книги" action. Sharing is what that
         /// button does; nothing else is.

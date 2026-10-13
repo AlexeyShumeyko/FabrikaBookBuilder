@@ -18,7 +18,9 @@ namespace PhotoBookRenamer.Presentation.Dialogs
     ///
     /// The naming format is shown read-only on purpose. The client's site only accepts
     /// KKK-FF.jpg, so the alternative format from the design mockup was deliberately not
-    /// implemented (see doc/AI_NOTES.md).
+    /// implemented The contract the site relies on is flat output: one folder, names
+    /// <book>-<page>.jpg, no per-book subfolders. An alternative naming scheme was
+    /// designed once and deliberately not implemented.
     /// </summary>
     public partial class ExportDialog : Window, INotifyPropertyChanged
     {
@@ -36,7 +38,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         /// It used to be `get => SubfoldersCheck.IsChecked == true` with a setter that wrote
         /// `SubfoldersCheck.IsChecked = value` - a two-way binding whose source wrote the
         /// target back, which is a binding loop. Ticking the box threw, which is what the
-        /// owner hit: the option is useless if clicking it crashes the dialog.
+        /// we hit: the option is useless if clicking it crashes the dialog.
         /// </summary>
         private bool _perBookSubfolders;
 
@@ -186,7 +188,7 @@ namespace PhotoBookRenamer.Presentation.Dialogs
         /// The first folder named <c>base</c>, <c>base1</c>, <c>base2</c>, ... under
         /// <paramref name="parent"/> that does not exist yet.
         ///
-        /// The owner's rule: every export gets its own folder, so exporting the same project
+        /// The we's rule: every export gets its own folder, so exporting the same project
         /// five times leaves five folders and two runs can never be mixed up. The plain name
         /// is used while it is free and the index is added from 1, so the first export on a
         /// clean desktop is <c>PhotoBookExport</c> and not <c>PhotoBookExport0</c>.

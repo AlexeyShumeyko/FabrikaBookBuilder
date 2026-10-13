@@ -3,7 +3,7 @@
 #   - the reason lands in the journal next to the projects, where support can be sent it.
 #
 # The fixture points one spread at a file that does not exist (make-combined-fixture
-# -MissingPhoto), so nothing of the owner's is touched. The red pixels of the warning are
+# -MissingPhoto), so nothing of our is touched. The red pixels of the warning are
 # counted in the screenshot of the live app.
 #
 # Usage: pwsh -File scripts/test-missing-photo.ps1

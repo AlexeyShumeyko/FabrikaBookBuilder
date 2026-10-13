@@ -10,7 +10,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
     ///
     /// "Shared" means run-wide and nothing looser. The same photograph in two DIFFERENT
     /// positions, or twice inside one book, is the photographer's own repetition - the
-    /// owner calls that out explicitly - and calling it shared would hide the one button
+    /// we calls that out explicitly - and calling it shared would hide the one button
     /// ("Во все книги") that actually makes a spread shared.
     /// </summary>
     public enum PhotoUsage

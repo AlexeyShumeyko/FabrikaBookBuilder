@@ -122,7 +122,7 @@ namespace PhotoBookRenamer.Presentation.ViewModels
 
                     // Loading folders must not create a project record. A record belongs to
                     // "new project" or to the list, and inventing one here put an empty card into
-                    // the owner's list. The project has no record until the photographer saves
+                    // our list. The project has no record until the photographer saves
                     // it from the panel, which is the normal way to use it.
                 }
 

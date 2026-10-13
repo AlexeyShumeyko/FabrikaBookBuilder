@@ -78,7 +78,7 @@ $id = [guid]::NewGuid().ToString()
 $bookList = @()
 for ($b = 1; $b -le $Books; $b++) {
     # -EmptyLastBook leaves the final book without photos. That is the check for the
-    # owner's rule: a run has ONE frame shape, so the empty book must end up the same
+    # we's rule: a run has ONE frame shape, so the empty book must end up the same
     # size as the filled one instead of falling back to the default 16:10.
     # -AllEmpty empties every book, -OnlyCover leaves a cover and no spreads at all.
     $fill = -not ($EmptyLastBook -and $b -eq $Books) -and -not $AllEmpty
@@ -89,7 +89,7 @@ for ($b = 1; $b -le $Books; $b++) {
     $pages = @()
     for ($s = 1; $s -le $Spreads; $s++) {
         # Spread 2 of every book gets the SAME photo on purpose: that is the run-wide
-        # spread the owner asked to see labelled.
+        # spread we asked to see labelled.
         $pick =
             if (-not $fill -or $OnlyCover) { $null }
             # -DuplicateInBook puts ONE photo in every spread of the FIRST book. Sharing is
@@ -99,12 +99,12 @@ for ($b = 1; $b -le $Books; $b++) {
             elseif ($DuplicateInBook -and $b -eq 1) { $photos[0] }
             elseif ($Pattern -eq 'Example1') {
                 # Cover and every spread but the last are shared by the whole run; the last
-                # spread is one photo per book. The owner's first example.
+                # spread is one photo per book. The we's first example.
                 if ($s -lt $Spreads) { $photos[$s % $photos.Count] } else { $photos[($b - 1) % $photos.Count] }
             }
             elseif ($Pattern -eq 'Example2') {
                 # Everything shared. Nothing in the set says how many books there are, which
-                # is exactly the owner's second example.
+                # is exactly our second example.
                 $photos[$s % $photos.Count]
             }
             elseif ($Pattern -eq 'Override') {
@@ -126,7 +126,7 @@ for ($b = 1; $b -le $Books; $b++) {
     }
 
     # -OutlierPhotoPath puts a photo of a DIFFERENT format in the LAST spread. That is
-    # the case the owner hit by accident: a cover pasted over a spread. A median would
+    # the case we hit by accident: a cover pasted over a spread. A median would
     # average the two formats; the frames must stay on the first spread's format and crop
     # the odd one out.
     if ($fill -and $OutlierPhotoPath -ne '' -and $OutlierW -gt 0 -and $OutlierH -gt 0 -and $Spreads -ge 1) {
@@ -139,7 +139,7 @@ for ($b = 1; $b -le $Books; $b++) {
     $cover = if ($fill) { $photos[0] } else { $null }
 
     # -CoverPhotoPath swaps the cover for a photo of a DIFFERENT format. That is the
-    # owner's real pattern (a 1.9 cover above square spreads), and it is how the rule
+    # we's real pattern (a 1.9 cover above square spreads), and it is how the rule
     # "aligned by the spreads, the cover does not count" gets checked.
     if ($fill -and $CoverPhotoPath -ne '' -and $CoverW -gt 0 -and $CoverH -gt 0) {
         $cover = @{ path = $CoverPhotoPath; w = $CoverW; h = $CoverH; thumb = $null }

@@ -21,7 +21,7 @@ param(
 )
 
 # The harness console runs on code page 866, which turns every Cyrillic string this
-# script prints into "?" and floods the agent context with mojibake. Force UTF-8 on
+# script prints into "?" and floods the console with mojibake. Force UTF-8 on
 # both channels; a child powershell.exe resets these on its own, so it has to be set
 # inside each script rather than once in the caller.
 # This has to sit AFTER the param block: param must be the first statement in the body,
@@ -204,7 +204,7 @@ try {
     Start-Sleep -Seconds 3
 
     # Every folder that was already occupied must come out of this run byte for byte: the
-    # owner's rule is that each export gets its own folder, so a second export of the same
+    # we's rule is that each export gets its own folder, so a second export of the same
     # project can never overwrite the first one's files.
     foreach ($name in $takenBefore.Keys) {
         $after = @(Get-ChildItem (Join-Path $desktop $name) -Recurse -File).Count

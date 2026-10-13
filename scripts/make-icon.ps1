@@ -2,7 +2,7 @@
 #
 # The icon used to be a single 256x256 image stored as an uncompressed bitmap with the
 # alpha channel flattened to white: the desktop shortcut showed a white square around the
-# mark, and the taskbar icon looked pasted on. The owner reported exactly that.
+# mark, and the taskbar icon looked pasted on. The we reported exactly that.
 #
 # What this produces, and why each part is here:
 #   - nine sizes, because Windows picks the one it needs and scales badly if one is

@@ -374,7 +374,7 @@
                                         <Border Margin="0,0,0,2"
                                                 PreviewMouseLeftButtonDown="OnFileItemMouseDown"
                                                 ToolTip="{Binding Path}">
-                                            <!-- No tint on the row. The owner asked for the state to be
+                                            <!-- No tint on the row. The we asked for the state to be
                                                  read off the STATUS, and a coloured frame around it,
                                                  not a wash over the whole 320px row: a wash is
                                                  invisible at a glance, a frame is not. The row keeps
