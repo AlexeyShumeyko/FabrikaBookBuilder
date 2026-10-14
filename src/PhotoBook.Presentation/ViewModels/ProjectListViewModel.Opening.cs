@@ -120,9 +120,6 @@ namespace PhotoBook.Presentation.ViewModels
                 var capturedProjectLastModified = projectLastModified;
                 var capturedProject = project;
 
-                // The screen changes hands only after the record has been written.
-                OpenProjectMode(projectMode);
-
                 // One record for the hand-over, built from the locals because the list has moved on by
                 // the time it arrives. It carries PageCount as well as BookCount: the editor
                 // reads it on arrival, and a record without it arrives as a project claiming
@@ -141,11 +138,19 @@ namespace PhotoBook.Presentation.ViewModels
                     LastModified = capturedProjectLastModified
                 };
 
-                // The editor is handed its project once the shell has built the view, and
-                // "once the shell has built the view" is the shell's own business: in this
-                // engine it is two dispatches at Loaded priority. The list says what the
-                // editor is going to find and leaves the waiting to whoever owns the window.
+                // The project is handed over FIRST and the screen opens SECOND.
+                //
+                // The other way round there is nothing waiting to be delivered at the moment
+                // the mode changes, so the editor comes up empty, and the project handed over
+                // a moment later sits and waits for the next time the screen changes. That is
+                // why going back to the list and opening the same project again worked, and
+                // why it looked like the program loading everything twice.
+                //
+                // Handing over first is what the waiting is for: the record is in place
+                // before the editor's screen exists, and is delivered the moment it does.
                 _navigator.HandProjectToEditor(capturedProject, editorRecord);
+
+                OpenProjectMode(projectMode);
             }
             catch (Exception ex)
             {

@@ -60,6 +60,12 @@ namespace PhotoBook.Shell.Converters
     /// </remarks>
     public class PageStateConverter : IValueConverter
     {
+        /// <summary>The roles whose answer is a colour.</summary>
+        private static readonly string[] BrushRoles = { "slotbrush", "filledbrush", "structurecomplete" };
+
+        /// <summary>What a colour role answers when nothing is known about the state.</summary>
+        private static readonly IBrush FallbackBrush = new SolidColorBrush(Color.Parse("#64748B"));
+
         public object? Convert(
             object? value,
             Type targetType,
@@ -77,7 +83,7 @@ namespace PhotoBook.Shell.Converters
                     "imageerror" => !string.IsNullOrEmpty(page.SourcePath) && !page.HasImage,
                     "slotbrush" => page.IsSlotLabelAccent ? Solid("#4F46E5") : Solid("#64748B"),
                     "slotempty" => page.IsCover ? "Обложка" : "Слот пуст",
-                    _ => string.Empty
+                    _ => Fallback(role)
                 };
             }
 
@@ -95,7 +101,7 @@ namespace PhotoBook.Shell.Converters
                         ? global::Avalonia.Media.FontWeight.SemiBold
                         : global::Avalonia.Media.FontWeight.Normal,
 
-                    _ => string.Empty
+                    _ => Fallback(role)
                 };
             }
 
@@ -104,10 +110,27 @@ namespace PhotoBook.Shell.Converters
             // at the gap and never notices there is a third.
             if (role == "notfirst" && value is int index) return index > 1;
 
-            return role == "structurecomplete" && value is bool complete
-                ? Solid(complete ? "#059669" : "#EF4444")
-                : string.Empty;
+            if (role == "structurecomplete" && value is bool complete)
+                return Solid(complete ? "#059669" : "#EF4444");
+
+            return Fallback(role);
         }
+
+        /// <summary>
+        /// What to answer with when the state does not match the question.
+        /// </summary>
+        /// <remarks>
+        /// A colour role always answers with a colour. It used to answer with an empty
+        /// string, and an empty string where a colour belongs is not an empty colour: the
+        /// engine tries to parse it, fails, and takes the whole program down. That is how a
+        /// project that happened to have a book with nothing in it stopped the program
+        /// opening, and it failed with no message and nothing in the journal.
+        ///
+        /// The question "what colour is this?" has an answer even when the state is not
+        /// known, and giving it is the difference between a neutral grey and a crash.
+        /// </remarks>
+        private static object? Fallback(string role) =>
+            Array.IndexOf(BrushRoles, role) >= 0 ? FallbackBrush : null;
 
         public object? ConvertBack(
             object? value,
