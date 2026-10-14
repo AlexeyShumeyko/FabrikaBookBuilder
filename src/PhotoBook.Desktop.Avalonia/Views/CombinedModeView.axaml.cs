@@ -147,9 +147,31 @@ public partial class CombinedModeView : UserControl
     /// the markup because a style cannot scale by one and a bit without a trigger, and
     /// there is no trigger here.
     /// </remarks>
+    /// <summary>The slot whose caption was last replaced, so it can be put back.</summary>
+    /// <remarks>
+    /// One slot at a time, remembered rather than found by walking the tree. The pair of
+    /// words in a slot's footer swap places when the pointer is on the slot, and a swap
+    /// that is put back only when the pointer leaves the slot can be stranded: the pointer
+    /// goes from one slot to another, the second takes over the caption, and the first
+    /// never hears about it again. A stranded caption reads as a photograph whose name is
+    /// "to all the books", which is a thing to be told rather than a thing to be worked
+    /// out.
+    ///
+    /// Moving to a new slot therefore puts the previous one back on the way in, not only on
+    /// the way out.
+    /// </remarks>
+    private Control? _captionSwapped;
+
     private void OnSlotPointerEntered(object? sender, PointerEventArgs e)
     {
         if (sender is not Control slot) return;
+
+        // Whoever held the caption last gives it back before anyone else takes it.
+        if (_captionSwapped is not null && !ReferenceEquals(_captionSwapped, slot))
+        {
+            ResetCaption(_captionSwapped);
+            _captionSwapped = null;
+        }
 
         var (label, action) = FooterParts(slot);
         var page = slot.DataContext as Page;
@@ -159,6 +181,10 @@ public partial class CombinedModeView : UserControl
         if (label is not null) label.IsVisible = !applicable;
         if (action is not null) action.IsVisible = applicable;
 
+        if (!applicable) return;
+
+        _captionSwapped = slot;
+
         if (slot.GetVisualDescendants().OfType<Image>().FirstOrDefault() is { } photo)
             photo.RenderTransform = new ScaleTransform(1.04, 1.04);
     }
@@ -167,6 +193,13 @@ public partial class CombinedModeView : UserControl
     {
         if (sender is not Control slot) return;
 
+        ResetCaption(slot);
+        if (ReferenceEquals(_captionSwapped, slot)) _captionSwapped = null;
+    }
+
+    /// <summary>Puts a slot's footer back to showing what the slot is.</summary>
+    private static void ResetCaption(Control slot)
+    {
         var (label, action) = FooterParts(slot);
 
         if (label is not null) label.IsVisible = true;
