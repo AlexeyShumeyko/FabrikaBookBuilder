@@ -73,8 +73,6 @@
                             </StackPanel>
                         </ToggleButton>
                         <ToggleButton Classes="tab" AutomationProperties.Name="Выбор режима"
-                                      IsEnabled="False"
-                                      ToolTip.Tip="Появится вместе с экраном выбора режима"
                                       IsChecked="{Binding IsStartSelected, Mode=TwoWay}"
                                       Command="{Binding GoToModeSelectCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">

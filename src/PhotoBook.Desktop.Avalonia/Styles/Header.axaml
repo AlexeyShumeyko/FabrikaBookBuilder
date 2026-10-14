@@ -85,4 +85,25 @@
         <Setter Property="Opacity" Value="0.45" />
     </Style>
 
+<!--
+        A mode card on the start screen: the whole card is the choice, so the control has to
+        be one that can be pressed, focused and reached by automation. Padding 24, a 1px
+        slate frame, radius 16, and the frame takes the product's colour on hover - which is
+        what makes a screen-sized block read as a card rather than as a form field.
+    -->
+    <Style Selector="Button.modeCard">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Padding" Value="24" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="Button.modeCard:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brand500}" />
+    </Style>
+
 </Styles>

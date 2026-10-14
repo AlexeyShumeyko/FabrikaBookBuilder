@@ -1,0 +1,219 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PhotoBook.Shell.Views.StartScreenView"
+             FontFamily="Inter">
+
+    <!--
+        Transcribed from doc\DESIGN_SPEC.md section 4, number by number, and checked against
+        the other shell's markup for the places where the two differ on purpose.
+
+            container     max 896, margin 32/16, blocks 32 apart
+            badge         padding 10/4, radius 8, 12 semibold, brand
+            heading       24 bold, centred
+            subtitle      12 slate-500, wraps at 560
+            grid          two equal columns, gap 24
+            mode card     padding 24, 1px slate-200, radius 16, brand frame on hover
+            icon tile     48x48, radius 16, 20 below it, glyph 20
+            mode name     18 bold
+            description   12 slate-600, line height 19
+            feature list  20 above, 10 between, check 12, text 8 across
+            card footer   rule inside the card, 32 above it, 12 semibold in the mode's colour
+
+        Four departures, each recorded rather than quietly copied:
+
+        1. The card is a Button, not a Border that reacts to a mouse press. A control that
+           only answers a mouse cannot be reached from the keyboard and does not appear in
+           the automation tree, and this screen is two choices - it is the one place where
+           that matters most. Everything the card shows, footer included, is its content, so
+           the rule and the call to action stay inside the frame where they belong.
+        2. Hover is a pointerover rule, not an IsMouseOver trigger. Same result, and it
+           needs no code-behind to keep working.
+        3. The badge is a rounded rectangle here as it is in the other shell. The design
+           called for a pill; the pill outline read as a stray border rather than a label,
+           and one shape in a product should belong to one thing.
+        4. The two cards share one grid row, so they are the same height. Laying them out as
+           a horizontal stack gives each card only as much height as its own text, and the
+           two cards on this screen are not the same length - the combined one carries an
+           extra highlighted box. Equal heights are what the frame is for: a row of cards
+           of different heights reads as a mistake whichever engine drew it.
+    -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel MaxWidth="896" Margin="32,16,32,32" HorizontalAlignment="Center">
+
+            <!-- ============================== heading ============================== -->
+            <StackPanel>
+                <Border Background="{DynamicResource Brand50}" CornerRadius="8" Padding="10,4"
+                        HorizontalAlignment="Center">
+                    <TextBlock Text="Выберите режим" Classes="t12Semi"
+                               Foreground="{DynamicResource Brand600}" />
+                </Border>
+
+                <TextBlock Text="Два способа собрать фотокниги" Classes="t24Bold"
+                           HorizontalAlignment="Center" Margin="0,8,0,0" />
+
+                <TextBlock Classes="t12" HorizontalAlignment="Center" TextAlignment="Center"
+                           TextWrapping="Wrap" MaxWidth="560" Margin="0,8,0,0"
+                           Foreground="{DynamicResource Slate500}"
+                           Text="Режим выбирается один раз — при создании проекта. Он определяет, как фотографии попадут в книги, а переключить его позже можно, открыв проект, созданный в нужном режиме." />
+            </StackPanel>
+
+            <!-- A fixed 24-wide spacer column rather than a spacing property: this engine's grid has
+                no ColumnSpacing, and a spacer is the same 24 with nothing left to get wrong. -->
+            <Grid ColumnDefinitions="*,24,*" Margin="0,32,0,0">
+
+                <!-- ======================== уникальные папки ========================= -->
+                <Button x:Name="UniqueCard" Classes="modeCard"
+                        AutomationProperties.Name="Уникальные папки"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <Grid RowDefinitions="*,Auto">
+
+                        <StackPanel Grid.Row="0">
+                            <Border Width="48" Height="48" CornerRadius="16" Margin="0,0,0,20"
+                                    HorizontalAlignment="Left"
+                                    Background="{DynamicResource Sky50}">
+                                <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="20" Foreground="{DynamicResource Sky600}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+
+                            <TextBlock Text="Уникальные папки" FontSize="18" FontWeight="Bold"
+                                       Foreground="{DynamicResource Slate900}" />
+
+                            <TextBlock Classes="t12" TextWrapping="Wrap" Margin="0,8,0,0"
+                                       LineHeight="19" Foreground="{DynamicResource Slate600}"
+                                       Text="Каждая загруженная папка становится отдельной фотокнигой. Программа сама определит обложку, разложит фотографии по разворотам и присвоит файлам имена, готовые к загрузке." />
+
+                            <StackPanel Margin="0,20,0,0">
+                                <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,10">
+                                    <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                                               FontSize="12" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource Sky500}" />
+                                    <TextBlock Grid.Column="1" Classes="t12" TextWrapping="Wrap"
+                                               Margin="8,0,0,0" Foreground="{DynamicResource Slate600}"
+                                               Text="Обложка определяется сама: самое большое фото в папке" />
+                                </Grid>
+                                <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,10">
+                                    <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                                               FontSize="12" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource Sky500}" />
+                                    <TextBlock Grid.Column="1" Classes="t12" TextWrapping="Wrap"
+                                               Margin="8,0,0,0" Foreground="{DynamicResource Slate600}"
+                                               Text="Порядок разворотов можно изменить, если фотографии в папке идут не по сюжету" />
+                                </Grid>
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                                               FontSize="12" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource Sky500}" />
+                                    <TextBlock Grid.Column="1" Classes="t12" TextWrapping="Wrap"
+                                               Margin="8,0,0,0" Foreground="{DynamicResource Slate600}"
+                                               Text="В одном проекте можно загружать только папки с одинаковым количеством файлов — это нужно для правильной сборки книг" />
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!--
+                            The rule and the call to action live inside the frame, on its own
+                            bottom edge. The body row above takes the slack, so this sits in
+                            the same place on both cards however many lines the text takes.
+                        -->
+                        <StackPanel Grid.Row="1" Margin="0,32,0,0">
+                            <Border Height="1" Background="{DynamicResource Slate100}" />
+                            <Grid Margin="0,16,0,0">
+                                <TextBlock Text="Выбрать режим" Classes="t12Semi"
+                                           Foreground="{DynamicResource Sky600}" />
+                                <TextBlock Text="&#xE72A;" HorizontalAlignment="Right"
+                                           FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                           Foreground="{DynamicResource Sky600}" />
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Button>
+
+                <!-- ========================= комбинированный ========================= -->
+                <Button x:Name="CombinedCard" Classes="modeCard" Grid.Column="2"
+                        AutomationProperties.Name="Комбинированный"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <Grid RowDefinitions="*,Auto">
+
+                        <StackPanel Grid.Row="0">
+                            <Border Width="48" Height="48" CornerRadius="16" Margin="0,0,0,20"
+                                    HorizontalAlignment="Left"
+                                    Background="{DynamicResource Brand50}">
+                                <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="20" Foreground="{DynamicResource Brand600}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+
+                            <TextBlock Text="Комбинированный" FontSize="18" FontWeight="Bold"
+                                       Foreground="{DynamicResource Slate900}" />
+
+                            <TextBlock Classes="t12" TextWrapping="Wrap" Margin="0,8,0,0"
+                                       LineHeight="19" Foreground="{DynamicResource Slate600}"
+                                       Text="Режим для сборки книг вручную: вы выбираете, какое фото в какой книге и на каком развороте будет стоять. Подходит, когда состав каждой книги подбирают отдельно." />
+
+                            <!--
+                                The point of the mode, in one sentence. A shared spread is what
+                                makes a run of forty books bearable, and it is the one thing
+                                this mode does that the folders mode cannot.
+                            -->
+                            <Border Background="{DynamicResource Brand50}"
+                                    BorderBrush="{DynamicResource Brand100}" BorderThickness="1"
+                                    CornerRadius="10" Padding="12,10" Margin="0,14,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Главное — общие развороты и обложки"
+                                               Classes="t12Semi" Foreground="{DynamicResource Brand700}" />
+                                    <TextBlock Classes="t12" TextWrapping="Wrap" Margin="0,3,0,0"
+                                               LineHeight="18" Foreground="{DynamicResource Slate600}"
+                                               Text="Одинаковый разворот или обложку можно добавить сразу во все книги одним действием — и больше не заполнять его вручную в каждой. На больших заказах это заметно ускоряет сборку." />
+                                </StackPanel>
+                            </Border>
+
+                            <StackPanel Margin="0,20,0,0">
+                                <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,10">
+                                    <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                                               FontSize="12" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource Brand500}" />
+                                    <TextBlock Grid.Column="1" Classes="t12" TextWrapping="Wrap"
+                                               Margin="8,0,0,0" Foreground="{DynamicResource Slate600}"
+                                               Text="Любая фотография попадает в любую книгу и на любой разворот" />
+                                </Grid>
+                                <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,10">
+                                    <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                                               FontSize="12" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource Brand500}" />
+                                    <TextBlock Grid.Column="1" Classes="t12" TextWrapping="Wrap"
+                                               Margin="8,0,0,0" Foreground="{DynamicResource Slate600}"
+                                               Text="Общий разворот или обложка добавляется сразу во все книги одним действием" />
+                                </Grid>
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                                               FontSize="12" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource Brand500}" />
+                                    <TextBlock Grid.Column="1" Classes="t12" TextWrapping="Wrap"
+                                               Margin="8,0,0,0" Foreground="{DynamicResource Slate600}"
+                                               Text="Количество разворотов у всех книг одинаковое — это нужно для правильной сборки" />
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Margin="0,32,0,0">
+                            <Border Height="1" Background="{DynamicResource Slate100}" />
+                            <Grid Margin="0,16,0,0">
+                                <TextBlock Text="Выбрать режим" Classes="t12Semi"
+                                           Foreground="{DynamicResource Brand600}" />
+                                <TextBlock Text="&#xE72A;" HorizontalAlignment="Right"
+                                           FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                           Foreground="{DynamicResource Brand600}" />
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Button>
+            </Grid>
+
+            <TextBlock Classes="t12" HorizontalAlignment="Center" TextAlignment="Center"
+                       TextWrapping="Wrap" Margin="0,32,0,0"
+                       Foreground="{DynamicResource Slate500}"
+                       Text="Выбранный режим откроется в отдельной вкладке и будет доступен, пока проект открыт." />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

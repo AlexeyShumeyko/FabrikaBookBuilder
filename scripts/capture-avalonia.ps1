@@ -13,8 +13,8 @@ param(
     [string]$Out = 'doc\shots\avalonia.png',
     [int]$TimeoutSeconds = 30,
     [string]$Exe,
-    # unique | combined - opens the most recent project of that mode before the window
-    # appears, so an editor screen can be photographed. See App.OpenNewest.
+    # start | unique | combined - which screen to open before the window appears, so any of
+    # them can be photographed. See App.OpenNewest.
     [string]$Open = ''
 )
 

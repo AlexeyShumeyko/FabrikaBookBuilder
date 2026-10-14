@@ -41,9 +41,8 @@ namespace PhotoBook.Shell.Navigation
 
         public object CreateScreen(AppMode mode, object viewModel) => mode switch
         {
-            // The mode-select screen is not ported yet. The projects screen stands in rather
-            // than a blank window, because a blank window reads as a crash.
-            AppMode.StartScreen => ProjectsScreen(),
+            AppMode.StartScreen => new StartScreenView(),
+
             AppMode.ProjectList => ProjectsScreen(),
 
             AppMode.UniqueFolders => new UniqueFoldersView

@@ -112,6 +112,12 @@ namespace PhotoBook.Shell.Navigation
 
             _host.Content = _screens.CreateScreen(_currentMode, viewModel);
 
+            // The mode-select screen has no view model: it asks a question and raises the
+            // answer. Who acts on the answer is this class's business, not the screen's, so
+            // the subscription is made here and nowhere else.
+            if (_host.Content is Views.StartScreenView startScreen)
+                startScreen.Chosen += CreateProject;
+
             DeliverPending();
         }
 
@@ -122,13 +128,22 @@ namespace PhotoBook.Shell.Navigation
         }
 
         /// <summary>
-        /// Not built yet. Creating a project opens the mode-select screen, and that screen is
-        /// a later step.
+        /// Starts a project that does not exist yet: the editor is emptied, then the mode
+        /// opens.
         /// </summary>
+        /// <remarks>
+        /// The reset is not optional. The editors are singletons, so without it "Создать
+        /// проект" carries the previous session's books and project record into the new
+        /// project - and the first save then overwrites the project that was open before.
+        /// </remarks>
         public void CreateProject(AppMode mode)
         {
+            if (mode is not (AppMode.UniqueFolders or AppMode.Combined)) return;
+
+            EditorFor(mode)?.ResetProjectCommand.Execute(null);
+
             _sessionMode = mode;
-            throw new NotSupportedException("The mode-select screen has not been ported yet.");
+            CurrentMode = mode;
         }
 
         public void EndSession()

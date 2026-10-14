@@ -69,7 +69,15 @@ public partial class App : Avalonia.Application
             // here it is plain sequential code before the framework starts pumping.
             var open = ReadOption(desktop.Args, "--open");
             if (!string.IsNullOrEmpty(open))
-                OpenNewest(_services, navigator, open);
+            {
+                // The mode-select screen has no project to open, so it is a mode and nothing
+                // else. Handled here rather than inside OpenNewest, which exists to find a
+                // project on disk.
+                if (open.Equals("start", StringComparison.OrdinalIgnoreCase))
+                    navigator.CurrentMode = AppMode.StartScreen;
+                else
+                    OpenNewest(_services, navigator, open);
+            }
 
             // The navigator drives the window: it is the thing that knows which screen a mode
             // means, so the window only has to hold what it is given. Attaching is also what
