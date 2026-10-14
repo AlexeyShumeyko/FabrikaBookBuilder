@@ -12,7 +12,10 @@
 param(
     [string]$Out = 'doc\shots\avalonia.png',
     [int]$TimeoutSeconds = 30,
-    [string]$Exe
+    [string]$Exe,
+    # unique | combined - opens the most recent project of that mode before the window
+    # appears, so an editor screen can be photographed. See App.OpenNewest.
+    [string]$Open = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -33,7 +36,8 @@ if (-not (Test-Path $Exe)) {
 Get-Process -Name 'PhotoBook.Desktop.Avalonia' -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 1
 
-$proc = Start-Process -FilePath $Exe -PassThru
+$arguments = if ($Open) { @('--open', $Open) } else { @() }
+$proc = Start-Process -FilePath $Exe -PassThru -ArgumentList $arguments
 
 $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
 while ((Get-Date) -lt $deadline) {

@@ -1,3 +1,4 @@
+using System.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -60,9 +61,18 @@ public partial class App : Avalonia.Application
             var navigator = _services.GetRequiredService<AvaloniaNavigator>();
             var window = new MainWindow();
 
+            // The screen to open is decided before the window exists, which is what makes it
+            // reliable. Done from a command it would be an asynchronous call whose
+            // continuations need a running event loop, and at this point there is no loop
+            // yet - four attempts at that ended with the switch quietly doing nothing. Done
+            // here it is plain sequential code before the framework starts pumping.
+            var open = ReadOption(desktop.Args, "--open");
+            if (!string.IsNullOrEmpty(open))
+                OpenNewest(_services, navigator, open);
+
             // The navigator drives the window: it is the thing that knows which screen a mode
             // means, so the window only has to hold what it is given. Attaching is also what
-            // puts the first screen up, so nothing is shown beforehand.
+            // puts the current screen up.
             navigator.Attach(window.ScreenHost);
 
             desktop.MainWindow = window;
@@ -131,4 +141,82 @@ public partial class App : Avalonia.Application
         // show the projects as they are at the moment it is opened. The navigator creates it.
         services.AddTransient<ProjectListViewModel>();
     }
+
+    /// <summary>
+    /// Reads a switch that may arrive as "--name value" or as "--name=value".
+    /// </summary>
+    /// <remarks>
+    /// A launcher passes them as two arguments and a shell passes one. Reading only the
+    /// second form gives a switch that appears to do nothing at all - which is what happened,
+    /// four times over, for a different reason each time.
+    /// </remarks>
+    private static string? ReadOption(IReadOnlyList<string> args, string name)
+    {
+        for (int i = 0; i < args.Count; i++)
+        {
+            if (args[i].Equals(name, StringComparison.OrdinalIgnoreCase) && i + 1 < args.Count)
+                return args[i + 1];
+
+            var prefix = name + "=";
+            if (args[i].StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return args[i][prefix.Length..].Trim();
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Opens the most recently changed project of the named mode, before the window exists.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// It goes through the navigator rather than through the projects list's command, and that
+    /// is the whole point. The command is asynchronous and its continuation needs a running
+    /// event loop; before the framework starts pumping there is none, so the command starts,
+    /// finds no loop, and the screen never changes. The navigator's contract is synchronous by
+    /// design - it is handed a project and told which mode wants it - so the sequence below is
+    /// plain sequential code with nothing to wait for.
+    /// </para>
+    /// <para>
+    /// It exists so an editor screen can be photographed. Verifying them the honest way needs
+    /// a way to drive the shell's UI, and that is step 3.9 tooling.
+    /// </para>
+    /// </remarks>
+    private static void OpenNewest(IServiceProvider services, AvaloniaNavigator navigator, string mode)
+    {
+        var wanted = mode.Equals("combined", StringComparison.OrdinalIgnoreCase)
+            ? AppMode.Combined
+            : AppMode.UniqueFolders;
+
+        // On the thread pool, and waited for from here.
+        //
+        // Reading these two files inline and waiting for them deadlocks: the UI thread is the
+        // one waiting, no dispatcher is pumping yet because the window has not been shown,
+        // and the continuation that would finish the read has nowhere to resume. The process
+        // stays alive with no window - which is what it did for an afternoon. On the pool
+        // there is no captured context and so nothing to wait for; only the hand-over comes
+        // back to the UI thread.
+        var opened = Task.Run(() =>
+        {
+            var record = services.GetRequiredService<IProjectListService>()
+                .GetAllProjectsAsync().GetAwaiter().GetResult()
+                .Where(p => p.Mode == wanted)
+                .OrderByDescending(p => p.LastModified)
+                .FirstOrDefault();
+
+            if (record?.FilePath is not { } path || !File.Exists(path))
+                return (project: (Project?)null, record: (ProjectInfo?)null);
+
+            var project = services.GetRequiredService<IProjectRepository>()
+                .LoadAsync(path).GetAwaiter().GetResult();
+
+            return (project: project, record: record);
+        }).GetAwaiter().GetResult();
+
+        if (opened.project is null || opened.record is null) return;
+
+        navigator.HandProjectToEditor(opened.project, opened.record);
+        navigator.CurrentMode = wanted;
+    }
 }
+

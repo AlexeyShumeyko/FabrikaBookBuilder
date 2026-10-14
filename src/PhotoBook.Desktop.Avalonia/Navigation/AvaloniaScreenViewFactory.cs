@@ -17,9 +17,10 @@ namespace PhotoBook.Shell.Navigation
     /// above it asks for "the screen for this mode" and never learns what came back.
     /// </para>
     /// <para>
-    /// View models are passed in rather than resolved here: the navigator owns them, and a
-    /// factory that resolved its own would be a second owner. The projects list is the
-    /// exception, because it is built per visit - so it arrives through a function.
+    /// View models are passed in rather than resolved here: the navigator holds them, and a
+    /// factory that resolved its own would answer the same question twice, in two places
+    /// that would then drift apart. The projects list is the exception, because it is built
+    /// per visit - so it arrives through a function.
     /// </para>
     /// </remarks>
     internal class AvaloniaScreenViewFactory : IScreenViewFactory
