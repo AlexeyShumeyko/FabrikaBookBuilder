@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
+using Avalonia;
 using Avalonia.Media;
 using PhotoBook.Core;
 
@@ -36,7 +37,12 @@ namespace PhotoBook.Shell.Converters
                 // The cover is the one slot that has to be findable in a row of twenty, so it
                 // is framed in the accent colour and two pixels. Everything else is a hairline.
                 "border" => page.IsCover ? Brush("#6366F1") : Brush("#E2E8F0"),
-                "borderthickness" => page.IsCover ? 2d : 1d,
+
+                // A Thickness, not a number. Bound to a plain double this conversion is not
+                // made at all, the border comes out with no thickness, and every slot on the
+                // screen loses its frame - which reads as "these cards have no border" rather
+                // than as a failed conversion.
+                "borderthickness" => page.IsCover ? new Thickness(2) : new Thickness(1),
 
                 _ => string.Empty
             };
