@@ -504,22 +504,25 @@
                                                                 <!-- empty: dashed frame, a plus in a circle and
                                                                      what this slot is waiting for -->
                                                                 <Grid IsVisible="{Binding Converter={StaticResource PageState}, ConverterParameter=empty}">
-                                                                    <Border BorderBrush="{DynamicResource Slate300}"
-                                                    BorderThickness="2" CornerRadius="7"
-                                                    Margin="4" />
+                                                                    <!--
+                                                                        Dashed, not drawn. A solid frame around an empty slot reads as a
+                                                                        finished thing with a hole in it; a broken one reads as "put
+                                                                        something here", which is the whole message of the frame.
+                                                                        The shape is its own so the dashes follow the rounded corner.
+                                                                    -->
+                                                                    <Rectangle RadiusX="7" RadiusY="7"
+                                                                       StrokeThickness="1.5"
+                                                                       StrokeDashArray="5,4"
+                                                                       Stroke="{DynamicResource Slate300}"
+                                                                       Margin="4" IsHitTestVisible="False" />
                                                                     <StackPanel VerticalAlignment="Center"
                                                         HorizontalAlignment="Center">
-                                                                        <Border Width="28" Height="28"
-                                                        CornerRadius="14"
-                                                        HorizontalAlignment="Center"
-                                                        Background="{DynamicResource Slate100}">
-                                                                            <TextBlock Text="&#xE710;"
-                                                                                       FontFamily="Segoe MDL2 Assets"
-                                                                                       FontSize="12"
-                                                                                       Foreground="{DynamicResource Slate400}"
-                                                                                       HorizontalAlignment="Center"
-                                                                                       VerticalAlignment="Center" />
-                                                                        </Border>
+                                                                        <TextBlock Text="&#xE710;"
+                                                                                   FontFamily="Segoe MDL2 Assets"
+                                                                                   FontSize="14"
+                                                                                   Foreground="{DynamicResource Slate400}"
+                                                                                   HorizontalAlignment="Center"
+                                                                                   VerticalAlignment="Center" />
                                                                         <TextBlock Foreground="{DynamicResource Slate600}"
                                                                                    TextAlignment="Center"
                                                                                    Margin="0,8,0,0"

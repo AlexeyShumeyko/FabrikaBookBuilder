@@ -36,6 +36,12 @@ namespace PhotoBook.Shell.Converters
 
                 // The cover is the one slot that has to be findable in a row of twenty, so it
                 // is framed in the accent colour and two pixels. Everything else is a hairline.
+                //
+                // The frame says which position this is, not whether it is done. An empty
+                // cover keeps the frame: it is still the cover, and a row of waiting slots
+                // should have exactly one place in it that is meant for something specific.
+                // It was tried without the accent on an empty cover, and the row read as
+                // eleven interchangeable blanks with no beginning.
                 "border" => page.IsCover ? Brush("#6366F1") : Brush("#E2E8F0"),
 
                 // A Thickness, not a number. Bound to a plain double this conversion is not
