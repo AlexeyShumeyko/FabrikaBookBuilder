@@ -26,7 +26,7 @@ namespace PhotoBook.Shell.Views;
 public sealed class ThreeColumnPanel : Panel
 {
     private const int Columns = 3;
-    private const double Gap = 24;
+    private const double EdgeMargin = 24;
 
     protected override Size MeasureOverride(Size availableSize)
     {
@@ -37,7 +37,7 @@ public sealed class ThreeColumnPanel : Panel
         // useless but not wrong, and the arrange pass below gets a real width and does the
         // real work.
         double width = double.IsInfinity(availableSize.Width) ? 0 : availableSize.Width;
-        double columnWidth = Math.Max(0, (width - Gap * (Columns - 1)) / Columns);
+        double columnWidth = Math.Max(0, width / Columns);
 
         double rowHeight = 0;
         double totalHeight = 0;
@@ -52,19 +52,19 @@ public sealed class ThreeColumnPanel : Panel
             bool rowEnds = i % Columns == Columns - 1 || i == Children.Count - 1;
             if (rowEnds)
             {
-                totalHeight += rowHeight + Gap;
+                totalHeight += rowHeight + EdgeMargin;
                 rowHeight = 0;
             }
         }
 
-        return new Size(width, Math.Max(0, totalHeight - Gap));
+        return new Size(width, Math.Max(0, totalHeight - EdgeMargin));
     }
 
     protected override Size ArrangeOverride(Size finalSize)
     {
         if (Children.Count == 0) return finalSize;
 
-        double columnWidth = Math.Max(0, (finalSize.Width - Gap * (Columns - 1)) / Columns);
+        double columnWidth = Math.Max(0, finalSize.Width / Columns);
         double y = 0;
         double rowHeight = 0;
 
@@ -73,13 +73,13 @@ public sealed class ThreeColumnPanel : Panel
             if (i % Columns == 0) rowHeight = 0;
             rowHeight = Math.Max(rowHeight, Children[i].DesiredSize.Height);
 
-            double x = (i % Columns) * (columnWidth + Gap);
+            double x = (i % Columns) * columnWidth;
             Children[i].Arrange(new Rect(x, y, columnWidth, rowHeight));
 
             bool rowEnds = i % Columns == Columns - 1 || i == Children.Count - 1;
             if (rowEnds)
             {
-                y += rowHeight + Gap;
+                y += rowHeight + EdgeMargin;
                 rowHeight = 0;
             }
         }

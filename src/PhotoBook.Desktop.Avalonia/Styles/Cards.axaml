@@ -24,6 +24,20 @@
         <Setter Property="BoxShadow" Value="{DynamicResource ShadowSubtle}" />
     </Style>
 
+    <Style Selector="Border.slotCard:pointerover">
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowHover}" />
+    </Style>
+
+    <!--
+        A card answers the pointer. It is the difference between a row of pictures on a
+        background and a row of things you can act on, and the other shell has always done
+        it: the shadow deepens and the frame takes a little more colour.
+    -->
+    <Style Selector="Border.card:pointerover">
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowCard}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate300}" />
+    </Style>
+
     <Style Selector="Button.primary">
         <Setter Property="Background" Value="{DynamicResource Brand600}" />
         <Setter Property="BorderThickness" Value="0" />
