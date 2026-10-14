@@ -97,7 +97,7 @@
                                    Foreground="{DynamicResource Brand600}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
-                    <TextBlock Text="Проектов пока нет" Classes="t16Bold"
+                    <TextBlock Text="Проектов пока нет" Classes="t18Bold"
                                HorizontalAlignment="Center" />
                     <TextBlock Classes="t12" TextWrapping="Wrap" TextAlignment="Center"
                                Foreground="{DynamicResource Slate500}"
@@ -250,8 +250,13 @@
                                                    FontSize="12" VerticalAlignment="Center"
                                                    Foreground="{DynamicResource Slate400}" />
                                         <TextBlock Classes="t12" VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource Slate600}"
-                                                   Text="{Binding BookCount, StringFormat='Книг: {0} шт.'}" />
+                                                   Foreground="{DynamicResource Slate600}">
+                                            <Run Text="Книг: " />
+                                            <Run Text="{Binding BookCount, Mode=OneWay}"
+                                                 FontWeight="Bold"
+                                                 Foreground="{DynamicResource Slate800}" />
+                                            <Run Text=" шт." FontWeight="SemiBold" />
+                                        </TextBlock>
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="1" Orientation="Horizontal"
@@ -260,8 +265,13 @@
                                                    FontSize="12" VerticalAlignment="Center"
                                                    Foreground="{DynamicResource Slate400}" />
                                         <TextBlock Classes="t12" VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource Slate600}"
-                                                   Text="{Binding PageCount, StringFormat='Разворотов: {0} стр.'}" />
+                                                   Foreground="{DynamicResource Slate600}">
+                                            <Run Text="Разворотов: " />
+                                            <Run Text="{Binding PageCount, Mode=OneWay}"
+                                                 FontWeight="Bold"
+                                                 Foreground="{DynamicResource Slate800}" />
+                                            <Run Text=" стр." FontWeight="SemiBold" />
+                                        </TextBlock>
                                     </StackPanel>
                                 </Grid>
 

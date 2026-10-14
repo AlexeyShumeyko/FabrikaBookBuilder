@@ -28,7 +28,15 @@ param(
     [ValidateSet('projects', 'combined', 'unique')]
     [string]$Mode = 'projects',
 
-    [string]$ReferenceExe = 'C:\Program Files (x86)\Fabrika BookBuilder Studio\PhotoBookRenamer.exe',
+    # The shell whose markup is being transcribed, built from this repository.
+    #
+    # NOT the installed release. The release is an older build of the same product and
+    # it differs - three and a half per cent of its projects screen is different from this
+    # one. Comparing against it means comparing against a design that is not the one being
+    # copied, and it has already sent two correct changes in the wrong direction.
+    #
+    # The markup is the design. This build is what the markup draws.
+    [string]$ReferenceExe = '',
 
     # Name of the project to open. Left empty, the first project of this mode is used -
     # chosen once here and then handed to both sides, which is the part that matters.
@@ -44,6 +52,14 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 # would otherwise make this an array, and an array silently becomes a list of paths.
 $root = @(Get-RepoRoot)[-1]
 $buildExe = @(Get-AppExe)[-1]
+
+if (-not $ReferenceExe) {
+    $ReferenceExe = @(Join-Path $root 'src\PhotoBook.Desktop.Wpf\bin\Release\net8.0-windows\PhotoBookRenamer.exe')[-1]
+}
+
+if (-not (Test-Path $ReferenceExe)) {
+    throw 'the reference shell is not built - build the solution first'
+}
 
 function Stop-Anything {
     Get-Process -ErrorAction SilentlyContinue |
