@@ -24,7 +24,9 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 
 . "$PSScriptRoot\common.ps1"
 
-$root = Get-RepoRoot
+# The last line only: anything written on the way out would make this an array, and an
+# array quietly becomes a list of paths.
+$root = @(Get-RepoRoot)[-1]
 if (-not $Exe) {
     $Exe = Join-Path $root 'src\PhotoBook.Desktop.Avalonia\bin\Release\net8.0\PhotoBook.Desktop.Avalonia.exe'
 }

@@ -206,7 +206,7 @@
                                 </Grid>
 
                                 <!-- ============================== slots ==================== -->
-                                <ItemsControl Margin="0,16,0,0" ItemsSource="{Binding AllSlotsPages}">
+                                <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding AllSlotsPages}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <WrapPanel Orientation="Horizontal" />
