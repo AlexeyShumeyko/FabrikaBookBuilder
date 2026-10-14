@@ -49,6 +49,12 @@
                         whole name is the target, not just the pencil.
                     -->
                     <StackPanel Orientation="Horizontal" Spacing="6">
+                        <!-- The word first. A name on its own says what it is called; the
+                             word says what it is, and the two screens that also show a
+                             project - this one and the combined one - both say it. -->
+                        <TextBlock Text="Проект:" Classes="t14Bold"
+                                   VerticalAlignment="Center" />
+
                         <TextBlock Name="ProjectNameTextBlock" Classes="t14Bold"
                                    Text="{Binding DisplayProjectName}"
                                    TextTrimming="CharacterEllipsis" MaxWidth="420"

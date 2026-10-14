@@ -20,11 +20,11 @@
     -->
     <DockPanel LastChildFill="True" Background="{DynamicResource AppBackground}">
 
-    <Border DockPanel.Dock="Top" Padding="32,12"
+    <Border DockPanel.Dock="Top" Padding="32,10"
             Background="{DynamicResource Surface}"
             BorderBrush="{DynamicResource Slate200}" BorderThickness="0,0,0,1"
             BoxShadow="{DynamicResource ShadowSubtle}">
-        <Grid Margin="20,0" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+        <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
 
                 <!-- left: the artwork, then the product name over the open project.
                      The logo is the company's own picture - a yellow disc on transparency.
