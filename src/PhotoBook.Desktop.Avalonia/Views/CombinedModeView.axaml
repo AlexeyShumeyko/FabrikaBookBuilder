@@ -380,25 +380,25 @@
                     </Border>
 
                     <!--
-                        ONE card for the whole run, and a hairline between books.
+                        A card for each book, with the page showing between them.
 
-                        It was one card per book, and a column of separate cards is a column
-                        of separate things: the eye reads the gaps and not the run, and "there
-                        is one more book below" has to be said. A single card with a line
-                        between its parts says it by being one thing.
+                        It was one card for the whole run with a line drawn between the
+                        books, on the reasoning that a column of separate cards reads as a
+                        column of separate things. Checked against the released program at
+                        full size: each book is its own card, the gap between them is the
+                        page, and the gap is what says there is another book below before
+                        anyone scrolls to find out.
+
+                        A line drawn between two parts of one white field says there is a
+                        boundary. It does not say what is on the other side of it.
                     -->
-                    <Border Classes="card" Padding="20" Margin="0,0,0,16"
-                            IsVisible="{Binding HasStructure}">
+                    <Border IsVisible="{Binding HasStructure}">
 
                     <ItemsControl ItemsSource="{Binding Books}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
+                                <Border Classes="card" Padding="20" Margin="0,0,0,16">
                                 <StackPanel>
-
-                                        <!-- One hairline above every book but the first. -->
-                                        <Border Height="1" Background="{DynamicResource Slate100}"
-                                                Margin="0,0,0,16"
-                                                IsVisible="{Binding BookIndex, Converter={StaticResource PageState}, ConverterParameter=notfirst}" />
 
                                         <!-- book header: the number IS the name -->
                                         <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
@@ -615,6 +615,7 @@
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
                                     </StackPanel>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
