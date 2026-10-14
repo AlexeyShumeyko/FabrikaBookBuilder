@@ -36,8 +36,10 @@ if (-not (Test-Path $Exe)) {
 Get-Process -Name 'PhotoBook.Desktop.Avalonia' -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 1
 
-$arguments = if ($Open) { @('--open', $Open) } else { @() }
-$proc = Start-Process -FilePath $Exe -PassThru -ArgumentList $arguments
+# -ArgumentList rejects an empty array, so the two cases are spelled out rather than
+# built as a list that is empty half the time.
+$proc = if ($Open) { Start-Process -FilePath $Exe -PassThru -ArgumentList '--open', $Open }
+        else { Start-Process -FilePath $Exe -PassThru }
 
 $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
 while ((Get-Date) -lt $deadline) {

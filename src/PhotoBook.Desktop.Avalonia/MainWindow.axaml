@@ -48,27 +48,35 @@
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <TextBlock Text="Проект:" Classes="t12Medium"
                                        Foreground="{DynamicResource Slate500}" />
-                            <TextBlock Text="—" Classes="t12Semi"
-                                       Foreground="{DynamicResource Slate700}" />
+                            <TextBlock Classes="t12Semi" MaxWidth="240"
+                                       TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource Slate700}"
+                                       Text="{Binding ProjectTitle}" />
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
 
-                <!-- centre: the three screens. Disabled in this step on purpose - step 3.6
-                     is navigation, and a tab that works before there is anything behind it
-                     would be a tab that goes nowhere. -->
+                <!-- centre: the four screens. The two editor tabs are greyed until a project
+                     of that mode is open, because a mode is reached through a project and not
+                     by choosing a tab. -->
                 <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
                         Background="{DynamicResource Slate200At70}" CornerRadius="12" Padding="4">
                     <StackPanel Orientation="Horizontal">
-                        <ToggleButton Classes="tab" IsChecked="True" IsEnabled="False">
+                        <ToggleButton Classes="tab" AutomationProperties.Name="Мои проекты"
+                                      IsChecked="{Binding IsProjectsSelected, Mode=TwoWay}"
+                                      Command="{Binding GoToProjectsCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                            Opacity="0.8"
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                                 <TextBlock Text="Мои проекты" />
                             </StackPanel>
                         </ToggleButton>
-                        <ToggleButton Classes="tab" IsEnabled="False">
+                        <ToggleButton Classes="tab" AutomationProperties.Name="Выбор режима"
+                                      IsEnabled="False"
+                                      ToolTip.Tip="Появится вместе с экраном выбора режима"
+                                      IsChecked="{Binding IsStartSelected, Mode=TwoWay}"
+                                      Command="{Binding GoToModeSelectCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="&#xE71C;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                            Opacity="0.8"
@@ -76,7 +84,23 @@
                                 <TextBlock Text="Выбор режима" />
                             </StackPanel>
                         </ToggleButton>
-                        <ToggleButton Classes="tab" IsEnabled="False">
+                        <ToggleButton Classes="tab" AutomationProperties.Name="Уникальные папки"
+                                      IsEnabled="{Binding CanOpenUniqueFoldersTab}"
+                                      ToolTip.Tip="Открывается только внутри проекта"
+                                      IsChecked="{Binding IsUniqueFoldersSelected, Mode=TwoWay}"
+                                      Command="{Binding GoToUniqueFoldersCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                           Opacity="0.8"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+                                <TextBlock Text="Уникальные папки" />
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton Classes="tab" AutomationProperties.Name="Комбинированный"
+                                      IsEnabled="{Binding CanOpenCombinedTab}"
+                                      ToolTip.Tip="Открывается только внутри проекта"
+                                      IsChecked="{Binding IsCombinedSelected, Mode=TwoWay}"
+                                      Command="{Binding GoToCombinedCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                            Opacity="0.8"

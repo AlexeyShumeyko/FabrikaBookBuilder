@@ -229,6 +229,9 @@ namespace PhotoBook.Presentation.ViewModels
         public string DisplayProjectName =>
             string.IsNullOrWhiteSpace(ProjectName) ? "Новый проект" : ProjectName!;
 
+        /// <inheritdoc />
+        public ProjectInfo? OpenProject => CurrentProjectInfo;
+
         public async System.Threading.Tasks.Task SaveProjectNameOnlyAsync()
         {
             if (CurrentProjectInfo == null || string.IsNullOrEmpty(ProjectName))

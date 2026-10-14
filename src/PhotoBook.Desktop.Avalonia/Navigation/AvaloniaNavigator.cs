@@ -30,6 +30,7 @@ namespace PhotoBook.Shell.Navigation
 
         private ContentControl? _host;
         private AppMode _currentMode = AppMode.ProjectList;
+        private AppMode? _sessionMode;
         private (Project Project, ProjectInfo Record)? _pending;
 
         public AvaloniaNavigator(
@@ -49,6 +50,27 @@ namespace PhotoBook.Shell.Navigation
 
         /// <summary>Raised whenever the mode changes, so a shell can react.</summary>
         public event EventHandler<AppMode>? ModeChanged;
+
+        /// <summary>
+        /// Raised when a project arrives or a session ends.
+        /// </summary>
+        /// <remarks>
+        /// Separate from <see cref="ModeChanged"/> because the two do not move together: a
+        /// project can arrive without the screen changing, and the session can end while the
+        /// screen stays put. The header needs to hear about both, and folding them into one
+        /// event would either miss one or fire on every tab click for nothing.
+        /// </remarks>
+        public event EventHandler? ProjectChanged;
+
+        /// <summary>
+        /// Which mode the current session belongs to, or null when no project is open.
+        /// </summary>
+        /// <remarks>
+        /// This is what keeps an editor tab enabled while its project is open and disables it
+        /// again after going back to the list. Reading it off the editor instead would keep
+        /// the tab alive forever: an editor never forgets its project, only the session ends.
+        /// </remarks>
+        public AppMode? SessionMode => _sessionMode;
 
         public AppMode CurrentMode
         {
@@ -93,16 +115,28 @@ namespace PhotoBook.Shell.Navigation
             DeliverPending();
         }
 
-        public void OpenProject(AppMode mode) => CurrentMode = mode;
+        public void OpenProject(AppMode mode)
+        {
+            _sessionMode = mode;
+            CurrentMode = mode;
+        }
 
         /// <summary>
         /// Not built yet. Creating a project opens the mode-select screen, and that screen is
         /// a later step.
         /// </summary>
         public void CreateProject(AppMode mode)
-            => throw new NotSupportedException("The mode-select screen has not been ported yet.");
+        {
+            _sessionMode = mode;
+            throw new NotSupportedException("The mode-select screen has not been ported yet.");
+        }
 
-        public void EndSession() => CurrentMode = AppMode.ProjectList;
+        public void EndSession()
+        {
+            _sessionMode = null;
+            CurrentMode = AppMode.ProjectList;
+            ProjectChanged?.Invoke(this, EventArgs.Empty);
+        }
 
         public IProjectEditor? EditorFor(AppMode mode) => mode switch
         {
@@ -136,7 +170,10 @@ namespace PhotoBook.Shell.Navigation
             if (_pending is not { } pending) return;
             _pending = null;
 
+            _sessionMode = pending.Record.Mode;
             EditorFor(pending.Record.Mode)?.SetProject(pending.Project, pending.Record);
+
+            ProjectChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }

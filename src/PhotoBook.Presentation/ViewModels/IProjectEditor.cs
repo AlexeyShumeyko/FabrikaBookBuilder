@@ -27,6 +27,22 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Which mode this editor is. An editor belongs to exactly one.</summary>
         AppMode Mode { get; }
 
+        /// <summary>
+        /// The project this editor currently holds, or null when it holds none.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// It exists for the header, which has to answer two questions about a screen it does
+        /// not own: is there anything open here, and what is it called. Both come from one
+        /// fact rather than a name and a flag that can disagree with each other.
+        /// </para>
+        /// <para>
+        /// The record is returned whole because it is what the caller would otherwise dig for
+        /// on the concrete type, which is the thing this interface was introduced to stop.
+        /// </para>
+        /// </remarks>
+        ProjectInfo? OpenProject { get; }
+
         /// <summary>Takes over a project loaded from disk or handed over by a new session.</summary>
         void SetProject(Project? project, ProjectInfo projectInfo);
 

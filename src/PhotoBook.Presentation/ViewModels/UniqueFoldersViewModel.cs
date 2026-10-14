@@ -274,6 +274,9 @@ namespace PhotoBook.Presentation.ViewModels
         public string DisplayProjectName =>
             string.IsNullOrWhiteSpace(ProjectName) ? "Новый проект" : ProjectName!;
 
+        /// <inheritdoc />
+        public ProjectInfo? OpenProject => CurrentProjectInfo;
+
         // What the shell and the panels are allowed to ask this editor to do.
         public ICommand LoadFoldersCommand { get; }
         public ICommand SelectCoverCommand { get; }

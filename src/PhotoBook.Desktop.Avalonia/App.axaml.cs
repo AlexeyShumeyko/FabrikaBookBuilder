@@ -18,6 +18,7 @@ using PhotoBook.Shell.Navigation;
 using PhotoBook.Shell.Platform;
 using PhotoBook.Shell.Services;
 using PhotoBook.Shell.Views;
+using PhotoBook.Shell.ViewModels;
 
 namespace PhotoBook.Shell;
 
@@ -59,7 +60,7 @@ public partial class App : Avalonia.Application
             FilePathToBitmapConverter.Attach(_services);
 
             var navigator = _services.GetRequiredService<AvaloniaNavigator>();
-            var window = new MainWindow();
+            var window = new MainWindow(_services.GetRequiredService<ShellHeaderViewModel>());
 
             // The screen to open is decided before the window exists, which is what makes it
             // reliable. Done from a command it would be an asynchronous call whose
@@ -136,6 +137,10 @@ public partial class App : Avalonia.Application
             () => sp.GetRequiredService<ProjectListViewModel>()));
 
         services.AddSingleton<IShellNavigator>(sp => sp.GetRequiredService<AvaloniaNavigator>());
+
+        // The header asks the navigator where the shell is rather than holding a copy of it,
+        // so a tab can never disagree with the screen behind it.
+        services.AddSingleton<ShellHeaderViewModel>();
 
         // The projects list is not a singleton: it is built per visit, because it exists to
         // show the projects as they are at the moment it is opened. The navigator creates it.
