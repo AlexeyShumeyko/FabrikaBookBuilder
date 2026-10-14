@@ -34,7 +34,7 @@ namespace PhotoBook.Presentation.ViewModels
                 // The picker distinguishes "closed without deciding" from "removed every folder", and so
                 // does this call: null is the first, an empty list is the second. Collapsing
                 // them would make "clear the project" quietly do nothing.
-                var folders = _editorDialogs.PickFolders(existingFolders);
+                var folders = await _editorDialogs.PickFolders(existingFolders);
                 if (folders == null)
                 {
                     return;

@@ -56,16 +56,23 @@ namespace PhotoBook.Application
         /// Lets the user choose folders.
         /// </summary>
         /// <param name="existingFolders">The folders the project already has, if any.</param>
+        /// <remarks>
+        /// A window is not up until the framework has pumped at least one frame, so a
+        /// dialog that returned its answer synchronously would have to block the thread
+        /// that shows it - and the window would never appear. That is not a corner case of
+        /// one shell: it is what waiting for a dialog means. Hence a task on every method
+        /// here, including the two that used to be plain calls.
+        /// </remarks>
         /// <returns>
         /// The folders chosen - an empty list when the user removed them all - or null when
         /// the window was closed without a decision.
         /// </returns>
-        List<string>? PickFolders(List<string> existingFolders);
+        Task<List<string>?> PickFolders(List<string> existingFolders);
 
         /// <summary>
         /// Asks which page a number should be assigned to.
         /// </summary>
         /// <returns>The page number, or null if the user stopped without choosing.</returns>
-        int? AskPageNumber(int maxPageNumber);
+        Task<int?> AskPageNumber(int maxPageNumber);
     }
 }

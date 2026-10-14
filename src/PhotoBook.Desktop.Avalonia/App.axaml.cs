@@ -133,7 +133,7 @@ public partial class App : Avalonia.Application
         // The windows that collect an answer - export options, folder picker, page number -
         // are step 3.5. Until then this stands in, so the editors can be constructed at all,
         // and it fails loudly rather than pretending a cancelled export is a real one.
-        services.AddSingleton<IEditorDialogs, DialogsNotPortedYet>();
+        services.AddSingleton<IEditorDialogs, AvaloniaEditorDialogs>();
 
         // Registered as its own type as well as the port, because the card bindings need to
         // reach a decoded image and the port deliberately does not hand one back.

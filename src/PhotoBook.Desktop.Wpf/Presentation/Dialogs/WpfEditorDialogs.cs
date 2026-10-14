@@ -63,21 +63,21 @@ namespace PhotoBookRenamer.Presentation.Dialogs
             });
         }
 
-        public List<string>? PickFolders(List<string> existingFolders)
+        public Task<List<string>?> PickFolders(List<string> existingFolders)
         {
             var dialog = new MultiFolderBrowserDialog(_files, existingFolders);
             Owner(dialog);
 
-            if (dialog.ShowDialog() != true) return null;
-            return dialog.SelectedFolders;
+            if (dialog.ShowDialog() != true) return Task.FromResult<List<string>?>(null);
+            return Task.FromResult(dialog.SelectedFolders);
         }
 
-        public int? AskPageNumber(int maxPageNumber)
+        public Task<int?> AskPageNumber(int maxPageNumber)
         {
             var dialog = new PageNumberDialog(maxPageNumber);
             Owner(dialog);
 
-            return dialog.ShowDialog() == true ? dialog.SelectedPageNumber : null;
+            return Task.FromResult(dialog.ShowDialog() == true ? dialog.SelectedPageNumber : null);
         }
 
         /// <summary>

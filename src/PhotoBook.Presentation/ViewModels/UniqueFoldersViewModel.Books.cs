@@ -116,7 +116,7 @@ namespace PhotoBook.Presentation.ViewModels
             }
         }
 
-        private void AssignPageNumber(Page? page)
+        private async void AssignPageNumber(Page? page)
         {
             if (page == null || page.IsCover) return;
 
@@ -128,7 +128,7 @@ namespace PhotoBook.Presentation.ViewModels
 
             if (maxPageNumber == 0) return;
 
-            var targetPageNumber = _editorDialogs.AskPageNumber(maxPageNumber);
+            var targetPageNumber = await _editorDialogs.AskPageNumber(maxPageNumber);
             if (targetPageNumber.HasValue)
             {
                 var pageNumber = targetPageNumber.Value;
