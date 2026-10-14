@@ -56,6 +56,11 @@
         <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
     </Style>
+    <Style Selector="TextBlock.t18Bold">
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
     <Style Selector="TextBlock.t20Bold">
         <Setter Property="FontSize" Value="20" />
         <Setter Property="FontWeight" Value="Bold" />

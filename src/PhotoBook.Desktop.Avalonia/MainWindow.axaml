@@ -7,18 +7,24 @@
         Background="{DynamicResource AppBackground}"
         WindowStartupLocation="CenterScreen">
 
-    <DockPanel LastChildFill="True">
+    <!--
+        The shell is a tinted page with white cards on it, and that is the decision this file
+        encodes. It used to be a white page with a full-width bar across the top and a
+        hairline under it - which is a different design, not a different way of drawing the
+        same one, and it is why every screen looked like it belonged to another program.
 
-        <!-- ================================ header ================================
-             Transcribed from doc\DESIGN_SPEC.md section 1, number by number: padding
-             32/12, logo 36 with radius 12, title 14 bold, PRO badge 10 with padding 6/2
-             and radius 4, tab container padding 4 radius 12, tabs 14/6 radius 8.
-        -->
-        <Border DockPanel.Dock="Top" Padding="32,12"
-                Background="{DynamicResource Surface}"
-                BorderBrush="{DynamicResource Slate200}" BorderThickness="0,0,0,1"
-                BoxShadow="{DynamicResource ShadowSubtle}">
-            <Grid ColumnDefinitions="Auto,*,Auto">
+        The header is a card like any other: inset thirty-two from the sides and twenty-four
+        from the top, sixteen round the corners, one hairline of border, the same shadow as
+        every other card. Nothing about it runs to the edge of the window, which is the whole
+        of the difference.
+    -->
+    <DockPanel LastChildFill="True" Background="{DynamicResource AppBackground}">
+
+    <Border DockPanel.Dock="Top" Margin="32,24,32,20" CornerRadius="16"
+            Background="{DynamicResource Surface}"
+            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+            BoxShadow="{DynamicResource ShadowSubtle}">
+        <Grid Margin="20,0" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
 
                 <!-- left: the artwork, then the product name over the open project.
                      The logo is the company's own picture - a yellow disc on transparency.
@@ -28,12 +34,12 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
 
                     <Image Source="avares://PhotoBook.Desktop.Avalonia/Assets/logo.png"
-                           Width="34" Height="34" Stretch="Uniform"
+                           Width="32" Height="32" Stretch="Uniform"
                            VerticalAlignment="Center"
                            AutomationProperties.Name="Фабрика Фотокниги" />
 
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Фабрика Фотокниги" Classes="t14Bold" />
+                        <TextBlock Text="Фабрика Фотокниги" Classes="t18Bold" />
                         <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
                             <TextBlock Text="Проект:" Classes="t12Medium"
                                        Foreground="{DynamicResource Slate500}" />
@@ -51,7 +57,7 @@
                 <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
                         Background="{DynamicResource Slate200At70}" CornerRadius="12" Padding="4">
                     <StackPanel Orientation="Horizontal">
-                        <RadioButton Classes="tab" AutomationProperties.Name="Мои проекты"
+                        <ToggleButton Classes="tab" AutomationProperties.Name="Мои проекты"
                                       Background="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
                                       Foreground="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToProjectsCommand}">
@@ -61,8 +67,8 @@
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}" />
                                 <TextBlock Text="Мои проекты" />
                             </StackPanel>
-                        </RadioButton>
-                        <RadioButton Classes="tab" AutomationProperties.Name="Выбор режима"
+                        </ToggleButton>
+                        <ToggleButton Classes="tab" AutomationProperties.Name="Выбор режима"
                                       Background="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
                                       Foreground="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToModeSelectCommand}">
@@ -72,8 +78,8 @@
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}" />
                                 <TextBlock Text="Выбор режима" />
                             </StackPanel>
-                        </RadioButton>
-                        <RadioButton Classes="tab" AutomationProperties.Name="Уникальные папки"
+                        </ToggleButton>
+                        <ToggleButton Classes="tab" AutomationProperties.Name="Уникальные папки"
                                       IsEnabled="{Binding CanOpenUniqueFoldersTab}"
                                       ToolTip.Tip="Открывается только внутри проекта"
                                       Background="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
@@ -85,8 +91,8 @@
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}" />
                                 <TextBlock Text="Уникальные папки" />
                             </StackPanel>
-                        </RadioButton>
-                        <RadioButton Classes="tab" AutomationProperties.Name="Комбинированный"
+                        </ToggleButton>
+                        <ToggleButton Classes="tab" AutomationProperties.Name="Комбинированный"
                                       IsEnabled="{Binding CanOpenCombinedTab}"
                                       ToolTip.Tip="Открывается только внутри проекта"
                                       Background="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
@@ -98,7 +104,7 @@
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}" />
                                 <TextBlock Text="Комбинированный" />
                             </StackPanel>
-                        </RadioButton>
+                        </ToggleButton>
                     </StackPanel>
                 </Border>
 
