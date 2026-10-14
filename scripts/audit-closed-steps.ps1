@@ -243,6 +243,21 @@ foreach ($f in (Get-ChildItem src -Recurse -Filter *.xaml -File | Where-Object {
 Check 'пров.' 'каждая ссылка на ресурс разрешается' ($unresolved.Count -eq 0) `
     ("`n          не разрешаются: " + (($unresolved | Select-Object -Unique) -join ', '))
 
+# Every project in the tree has to be in the solution, because the solution is what the
+# build, the formatter and the warning check all read. A project left out of it is not
+# "not yet checked" - it is never checked, and every green status in between is a status
+# about code that was not there. The Avalonia shell sat outside the solution for three
+# waves for exactly that reason.
+$solution = [System.IO.File]::ReadAllText((Join-Path $root 'PhotoBookRenamer.sln'))
+$missing = @()
+foreach ($p in (Get-ChildItem src, tests -Recurse -Filter *.csproj -File |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+    $relative = $p.FullName.Substring($root.Length + 1)
+    if ($solution -notmatch [regex]::Escape($relative)) { $missing += $relative }
+}
+Check 'пров.' 'каждый проект входит в решение' ($missing.Count -eq 0) `
+    ("`n          вне решения: " + ($missing -join ', '))
+
 Write-Host ''
 Write-Host '============================================================='
 Write-Host ("ИТОГО: пройдено {0}, провалено {1}" -f $script:Pass, $script:Fail)
