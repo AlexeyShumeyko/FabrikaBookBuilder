@@ -24,15 +24,40 @@
         <Setter Property="BoxShadow" Value="{DynamicResource ShadowSubtle}" />
     </Style>
 
+    <!--
+        A row in the file list. A list box draws its own rows - a background, a border, a
+        focus rectangle and some padding - and all four of those turn a photograph row into
+        something that looks like a form field. The row is meant to be the row: the state is
+        read off the badge at its end, not off a wash of colour across the whole 320 pixels.
+    -->
+    <Style Selector="ListBoxItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="MinHeight" Value="0" />
+    </Style>
+
+    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!--
+        A slot on the combined screen: radius 12, a hairline frame, and the cover framed
+        two pixels in the product's colour. The border and its thickness are bound to the
+        page rather than set here, because which of the two a slot is depends on what is in
+        it.
+    -->
+    <Style Selector="Border.slotCard">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="CornerRadius" Value="12" />
+    </Style>
+
     <Style Selector="Border.slotCard:pointerover">
         <Setter Property="BoxShadow" Value="{DynamicResource ShadowHover}" />
     </Style>
 
-    <!--
-        A card answers the pointer. It is the difference between a row of pictures on a
-        background and a row of things you can act on, and the other shell has always done
-        it: the shadow deepens and the frame takes a little more colour.
-    -->
     <Style Selector="Border.card:pointerover">
         <Setter Property="BoxShadow" Value="{DynamicResource ShadowCard}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Slate300}" />

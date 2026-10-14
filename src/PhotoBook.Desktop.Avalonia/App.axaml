@@ -50,6 +50,8 @@
             <conv:BookStatusConverter x:Key="BookStatus" />
             <conv:SelectedTabToBrushConverter x:Key="SelectedTab" />
             <conv:PageToBitmapConverter x:Key="PageToBitmap" />
+            <conv:PageStateConverter x:Key="PageState" />
+            <conv:PhotoUsageToBrushConverter x:Key="PhotoUsageBrush" />
         </ResourceDictionary>
     </Application.Resources>
 

@@ -50,7 +50,10 @@ namespace PhotoBook.Shell.Navigation
                 DataContext = viewModel as UniqueFoldersViewModel ?? _uniqueFolders
             },
 
-            AppMode.Combined => viewModel as CombinedModeViewModel ?? _combined,
+            AppMode.Combined => new CombinedModeView
+            {
+                DataContext = viewModel as CombinedModeViewModel ?? _combined
+            },
 
             _ => throw new ArgumentOutOfRangeException(
                 nameof(mode),

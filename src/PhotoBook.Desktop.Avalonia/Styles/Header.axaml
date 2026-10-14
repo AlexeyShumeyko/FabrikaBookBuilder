@@ -111,6 +111,30 @@
     </Style>
 
 <!--
+        A number field for the run controls. The ordinary text box is sized for a form -
+        padding 12 by 8 and 12px - so two of them side by side made the run fields taller
+        than the buttons beside them and the panel looked uneven. Same box, smaller.
+    -->
+    <Style Selector="TextBox.numberField">
+        <Setter Property="Width" Value="64" />
+        <Setter Property="Padding" Value="8,5" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style Selector="TextBox.searchField">
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <!--
         A mode card on the start screen: the whole card is the choice, so the control has to
         be one that can be pressed, focused and reached by automation. Padding 24, a 1px
         slate frame, radius 16, and the frame takes the product's colour on hover - which is
