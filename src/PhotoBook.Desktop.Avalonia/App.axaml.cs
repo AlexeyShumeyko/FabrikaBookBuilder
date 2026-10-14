@@ -67,6 +67,7 @@ public partial class App : Avalonia.Application
             _services = services.BuildServiceProvider();
 
             FilePathToBitmapConverter.Attach(_services);
+            PageToBitmapConverter.Attach(_services);
 
             var navigator = _services.GetRequiredService<AvaloniaNavigator>();
             var window = new MainWindow(_services.GetRequiredService<ShellHeaderViewModel>());

@@ -49,6 +49,7 @@
             <conv:PageCaptionConverter x:Key="PageCaption" />
             <conv:BookStatusConverter x:Key="BookStatus" />
             <conv:SelectedTabToBrushConverter x:Key="SelectedTab" />
+            <conv:PageToBitmapConverter x:Key="PageToBitmap" />
         </ResourceDictionary>
     </Application.Resources>
 

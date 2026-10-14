@@ -249,7 +249,7 @@
                                                                   edges a photographer chose, and moving the window to a
                                                                   monitor with a different scaling used to crop more of it. -->
                                                         <Image Stretch="Uniform"
-                                                               Source="{Binding SourcePath, Converter={StaticResource FilePathToBitmap}, ConverterParameter=360}" />
+                                                               Source="{Binding Converter={StaticResource PageToBitmap}, ConverterParameter=360}" />
 
                                                         <!-- the file name, on the photograph -->
                                                         <Border VerticalAlignment="Top"

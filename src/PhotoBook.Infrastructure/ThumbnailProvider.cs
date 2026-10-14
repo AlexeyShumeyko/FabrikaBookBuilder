@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using PhotoBook.Application;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
 
@@ -137,7 +138,32 @@ namespace PhotoBook.Infrastructure
                         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                             Directory.CreateDirectory(directory);
 
-                        using var image = Image.Load(sourcePath);
+                        // The size is settled BEFORE the photograph is decoded, and the decoder
+                        // scales as it goes.
+                        //
+                        // Decoding first and shrinking afterwards means the whole original
+                        // exists in memory at once: about 96 MB per photograph, which is what
+                        // this class's own notes above measured, and it is why opening a
+                        // project of eighteen spreads cost 12.3 seconds of CPU and 824 MB.
+                        // Asking the decoder for a smaller image means the original pixels are
+                        // never produced - the scaling happens inside the decoder, which is
+                        // what it is for. The reduced copy afterwards is then a no-op.
+                        var info = Image.Identify(sourcePath);
+                        if (info is null) return string.Empty;
+
+                        // TargetSize can only be set while the options are being built, and the
+                        // options go first in this overload. A photograph that is already small
+                        // enough is loaded plainly - asking for a larger box than the original
+                        // would make the decoder scale it up, which is not a reduced copy.
+                        DecoderOptions? options =
+                            info.Width > MaxSize || info.Height > MaxSize
+                                ? new DecoderOptions { TargetSize = Fit(info.Width, info.Height, MaxSize) }
+                                : null;
+
+                        using var image = options is null
+                            ? Image.Load(sourcePath)
+                            : Image.Load(options, sourcePath);
+
                         var ratio = Math.Min((double)MaxSize / image.Width, (double)MaxSize / image.Height);
                         var target = new Size((int)(image.Width * ratio), (int)(image.Height * ratio));
 
@@ -166,6 +192,17 @@ namespace PhotoBook.Infrastructure
             {
                 _gate.Release();
             }
+        }
+
+        /// <summary>The box a photograph of this size is reduced into, proportions kept.</summary>
+        private static Size Fit(int width, int height, int max)
+        {
+            if (width <= 0 || height <= 0) return new Size(max, max);
+
+            double ratio = Math.Min((double)max / width, (double)max / height);
+            return new Size(
+                Math.Max(1, (int)Math.Round(width * ratio)),
+                Math.Max(1, (int)Math.Round(height * ratio)));
         }
 
         private static void Write(Image image, string path)

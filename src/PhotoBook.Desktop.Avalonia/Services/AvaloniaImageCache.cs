@@ -46,6 +46,19 @@ namespace PhotoBook.Shell.Services
         /// decoded again - which is a stutter that grows with the folder. Shedding a quarter
         /// means the worst case is a quarter of them, and it cannot compound.
         /// </remarks>
+        /// <summary>
+        /// Largest picture this cache will ever produce, whatever the caller asks for.
+        /// </summary>
+        /// <remarks>
+        /// Nothing in this shell draws a photograph at its original size: a cell draws a
+        /// reduced copy, and exporting writes the file to disk rather than reading it into
+        /// memory. So the largest size that is ever needed is a generous one, and asking for
+        /// "whatever it is" is answered with that rather than with the truth. It is what
+        /// turned a project open into 1.5 GB: the preparation pass decoded every original in
+        /// full and kept them, and nothing ever drew one.
+        /// </remarks>
+        private const int LargestUseful = 1024;
+
         private const int MaxCached = 600;
 
         private readonly ConcurrentDictionary<string, Bitmap?> _cache =
@@ -67,30 +80,36 @@ namespace PhotoBook.Shell.Services
         }
 
         /// <summary>
-        /// Decodes ahead of the first paint, off the drawing thread. A photograph that cannot
-        /// be read is not an error here: the tile that shows it says so.
+        /// Decodes ahead of the first paint, off the drawing thread.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// In this shell it does nothing, and that is the decision, not an omission.
+        /// </para>
+        /// <para>
+        /// The contract asks for a preparation pass over the originals. Here the originals
+        /// are the one thing a cell must not read: a reduced copy exists by the time a
+        /// project is on screen, it is a few dozen kilobytes, and reading the 18-megabyte
+        /// original to produce something nobody draws is what made opening a project cost
+        /// 9.4 seconds of CPU and 1.5 GB. The pass still happens - the reduced copies are
+        /// built by the thumbnail service, and that is the part that takes the time and the
+        /// part that is worth taking.
+        /// </para>
+        /// <para>
+        /// The other shell's version does decode, at the size a cell draws, and is right to:
+        /// its cells may still have to fall back to an original when a reduced copy is
+        /// missing. Making this one do the same thing would undo the whole point.
+        /// </para>
+        /// </remarks>
         public Task PrewarmAsync(
             IEnumerable<string>? filePaths,
-            CancellationToken cancellationToken = default)
-            => PrewarmAsync(filePaths, 0, cancellationToken);
+            CancellationToken cancellationToken = default) => Task.CompletedTask;
 
         /// <summary>The same, at the size the cells will draw it.</summary>
-        public async Task PrewarmAsync(
+        public Task PrewarmAsync(
             IEnumerable<string>? filePaths,
             int targetWidth,
-            CancellationToken cancellationToken = default)
-        {
-            if (filePaths is null) return;
-
-            foreach (var path in filePaths)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                if (string.IsNullOrEmpty(path) || _cache.ContainsKey(Key(path, targetWidth))) continue;
-
-                await Task.Run(() => Decode(path, targetWidth), cancellationToken).ConfigureAwait(false);
-            }
-        }
+            CancellationToken cancellationToken = default) => Task.CompletedTask;
 
         /// <summary>
         /// The decoded image for a path at a given width, or null. Null covers both "not
@@ -129,13 +148,12 @@ namespace PhotoBook.Shell.Services
             {
                 if (!File.Exists(filePath)) return null;
 
-                // Zero means "whatever it is", and the sized call is the whole point of this
-                // class: decoding a 48-pixel tile out of a four-thousand-pixel photograph is
-                // the single most expensive thing a file list can do on the thread that draws.
-                if (targetWidth <= 0) return new Bitmap(filePath);
+                // The size asked for, or the largest one that is ever useful. Never the
+                // original: see LargestUseful.
+                int width = targetWidth <= 0 ? LargestUseful : targetWidth;
 
                 using var stream = File.OpenRead(filePath);
-                return Bitmap.DecodeToWidth(stream, targetWidth, BitmapInterpolationMode.HighQuality);
+                return Bitmap.DecodeToWidth(stream, width, BitmapInterpolationMode.HighQuality);
             }
             catch
             {
