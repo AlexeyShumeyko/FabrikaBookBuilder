@@ -379,14 +379,26 @@
                         </StackPanel>
                     </Border>
 
-                    <ItemsControl ItemsSource="{Binding Books}"
-                                  IsVisible="{Binding HasStructure}">
+                    <!--
+                        ONE card for the whole run, and a hairline between books.
+
+                        It was one card per book, and a column of separate cards is a column
+                        of separate things: the eye reads the gaps and not the run, and "there
+                        is one more book below" has to be said. A single card with a line
+                        between its parts says it by being one thing.
+                    -->
+                    <Border Classes="card" Padding="20" Margin="0,0,0,16"
+                            IsVisible="{Binding HasStructure}">
+
+                    <ItemsControl ItemsSource="{Binding Books}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <!-- Each book is its own white card. Without the card the
-                                     books ran together into one field. -->
-                                <Border Classes="card" Padding="20" Margin="0,0,0,16">
-                                    <StackPanel>
+                                <StackPanel>
+
+                                        <!-- One hairline above every book but the first. -->
+                                        <Border Height="1" Background="{DynamicResource Slate100}"
+                                                Margin="0,0,0,16"
+                                                IsVisible="{Binding BookIndex, Converter={StaticResource PageState}, ConverterParameter=notfirst}" />
 
                                         <!-- book header: the number IS the name -->
                                         <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
@@ -484,7 +496,7 @@
                                                                     </MultiBinding>
                                                                 </Grid.Height>
 
-                                                                <Image x:Name="SlotPhoto" Stretch="Uniform"
+                                                                <Image x:Name="SlotPhoto" Stretch="UniformToFill"
                                                                        IsHitTestVisible="False"
                                                                        IsVisible="{Binding Converter={StaticResource PageState}, ConverterParameter=hasphoto}"
                                                                        Source="{Binding Converter={StaticResource PageToBitmap}, ConverterParameter=360}" />
@@ -600,11 +612,12 @@
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
                                     </StackPanel>
-                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </StackPanel>
+
+                </Border>
+            </StackPanel>
             </ScrollViewer>
         </Grid>
     </Grid>

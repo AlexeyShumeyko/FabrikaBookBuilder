@@ -99,6 +99,11 @@ namespace PhotoBook.Shell.Converters
                 };
             }
 
+            // The first book in the run carries no line above it. Every one after it does:
+            // without the line, two books read as two separate things, and the eye stops
+            // at the gap and never notices there is a third.
+            if (role == "notfirst" && value is int index) return index > 1;
+
             return role == "structurecomplete" && value is bool complete
                 ? Solid(complete ? "#059669" : "#EF4444")
                 : string.Empty;
