@@ -1,4 +1,6 @@
 using System;
+using Avalonia.Controls;
+using PhotoBook.Application;
 using PhotoBook.Core;
 using PhotoBook.Presentation.ViewModels;
 
@@ -9,38 +11,89 @@ namespace PhotoBook.Shell.Navigation
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The project list needs exactly four things from the shell around it: what the current
-    /// mode is, how to open a project, how to end a session, and where an opened project
-    /// should be handed. Everything else it decides for itself.
+    /// The project list needs four things from the shell around it: the current mode, how to
+    /// open a project, how to end a session, and where an opened project should be handed.
+    /// Everything else it decides for itself.
     /// </para>
     /// <para>
-    /// Until the editors are ported, <see cref="EditorFor"/> has no editor to name and
-    /// <see cref="HandProjectToEditor"/> has nowhere to hand anything to. Both say so rather
-    /// than guessing: a list that opened a project into nothing would look like the data was
-    /// lost, which is the one thing it must never look like.
+    /// <b>The navigator drives the window.</b> It is the one that knows which screen a mode
+    /// means, and it is the one that makes sure an editor has its project before its screen
+    /// exists to show it. The window holds whatever it is given - the same shape as the WPF
+    /// shell's navigator, which is the point: one behaviour, written twice.
     /// </para>
     /// </remarks>
     public class AvaloniaNavigator : IShellNavigator
     {
-        /// <summary>Raised whenever <see cref="CurrentMode"/> changes, so the shell can repaint.</summary>
-        public event EventHandler<AppMode>? ModeChanged;
+        private readonly IScreenViewFactory _screens;
+        private readonly UniqueFoldersViewModel _uniqueFolders;
+        private readonly CombinedModeViewModel _combined;
 
+        private ContentControl? _host;
         private AppMode _currentMode = AppMode.ProjectList;
+        private (Project Project, ProjectInfo Record)? _pending;
+
+        public AvaloniaNavigator(
+            IScreenViewFactory screens,
+            UniqueFoldersViewModel uniqueFolders,
+            CombinedModeViewModel combined,
+            Func<ProjectListViewModel> projectListProvider)
+        {
+            _screens = screens;
+            _uniqueFolders = uniqueFolders;
+            _combined = combined;
+            ProjectListProvider = projectListProvider;
+        }
+
+        /// <summary>Builds the next projects list, once per visit.</summary>
+        public Func<ProjectListViewModel> ProjectListProvider { get; }
+
+        /// <summary>Raised whenever the mode changes, so a shell can react.</summary>
+        public event EventHandler<AppMode>? ModeChanged;
 
         public AppMode CurrentMode
         {
             get => _currentMode;
             set
             {
-                if (_currentMode == value) return;
+                bool changed = _currentMode != value;
                 _currentMode = value;
+                if (changed || _host?.Content is null) Show();
                 ModeChanged?.Invoke(this, value);
             }
         }
 
-        /// <summary>The project list is the first screen this shell has, so it opens it.</summary>
-        public void OpenProject(AppMode mode)
-            => CurrentMode = mode;
+        /// <summary>
+        /// Gives the navigator the place it puts screens. The window does not exist when the
+        /// container is built, so this comes afterwards - and it is the only thing the
+        /// navigator needs from the window.
+        /// </summary>
+        public void Attach(ContentControl host)
+        {
+            _host = host;
+            Show();
+        }
+
+        /// <summary>Puts the current mode's screen on the window.</summary>
+        public void Show()
+        {
+            if (_host is null) return;
+
+            // The projects list is built per visit - it exists to show the projects as they
+            // are at the moment it is opened - so it is created here rather than kept. The
+            // editors are singletons and come back exactly as they were left.
+            var viewModel = _currentMode switch
+            {
+                AppMode.UniqueFolders => (object)_uniqueFolders,
+                AppMode.Combined => _combined,
+                _ => ProjectListProvider()
+            };
+
+            _host.Content = _screens.CreateScreen(_currentMode, viewModel);
+
+            DeliverPending();
+        }
+
+        public void OpenProject(AppMode mode) => CurrentMode = mode;
 
         /// <summary>
         /// Not built yet. Creating a project opens the mode-select screen, and that screen is
@@ -51,16 +104,39 @@ namespace PhotoBook.Shell.Navigation
 
         public void EndSession() => CurrentMode = AppMode.ProjectList;
 
-        /// <summary>No editor exists in this shell yet, so there is none to name.</summary>
-        public IProjectEditor? EditorFor(AppMode mode) => null;
+        public IProjectEditor? EditorFor(AppMode mode) => mode switch
+        {
+            AppMode.UniqueFolders => _uniqueFolders,
+            AppMode.Combined => _combined,
+            _ => null
+        };
 
         /// <summary>
-        /// Nowhere to hand the project to. Silent rather than an exception, because the open
-        /// path runs from a command and an exception there would end the process with no
-        /// explanation - which is what a missing editor must never look like.
+        /// Hands an opened project to the editor that owns its mode.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The hand-over is held rather than performed when the caller asks. The screen for a
+        /// mode is created after the mode changes, and an editor asked for a project before
+        /// its screen exists has nowhere to show it - which in the WPF shell needed two
+        /// dispatches at Loaded priority, and is the reason that wait is written once, here,
+        /// rather than at every call site.
+        /// </para>
+        /// <para>
+        /// Delivery happens immediately after the screen is set, which in this engine is
+        /// synchronous: the content is in place before the layout pass that binds it. No
+        /// waiting, and no chance of a project arriving at an editor that cannot see it yet.
+        /// </para>
+        /// </remarks>
         public void HandProjectToEditor(Project project, ProjectInfo record)
+            => _pending = (project, record);
+
+        private void DeliverPending()
         {
+            if (_pending is not { } pending) return;
+            _pending = null;
+
+            EditorFor(pending.Record.Mode)?.SetProject(pending.Project, pending.Record);
         }
     }
 }

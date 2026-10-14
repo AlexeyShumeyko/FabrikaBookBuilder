@@ -100,4 +100,53 @@
         <Setter Property="Foreground" Value="#EF4444" />
     </Style>
 
+<Style Selector="Button.secondary">
+        <Setter Property="Background" Value="{DynamicResource Slate100}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
+        <Setter Property="Opacity" Value="0.85" />
+    </Style>
+
+    <!-- The two arrows under a slot. Padding 2, so the pill is exactly as tight as the
+         spec asks and the whole thing disappears into the card's footer rather than
+         competing with the caption for room. -->
+    <Style Selector="Button.arrow">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.arrow:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Slate200}" />
+    </Style>
+
 </Styles>

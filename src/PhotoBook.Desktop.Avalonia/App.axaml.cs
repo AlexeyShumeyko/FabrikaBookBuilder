@@ -1,17 +1,20 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using PhotoBook.Application;
+using PhotoBook.Core;
 using PhotoBook.Infrastructure;
 using PhotoBook.Presentation;
 using PhotoBook.Presentation.ViewModels;
 using PhotoBook.Shell.Converters;
 using PhotoBook.Shell.Navigation;
-using PhotoBook.Shell.Services;
+using PhotoBook.Shell.Platform;
 using PhotoBook.Shell.Services;
 using PhotoBook.Shell.Views;
 
@@ -55,12 +58,12 @@ public partial class App : Avalonia.Application
             FilePathToBitmapConverter.Attach(_services);
 
             var navigator = _services.GetRequiredService<AvaloniaNavigator>();
-
             var window = new MainWindow();
-            window.ShowScreen(new ProjectListView
-            {
-                DataContext = _services.GetRequiredService<ProjectListViewModel>()
-            });
+
+            // The navigator drives the window: it is the thing that knows which screen a mode
+            // means, so the window only has to hold what it is given. Attaching is also what
+            // puts the first screen up, so nothing is shown beforehand.
+            navigator.Attach(window.ScreenHost);
 
             desktop.MainWindow = window;
 
@@ -80,6 +83,13 @@ public partial class App : Avalonia.Application
     /// </summary>
     private void ConfigureServices(IServiceCollection services)
     {
+        // The journal first, before anything can fail. This shell is a windowed application
+        // with no console, so without this every warning it writes - a file that will not
+        // decode, an index that could not be saved - goes nowhere at all. The WPF shell
+        // installs it for the same reason, and the second shell quietly not doing it is
+        // exactly the kind of difference between shells that nobody notices.
+        Diagnostics.InstallJournal();
+
         services.AddLogging();
 
         services.AddPhotoBookApplication();
@@ -88,19 +98,37 @@ public partial class App : Avalonia.Application
 
         // This shell's own answers to the ports. Everything above this line is shared.
         services.AddSingleton<IProjectDialogs, AvaloniaProjectDialogs>();
-        services.AddSingleton<AvaloniaNavigator>();
-        services.AddSingleton<IShellNavigator>(sp => sp.GetRequiredService<AvaloniaNavigator>());
         services.AddSingleton<IUiThread, AvaloniaUiThread>();
+        services.AddSingleton<IPickFiles, AvaloniaPickFiles>();
+
+        // The windows that collect an answer - export options, folder picker, page number -
+        // are step 3.5. Until then this stands in, so the editors can be constructed at all,
+        // and it fails loudly rather than pretending a cancelled export is a real one.
+        services.AddSingleton<IEditorDialogs, DialogsNotPortedYet>();
 
         // Registered as its own type as well as the port, because the card bindings need to
         // reach a decoded image and the port deliberately does not hand one back.
         services.AddSingleton<AvaloniaImageCache>();
         services.AddSingleton<IDecodedImageCache>(sp => sp.GetRequiredService<AvaloniaImageCache>());
 
-        // The project list's view model is not a singleton: it is built per visit, because it
-        // exists to show the projects as they are at the moment it is opened. The navigator
-        // creates it, which is why it is registered as transient rather than resolved here.
+        // Both of these are registered through factories rather than by type, because each
+        // one needs a Func<ProjectListViewModel>: the projects list is built per visit, and
+        // the container cannot construct a delegate on its own.
+        services.AddSingleton<IScreenViewFactory>(sp => new AvaloniaScreenViewFactory(
+            sp.GetRequiredService<UniqueFoldersViewModel>(),
+            sp.GetRequiredService<CombinedModeViewModel>(),
+            () => sp.GetRequiredService<ProjectListViewModel>()));
+
+        services.AddSingleton(sp => new AvaloniaNavigator(
+            sp.GetRequiredService<IScreenViewFactory>(),
+            sp.GetRequiredService<UniqueFoldersViewModel>(),
+            sp.GetRequiredService<CombinedModeViewModel>(),
+            () => sp.GetRequiredService<ProjectListViewModel>()));
+
+        services.AddSingleton<IShellNavigator>(sp => sp.GetRequiredService<AvaloniaNavigator>());
+
+        // The projects list is not a singleton: it is built per visit, because it exists to
+        // show the projects as they are at the moment it is opened. The navigator creates it.
         services.AddTransient<ProjectListViewModel>();
     }
 }
-

@@ -33,6 +33,9 @@
             <conv:FilePathToBitmapConverter x:Key="FilePathToBitmap" />
             <conv:NotEmptyConverter x:Key="NotEmpty" />
             <conv:CardWidthConverter x:Key="CardWidth" />
+            <conv:AdaptiveCardSizeConverter x:Key="AdaptiveCardSize" />
+            <conv:PageCaptionConverter x:Key="PageCaption" />
+            <conv:BookStatusConverter x:Key="BookStatus" />
         </ResourceDictionary>
     </Application.Resources>
 
