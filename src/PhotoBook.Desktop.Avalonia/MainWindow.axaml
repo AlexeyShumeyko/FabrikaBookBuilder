@@ -51,29 +51,29 @@
                 <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
                         Background="{DynamicResource Slate200At70}" CornerRadius="12" Padding="4">
                     <StackPanel Orientation="Horizontal">
-                        <ToggleButton Classes="tab" AutomationProperties.Name="Мои проекты"
+                        <RadioButton Classes="tab" AutomationProperties.Name="Мои проекты"
                                       Background="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
                                       Foreground="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToProjectsCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                            Opacity="0.8"
-                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}" />
                                 <TextBlock Text="Мои проекты" />
                             </StackPanel>
-                        </ToggleButton>
-                        <ToggleButton Classes="tab" AutomationProperties.Name="Выбор режима"
+                        </RadioButton>
+                        <RadioButton Classes="tab" AutomationProperties.Name="Выбор режима"
                                       Background="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
                                       Foreground="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToModeSelectCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="&#xE71C;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                            Opacity="0.8"
-                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}" />
                                 <TextBlock Text="Выбор режима" />
                             </StackPanel>
-                        </ToggleButton>
-                        <ToggleButton Classes="tab" AutomationProperties.Name="Уникальные папки"
+                        </RadioButton>
+                        <RadioButton Classes="tab" AutomationProperties.Name="Уникальные папки"
                                       IsEnabled="{Binding CanOpenUniqueFoldersTab}"
                                       ToolTip.Tip="Открывается только внутри проекта"
                                       Background="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
@@ -82,11 +82,11 @@
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                            Opacity="0.8"
-                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}" />
                                 <TextBlock Text="Уникальные папки" />
                             </StackPanel>
-                        </ToggleButton>
-                        <ToggleButton Classes="tab" AutomationProperties.Name="Комбинированный"
+                        </RadioButton>
+                        <RadioButton Classes="tab" AutomationProperties.Name="Комбинированный"
                                       IsEnabled="{Binding CanOpenCombinedTab}"
                                       ToolTip.Tip="Открывается только внутри проекта"
                                       Background="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
@@ -95,10 +95,10 @@
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                            Opacity="0.8"
-                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}" />
                                 <TextBlock Text="Комбинированный" />
                             </StackPanel>
-                        </ToggleButton>
+                        </RadioButton>
                     </StackPanel>
                 </Border>
 

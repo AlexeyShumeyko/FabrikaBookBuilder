@@ -137,8 +137,10 @@ try {
         if ($proc.MainWindowHandle -ne 0) { break }
     }
     if ($proc.MainWindowHandle -eq 0) { throw 'no window' }
-    [void][Win2]::ShowWindow($proc.MainWindowHandle, 3)
-    Start-Sleep -Seconds 2
+
+    # Synthetic input goes to the window that has focus. Ask for it once, here, rather than
+    # discovering later that the wheel is landing on something else.
+    Set-WindowFocus $proc.MainWindowHandle
 
     $el = [System.Windows.Automation.AutomationElement]::FromHandle($proc.MainWindowHandle)
     $openLabel = '*' + [char]0x041E + [char]0x0442 + [char]0x043A + [char]0x0440 + [char]0x044B + [char]0x0442 + [char]0x044C + ' ' + [char]0x041F + [char]0x0440 + [char]0x043E + [char]0x0435 + [char]0x043A + [char]0x0442 + '*'
