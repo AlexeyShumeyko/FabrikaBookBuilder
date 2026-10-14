@@ -33,12 +33,20 @@ if (-not (Test-Path $Exe)) {
     throw "the shell is not built: $Exe"
 }
 
-Get-Process -Name 'PhotoBook.Desktop.Avalonia' -ErrorAction SilentlyContinue | Stop-Process -Force
+# Whatever the binary is called. The installed release is the other name, and a capture
+# that leaves it running photographs whichever window it found first.
+$appName = [System.IO.Path]::GetFileNameWithoutExtension($Exe)
+Get-Process -Name $appName -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 1
 
 # -ArgumentList rejects an empty array, so the two cases are spelled out rather than
 # built as a list that is empty half the time.
-$proc = if ($Open) { Start-Process -FilePath $Exe -PassThru -ArgumentList '--open', $Open }
+# The switch that opens a screen straight away belongs to the shell being built here. A
+# released build has never heard of it, and passing it anyway produces a process that
+# exits before a window appears.
+$isDevBuild = $Exe -like '*PhotoBook.Desktop.Avalonia.exe'
+
+$proc = if ($Open -and $isDevBuild) { Start-Process -FilePath $Exe -PassThru -ArgumentList '--open', $Open }
         else { Start-Process -FilePath $Exe -PassThru }
 
 $deadline = (Get-Date).AddSeconds($TimeoutSeconds)

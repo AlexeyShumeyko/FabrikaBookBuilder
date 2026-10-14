@@ -20,9 +20,9 @@
     -->
     <DockPanel LastChildFill="True" Background="{DynamicResource AppBackground}">
 
-    <Border DockPanel.Dock="Top" Margin="32,24,32,20" CornerRadius="16"
+    <Border DockPanel.Dock="Top" Padding="32,12"
             Background="{DynamicResource Surface}"
-            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+            BorderBrush="{DynamicResource Slate200}" BorderThickness="0,0,0,1"
             BoxShadow="{DynamicResource ShadowSubtle}">
         <Grid Margin="20,0" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
 

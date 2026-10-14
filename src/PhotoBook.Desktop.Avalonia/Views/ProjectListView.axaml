@@ -138,14 +138,16 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border Classes="card" Padding="20" Margin="0,0,24,24" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-                            <Grid RowDefinitions="*,Auto">
-                                <!--
-                                    Two rows: everything the project says, and the action. The first
-                                    row takes the slack, so the button sits on the bottom edge of every
-                                    card in the row whatever the card above it needed - which is the one
-                                    thing that makes a row of cards read as a row.
-                                -->
-                                <StackPanel Grid.Row="0">
+                            <!--
+                                The content sits at the top and the button comes straight after
+                                it. Pinning the button to the bottom of the card was tried and
+                                undone against the released program: a card with no photographs in
+                                it has its button high up there, and that is what people know.
+                                Every card in a row is as tall as the row needs, so the slack is
+                                at the bottom of the card - and it is the card's own slack, not a
+                                hole left to be filled.
+                            -->
+                            <StackPanel>
 
                                 <!-- status pill + when it changed -->
                                 <Grid ColumnDefinitions="Auto,*">
@@ -265,9 +267,7 @@
 
                                 <!-- footer: the card's own width of "open", and the one
                                      destructive thing on it -->
-                                </StackPanel>
 
-                                <StackPanel Grid.Row="1">
                                 <Border Height="1" Background="{DynamicResource Slate100}"
                                         Margin="0,16,0,0" />
                                 <Grid ColumnDefinitions="*,Auto" Margin="0,12,0,0">
@@ -289,7 +289,6 @@
                                     </Button>
                                 </Grid>
                                 </StackPanel>
-                            </Grid>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
