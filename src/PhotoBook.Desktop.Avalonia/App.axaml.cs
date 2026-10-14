@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Threading;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
@@ -41,6 +42,53 @@ public partial class App : Avalonia.Application
         // is the platform's own control colours arriving dark while the product's palette
         // stays light, which reads as one stray dark tab and is not one stray dark tab.
         RequestedThemeVariant = ThemeVariant.Light;
+    }
+
+    /// <summary>
+    /// Looks for a newer version once the window is up, and says so if there is one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A failed check is not worth interrupting anyone for: it is logged and forgotten. The
+    /// person who started the program is working, not waiting to be told that the internet
+    /// is having a moment.
+    /// </para>
+    /// <para>
+    /// It runs on the UI thread's scheduler rather than on a pool thread, because showing a
+    /// window is a UI-thread job and asking for one from a background thread is the deadlock
+    /// this wave has already met once.
+    /// </para>
+    /// </remarks>
+    private static async Task CheckForUpdatesLaterAsync(IServiceProvider services)
+    {
+        try
+        {
+            await Task.Delay(2000);
+
+            var feed = services.GetRequiredService<IUpdateFeed>();
+            var update = await feed.CheckForUpdatesAsync();
+            if (!update.IsSuccess || !update.Value) return;
+
+            var latest = await feed.GetLatestVersionAsync();
+            if (string.IsNullOrEmpty(latest)) return;
+
+            var notes = await feed.GetLatestReleaseNotesAsync();
+
+            Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                var window = new UpdateWindow(new UpdateViewModel(feed, latest, notes));
+                var owner = (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+                if (owner is not null) await window.ShowDialog(owner);
+                else await window.ShowDialog(window);
+            });
+        }
+        catch (Exception ex)
+        {
+            // Same rule as everywhere else in the shell: a failure of a background nicety is
+            // written down, not shown.
+            services.GetRequiredService<IJournal>().Write(
+                JournalLevel.Warning, "update", "Проверка обновлений не завершилась", ex);
+        }
     }
 
     private ServiceProvider? _services;
@@ -163,6 +211,11 @@ public partial class App : Avalonia.Application
         // The projects list is not a singleton: it is built per visit, because it exists to
         // show the projects as they are at the moment it is opened. The navigator creates it.
         services.AddTransient<ProjectListViewModel>();
+
+        // The update check starts once the window is up, not before it: the person who
+        // started the program should see the program first, and a window that appears two
+        // seconds late is a window that looks broken on a slow connection.
+        _ = CheckForUpdatesLaterAsync(_services);
     }
 
     /// <summary>
