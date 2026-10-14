@@ -33,6 +33,11 @@ public class PageNumberWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brushes.Transparent;
 
+        // No system frame. The reference draws these as a sheet on the app's own
+        // background, and a title bar with its own minimise and close buttons is a
+        // window belonging to something else.
+        SystemDecorations = SystemDecorations.None;
+
         _field = new TextBox
         {
             FontSize = 14,
@@ -128,8 +133,9 @@ public class PageNumberWindow : Window
                                 VerticalAlignment = VerticalAlignment.Center,
                                 Child = new TextBlock
                                 {
-                                    Text = "",
-                                    FontFamily = new FontFamily("Segoe MDL2 Assets"),
+                                    // The glyph as a code point, not as the character.
+                                    // See the same note in the help window.
+                                    Text = ((char)0xE8FD).ToString(),
                                     FontSize = 15,
                                     Foreground = ConfirmWindow.Brush("#4F46E5"),
                                     HorizontalAlignment = HorizontalAlignment.Center,

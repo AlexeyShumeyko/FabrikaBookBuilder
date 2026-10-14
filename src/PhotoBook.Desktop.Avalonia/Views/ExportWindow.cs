@@ -71,6 +71,11 @@ public class ExportWindow : Window
         ShowInTaskbar = false;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brushes.Transparent;
+
+        // No system frame. The reference draws these as a sheet on the app's own
+        // background, and a title bar with its own minimise and close buttons is a
+        // window belonging to something else.
+        SystemDecorations = SystemDecorations.None;
         FontFamily = new FontFamily("Inter");
 
         _exportButton = Button("Выгрузить", accent: true);
@@ -133,7 +138,7 @@ public class ExportWindow : Window
             Spacing = 9,
             Children =
             {
-                Glyph("", 11, Ink.Success),
+                Glyph(0xE73E, 11, Ink.Success),
                 new TextBlock { Text = "001-00.jpg, 001-01.jpg, 001-02.jpg", FontSize = 12, VerticalAlignment = VerticalAlignment.Center },
                 new TextBlock
                 {
@@ -157,7 +162,7 @@ public class ExportWindow : Window
         });
         body.Children.Add(new TextBlock
         {
-            Text = "Каждый экспорт получает сво�� папку — файлы прошлой выгрузки не перезаписываются.",
+            Text = "Каждый экспорт получает свою папку — файлы прошлой выгрузки не перезаписываются.",
             FontSize = 10,
             Foreground = Ink.Faint,
             TextWrapping = TextWrapping.Wrap,
@@ -242,7 +247,7 @@ public class ExportWindow : Window
                     CornerRadius = new CornerRadius(10),
                     Background = Ink.AccentTint,
                     VerticalAlignment = VerticalAlignment.Center,
-                    Child = Glyph("", 15, Ink.Accent)
+                    Child = Glyph(0xE8A7, 15, Ink.Accent)
                 },
                 new TextBlock
                 {
@@ -267,7 +272,7 @@ public class ExportWindow : Window
             Padding = new Thickness(8),
             Cursor = new Cursor(StandardCursorType.Hand)
         };
-        close.Content = Glyph("", 13, Ink.Muted2);
+        close.Content = Glyph(0xE711, 13, Ink.Muted2);
         close.Click += (_, _) => { if (!_running) Close(); };
         return close;
     }
@@ -427,9 +432,9 @@ public class ExportWindow : Window
         Margin = new Thickness(0, top, 0, bottom)
     };
 
-    private static Control Glyph(string code, double size, IBrush brush) => new TextBlock
+    private static Control Glyph(int codePoint, double size, IBrush brush) => new TextBlock
     {
-        Text = code,
+        Text = ((char)codePoint).ToString(),
         FontFamily = new FontFamily("Segoe MDL2 Assets"),
         FontSize = size,
         Foreground = brush

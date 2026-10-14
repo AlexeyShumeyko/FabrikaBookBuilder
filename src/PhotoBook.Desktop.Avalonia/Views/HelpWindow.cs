@@ -37,6 +37,11 @@ public class HelpWindow : Window
         ShowInTaskbar = false;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         Background = Brushes.Transparent;
+
+        // No system frame. The reference draws these as a sheet on the app's own
+        // background, and a title bar with its own minimise and close buttons is a
+        // window belonging to something else.
+        SystemDecorations = SystemDecorations.None;
         FontFamily = new FontFamily("Inter");
 
         Content = Build();
@@ -147,45 +152,60 @@ public class HelpWindow : Window
         };
     }
 
-    private static Control Header() => new Grid
+    /// <summary>
+    /// The icon tile on the left, the title beside it.
+    /// </summary>
+    /// <remarks>
+    /// Both columns are named rather than left to the order the children are written in: the
+    /// tile is the left one, and until it was said out loud it came out to the right of the
+    /// title - which is not a mistake a screenshot of the whole window would catch, because
+    /// the tile was still there, just on the wrong side of the words.
+    /// </remarks>
+    private static Control Header()
     {
-        ColumnDefinitions = new ColumnDefinitions("Auto,*"),
-        Margin = new Thickness(0, 0, 0, 16),
-        Children =
+        var tile = new Border
         {
-            new Border
+            Width = 36,
+            Height = 36,
+            CornerRadius = new CornerRadius(10),
+            Background = ConfirmWindow.Brush("#EEF2FF"),
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = Glyph(0xE897, 15, "#4F46E5")
+        };
+
+        var title = new StackPanel
+        {
+            Margin = new Thickness(12, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Children =
             {
-                Width = 36,
-                Height = 36,
-                CornerRadius = new CornerRadius(10),
-                Background = ConfirmWindow.Brush("#EEF2FF"),
-                VerticalAlignment = VerticalAlignment.Center,
-                Child = Glyph("", 15, "#4F46E5")
-            },
-            new StackPanel
-            {
-                Margin = new Thickness(12, 0, 0, 0),
-                VerticalAlignment = VerticalAlignment.Center,
-                Children =
+                new TextBlock
                 {
-                    new TextBlock
-                    {
-                        Text = "Помощь",
-                        FontSize = 16,
-                        FontWeight = FontWeight.Bold,
-                        Foreground = ConfirmWindow.Brush("#0F172A")
-                    },
-                    new TextBlock
-                    {
-                        Text = "Раздел готовится и появится в ближайших обновлениях",
-                        FontSize = 12,
-                        Foreground = ConfirmWindow.Brush("#64748B"),
-                        Margin = new Thickness(0, 2, 0, 0)
-                    }
+                    Text = "Помощь",
+                    FontSize = 16,
+                    FontWeight = FontWeight.Bold,
+                    Foreground = ConfirmWindow.Brush("#0F172A")
+                },
+                new TextBlock
+                {
+                    Text = "Раздел готовится и появится в ближайших обновлениях",
+                    FontSize = 12,
+                    Foreground = ConfirmWindow.Brush("#64748B"),
+                    Margin = new Thickness(0, 2, 0, 0)
                 }
             }
-        }
-    };
+        };
+
+        Grid.SetColumn(tile, 0);
+        Grid.SetColumn(title, 1);
+
+        return new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+            Margin = new Thickness(0, 0, 0, 16),
+            Children = { tile, title }
+        };
+    }
 
     private static Control JournalPathBox()
     {
@@ -243,9 +263,18 @@ public class HelpWindow : Window
         Margin = new Thickness(left, 0, 0, 0)
     };
 
-    private static Control Glyph(string code, double size, string brush) => new TextBlock
+    /// <summary>
+    /// One icon glyph, written as its code point.
+    /// </summary>
+    /// <remarks>
+    /// A number rather than the character itself. These live in the private use area, and a
+    /// private use character does not survive being written, read and written again by
+    /// different tools - it came back as a neighbouring code point twice, which renders as
+    /// nothing at all rather than as an error. A number is the glyph.
+    /// </remarks>
+    private static Control Glyph(int codePoint, double size, string brush) => new TextBlock
     {
-        Text = code,
+        Text = ((char)codePoint).ToString(),
         FontFamily = new FontFamily("Segoe MDL2 Assets"),
         FontSize = size,
         Foreground = ConfirmWindow.Brush(brush),
