@@ -39,15 +39,32 @@
         <Setter Property="Cursor" Value="Hand" />
     </Style>
 
+    <!--
+        An icon button is an icon and nothing else: no plate, no frame, no fill. The other
+        shell's version is a transparent rounded rectangle with 8 of padding around a 14px
+        glyph, and this one had a white fill, a grey border and a fixed 32x32 box - which
+        turned three quiet icons in the header into three framed buttons, and was the first
+        thing anyone noticed was wrong.
+
+        The faint foreground is the same faint the other shell uses for its icon buttons.
+    -->
     <Style Selector="Button.icon">
-        <Setter Property="Background" Value="{DynamicResource Surface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Width" Value="32" />
-        <Setter Property="Height" Value="32" />
-        <Setter Property="Padding" Value="0" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
         <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="Button.icon:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Slate100}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
+    </Style>
+
+    <Style Selector="Button.icon:pressed">
+        <Setter Property="Background" Value="{DynamicResource Slate200}" />
     </Style>
 
     <Style Selector="ToggleButton.tab">

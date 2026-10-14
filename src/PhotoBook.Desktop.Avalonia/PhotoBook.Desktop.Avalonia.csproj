@@ -52,6 +52,11 @@
     <ProjectReference Include="..\PhotoBook.Core\PhotoBook.Core.csproj" />
     <ProjectReference Include="..\PhotoBook.Application\PhotoBook.Application.csproj" />
     <ProjectReference Include="..\PhotoBook.Infrastructure\PhotoBook.Infrastructure.csproj" />
+    <!-- The company's own artwork, the yellow disc in the header. Named here rather than
+         left to the default glob: a resource that did not get picked up is a crash at
+         start-up, in the engine's own vocabulary, with nothing in the message that says
+         "image missing". -->
+    <AvaloniaResource Include="Assets\logo.png" />
     <ProjectReference Include="..\PhotoBook.Presentation\PhotoBook.Presentation.csproj" />
   </ItemGroup>
 

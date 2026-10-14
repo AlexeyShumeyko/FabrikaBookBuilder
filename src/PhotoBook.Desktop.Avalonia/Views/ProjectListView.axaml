@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:PhotoBook.Shell.Views"
              x:Class="PhotoBook.Shell.Views.ProjectListView"
              FontFamily="Inter">
 
@@ -121,29 +122,22 @@
                  that looks like it has six projects.
             -->
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <ItemsControl ItemsSource="{Binding Projects}" x:Name="CardRow">
+            <ItemsControl ItemsSource="{Binding Projects}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                    <!--
-                         A wrap panel, not a uniform grid. A uniform grid gives every cell
-                         the height of the tallest one, and cards of different heights then
-                         overlap or clip: the statistics get cut off and the footer
-                         disappears. A wrap panel sizes each row to its own content; a card's
-                         width is measured from this row's own width, not derived from it.
-                    -->
-                        <WrapPanel Orientation="Horizontal" />
+                    <!-- Three columns, every card in a row as tall as the tallest card beside it.
+                     The platform's uniform grid makes every cell in the list one height and
+                     clips the long ones; a wrapping panel makes each card its own height and
+                     an empty project comes out visibly shorter than its neighbours. Neither
+                     is what the other shell does - it puts three columns in a grid and lets
+                     each row be as tall as that row needs. That is the whole of what this
+                     panel is. -->
+                        <local:ThreeColumnPanel />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <!-- VerticalAlignment="Top" is not decoration. A UniformGrid gives every cell
-                             the height of the tallest, and a card that is stretched to that height
-                             clips its own statistics and hides its footer. This is the same rule
-                             the WPF shell learned the hard way. -->
-                        <Border Classes="card" Padding="20" Margin="0,0,24,24"
-                                VerticalAlignment="Top"
-                                HorizontalAlignment="Left"
-                                Width="{Binding Bounds.Width, ElementName=CardRow, Converter={StaticResource CardWidth}}">
+                        <Border Classes="card" Padding="20">
                             <StackPanel>
 
                                 <!-- status pill + when it changed -->
@@ -232,49 +226,56 @@
                                     </Border>
                                 </StackPanel>
 
-                                <!-- two numbers: label beside, number in bold -->
-                                <Border Margin="0,16,0,0" Padding="0,12,0,0"
-                                        BorderBrush="{DynamicResource Slate100}"
-                                        BorderThickness="0,1,0,0">
-                                    <StackPanel Spacing="2">
-                                        <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <TextBlock Text="Книг:" Classes="t12"
-                                                       Foreground="{DynamicResource Slate600}" />
-                                            <TextBlock Text="{Binding BookCount}" Classes="t12Semi"
-                                                       Foreground="{DynamicResource Slate800}" />
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <TextBlock Text="Разворотов:" Classes="t12"
-                                                       Foreground="{DynamicResource Slate600}" />
-                                            <TextBlock Text="{Binding PageCount}" Classes="t12Semi"
-                                                       Foreground="{DynamicResource Slate800}" />
-                                        </StackPanel>
+                                <!-- Two numbers side by side, each behind its own glyph, the figure in bold and
+                                     the unit after it. They sit on one row on purpose: stacked,
+                                     the card grows by a line and the two numbers stop being
+                                     comparable at a glance, which is all they are there for. -->
+                                <Border Height="1" Background="{DynamicResource Slate100}"
+                                        Margin="0,16,0,0" />
+                                <Grid ColumnDefinitions="*,*" Margin="0,12,0,0">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal"
+                                                Spacing="6" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE82D;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="12" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource Slate400}" />
+                                        <TextBlock Classes="t12" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource Slate600}"
+                                                   Text="{Binding BookCount, StringFormat='Книг: {0} шт.'}" />
                                     </StackPanel>
-                                </Border>
 
-                                <!-- footer: open, and the one destructive thing here -->
-                                <Border Margin="0,20,0,0" Padding="0,12,0,0"
-                                        BorderBrush="{DynamicResource Slate100}"
-                                        BorderThickness="0,1,0,0">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <Button Grid.Column="0" Classes="ghost" Padding="12,8"
-                                                HorizontalAlignment="Left"
-                                                AutomationProperties.Name="Открыть проект"
-                                                Command="{Binding DataContext.OpenProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}">
-                                            <TextBlock Text="Открыть проект" Classes="t12Semi" />
-                                        </Button>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                Spacing="6" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE8B9;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="12" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource Slate400}" />
+                                        <TextBlock Classes="t12" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource Slate600}"
+                                                   Text="{Binding PageCount, StringFormat='Разворотов: {0} стр.'}" />
+                                    </StackPanel>
+                                </Grid>
 
-                                        <Button Grid.Column="1" Classes="dangerIcon" Padding="8"
-                                                AutomationProperties.Name="Удалить проект"
-                                                Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}">
-                                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"
-                                                       FontSize="14" Classes="dangerGlyph"
-                                                       Foreground="{DynamicResource Slate400}" />
-                                        </Button>
-                                    </Grid>
-                                </Border>
+                                <!-- footer: the card's own width of "open", and the one
+                                     destructive thing on it -->
+                                <Border Height="1" Background="{DynamicResource Slate100}"
+                                        Margin="0,16,0,0" />
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,12,0,0">
+                                    <Button Grid.Column="0" Classes="secondary" Padding="12,8"
+                                            HorizontalAlignment="Stretch"
+                                            AutomationProperties.Name="Открыть проект"
+                                            Command="{Binding DataContext.OpenProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <TextBlock Text="Открыть проект" Classes="t12Semi" />
+                                    </Button>
+
+                                    <Button Grid.Column="1" Classes="icon" Margin="8,0,0,0"
+                                            AutomationProperties.Name="Удалить проект"
+                                            Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="14"
+                                                   Foreground="{DynamicResource Slate400}" />
+                                    </Button>
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </DataTemplate>

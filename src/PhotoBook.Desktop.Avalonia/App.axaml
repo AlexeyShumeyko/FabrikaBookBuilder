@@ -48,5 +48,6 @@
         <StyleInclude Source="avares://PhotoBook.Desktop.Avalonia/Styles/Typography.axaml" />
         <StyleInclude Source="avares://PhotoBook.Desktop.Avalonia/Styles/Header.axaml" />
         <StyleInclude Source="avares://PhotoBook.Desktop.Avalonia/Styles/Cards.axaml" />
+        <StyleInclude Source="avares://PhotoBook.Desktop.Avalonia/Styles/ScrollBars.axaml" />
     </Application.Styles>
 </Application>

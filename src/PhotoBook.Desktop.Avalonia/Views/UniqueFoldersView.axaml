@@ -183,7 +183,7 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Margin="0,0,16,16" CornerRadius="12"
+                                            <Border Margin="0,0,16,16" CornerRadius="12" ClipToBounds="True"
                                                     BorderBrush="{Binding Converter={StaticResource PageCaption}, ConverterParameter=border}"
                                                     BorderThickness="{Binding Converter={StaticResource PageCaption}, ConverterParameter=borderthickness}">
                                                 <!--
@@ -207,8 +207,14 @@
 
                                                 <StackPanel>
 
-                                                    <!-- the photograph, flush to the edges -->
-                                                    <Panel Height="190" ClipToBounds="True">
+                                                    <!-- the photograph, flush to the edges. The clipping that matters is on the
+                                                     card above: a photo that runs to the edge of a
+                                                     card with rounded corners has to be cut to
+                                                     those same corners, or it squares them
+                                                     off. Clipping the inner panel instead
+                                                     clips to a rectangle and changes
+                                                     nothing. -->
+                                                    <Panel Height="190">
                                                         <Image Stretch="UniformToFill"
                                                                Source="{Binding SourcePath, Converter={StaticResource FilePathToBitmap}}" />
 

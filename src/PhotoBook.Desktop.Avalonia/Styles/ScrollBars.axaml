@@ -1,0 +1,76 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Scrollbars, transcribed from the other shell's theme.
+
+            width       10
+            track       transparent
+            thumb       6 wide, slate-300, radius 3
+            hover       slate-400
+            arrows      none
+
+        The reason this file exists at all: the platform theme's scrollbar is a wide grey
+        trough with a thick handle and two arrow buttons, and it is on screen at all times
+        whether or not anyone needs it. It was the first thing on the screen that looked
+        like a different product. A ten-pixel trough with a six-pixel handle is almost
+        nothing, which is the point.
+
+        One template serves both orientations, as it does in the other shell. Avalonia's own
+        template switches on orientation and sizes the handle to the trough; this one does
+        not, so a horizontal bar gets the same six-pixel handle - there are no horizontal
+        scrollers in this product, and a template that guessed wrong for them would be a
+        guess nobody could check.
+    -->
+    <Style Selector="ScrollBar">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Width" Value="10" />
+        <Setter Property="MinWidth" Value="10" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Panel Background="Transparent">
+                    <Track x:Name="PART_Track" IsDirectionReversed="True">
+                        <Track.Thumb>
+                            <Thumb Classes="slimThumb" />
+                        </Track.Thumb>
+                    </Track>
+                </Panel>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <!--
+        What this costs, written down: clicking the empty trough no longer pages. The other
+        shell has invisible page buttons there, and this engine's track does not accept them
+        - set on a track, they are a compile error, not a runtime one. Wheel, dragging the
+        handle, the keyboard, the mouse wheel and the scroll-viewer's own keys all work, and
+        on a ten-pixel trough the lost gesture is one nobody would have found by accident.
+        It goes back the day the track takes them.
+    -->
+
+    <Style Selector="Thumb.slimThumb">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{DynamicResource Slate300}" CornerRadius="3"
+                        MaxWidth="6" MaxHeight="6"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Thumb.slimThumb:pointerover /template/ Border">
+        <Setter Property="Background" Value="{DynamicResource Slate400}" />
+    </Style>
+
+    <Style Selector="Thumb.slimThumb:pressed /template/ Border">
+        <Setter Property="Background" Value="{DynamicResource Slate400}" />
+    </Style>
+
+    <!--
+        The trough itself is 1px slate-100 in the other shell, set on the ScrollBar rather
+        than on the template, which means it shows through behind the handle. Left
+        transparent here on purpose: at ten pixels wide it sits against the page background
+        anyway, and a visible stripe down the right-hand edge of every screen is exactly the
+        artefact this file was written to remove.
+    -->
+</Styles>

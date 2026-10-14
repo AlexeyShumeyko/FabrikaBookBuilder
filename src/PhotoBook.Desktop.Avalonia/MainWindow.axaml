@@ -20,32 +20,21 @@
                 BoxShadow="{DynamicResource ShadowSubtle}">
             <Grid ColumnDefinitions="Auto,*,Auto">
 
-                <!-- left: logo, then the product name over the open project -->
+                <!-- left: the artwork, then the product name over the open project.
+                     The logo is the company's own picture - a yellow disc on transparency.
+                     It is not a glyph on a coloured plate: there is no plate, and there is no
+                     badge next to the name either. Both were invented here once and both are
+                     gone. -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
 
-                    <Border Width="36" Height="36" CornerRadius="12" VerticalAlignment="Center">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                <GradientStop Offset="0" Color="{DynamicResource Brand600}" />
-                                <GradientStop Offset="1" Color="{DynamicResource Indigo400}" />
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                   Foreground="White"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
+                    <Image Source="avares://PhotoBook.Desktop.Avalonia/Assets/logo.png"
+                           Width="34" Height="34" Stretch="Uniform"
+                           VerticalAlignment="Center"
+                           AutomationProperties.Name="Фабрика Фотокниги" />
 
                     <StackPanel VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <TextBlock Text="Фабрика Фотокниги" Classes="t14Bold" />
-                            <Border Background="{DynamicResource Brand50}"
-                                    BorderBrush="{DynamicResource Brand100}" BorderThickness="1"
-                                    CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                <TextBlock Text="PRO" Classes="t10"
-                                           Foreground="{DynamicResource Brand600}" />
-                            </Border>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="Фабрика Фотокниги" Classes="t14Bold" />
+                        <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
                             <TextBlock Text="Проект:" Classes="t12Medium"
                                        Foreground="{DynamicResource Slate500}" />
                             <TextBlock Classes="t12Semi" MaxWidth="240"
@@ -110,24 +99,26 @@
                 </Border>
 
                 <!-- right: the three header buttons. Stubs until the later steps, and the
-                     tooltips say so rather than letting them be discovered. -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                     tooltips say so rather than letting them be discovered. Six apart, the
+                     way the other shell spaces them; the divider sits twelve from the group
+                     and none from its own edge. -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                     <Border Width="1" Height="24" Background="{DynamicResource Slate200}"
-                            Margin="0,0,4,0" VerticalAlignment="Center" />
+                            Margin="0,0,6,0" VerticalAlignment="Center" />
                     <Button Classes="icon" ToolTip.Tip="Тема оформления — в разработке"
                             AutomationProperties.Name="Тема оформления">
-                        <TextBlock Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                        <TextBlock Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="14"
                                    Foreground="{DynamicResource Slate400}" />
                     </Button>
-                    <Button Classes="icon" ToolTip.Tip="Помощь и журнал работы"
+                    <Button Classes="icon" ToolTip.Tip="Помощь и журнал работы программы"
                             AutomationProperties.Name="Помощь">
-                        <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                   Foreground="{DynamicResource Slate600}" />
+                        <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="{DynamicResource Slate400}" />
                     </Button>
-                    <Button Classes="icon" ToolTip.Tip="Контакты поддержки — в разработке"
+                    <Button Classes="icon" ToolTip.Tip="Контакты — в разработке"
                             AutomationProperties.Name="Контакты">
-                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                   Foreground="{DynamicResource Slate600}" />
+                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="{DynamicResource Slate400}" />
                     </Button>
                 </StackPanel>
             </Grid>
