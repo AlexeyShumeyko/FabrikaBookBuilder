@@ -100,28 +100,39 @@ public partial class UniqueFoldersView : UserControl
     }
 
     /// <summary>
-    /// The action under the caption appears while the card is under the pointer.
+    /// The caption makes way for the action while the card is under the pointer.
     /// </summary>
     /// <remarks>
-    /// Driven from here rather than from a style, because there is no way in this engine to
-    /// make a child visible because its parent is hovered. The button is found by name among
-    /// the card's own descendants, which is stable: it is the only one on the card with that
-    /// name, and the card is what the pointer entered.
+    /// <para>
+    /// They occupy the same half of the same row, so one of them has to go. Which one is a
+    /// fact about the pointer rather than about the page, and the pointer is not in the
+    /// model - which is why this is done here and not by a converter. Bound to the slot
+    /// instead, it hid the caption on every spread and left the two words printed on top of
+    /// each other.
+    /// </para>
+    /// <para>
+    /// A cover has no action to offer, so its caption stays where it is; that is what the
+    /// action's own visibility decides, and the caption only moves if the action appeared.
+    /// </para>
     /// </remarks>
     private void OnCardPointerEntered(object? sender, PointerEventArgs e)
-        => SetCoverAction(sender, visible: true);
+        => SwapCaptionForAction(sender, action: true);
 
     private void OnCardPointerExited(object? sender, PointerEventArgs e)
-        => SetCoverAction(sender, visible: false);
+        => SwapCaptionForAction(sender, action: false);
 
-    private static void SetCoverAction(object? sender, bool visible)
+    private static void SwapCaptionForAction(object? sender, bool action)
     {
         if (sender is not Control card) return;
 
-        var action = card.GetVisualDescendants()
-            .OfType<Button>()
-            .FirstOrDefault(b => b.Name == "AssignCoverAction");
+        var parts = card.GetVisualDescendants().OfType<Control>().ToArray();
 
-        if (action is not null) action.IsVisible = visible;
+        var button = parts.OfType<Button>().FirstOrDefault(b => b.Name == "AssignCoverAction");
+        if (button is null) return;
+
+        button.IsVisible = action;
+
+        var caption = parts.OfType<TextBlock>().FirstOrDefault(t => t.Name == "PageCaption");
+        if (caption is not null) caption.IsVisible = !action;
     }
 }

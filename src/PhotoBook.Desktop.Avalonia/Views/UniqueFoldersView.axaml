@@ -251,15 +251,18 @@
 
                                                     <!-- the caption, and the two arrows -->
                                                     <Grid Margin="10,8,10,10" ColumnDefinitions="*,Auto">
-                                                        <!-- The caption and the action share the left half of the row. Only one is
-                         ever visible: the caption normally, the action while the card is under
-                         the pointer. It is a real button rather than a styled text because it
-                         has to be reachable from the keyboard and show up in automation. -->
+                                                        <!-- The caption and the action share the left half of the row, and only one
+                         of them is ever on screen: the caption normally, the action while the
+                         pointer is on the card. The action is a real button rather than styled
+                         text because it has to be reachable from the keyboard and show up in
+                         automation. Neither is bound to a converter: which one is showing is
+                         a fact about the pointer, and the pointer is not in the model. Binding
+                         the caption's visibility to the slot instead - "hide the caption on
+                         every spread" - is what put the two words on top of each other. -->
                                                     <Grid Grid.Column="0">
-                                                        <TextBlock Classes="t12"
+                                                        <TextBlock Name="PageCaption" Classes="t12"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
-                                                                   IsVisible="{Binding IsCover, Converter={StaticResource NotEmpty}, ConverterParameter=invert}"
                                                                    Foreground="{Binding Converter={StaticResource PageCaption}, ConverterParameter=brush}"
                                                                    Text="{Binding Converter={StaticResource PageCaption}, ConverterParameter=text}" />
 
