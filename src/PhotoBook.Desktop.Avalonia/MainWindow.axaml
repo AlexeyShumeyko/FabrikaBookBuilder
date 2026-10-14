@@ -52,7 +52,8 @@
                         Background="{DynamicResource Slate200At70}" CornerRadius="12" Padding="4">
                     <StackPanel Orientation="Horizontal">
                         <ToggleButton Classes="tab" AutomationProperties.Name="Мои проекты"
-                                      IsChecked="{Binding IsProjectsSelected, Mode=TwoWay}"
+                                      Background="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
+                                      Foreground="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToProjectsCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="12"
@@ -62,7 +63,8 @@
                             </StackPanel>
                         </ToggleButton>
                         <ToggleButton Classes="tab" AutomationProperties.Name="Выбор режима"
-                                      IsChecked="{Binding IsStartSelected, Mode=TwoWay}"
+                                      Background="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
+                                      Foreground="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToModeSelectCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="&#xE71C;" FontFamily="Segoe MDL2 Assets" FontSize="12"
@@ -74,7 +76,8 @@
                         <ToggleButton Classes="tab" AutomationProperties.Name="Уникальные папки"
                                       IsEnabled="{Binding CanOpenUniqueFoldersTab}"
                                       ToolTip.Tip="Открывается только внутри проекта"
-                                      IsChecked="{Binding IsUniqueFoldersSelected, Mode=TwoWay}"
+                                      Background="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
+                                      Foreground="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToUniqueFoldersCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="12"
@@ -86,7 +89,8 @@
                         <ToggleButton Classes="tab" AutomationProperties.Name="Комбинированный"
                                       IsEnabled="{Binding CanOpenCombinedTab}"
                                       ToolTip.Tip="Открывается только внутри проекта"
-                                      IsChecked="{Binding IsCombinedSelected, Mode=TwoWay}"
+                                      Background="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
+                                      Foreground="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToCombinedCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="12"

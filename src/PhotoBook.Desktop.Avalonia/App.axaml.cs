@@ -7,6 +7,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Styling;
 using Microsoft.Extensions.DependencyInjection;
 using PhotoBook.Application;
 using PhotoBook.Core;
@@ -32,6 +33,14 @@ public partial class App : Avalonia.Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+
+        // Set here rather than on the Application element in the markup. A value written on
+        // the root element is applied while the markup is being read, which is after the
+        // platform theme has already chosen a variant - so it arrives too late and silently
+        // does nothing. Set right after loading, it takes. The symptom of getting this wrong
+        // is the platform's own control colours arriving dark while the product's palette
+        // stays light, which reads as one stray dark tab and is not one stray dark tab.
+        RequestedThemeVariant = ThemeVariant.Light;
     }
 
     private ServiceProvider? _services;

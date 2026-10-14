@@ -4,10 +4,22 @@
              x:Class="PhotoBook.Shell.App">
 
     <!--
-        Light on purpose. RequestedThemeVariant is left unset because the product has one
-        theme today, and a theme switch with nothing to switch to is a button that lies. It
-        is one line to set once there is a second theme, and the decision is recorded with
-        the rest of the header stubs.
+        Light, and pinned in App.Initialize rather than here.
+
+        Written on this element it arrives too late: the platform theme has already chosen a
+        variant by the time the markup finishes reading, and the value is accepted and
+        ignored. On a dark machine the platform's own control colours then come in dark while
+        the product's palette - which is light, deliberately, because a photograph has to sit
+        on white - stays light. Being "the light theme on a dark machine" is not a state this
+        product has. The line itself is in the code-behind, next to the comment that explains
+        why it could not go here.
+    -->
+
+    <!--
+        Light on purpose, and pinned above. RequestedThemeVariant is set because the product
+        has one theme today, and a theme switch with nothing to switch to is a button that
+        lies. It is one line to remove once there is a second theme, and the decision is
+        recorded with the rest of the header stubs.
 
         The palette lives in Tokens.axaml and the type scale in Typography.axaml, included
         the same way a dictionary is included in any other Avalonia project: as a merged
@@ -36,6 +48,7 @@
             <conv:AdaptiveCardSizeConverter x:Key="AdaptiveCardSize" />
             <conv:PageCaptionConverter x:Key="PageCaption" />
             <conv:BookStatusConverter x:Key="BookStatus" />
+            <conv:SelectedTabToBrushConverter x:Key="SelectedTab" />
         </ResourceDictionary>
     </Application.Resources>
 

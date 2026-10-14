@@ -78,9 +78,17 @@
         <Setter Property="Cursor" Value="Hand" />
     </Style>
 
+    <!--
+        The selected tab does NOT get its colours from here. The platform theme's rule for a
+        checked toggle button is applied after this one and wins, which is why the checked
+        rule below is kept for shape only and the colour is bound straight from the state -
+        see SelectedTabToBrushConverter, and the note there about what was measured.
+
+        Checked shape, kept so the tab still reads as "chosen" even if a future converter
+        change forgets the colour.
+    -->
     <Style Selector="ToggleButton.tab:checked">
-        <Setter Property="Background" Value="{DynamicResource Surface}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brand600}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 

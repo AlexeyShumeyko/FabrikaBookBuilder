@@ -204,8 +204,10 @@
                                                         BorderThickness="1"
                                                         Background="{DynamicResource Slate100}"
                                                         BorderBrush="{DynamicResource Slate200}">
+                                                    <!-- 96 for a 48-pixel tile: two times the drawn size, so a card that lands on a
+                                                               high-density screen is not scaling a 48-pixel bitmap back up. -->
                                                     <Image Stretch="UniformToFill"
-                                                           Source="{Binding Converter={StaticResource FilePathToBitmap}}" />
+                                                           Source="{Binding Converter={StaticResource FilePathToBitmap}, ConverterParameter=96}" />
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>

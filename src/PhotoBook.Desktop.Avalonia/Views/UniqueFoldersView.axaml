@@ -141,15 +141,15 @@
 
                                     <StackPanel Grid.Column="2" Orientation="Horizontal"
                                                 Spacing="6" VerticalAlignment="Center">
-                                        <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                                   Classes="t12Semi" VerticalAlignment="Center"
-                                                   Foreground="{Binding IsValid, Converter={StaticResource BookStatus}, ConverterParameter=brush}"
-                                                   Text="{Binding IsValid, Converter={StaticResource BookStatus}, ConverterParameter=glyph}" />
-                                        <TextBlock Classes="t12Semi" VerticalAlignment="Center"
-                                                   Foreground="{Binding IsValid, Converter={StaticResource BookStatus}, ConverterParameter=brush}"
-                                                   Text="{Binding IsValid, Converter={StaticResource BookStatus}, ConverterParameter=text}" />
-
-                                        <Button Classes="ghost" Padding="10,6" Margin="8,0,0,0"
+                                        <!--
+                                            The action comes before the state. That is the
+                                            order the reference uses, and it is the right one:
+                                            "reset the order" is something you can do, and
+                                            "the structure is correct" is a fact about the
+                                            book, and a fact reads better after the thing
+                                            it follows than before it.
+                                        -->
+                                        <Button Classes="ghost" Padding="10,6" Margin="0,0,8,0"
                                                 AutomationProperties.Name="Сбросить порядок"
                                                 ToolTip.Tip="Вернуть развороты в исходный порядок"
                                                 Command="{Binding DataContext.ResetBookOrderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -163,12 +163,20 @@
                                             </StackPanel>
                                         </Button>
 
-                                        <Button Classes="dangerIcon" Padding="6"
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                                   Classes="t12Semi" VerticalAlignment="Center"
+                                                   Foreground="{Binding IsValid, Converter={StaticResource BookStatus}, ConverterParameter=brush}"
+                                                   Text="{Binding IsValid, Converter={StaticResource BookStatus}, ConverterParameter=glyph}" />
+                                        <TextBlock Classes="t12Semi" VerticalAlignment="Center"
+                                                   Foreground="{Binding IsValid, Converter={StaticResource BookStatus}, ConverterParameter=brush}"
+                                                   Text="{Binding IsValid, Converter={StaticResource BookStatus}, ConverterParameter=text}" />
+
+                                        <Button Classes="icon" Margin="8,0,0,0"
                                                 AutomationProperties.Name="Удалить книгу"
                                                 Command="{Binding DataContext.DeleteBookCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}">
                                             <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"
-                                                       FontSize="12" Classes="dangerGlyph"
+                                                       FontSize="14"
                                                        Foreground="{DynamicResource Slate400}" />
                                         </Button>
                                     </StackPanel>
@@ -215,8 +223,12 @@
                                                      clips to a rectangle and changes
                                                      nothing. -->
                                                     <Panel Height="190">
+                                                        <!-- 360 for a cell a little under that wide. The photograph is the whole cost of this
+                                                                  screen: decoded at full size it is the reason the list used to
+                                                                  freeze, and it is the reason a long book stuttered while
+                                                                  scrolling. -->
                                                         <Image Stretch="UniformToFill"
-                                                               Source="{Binding SourcePath, Converter={StaticResource FilePathToBitmap}}" />
+                                                               Source="{Binding SourcePath, Converter={StaticResource FilePathToBitmap}, ConverterParameter=360}" />
 
                                                         <!-- the file name, on the photograph -->
                                                         <Border VerticalAlignment="Top"
