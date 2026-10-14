@@ -191,7 +191,9 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Margin="0,0,16,16" CornerRadius="12" ClipToBounds="True"
+                                            <Border Margin="0,0,16,16" CornerRadius="12" ClipToBounds="True" Classes="slotCard"
+                                                    PointerEntered="OnCardPointerEntered"
+                                                    PointerExited="OnCardPointerExited"
                                                     BorderBrush="{Binding Converter={StaticResource PageCaption}, ConverterParameter=border}"
                                                     BorderThickness="{Binding Converter={StaticResource PageCaption}, ConverterParameter=borderthickness}">
                                                 <!--
@@ -223,11 +225,13 @@
                                                      clips to a rectangle and changes
                                                      nothing. -->
                                                     <Panel Height="190">
-                                                        <!-- 360 for a cell a little under that wide. The photograph is the whole cost of this
-                                                                  screen: decoded at full size it is the reason the list used to
-                                                                  freeze, and it is the reason a long book stuttered while
-                                                                  scrolling. -->
-                                                        <Image Stretch="UniformToFill"
+                                                        <!-- 360 for a cell a little under that wide, in layout units - the converter turns it
+                                                                  into device pixels by the monitor's own scaling, which is what keeps a
+                                                                  photo sharp on a dense screen instead of stretched back up.
+                                                                  Fit, not fill: a photograph that is cropped to the cell loses the
+                                                                  edges a photographer chose, and moving the window to a
+                                                                  monitor with a different scaling used to crop more of it. -->
+                                                        <Image Stretch="Uniform"
                                                                Source="{Binding SourcePath, Converter={StaticResource FilePathToBitmap}, ConverterParameter=360}" />
 
                                                         <!-- the file name, on the photograph -->
@@ -247,7 +251,29 @@
 
                                                     <!-- the caption, and the two arrows -->
                                                     <Grid Margin="10,8,10,10" ColumnDefinitions="*,Auto">
-                                                        <TextBlock Grid.Column="0" Classes="t12"
+                                                        <!-- The caption and the action share the left half of the row. Only one is
+                         ever visible: the caption normally, the action while the card is under
+                         the pointer. It is a real button rather than a styled text because it
+                         has to be reachable from the keyboard and show up in automation. -->
+                                                    <Grid Grid.Column="0">
+                                                        <TextBlock Classes="t12"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   IsVisible="{Binding IsCover, Converter={StaticResource NotEmpty}, ConverterParameter=invert}"
+                                                                   Foreground="{Binding Converter={StaticResource PageCaption}, ConverterParameter=brush}"
+                                                                   Text="{Binding Converter={StaticResource PageCaption}, ConverterParameter=text}" />
+
+                                                        <Button Name="AssignCoverAction" Classes="ghost"
+                                                                Padding="0" HorizontalAlignment="Left"
+                                                                IsVisible="False"
+                                                                AutomationProperties.Name="Назначить обложкой"
+                                                                Click="OnAssignCoverClick">
+                                                            <TextBlock Classes="t12Semi"
+                                                                       Foreground="{DynamicResource Emerald600}"
+                                                                       Text="Назначить обложкой" />
+                                                        </Button>
+                                                    </Grid>
+<TextBlock Classes="t12"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Foreground="{Binding Converter={StaticResource PageCaption}, ConverterParameter=brush}"
@@ -259,8 +285,7 @@
                                                             <StackPanel Orientation="Horizontal">
                                                                 <Button Classes="arrow" Padding="4"
                                                                         AutomationProperties.Name="Переместить левее"
-                                                                        Command="{Binding DataContext.MovePageUpCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                                        CommandParameter="{Binding}">
+                                                                        Click="OnMovePageLeftClick">
                                                                     <TextBlock Text="&#xE72B;"
                                                                                FontFamily="Segoe MDL2 Assets"
                                                                                FontSize="12"
@@ -270,8 +295,7 @@
                                                                         Background="{DynamicResource Slate200}" />
                                                                 <Button Classes="arrow" Padding="4"
                                                                         AutomationProperties.Name="Переместить правее"
-                                                                        Command="{Binding DataContext.MovePageDownCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                                        CommandParameter="{Binding}">
+                                                                        Click="OnMovePageRightClick">
                                                                     <TextBlock Text="&#xE72A;"
                                                                                FontFamily="Segoe MDL2 Assets"
                                                                                FontSize="12"

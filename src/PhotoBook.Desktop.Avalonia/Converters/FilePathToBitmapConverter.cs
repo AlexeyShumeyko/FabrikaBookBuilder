@@ -49,7 +49,7 @@ namespace PhotoBook.Shell.Converters
 
         private static int Width(object? parameter) =>
             int.TryParse(parameter?.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var width)
-                ? width
+                ? BitmapScale.Pixels(width)
                 : 0;
     }
 }
