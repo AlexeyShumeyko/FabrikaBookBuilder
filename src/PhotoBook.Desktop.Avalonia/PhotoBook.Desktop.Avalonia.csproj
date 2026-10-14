@@ -42,6 +42,10 @@
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <!-- The header's view model needs change notification and commands. The same toolkit the
+         other two view models use, at the same version, rather than a hand-rolled base that
+         would behave slightly differently from every view model next to it. -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
   </ItemGroup>
 
   <ItemGroup>
