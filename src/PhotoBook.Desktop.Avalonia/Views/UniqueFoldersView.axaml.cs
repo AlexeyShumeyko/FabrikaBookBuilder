@@ -68,6 +68,82 @@ public partial class UniqueFoldersView : UserControl
     }
 
     /// <summary>
+    /// Renaming a project, where its name already is.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A name being renamed is already on screen, and a second window for it is a second
+    /// thing to look at. The whole name is the target, not only the pencil.
+    /// </para>
+    /// <para>
+    /// Order matters when saving. The header shows the project record's name, and the only
+    /// thing that makes it re-read is the notification raised by the name property. Writing
+    /// the record first and the property second is what makes the top bar follow the rename;
+    /// the other way round the rename lands in the panel and the header keeps showing the
+    /// old one.
+    /// </para>
+    /// </remarks>
+    private void OnProjectNamePencilClick(object? sender, RoutedEventArgs e) => BeginProjectRename();
+
+    private void OnProjectNameClick(object? sender, PointerPressedEventArgs e) => BeginProjectRename();
+
+    private void OnProjectNameLostFocus(object? sender, RoutedEventArgs e) => CommitProjectName();
+
+    private void OnProjectNameKeyDown(object? sender, KeyEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case Key.Enter:
+                CommitProjectName();
+                e.Handled = true;
+                break;
+
+            case Key.Escape:
+                ShowProjectNameAsText();
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private void BeginProjectRename()
+    {
+        if (DataContext is not UniqueFoldersViewModel editor) return;
+
+        ProjectNameTextBox.Text = editor.ProjectName ?? string.Empty;
+        ProjectNameTextBlock.IsVisible = false;
+        ProjectNameTextBox.IsVisible = true;
+
+        ProjectNameTextBox.Focus();
+        ProjectNameTextBox.SelectAll();
+    }
+
+    private void CommitProjectName()
+    {
+        if (DataContext is not UniqueFoldersViewModel editor) return;
+
+        ShowProjectNameAsText();
+
+        var newName = ProjectNameTextBox.Text?.Trim();
+        if (string.IsNullOrEmpty(newName) || newName == editor.ProjectName) return;
+
+        if (editor.CurrentProjectInfo is { } info)
+        {
+            info.Name = newName;
+            info.LastModified = DateTime.Now;
+        }
+
+        editor.ProjectName = newName;
+
+        _ = editor.SaveProjectNameOnlyAsync();
+    }
+
+    private void ShowProjectNameAsText()
+    {
+        ProjectNameTextBox.IsVisible = false;
+        ProjectNameTextBlock.IsVisible = true;
+    }
+
+    /// <summary>
     /// The arrows move a page within its book.
     /// </summary>
     /// <remarks>

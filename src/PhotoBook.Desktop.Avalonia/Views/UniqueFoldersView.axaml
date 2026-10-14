@@ -41,16 +41,33 @@
                 </Border>
 
                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                    <!--
+                        The name is edited where it is shown, not in a dialog. The other shell
+                        does it this way and the reason is worth keeping: a name you are
+                        renaming is already on screen, and a second window for it is a second
+                        thing to look at. Clicking the name itself starts the edit too - the
+                        whole name is the target, not just the pencil.
+                    -->
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <TextBlock Text="Проект:" Classes="t14Bold" />
-                        <TextBlock Classes="t14Bold" Text="{Binding DisplayProjectName}"
-                                   TextTrimming="CharacterEllipsis" MaxWidth="360" />
-                        <Button Classes="ghost" Padding="6,4"
+                        <TextBlock Name="ProjectNameTextBlock" Classes="t14Bold"
+                                   Text="{Binding DisplayProjectName}"
+                                   TextTrimming="CharacterEllipsis" MaxWidth="420"
+                                   VerticalAlignment="Center" Cursor="Hand"
+                                   PointerPressed="OnProjectNameClick" />
+
+                        <Button Classes="icon" Padding="4,4"
                                 AutomationProperties.Name="Переименовать проект"
-                                ToolTip.Tip="Переименовать проект">
+                                ToolTip.Tip="Переименовать проект"
+                                Click="OnProjectNamePencilClick">
                             <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                        Foreground="{DynamicResource Slate600}" />
                         </Button>
+
+                        <TextBox Name="ProjectNameTextBox" Width="360" FontSize="13"
+                                 Margin="6,0,0,0" VerticalAlignment="Center"
+                                 IsVisible="False"
+                                 KeyDown="OnProjectNameKeyDown"
+                                 LostFocus="OnProjectNameLostFocus" />
                     </StackPanel>
                     <TextBlock Classes="t12" Margin="0,2,0,0"
                                Foreground="{DynamicResource Slate500}"
