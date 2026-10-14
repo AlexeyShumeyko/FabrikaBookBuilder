@@ -107,6 +107,24 @@
                      way the other shell spaces them; the divider sits twelve from the group
                      and none from its own edge. -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+
+                    <!-- Undo and redo belong to the folders editor alone: it is the only screen
+                         whose panel does not already carry the controls a person changes most,
+                         so two sets of arrows there would be two sets to read. -->
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,4,0"
+                                IsVisible="{Binding ShowUndoRedo}">
+                        <Button Classes="icon" AutomationProperties.Name="Отменить"
+                                ToolTip.Tip="Отменить (Ctrl+Z)"
+                                Command="{Binding UndoCommand}">
+                            <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                        </Button>
+                        <Button Classes="icon" AutomationProperties.Name="Вернуть"
+                                ToolTip.Tip="Вернуть (Ctrl+Y)"
+                                Command="{Binding RedoCommand}">
+                            <TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                        </Button>
+                    </StackPanel>
+
                     <Border Width="1" Height="24" Background="{DynamicResource Slate200}"
                             Margin="0,0,6,0" VerticalAlignment="Center" />
                     <Button Classes="icon" ToolTip.Tip="Тема оформления — в разработке"
@@ -114,7 +132,7 @@
                         <TextBlock Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="14"
                                    Foreground="{DynamicResource Slate400}" />
                     </Button>
-                    <Button Classes="icon" ToolTip.Tip="Помощь и журнал работы программы"
+                    <Button Classes="icon" Click="OnHelpClick" ToolTip.Tip="Помощь и журнал работы программы"
                             AutomationProperties.Name="Помощь">
                         <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="14"
                                    Foreground="{DynamicResource Slate400}" />

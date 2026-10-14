@@ -1,4 +1,5 @@
 using System;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 using PhotoBook.Shell.Navigation;
@@ -74,6 +75,28 @@ namespace PhotoBook.Shell.ViewModels
             _ => "Не выбран"
         };
 
+        /// <summary>
+        /// Whether undo and redo belong on screen at all.
+        /// </summary>
+        /// <remarks>
+        /// Only the folders editor has a history worth showing. In the combined editor undo
+        /// exists too, but the panel there has its own controls for the things a person
+        /// changes most, and two sets of arrows on one screen is one more set to read.
+        /// </remarks>
+        public bool ShowUndoRedo => CurrentMode == AppMode.UniqueFolders;
+
+        /// <summary>
+        /// The editor's own undo, rather than a copy of it here.
+        /// </summary>
+        /// <remarks>
+        /// A wrapper would have to re-ask whether the editor can undo it every time anything
+        /// changed, and the editor already knows. Handing the command straight over keeps the
+        /// button enabled exactly when the editor says it can be.
+        /// </remarks>
+        public ICommand? UndoCommand => _navigator.EditorFor(AppMode.UniqueFolders)?.UndoCommand;
+
+        public ICommand? RedoCommand => _navigator.EditorFor(AppMode.UniqueFolders)?.RedoCommand;
+
         [RelayCommand]
         private void GoToProjects() => CurrentMode = AppMode.ProjectList;
 
@@ -101,6 +124,9 @@ namespace PhotoBook.Shell.ViewModels
             OnPropertyChanged(nameof(CanOpenUniqueFoldersTab));
             OnPropertyChanged(nameof(CanOpenCombinedTab));
             OnPropertyChanged(nameof(ProjectTitle));
+            OnPropertyChanged(nameof(ShowUndoRedo));
+            OnPropertyChanged(nameof(UndoCommand));
+            OnPropertyChanged(nameof(RedoCommand));
         }
     }
 }
