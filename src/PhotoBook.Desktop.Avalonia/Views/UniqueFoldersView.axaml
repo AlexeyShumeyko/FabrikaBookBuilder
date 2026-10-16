@@ -106,12 +106,13 @@
                             Background="{DynamicResource Slate200}" />
 
                     <Button Classes="primary" Padding="16,10"
-                            AutomationProperties.Name="Экспортировать все книги"
+                            AutomationProperties.Name="Экспортировать"
                             ToolTip.Tip="Выгрузить все книги проекта в одну папку"
+                            IsEnabled="{Binding CanExport}"
                             Command="{Binding ExportCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="12" />
-                            <TextBlock Text="Экспортировать все книги" />
+                            <TextBlock Text="Экспортировать" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -173,7 +174,7 @@
                                             it follows than before it.
                                         -->
                                         <Button Classes="ghost" Padding="10,6" Margin="0,0,8,0"
-                                                AutomationProperties.Name="Сбросить порядок"
+                                                AutomationProperties.Name="Сбросить порядок книги"
                                                 ToolTip.Tip="Вернуть развороты в исходный порядок"
                                                 Command="{Binding DataContext.ResetBookOrderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}">
@@ -181,7 +182,7 @@
                                                 <TextBlock Text="&#xE777;" FontFamily="Segoe MDL2 Assets"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource Slate600}" />
-                                                <TextBlock Text="Сбросить порядок" Classes="t12Semi"
+                                                <TextBlock Text="Сбросить порядок книги" Classes="t12Semi"
                                                            Foreground="{DynamicResource Slate600}" />
                                             </StackPanel>
                                         </Button>
