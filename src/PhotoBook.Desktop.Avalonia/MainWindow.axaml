@@ -5,6 +5,7 @@
         Width="1520" Height="800"
         FontFamily="Inter"
         Background="{DynamicResource AppBackground}"
+        PointerPressed="OnWindowPointerPressed"
         WindowStartupLocation="CenterScreen">
 
     <!--

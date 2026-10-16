@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using PhotoBook.Core;
 using PhotoBook.Presentation.ViewModels;
@@ -30,7 +31,7 @@ namespace PhotoBook.Shell.Views;
 /// without looking disabled.
 /// </para>
 /// </remarks>
-public partial class CombinedModeView : UserControl
+public partial class CombinedModeView : UserControl, IPendingRename
 {
     public CombinedModeView()
     {
@@ -82,6 +83,21 @@ public partial class CombinedModeView : UserControl
         ProjectNameTextBox.IsVisible = true;
         ProjectNameTextBox.Focus();
         ProjectNameTextBox.SelectAll();
+    }
+
+    /// <summary>
+    /// Applies the rename if one is open, and does nothing if none is.
+    /// </summary>
+    /// <remarks>
+    /// Posted rather than called straight away, because the click that dismisses the box is
+    /// the very event being handled. Taking the box away from under the event that is still
+    /// travelling loses the click, and the next click then looks like the first one failed.
+    /// </remarks>
+    public void TryCommitPendingRename()
+    {
+        if (!ProjectNameTextBox.IsVisible) return;
+
+        Dispatcher.UIThread.Post(CommitRename, DispatcherPriority.Loaded);
     }
 
     private void CommitRename()

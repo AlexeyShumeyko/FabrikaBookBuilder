@@ -37,6 +37,7 @@ namespace PhotoBook.Shell.ViewModels
             _navigator = navigator;
             _navigator.ModeChanged += (_, _) => Refresh();
             _navigator.ProjectChanged += (_, _) => Refresh();
+            _navigator.ProjectNameChanged += (_, _) => Refresh();
         }
 
         /// <summary>Which screen is showing. Setting it is how a tab navigates.</summary>

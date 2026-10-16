@@ -43,6 +43,18 @@ namespace PhotoBook.Shell.Navigation
             _uniqueFolders = uniqueFolders;
             _combined = combined;
             ProjectListProvider = projectListProvider;
+
+            // The header reads the name off the editor rather than keeping a copy, so that a
+            // copy cannot fall behind. A copy needs telling, though, and a rename is neither
+            // a new project nor a new screen - it is the same project under a name someone
+            // just typed, which is why neither of the events above would ever have fired.
+            _uniqueFolders.PropertyChanged += OnEditorPropertyChanged;
+            _combined.PropertyChanged += OnEditorPropertyChanged;
+        }
+
+        private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is nameof(UniqueFoldersViewModel.ProjectName)) ProjectNameChanged?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>Builds the next projects list, once per visit.</summary>
@@ -61,6 +73,16 @@ namespace PhotoBook.Shell.Navigation
         /// event would either miss one or fire on every tab click for nothing.
         /// </remarks>
         public event EventHandler? ProjectChanged;
+
+        /// <summary>
+        /// Raised when the open project is renamed, so the header can read the new name.
+        /// </summary>
+        /// <remarks>
+        /// A rename arrives as nothing but a property notification on an editor: no mode
+        /// moved and no project arrived. Without this the top bar would keep showing the old
+        /// name beside a panel showing the new one, and the two are on screen at once.
+        /// </remarks>
+        public event EventHandler? ProjectNameChanged;
 
         /// <summary>
         /// Which mode the current session belongs to, or null when no project is open.

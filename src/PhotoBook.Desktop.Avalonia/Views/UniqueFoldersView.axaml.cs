@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using PhotoBook.Core;
 using PhotoBook.Presentation.ViewModels;
@@ -21,7 +22,7 @@ namespace PhotoBook.Shell.Views;
 /// decoded for the monitor this window is on - all three questions about the screen rather
 /// than about a book.
 /// </remarks>
-public partial class UniqueFoldersView : UserControl
+public partial class UniqueFoldersView : UserControl, IPendingRename
 {
     private double _renderScaling = 1;
 
@@ -115,6 +116,21 @@ public partial class UniqueFoldersView : UserControl
 
         ProjectNameTextBox.Focus();
         ProjectNameTextBox.SelectAll();
+    }
+
+    /// <summary>
+    /// Applies the rename if one is open, and does nothing if none is.
+    /// </summary>
+    /// <remarks>
+    /// Posted rather than called straight away, because the click that dismisses the box is
+    /// the very event being handled. Taking the box away from under the event that is still
+    /// travelling loses the click, and the next click then looks like the first one failed.
+    /// </remarks>
+    public void TryCommitPendingRename()
+    {
+        if (!ProjectNameTextBox.IsVisible) return;
+
+        Dispatcher.UIThread.Post(CommitProjectName, DispatcherPriority.Loaded);
     }
 
     private void CommitProjectName()
