@@ -241,6 +241,8 @@ try {
 
     $bmp = New-Object System.Drawing.Bitmap $w2, $h2
     $g = [System.Drawing.Graphics]::FromImage($bmp)
+    # The picture is taken from the screen, so what is in front is what lands in it.
+    Assert-WindowInFront $dlgHwnd
     $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w2, $h2)))
 
     $full = Join-Path $root $Out

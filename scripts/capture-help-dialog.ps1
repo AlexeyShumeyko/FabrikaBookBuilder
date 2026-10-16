@@ -138,6 +138,8 @@ try {
 
     $bmp = New-Object System.Drawing.Bitmap([int]$r.Width, [int]$r.Height)
     $g = [System.Drawing.Graphics]::FromImage($bmp)
+    # The picture is taken from the screen, so what is in front is what lands in it.
+    Assert-WindowInFront $dialog
     $g.CopyFromScreen([int]$r.X, [int]$r.Y, 0, 0, $bmp.Size)
     $outFull = Join-Path $root $Out
     $bmp.Save($outFull, [System.Drawing.Imaging.ImageFormat]::Png)

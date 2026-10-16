@@ -151,8 +151,8 @@ function Set-WindowInFront {
         [int]$Attempts = 8
     )
 
-    if (-not ('WindowInput' -as [type])) {
-        Add-Type -Namespace 'WindowInput' -Name 'Native' -MemberDefinition @"
+    if (-not ('WindowFront' -as [type])) {
+        Add-Type -Namespace 'WindowFront' -Name 'Native' -MemberDefinition @"
 [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
 [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int n);
 [DllImport("user32.dll")] public static extern bool BringWindowToTop(IntPtr h);
@@ -167,28 +167,75 @@ function Set-WindowInFront {
         # Windows only lets a process take the foreground if that process was the last one to
         # have input. Pressing and releasing alt is the long-standing way to be the last one:
         # it costs nothing, it is invisible, and it hands the right over.
-        [void][WindowInput.Native]::keybd_event(0x12, 0, 0, [IntPtr]::Zero)   # alt down
-        [void][WindowInput.Native]::keybd_event(0x12, 0, 2, [IntPtr]::Zero)   # alt up
+        [void][WindowFront.Native]::keybd_event(0x12, 0, 0, [IntPtr]::Zero)   # alt down
+        [void][WindowFront.Native]::keybd_event(0x12, 0, 2, [IntPtr]::Zero)   # alt up
 
-        [void][WindowInput.Native]::ShowWindow($Handle, 3)   # SW_MAXIMIZE
-        [void][WindowInput.Native]::BringWindowToTop($Handle)
-        [void][WindowInput.Native]::SetForegroundWindow($Handle)
+        [void][WindowFront.Native]::ShowWindow($Handle, 3)   # SW_MAXIMIZE
+        [void][WindowFront.Native]::BringWindowToTop($Handle)
+        [void][WindowFront.Native]::SetForegroundWindow($Handle)
         Start-Sleep -Milliseconds 400
 
         $owner = 0
-        [void][WindowInput.Native]::GetWindowThreadProcessId(
-            [WindowInput.Native]::GetForegroundWindow(), [ref]$owner)
+        [void][WindowFront.Native]::GetWindowThreadProcessId(
+            [WindowFront.Native]::GetForegroundWindow(), [ref]$owner)
 
         $onTop = if ($ProcessId -gt 0) { $owner -eq $ProcessId } else { $false }
     }
 
     if (-not $onTop) {
         $blocker = 0
-        [void][WindowInput.Native]::GetWindowThreadProcessId(
-            [WindowInput.Native]::GetForegroundWindow(), [ref]$blocker)
+        [void][WindowFront.Native]::GetWindowThreadProcessId(
+            [WindowFront.Native]::GetForegroundWindow(), [ref]$blocker)
 
         $name = try { (Get-Process -Id $blocker -ErrorAction Stop).ProcessName } catch { 'unknown' }
         throw ("the program could not be brought to the front after {0} tries; '{1}' is in front of it." -f
             $Attempts, $name) + "`nA photograph taken now would be of that window, not this one."
     }
+}
+<#
+.SYNOPSIS
+    Refuses to go on unless this window is the one in front.
+
+.DESCRIPTION
+    The photograph is taken from the screen, not from the window, so whatever is on top is
+    what lands in the picture. A picture of the wrong window is not obviously wrong: it is
+    the right size, it has content in it, and it compares well against another picture of the
+    same wrong window. That is how a run once reported 0.02% between two programs that had
+    not changed.
+
+    Unlike Set-WindowInFront this does not try to fix anything. It asks, and stops.
+
+.PARAMETER Handle
+    The window about to be photographed.
+
+.PARAMETER What
+    How to name it when complaining, so the message says which picture is suspect.
+#>
+function Assert-WindowInFront {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][IntPtr]$Handle,
+        [string]$What = 'this window'
+    )
+
+    if (-not ('WindowAssert' -as [type])) {
+        Add-Type -Namespace 'WindowAssert' -Name 'Native' -MemberDefinition @"
+[DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+[DllImport("user32.dll")] public static extern IntPtr GetParent(IntPtr h);
+[DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+"@
+    }
+
+    $front = [WindowAssert.Native]::GetForegroundWindow()
+    $node = $front
+    for ($i = 0; $i -lt 4 -and $node -ne [IntPtr]::Zero; $i++) {
+        if ($node -eq $Handle) { return }
+        $node = [WindowAssert.Native]::GetParent($node)
+    }
+
+    $blocker = 0
+    [void][WindowAssert.Native]::GetWindowThreadProcessId($front, [ref]$blocker)
+    $name = try { (Get-Process -Id $blocker -ErrorAction Stop).ProcessName } catch { 'something else' }
+
+    throw ("{0} is not in front - '{1}' is. The photograph would be of that instead." -f $What, $name)
 }

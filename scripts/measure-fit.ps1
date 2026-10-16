@@ -271,6 +271,8 @@ try {
         $ww = $r.Right - $r.Left; $hh = $r.Bottom - $r.Top
         $bmp = New-Object System.Drawing.Bitmap $ww, $hh
         $g = [System.Drawing.Graphics]::FromImage($bmp)
+        # The picture is taken from the screen, so what is in front is what lands in it.
+        Assert-WindowInFront $hwnd
         $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($ww, $hh)))
         $g.Dispose()
 

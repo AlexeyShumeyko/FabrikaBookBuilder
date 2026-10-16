@@ -292,6 +292,8 @@ try {
 
     $bmp = New-Object System.Drawing.Bitmap $w, $h
     $g = [System.Drawing.Graphics]::FromImage($bmp)
+    # The picture is taken from the screen, so what is in front is what lands in it.
+    Assert-WindowInFront $hwnd
     $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w, $h)))
 
     $full = Join-Path $root $Out
@@ -310,6 +312,8 @@ try {
 
         $hbmp = New-Object System.Drawing.Bitmap $w, $h
         $hg = [System.Drawing.Graphics]::FromImage($hbmp)
+        # The picture is taken from the screen, so what is in front is what lands in it.
+        Assert-WindowInFront $hwnd
         $hg.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w, $h)))
         $hoverFull = if ($HoverOut) { Join-Path $root $HoverOut } else { $full.Replace('.png', '-hover.png') }
         $hdir = Split-Path -Parent $hoverFull

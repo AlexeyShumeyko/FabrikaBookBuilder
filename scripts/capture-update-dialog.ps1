@@ -106,6 +106,8 @@ try {
     [void][UpdWin]::GetWindowRect($dlg, [ref]$r)
     $bmp = New-Object System.Drawing.Bitmap ($r.R - $r.L), ($r.B - $r.T)
     $g = [System.Drawing.Graphics]::FromImage($bmp)
+    # The picture is taken from the screen, so what is in front is what lands in it.
+    Assert-WindowInFront $dlg
     $g.CopyFromScreen($r.L, $r.T, 0, 0, $bmp.Size)
     $g.Dispose()
 
