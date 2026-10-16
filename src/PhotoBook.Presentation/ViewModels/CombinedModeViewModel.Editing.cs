@@ -128,7 +128,11 @@ namespace PhotoBook.Presentation.ViewModels
 
             try
             {
-                var files = await _files.PickImagesAsync();
+                // The window is named after what it is for. Picking a photograph for one slot is
+                // a different question from picking photographs to load into a run, and the
+                // other shell words it that way - a dialog that answers to the wrong name
+                // cannot be looked for, which is how it gets found in the first place.
+                var files = await _files.PickImagesAsync("Выберите фото для слота");
                 if (files == null || files.Length == 0) return;
 
                 var file = files.FirstOrDefault(f => _fileService.IsJpegFile(f));

@@ -146,6 +146,22 @@ public partial class CombinedModeView : UserControl, IPendingRename
     private void OnFileItemClick(object? sender, PointerPressedEventArgs e)
         => Execute(nameof(CombinedModeViewModel.LoadPageFileCommand), sender);
 
+    /// <summary>
+    /// Clicking an empty slot opens a picker, as the original did.
+    /// </summary>
+    /// <remarks>
+    /// Only an empty one. A slot that already holds a photograph is not a question, and
+    /// answering it by accident replaces a photograph nobody asked to replace - which is
+    /// the kind of thing a stray click next to a panel does.
+    /// </remarks>
+    private void OnSlotPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Control { DataContext: Page page }) return;
+        if (!string.IsNullOrEmpty(page.SourcePath)) return;
+
+        Execute(nameof(CombinedModeViewModel.LoadPageFileCommand), sender);
+    }
+
     // ------------------------------------------------------------------ upload --
 
     private void OnUploadAreaClick(object? sender, PointerPressedEventArgs e)

@@ -78,7 +78,7 @@ public class ExportWindow : Window
         SystemDecorations = SystemDecorations.None;
         FontFamily = new FontFamily("Inter");
 
-        _exportButton = Button("Выгрузить", accent: true);
+        _exportButton = Button("Начать экспорт", accent: true);
         _exportButton.Click += async (_, _) => await RunAsync();
 
         _cancelButton = Button("Отмена", accent: false);

@@ -447,6 +447,7 @@
                                                 <DataTemplate>
                                                     <Border Name="SlotCard" Classes="slotCard"
                                                             Margin="0,0,16,16" ClipToBounds="True"
+                                                            PointerPressed="OnSlotPressed"
                                                             PointerEntered="OnSlotPointerEntered"
                                                             PointerExited="OnSlotPointerExited"
                                                             BorderBrush="{Binding Converter={StaticResource PageCaption}, ConverterParameter=border}"

@@ -136,18 +136,33 @@ try {
     }
     if ($null -eq $titleEl) { throw "fixture project '$wantedTitle' not found" }
 
-    $walker = [System.Windows.Automation.TreeWalker]::ControlViewWalker
-    $node = $walker.GetParent($titleEl); $open = $null
-    for ($i = 0; $i -lt 10 -and $null -ne $node -and $null -eq $open; $i++) {
-        foreach ($b in $node.FindAll([System.Windows.Automation.TreeScope]::Descendants,
-            (New-Object System.Windows.Automation.PropertyCondition(
-                [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-                [System.Windows.Automation.ControlType]::Button)))) {
-            if ($b.Current.Name -like '*Открыть проект*') { $open = $b; break }
-        }
-        $node = $walker.GetParent($node)
+    # The open button belonging to THIS card, which is the nearest one to the name rather
+    # than the first one found while walking up the tree.
+    #
+    # Walking up and taking the first open button works while there are three cards and
+    # breaks the moment the list is a grid: the ancestor reached is the one holding every
+    # card, so the first button in it belongs to whichever card is drawn first - a different
+    # project entirely. Nothing then says so, because opening a project succeeds: the wrong
+    # project simply opens, with its own screen and its own export button's name.
+    $at = $titleEl.Current.BoundingRectangle
+    $openButtons = @()
+    foreach ($b in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+        (New-Object System.Windows.Automation.PropertyCondition(
+            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+            [System.Windows.Automation.ControlType]::Button)))) {
+        if ($b.Current.Name -like '*Открыть проект*') { $openButtons += $b }
+    }
+    $open = $null
+    $best = [double]::MaxValue
+    foreach ($b in $openButtons) {
+        $r = $b.Current.BoundingRectangle
+        $dx = $r.X + $r.Width / 2 - $at.X
+        $dy = $r.Y + $r.Height / 2 - $at.Y
+        $d = [math]::Sqrt($dx * $dx + $dy * $dy)
+        if ($d -lt $best) { $best = $d; $open = $b }
     }
     if ($null -eq $open) { throw 'no Open button' }
+    Write-Host ("opening '{0}': its card's button is {1} px away" -f $titleEl.Current.Name, [int]$best)
     $open.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
     Start-Sleep -Seconds 8
 
