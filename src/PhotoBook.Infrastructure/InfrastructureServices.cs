@@ -29,6 +29,11 @@ namespace PhotoBook.Infrastructure
             services.AddSingleton<IThumbnailProvider, ThumbnailProvider>();
             services.AddSingleton<IUpdateFeed, UpdateService>();
             services.AddSingleton<ILoggingService, LoggingService>();
+
+            // The journal is in the container rather than reached for statically, so that anything
+            // with a reason to write something down can be given it. A converter with no journal
+            // writes nothing, which is how a photograph that cannot be read used to leave no trace.
+            services.AddSingleton<IJournal>(sp => new FileJournal(Diagnostics.Directory));
             services.AddSingleton<IProjectRepository, ProjectRepository>();
             services.AddSingleton<IProjectIndexStore, ProjectIndexStore>();
 

@@ -1,4 +1,4 @@
-# One place that knows where the built program is.
+﻿# One place that knows where the built program is.
 #
 # Twenty-two verification scripts used to spell the path out themselves, in three slightly
 # different spellings, and every one of them named the WPF project and the Release
@@ -125,3 +125,6 @@ function Stop-RunningApp {
         Stop-Process -Force -ErrorAction SilentlyContinue
     Start-Sleep -Seconds 2
 }
+# The pieces every scenario needs before it can ask anything. Loaded here so that a script
+# which dot-sources this one has them without knowing they exist.
+. (Join-Path $PSScriptRoot 'test-helpers.ps1')

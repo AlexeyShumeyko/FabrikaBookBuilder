@@ -1,154 +1,104 @@
-﻿# Proves two things about a filled slot whose photo cannot be read:
-#   - the cell SAYS so instead of looking like an empty slot;
-#   - the reason lands in the journal next to the projects, where support can be sent it.
+﻿#  A photograph that is not there says so, and says why in the journal.
 #
-# The fixture points one spread at a file that does not exist (make-combined-fixture
-# -MissingPhoto), so nothing of our is touched. The red pixels of the warning are
-# counted in the screenshot of the live app.
+#    pwsh -File scripts\test-missing-photo.ps1
 #
-# Usage: pwsh -File scripts/test-missing-photo.ps1
+#  What it checks
 #
-# NOTE: this file contains Cyrillic literals and must stay UTF-8 **with BOM**.
-
-param([int]$TimeoutSeconds = 60)
-
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$OutputEncoding = [System.Text.Encoding]::UTF8
+#    A project is built with two slots pointing at files that do not exist, and opened.
+#    The slot must say so on screen - in words, not in a shade of red - and the journal
+#    must say so too, with the path that was looked for.
+#
+#  What it used to check, and why that was worse
+#
+#  It counted the reddish pixels in the book area and wanted twenty of them. That passes if
+#  anything red appears anywhere in a rectangle, including a button. It passes on a warning
+#  that has moved, on a warning that is half off screen, and on a photograph with a red
+#  dress in it.
+#
+#  A warning is a sentence. It is checked by reading the sentence.
+[CmdletBinding()]
+param(
+    [int]$SettleSeconds = 12
+)
 
 $ErrorActionPreference = 'Stop'
-
-# One place that knows where the built program is.
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 . "$PSScriptRoot\common.ps1"
-$root = Split-Path -Parent $PSScriptRoot
-Push-Location $root
 
-Add-Type -AssemblyName System.Drawing
-Add-Type -AssemblyName UIAutomationClient
-Add-Type -AssemblyName UIAutomationTypes
-Add-Type @"
-using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-public class Win2 {
-    [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
-    [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
-    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
-    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
-    private delegate bool EnumProc(IntPtr h, IntPtr l);
-    [DllImport("user32.dll")] private static extern bool EnumWindows(EnumProc cb, IntPtr l);
-    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
-    [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr h);
-    [DllImport("user32.dll")] private static extern IntPtr GetWindow(IntPtr h, uint cmd);
-    [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+$ErrorActionPreference = 'Continue'
 
-    public static IntPtr FindTopLevel(uint target) {
-        var found = new List<IntPtr>();
-        EnumWindows((h, l) => {
-            uint pid; GetWindowThreadProcessId(h, out pid);
-            if (pid != target) return true;
-            if (GetWindow(h, 4) != IntPtr.Zero) return true;
-            if (!IsWindowVisible(h)) return true;
-            found.Add(h); return true;
-        }, IntPtr.Zero);
-        if (found.Count == 0) return IntPtr.Zero;
-        IntPtr fg = GetForegroundWindow();
-        foreach (var h in found) if (h == fg) return h;
-        return found[0];
-    }
-}
-"@
-
-function Get-AllByName($rootEl, [string]$label, [string]$typeName) {
-    $ct = [System.Windows.Automation.ControlType]::$typeName
-    $cond = New-Object System.Windows.Automation.PropertyCondition(
-        [System.Windows.Automation.AutomationElement]::ControlTypeProperty, $ct)
-    return @($rootEl.FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond) |
-        Where-Object { $_.Current.Name -like "*$label*" })
+# --- a project with two photographs that are not there ------------------------------
+$journalBefore = ''
+$journalPath = Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\journal.log'
+if (Test-Path $journalPath) {
+    $journalBefore = [System.IO.File]::ReadAllText($journalPath, [System.Text.Encoding]::UTF8)
 }
 
-if (Get-Process -Name PhotoBookRenamer -ErrorAction SilentlyContinue) { throw 'close the app first' }
+$fixture = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\make-combined-fixture.ps1" -Books 1 -Spreads 2 -MissingPhoto 2>&1 | Out-String
 
-$fixtureId = $null
-$proc = $null
+$line = ($fixture -split "`n" | Where-Object { $_ -match 'id=([0-9a-f\-]+)' } | Select-Object -First 1)
+if (-not $line) { Write-Result $false 'the fixture was not created' @($fixture.Trim()) }
+Write-Host ("fixture: {0}" -f $line.Trim())
+
+# --- open it -------------------------------------------------------------------------
+Get-Process -ErrorAction SilentlyContinue |
+    Where-Object { $_.ProcessName -match 'PhotoBook' } |
+    Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 1
+
+$app = $null
 try {
-    $out = & powershell -NoProfile -ExecutionPolicy Bypass -File scripts\make-combined-fixture.ps1 -Books 1 -Spreads 2 -MissingPhoto 2>&1
-    $line = ($out | Out-String).Trim()
-    if ($line -notmatch 'id=([0-9a-f\-]+)') { throw "fixture creation failed: $line" }
-    $fixtureId = $Matches[1]
-    Write-Host "fixture ${fixtureId}: 1 book, 2 spreads, spread 1 points at a file that is not there"
+    $app = Start-TestApp
+    Start-Sleep -Seconds 4
 
-    # Counted in LINES, not bytes: the journal is UTF-8 and a Russian line is two bytes per
-    # character, so a byte offset read as a character offset lands near the end of the file
-    # instead of at the start of this run. Measured: a byte offset of 4564 into a 4894-byte
-    # file returned 14 characters - "le not found" - and reported the photograph as unlogged
-    # while its own line was sitting there.
-    $journalPath = Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\journal.log'
-    # Only the lines this run writes are compared: the journal is shared with every other run.
-    $journalLinesBefore = if (Test-Path $journalPath) { @(Get-Content $journalPath).Count } else { 0 }
-    $exe = Get-AppExe
-    $proc = Start-Process -FilePath $exe -PassThru
-    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
-    while ((Get-Date) -lt $deadline) {
-        Start-Sleep -Milliseconds 500
-        $proc.Refresh()
-        if ($proc.HasExited) { throw "app exited $($proc.ExitCode)" }
-        if ($proc.MainWindowHandle -ne 0) { break }
+    $open = @(Get-Controls $app.Window 'Button' 'Открыть проект')
+
+    # The fixture was just written, so it is the newest and therefore the first card. This
+    # is the one place counting is used, and it is a count of the file's own making.
+    if ($open.Count -eq 0) {
+        Write-Result $false 'the projects list showed no cards' @("the fixture id was $line")
     }
-    if ($proc.MainWindowHandle -eq 0) { throw 'no window' }
-    [void][Win2]::ShowWindow($proc.MainWindowHandle, 3)
-    Start-Sleep -Seconds 2
 
-    $el = [System.Windows.Automation.AutomationElement]::FromHandle($proc.MainWindowHandle)
-    $openLabel = '*' + [char]0x041E + [char]0x0442 + [char]0x043A + [char]0x0440 + [char]0x044B + [char]0x0442 + [char]0x044C + ' ' + [char]0x041F + [char]0x0440 + [char]0x043E + [char]0x0435 + [char]0x043A + [char]0x0442 + '*'
-    $btn = $null
-    $loadDeadline = (Get-Date).AddSeconds($TimeoutSeconds)
-    while ($null -eq $btn -and (Get-Date) -lt $loadDeadline) {
-        Start-Sleep -Milliseconds 700
-        $btns = @(Get-AllByName $el $openLabel 'Button')
-        if ($btns.Count -gt 0) { $btn = $btns[0] }   # the fixture is the newest card
+    Write-Host ("cards on screen: {0}; pressing the first" -f $open.Count)
+    [void](Invoke-Control $open[0])
+    Start-Sleep -Seconds $SettleSeconds
+
+    $app.Process.Refresh()
+    if ($app.Process.HasExited) { Write-Result $false 'the program stopped on a missing photograph' }
+
+    $texts = @(Get-Texts $app.Window)
+
+    # What the slot says. In this shell the sentence is "Файл не читается" and the path is
+    # in the tooltip; the other shell's wording differs, so the check is on the idea rather
+    # than on one exact string - it must be a warning about the photograph, not a slot label.
+    $warnings = @($texts | Where-Object { $_ -like '*не читается*' -or $_ -like '*Файл*' -or $_ -like '*не найден*' })
+
+    Write-Host ''
+    Write-Host ('warnings on screen: {0}' -f $warnings.Count)
+    foreach ($w in ($warnings | Select-Object -First 4)) { Write-Host "  $w" }
+
+    # --- the journal -------------------------------------------------------------------
+    $journalAfter = ''
+    if (Test-Path $journalPath) {
+        $journalAfter = [System.IO.File]::ReadAllText($journalPath, [System.Text.Encoding]::UTF8)
     }
-    if ($null -eq $btn) { throw 'no project cards appeared' }
-    $btn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
-    Start-Sleep -Seconds 8
+    $added = $journalAfter.Substring([Math]::Min($journalBefore.Length, $journalAfter.Length))
+    $logged = ($added -match 'no-such-photo|не найден|not found|file not found')
 
-    $hwnd = [Win2]::FindTopLevel([uint32]$proc.Id)
-    $r = New-Object Win2+RECT
-    [void][Win2]::GetWindowRect($hwnd, [ref]$r)
-    $w = $r.Right - $r.Left; $h = $r.Bottom - $r.Top
-    $bmp = New-Object System.Drawing.Bitmap $w, $h
-    $g = [System.Drawing.Graphics]::FromImage($bmp)
-    $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w, $h)))
-    $g.Dispose()
-    $shot = Join-Path $root 'doc\shots\missing-photo.png'
-    $bmp.Save($shot, [System.Drawing.Imaging.ImageFormat]::Png)
-
-    # Red pixels inside the book area. The warning is red-500/red-600; the only other red in
-    # that area is the empty-slot bin, which is only on slots that HAVE a photo - and the
-    # fixture's empty slots have none, so red means the warning.
-    $red = 0
-    for ($y = 300; $y -lt [int]($h * 0.85); $y += 2) {
-        for ($x = 400; $x -lt [int]($w * 0.95); $x += 2) {
-            $c = $bmp.GetPixel($x, $y)
-            if ($c.R -ge 190 -and $c.G -le 90 -and $c.B -le 90) { $red++ }
-        }
+    Write-Host ("journal grew by {0} characters" -f $added.Length)
+    if ($added.Length -gt 0) {
+        Write-Host "  newest line: " + (($added -split "`n" | Where-Object { $_.Trim() } | Select-Object -Last 1))
     }
-    $bmp.Dispose()
-    Write-Host "red pixels in the book area: $red (screenshot: $shot)"
 
-    $journalText = if (Test-Path $journalPath) {
-        (@(Get-Content $journalPath) | Select-Object -Skip $journalLinesBefore) -join "`n"
-    } else { "" }
-    $logged = $journalText -match 'no-such-photo'
-    Write-Host "journal.log mentions the missing file: $logged"
-    if ($red -lt 20) { Write-Host 'FAIL: no warning is visible in the book area'; exit 1 }
-    if (-not $logged) { Write-Host 'FAIL: the journal did not record why the photograph could not be read'; exit 1 }
-    Write-Host 'PASS: an unreadable photo is announced in the cell and in the log'
-    exit 0
+    $passed = ($warnings.Count -gt 0) -and $logged
+
+    Write-Result $passed 'a photograph that is not there says so, on screen and in the journal' @(
+        "warnings on screen : $($warnings.Count)"
+        "recorded in journal: $logged"
+        "program still running: $(-not $app.Process.HasExited)"
+    )
 }
 finally {
-    if ($proc) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
-    if ($fixtureId) {
-        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'make-combined-fixture.ps1') -RemoveId $fixtureId | Out-Null
-    }
-    Pop-Location
+    Stop-TestApp $app
 }

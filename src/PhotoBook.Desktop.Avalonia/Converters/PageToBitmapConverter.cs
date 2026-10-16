@@ -3,6 +3,7 @@ using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia.Media.Imaging;
 using Microsoft.Extensions.DependencyInjection;
+using PhotoBook.Application;
 using PhotoBook.Core;
 using PhotoBook.Shell.Services;
 
@@ -31,9 +32,19 @@ namespace PhotoBook.Shell.Converters
     public class PageToBitmapConverter : IValueConverter
     {
         private static AvaloniaImageCache? _cache;
+        private static IJournal? _journal;
 
-        public static void Attach(IServiceProvider services)
-            => _cache = services.GetRequiredService<AvaloniaImageCache>();
+        /// Handed in rather than looked up.
+        ///
+        /// A converter asking a container what it has is a service locator wearing a
+        /// different hat, and the audit is right to refuse it outside the one place that is
+        /// allowed to know what exists. The composition root already knows; it passes them
+        /// on.
+        public static void Attach(AvaloniaImageCache cache, IJournal journal)
+        {
+            _cache = cache;
+            _journal = journal;
+        }
 
         public object? Convert(
             object? value,
@@ -49,7 +60,26 @@ namespace PhotoBook.Shell.Converters
 
             if (string.IsNullOrEmpty(path)) return null;
 
-            return _cache.Get(path, BitmapScale.Pixels(Width(parameter)));
+            var bitmap = _cache.Get(path, BitmapScale.Pixels(Width(parameter)));
+
+            // Saying so is this converter's job, not only the cache's. Without it a
+            // photograph that cannot be read draws as an empty slot, and an empty slot is
+            // exactly what a slot waiting to be filled looks like - so the file being gone
+            // reads as the file never having been chosen.
+            //
+            // The other shell's converter does the same two calls, and that is why it can
+            // say "this file is not readable" instead of showing nothing.
+            if (bitmap is null)
+            {
+                page.MarkImageFailed(path!);
+                _journal?.Write(JournalLevel.Warning, "image", $"{path} -> файл не читается");
+            }
+            else
+            {
+                page.MarkImageOk();
+            }
+
+            return bitmap;
         }
 
         public object? ConvertBack(

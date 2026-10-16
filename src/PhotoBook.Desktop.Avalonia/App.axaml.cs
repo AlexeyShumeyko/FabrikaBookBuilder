@@ -115,7 +115,9 @@ public partial class App : Avalonia.Application
             _services = services.BuildServiceProvider();
 
             FilePathToBitmapConverter.Attach(_services);
-            PageToBitmapConverter.Attach(_services);
+            PageToBitmapConverter.Attach(
+                _services.GetRequiredService<AvaloniaImageCache>(),
+                _services.GetRequiredService<IJournal>());
 
             var navigator = _services.GetRequiredService<AvaloniaNavigator>();
             var window = new MainWindow(_services.GetRequiredService<ShellHeaderViewModel>());
@@ -170,6 +172,7 @@ public partial class App : Avalonia.Application
         services.AddLogging();
 
         services.AddPhotoBookApplication();
+
         services.AddPhotoBookInfrastructure();
         services.AddPhotoBookPresentation();
 
