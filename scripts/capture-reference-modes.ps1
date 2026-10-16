@@ -1,4 +1,4 @@
-#  Photographs the released program on the screens that need a project opened first.
+﻿#  Photographs the released program on the screens that need a project opened first.
 #
 #    pwsh -File scripts\capture-reference-modes.ps1 -Card 4 -Out doc\shots\ref-111-combined.png
 #    pwsh -File scripts\capture-reference-modes.ps1 -Card 2 -Out doc\shots\ref-111-unique.png
@@ -118,7 +118,7 @@ while ((Get-Date) -lt $deadline) {
 }
 if ($proc.MainWindowHandle -eq 0) { throw 'no window' }
 
-Set-WindowFocus $proc.MainWindowHandle
+Set-WindowInFront $proc.MainWindowHandle $proc.Id
 
 $root = [System.Windows.Automation.AutomationElement]::RootElement
 $win = [System.Windows.Automation.AutomationElement]::FromHandle($proc.MainWindowHandle)

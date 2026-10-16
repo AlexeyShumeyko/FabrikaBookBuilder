@@ -1,4 +1,4 @@
-# Screenshots the Avalonia shell.
+﻿# Screenshots the Avalonia shell.
 #
 # The WPF capture scripts drive the app through UI Automation and assume WPF's automation
 # tree. This one only takes the picture: finding the window by process id and copying the
@@ -79,6 +79,11 @@ public static class AvaloniaCapture {
 
 [void][AvaloniaCapture]::ShowWindow($proc.MainWindowHandle, 3)
 [void][AvaloniaCapture]::SetForegroundWindow($proc.MainWindowHandle)
+
+        # Photographs are taken from the screen, so whatever is in front is what lands in
+        # the picture. Windows can refuse to give up the foreground, and it reports that it
+        # has - in a return value nobody was reading. Asked again, with an answer.
+        Set-WindowInFront $proc.MainWindowHandle $proc.Id
 Start-Sleep -Milliseconds 700
 
 $r = New-Object AvaloniaCapture+RECT
