@@ -282,10 +282,20 @@ namespace PhotoBook.Presentation.ViewModels
 
         }
 
-        private void ConfirmStructure()
+        private async void ConfirmStructure()
         {
             IsStructureConfirmed = true;
-            GenerateStructure();
+
+            // Awaited, and this is the whole of why: a structure that is getting smaller
+            // stops here and asks a question. Starting the work and then immediately asking
+            // someone else to save it meant the save ran while the question was still open -
+            // so it wrote the structure the person was in the middle of changing, and when
+            // they answered, the change they had confirmed was never written at all.
+            //
+            // Which one happened first was never decided by the code, only by how quickly
+            // each side got going, and in the shell being built the save won. A structure
+            // that shrinks and then does not stay shrunk is not a question of speed.
+            await GenerateStructure();
 
             if (ConfirmStructureCommand is RelayCommand confirmCmd)
             {
@@ -298,7 +308,7 @@ namespace PhotoBook.Presentation.ViewModels
             // away instead of waiting for a button we may never press. Photo
             // assignment is deliberately NOT auto-saved: that is where "без перебора" comes
             // in, and the export saves the whole project anyway.
-            Background.Run(() => SaveStructureAsync(), "save structure");
+            await SaveStructureAsync();
         }
 
         private async Task SaveStructureAsync()

@@ -21,16 +21,25 @@ namespace PhotoBook.Shell.Views
     /// question whose answer can destroy something. Enter means yes, because a question the
     /// user cannot answer from the keyboard is half a question.
     /// </para>
+    /// <para>
+    /// Two different names live here and it matters which is which. The heading on screen is
+    /// whatever the question is about - "Уменьшить структуру?" - and the window's own title
+    /// is the same for every question in the program, "Подтверждение". The title is what a
+    /// window is called, and a question that borrowed its heading for it meant there was no
+    /// way to say "is a question open?" at all.
+    /// </para>
     /// </remarks>
     public class ConfirmWindow : Window
     {
         private readonly bool _destructive;
+        private readonly string _title;
         private readonly string _message;
         private readonly string _confirmText;
 
-        public ConfirmWindow(string confirmText, string message, bool destructive)
+        public ConfirmWindow(string title, string confirmText, string message, bool destructive)
         {
             _destructive = destructive;
+            _title = title;
             _message = message;
             _confirmText = confirmText;
 
@@ -40,6 +49,7 @@ namespace PhotoBook.Shell.Views
             ShowInTaskbar = false;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             Background = Brushes.White;
+            Title = "Подтверждение";
 
             Content = Build();
 
@@ -55,6 +65,79 @@ namespace PhotoBook.Shell.Views
         private Control Build()
         {
             var accent = _destructive ? Brush("#DC2626") : Brush("#4F46E5");
+
+            // A question is marked by whether it can take something away, so the icon's two
+            // colours are the whole of the warning: red when the answer can destroy, the
+            // brand's own colours when it cannot.
+            var iconTint = _destructive ? Brush("#DC2626") : Brush("#4F46E5");
+            var iconTintPale = _destructive ? Brush("#FEF2F2") : Brush("#EEF2FF");
+
+            var iconHost = new Border
+            {
+                Width = 36,
+                Height = 36,
+                CornerRadius = new CornerRadius(10),
+                Background = iconTintPale,
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = new TextBlock
+                {
+                    // A private-use glyph, written as its number so that no round trip
+                    // through a file can turn it into a different character.
+                    Text = ((char)0xE7BA).ToString(),
+                    FontFamily = new FontFamily("Segoe MDL2 Assets"),
+                    FontSize = 15,
+                    Foreground = iconTint,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                }
+            };
+
+            var heading = new Grid
+            {
+                Margin = new Thickness(0, 0, 0, 14),
+                ColumnDefinitions =
+                {
+                    new ColumnDefinition(GridLength.Auto),
+                    new ColumnDefinition(GridLength.Star)
+                },
+                Children =
+                {
+                    iconHost
+                }
+            };
+            Grid.SetColumn(iconHost, 0);
+
+            var headingText = new TextBlock
+            {
+                Text = _title,
+                FontSize = 16,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brush("#0F172A"),
+                TextWrapping = TextWrapping.Wrap,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(12, 0, 0, 0)
+            };
+            Grid.SetColumn(headingText, 1);
+            heading.Children.Add(headingText);
+
+            // The message sits under the heading rather than beside the icon, which is why
+            // it carries the icon's width as its own left edge.
+            var message = new TextBlock
+            {
+                Text = _message,
+                FontSize = 12,
+                Foreground = Brush("#475569"),
+                TextWrapping = TextWrapping.Wrap,
+                LineHeight = 19,
+                Margin = new Thickness(48, 0, 0, 0)
+            };
+
+            var rule = new Border
+            {
+                Height = 1,
+                Background = Brush("#F1F5F9"),
+                Margin = new Thickness(0, 20, 0, 18)
+            };
 
             var confirm = new Button
             {
@@ -92,20 +175,9 @@ namespace PhotoBook.Shell.Views
 
             return new StackPanel
             {
-                Margin = new Thickness(24),
-                Spacing = 20,
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = _message,
-                        TextWrapping = TextWrapping.Wrap,
-                        FontSize = 13,
-                        Foreground = Brush("#334155"),
-                        MaxWidth = 392
-                    },
-                    buttons
-                }
+                Margin = new Thickness(24, 22, 24, 20),
+                Spacing = 0,
+                Children = { heading, message, rule, buttons }
             };
         }
 

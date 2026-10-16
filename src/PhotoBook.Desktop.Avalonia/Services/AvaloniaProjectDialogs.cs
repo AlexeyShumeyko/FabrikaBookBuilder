@@ -31,10 +31,10 @@ namespace PhotoBook.Shell.Services
             string confirmText = "Подтвердить",
             bool destructive = true)
         {
-            var window = new ConfirmWindow(confirmText, message, destructive)
-            {
-                Title = title
-            };
+            // The heading on screen is what the question is about. The window keeps its own
+            // name, the same for every question in the program, so that "is a question open?"
+            // is something that can be asked at all.
+            var window = new ConfirmWindow(title, confirmText, message, destructive);
 
             var owner = Owner();
             if (owner != null) window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -68,7 +68,7 @@ namespace PhotoBook.Shell.Services
             // The three-way question belongs to the editors, which are not ported yet. The
             // primary answer is the one that cannot be got wrong by accident, so that is what
             // it does - and it is stated here rather than hidden behind a default.
-            var window = new ConfirmWindow(primaryText, message, destructive: true)
+            var window = new ConfirmWindow(title, primaryText, message, destructive: true)
             {
                 Title = title
             };
