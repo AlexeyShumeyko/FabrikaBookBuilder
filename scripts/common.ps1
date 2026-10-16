@@ -34,17 +34,28 @@ function Get-AppExe {
     [CmdletBinding()]
     param(
         [ValidateSet('Release', 'Debug')]
-        [string]$Configuration = 'Release'
+        [string]$Configuration = 'Release',
+
+        # Which shell. The one that ships is the default; the one being compared against is
+        # asked for by name, because both are built from this repository and comparing the
+        # two means being able to point at either.
+        [ValidateSet('Avalonia', 'Wpf')]
+        [string]$Shell = 'Avalonia'
     )
 
     # The shell project moves during the Avalonia migration. Everything downstream asks this
     # function, so that move is one edit rather than twenty-two.
     #
-    # It now points at the shell that ships. The old one is still in the tree while its
-    # replacement is compared against it screen by screen; when the comparison is done this
-    # function is the only thing that has to know.
-    $project = 'src\PhotoBook.Desktop.Avalonia'
-    $candidate = Join-Path $script:RepoRoot "$project\bin\$Configuration\net8.0\PhotoBook.Desktop.Avalonia.exe"
+    # No script names a path to a built program. A path written into a script is a path that
+    # goes stale the moment a folder is renamed, and the audit fails the build for it.
+    if ($Shell -eq 'Wpf') {
+        $relative = 'src\PhotoBook.Desktop.Wpf\bin\{0}\net8.0-windows\PhotoBookRenamer.exe' -f $Configuration
+    }
+    else {
+        $relative = 'src\PhotoBook.Desktop.Avalonia\bin\{0}\net8.0\PhotoBook.Desktop.Avalonia.exe' -f $Configuration
+    }
+
+    $candidate = Join-Path $script:RepoRoot $relative
 
     if (-not (Test-Path $candidate)) {
         throw "no build at $candidate`nBuild it first:  dotnet build PhotoBookRenamer.sln -c $Configuration"

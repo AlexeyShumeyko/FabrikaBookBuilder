@@ -54,7 +54,7 @@ $root = @(Get-RepoRoot)[-1]
 $buildExe = @(Get-AppExe)[-1]
 
 if (-not $ReferenceExe) {
-    $ReferenceExe = @(Join-Path $root 'src\PhotoBook.Desktop.Wpf\bin\Release\net8.0-windows\PhotoBookRenamer.exe')[-1]
+    $ReferenceExe = @(Get-AppExe -Shell Wpf)[-1]
 }
 
 if (-not (Test-Path $ReferenceExe)) {
