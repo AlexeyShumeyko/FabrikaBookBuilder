@@ -201,6 +201,7 @@ try {
     $bmp = New-Object System.Drawing.Bitmap $w, $h
     $g = [System.Drawing.Graphics]::FromImage($bmp)
     # The picture is taken from the screen, so what is in front is what lands in it.
+    Set-WindowInFront $dlg $proc.Id
     Assert-WindowInFront $dlg
     $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w, $h)))
     $g.Dispose()

@@ -235,23 +235,98 @@ try {
     $hwnd = $proc.MainWindowHandle
     $el = [System.Windows.Automation.AutomationElement]::FromHandle($hwnd)
     $openLabel = '*' + [char]0x041E + [char]0x0442 + [char]0x043A + [char]0x0440 + [char]0x044B + [char]0x0442 + [char]0x044C + ' ' + [char]0x041F + [char]0x0440 + [char]0x043E + [char]0x0435 + [char]0x043A + [char]0x0442 + '*'
+
+    # Which project to measure. Asked of the index rather than counted into a list of cards:
+    # "card number N" is not a project, it is whichever project is drawn Nth, and with thirty
+    # on the machine that is a different answer every time the index changes. The most
+    # recently touched combined project is asked for by name and its own card is opened.
+    # -OpenIndex still says "that one", for anyone who means it.
+    $wanted = $null
+    if ($OpenIndex -lt 0) {
+        $indexPath = Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\Projects\projects.json'
+        if (Test-Path $indexPath) {
+            $parsed = [System.IO.File]::ReadAllText($indexPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+            $newest = $null
+            $newestWhen = [datetime]::MinValue
+            foreach ($entry in $parsed) {
+                if ($entry.mode -ne 3) { continue }
+                $when = [datetime]::MinValue
+                if (-not [datetime]::TryParse([string]$entry.lastModified, [ref]$when)) { continue }
+                if ($when -gt $newestWhen) { $newestWhen = $when; $newest = $entry }
+            }
+            if ($newest) {
+                $wanted = $newest.name
+                Write-Host ("measuring '{0}'" -f $wanted)
+            }
+        }
+    }
+
     $target = $null
     $loadDeadline = (Get-Date).AddSeconds(60)
     while ($null -eq $target -and (Get-Date) -lt $loadDeadline) {
         Start-Sleep -Milliseconds 700
-        $buttons = @(Get-AllByName $el $openLabel 'Button')
-        if ($buttons.Count -gt $OpenIndex) { $target = $buttons[$OpenIndex] }
+        $buttons = @(Get-Controls $el 'Button' 'Открыть проект')
+
+        if ($OpenIndex -ge 0) {
+            if ($buttons.Count -gt $OpenIndex) { $target = $buttons[$OpenIndex] }
+            continue
+        }
+
+        if ($wanted) {
+            # Every card's open button is called exactly "Открыть проект", so the name on
+            # the card is the only thing that says which project it belongs to - and the
+            # nearest button to that name is the one on the same card.
+            $label = @(Get-Controls $el 'Text' $wanted) | Select-Object -First 1
+            if (-not $label) { continue }
+
+            $at = $label.Current.BoundingRectangle
+            $best = [double]::MaxValue
+            foreach ($b in $buttons) {
+                $r = $b.Current.BoundingRectangle
+                $dx = $r.X + $r.Width / 2 - $at.X
+                $dy = $r.Y + $r.Height / 2 - $at.Y
+                $d = [math]::Sqrt($dx * $dx + $dy * $dy)
+                if ($d -lt $best) { $best = $d; $target = $b }
+            }
+        }
+        elseif ($buttons.Count -gt 0) {
+            $target = $buttons[0]
+        }
     }
     if ($null -eq $target) { throw 'no project cards appeared' }
-    $target.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+    if (-not (Invoke-Control $target)) { throw 'the open button did not answer to being pressed' }
     Start-Sleep -Seconds 7
 
     $hwnd = [Win2]::FindTopLevel([uint32]$proc.Id)
     $el = [System.Windows.Automation.AutomationElement]::FromHandle($hwnd)
-    $tab = Get-ByName $el 'Комбинированный' 'RadioButton'
-    if ($null -eq $tab) { throw 'the combined tab is not there' }
-    $tab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
-    Start-Sleep -Seconds 2
+
+    # The tab, asked for by name and pressed by whatever it turns out to be.
+    #
+    # It used to be asked for as a radio button, because in the old shell it was one. It is
+    # a toggle now, and a name asked for by the wrong kind is not a near miss - it is no
+    # element at all, and the search reports nothing rather than reporting a problem.
+    $tab = @(Get-Controls $el 'Button' 'Комбинированный') | Select-Object -First 1
+    if (-not $tab) {
+        Write-Host ''
+        Write-Host 'FAIL: the combined tab is not there.'
+        Write-Host '      Tabs on screen:'
+        foreach ($t in (Get-Texts $el) | Select-Object -First 12) { Write-Host "        $t" }
+        Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+        exit 1
+    }
+
+    if (-not (Invoke-Control $tab)) {
+        Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+        throw 'the combined tab did not answer to being pressed'
+    }
+    Start-Sleep -Seconds 3
+
+    # Now it has to have arrived: a tab that was pressed and a tab that is showing are not
+    # the same thing, and measuring a screen nobody is looking at measures the old one.
+    if (-not @(Get-Controls $el 'Button' 'Добавить структуру')) {
+        Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+        throw 'the combined tab was pressed but the combined screen did not come up'
+    }
 
     $list = @($Widths -split ',' | ForEach-Object { [int]$_.Trim() })
     $shots = Join-Path $root 'doc\shots'
@@ -272,6 +347,7 @@ try {
         $bmp = New-Object System.Drawing.Bitmap $ww, $hh
         $g = [System.Drawing.Graphics]::FromImage($bmp)
         # The picture is taken from the screen, so what is in front is what lands in it.
+        Set-WindowInFront $hwnd $proc.Id
         Assert-WindowInFront $hwnd
         $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($ww, $hh)))
         $g.Dispose()
