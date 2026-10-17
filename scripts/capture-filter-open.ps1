@@ -50,7 +50,9 @@ try {
     Start-Sleep -Seconds 10
     $w = $app.Window
 
-    $combo = @(Get-Controls $w 'ComboBox' $name)
+    # The filter is a control of its own now, not a dropdown the platform owns, so it is
+    # a Button as far as the tree is concerned.
+    $combo = @(Get-Controls $w 'Button' $name)
     if ($combo.Count -eq 0) { throw "the filter '$name' was not found" }
 
     $r = $combo[0].Current.BoundingRectangle

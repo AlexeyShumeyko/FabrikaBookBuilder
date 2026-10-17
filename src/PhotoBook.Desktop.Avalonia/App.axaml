@@ -48,7 +48,7 @@
             <conv:AdaptiveCardSizeConverter x:Key="AdaptiveCardSize" />
             <conv:PageCaptionConverter x:Key="PageCaption" />
             <conv:BookStatusConverter x:Key="BookStatus" />
-            <conv:NotConverter x:Key="Not" />
+            <conv:SelectedTabToBrushConverter x:Key="SelectedTab" />
 
             <conv:PageToBitmapConverter x:Key="PageToBitmap" />
             <conv:PageStateConverter x:Key="PageState" />

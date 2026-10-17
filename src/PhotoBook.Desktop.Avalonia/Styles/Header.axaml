@@ -101,53 +101,35 @@
     </Style>
 
     <!--
-        The two filters, living inside the control panel rather than in a bar of their own.
+        A filter's box.
 
-        Borderless was right and grey was not. A framed control inside a white panel reads
-        as something that arrived from another program; the same control with nothing
-        behind it reads as part of the panel. But the only shape these controls were given
-        was the panel's own grey on hover, and grey on grey is the one combination that
-        looks like a control nobody finished drawing.
+        It was thirty-four pixels tall with twelve of padding, and it looked it: the words
+        sat in a strip with no room to breathe, and two controls of that size on a white
+        panel read as labels that had been underlined rather than as things you can press.
+        Thirty-eight pixels, fourteen of padding, an eleven-pixel corner and thirteen-point
+        type is the same shape with air in it.
 
-        So they wear the brand instead. A whisper of it - Brand50, which is #EEF2FF, barely
-        a shade off the white they sit on - and the pointer deepens it to Brand100 rather
-        than darkening it. A filter that changes colour on the way in is saying "this one is
-        live", and it says it in the only colour this program has for meaning anything.
+        The fill is the brand's own lightest, #EEF2FF, barely a shade off the white it sits
+        on, and the pointer deepens it rather than darkening it. Grey on grey - which is
+        what this wore before - is the one combination that looks like a control nobody
+        finished drawing.
 
-        Same width, both of them: the two labels are different lengths and letting the
-        controls size themselves left them a matched pair that did not match.
-
-        The template below is written out because the list that comes down was the part
-        that was never dressed. The control had a colour and a shape; the thing that
-        actually appears when you open it arrived as the platform ships it - a grey slab,
-        square corners, rows the height of a text line - which against the rest of this
-        window looks like a window from another operating system that happened to open on
-        top of it. Styling the popup's border from outside reached nothing, because the
-        popup lives in a window of its own and the theme builds it out of parts this
-        program never sees. So the template is written here, the same way the tab is.
-
-        Two names inside it are not decoration and must keep their spelling:
-        PART_ToggleButton and PART_Popup. The control looks the two up by name, and
-        without them the list silently refuses to open.
-
-        The one subtlety worth writing down: there are two sets of TemplateBinding in this
-        template and they do not mean the same thing. The one on the toggle button's own
-        ContentPresenter belongs to the template nested inside it and reads the toggle. The
-        ones in that toggle's content belong to the template out here and read this
-        ComboBox - which is why the label can be written as SelectedItem at all.
+        The chevron is drawn in the control's own template rather than taken from the
+        platform's, and takes its colour from the text, so it stays quiet at rest and
+        darkens with the label on hover.
     -->
-    <Style Selector="ComboBox.filter">
-        <Setter Property="Height" Value="34" />
-        <Setter Property="MinWidth" Value="150" />
-        <Setter Property="Padding" Value="12,0" />
-        <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontWeight" Value="Medium" />
+    <Style Selector="Button.filterChip">
         <Setter Property="Background" Value="{DynamicResource Brand50}" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="Height" Value="38" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{DynamicResource Slate800}" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
 
         <Setter Property="Transitions">
             <Transitions>
@@ -159,120 +141,35 @@
 
         <Setter Property="Template">
             <ControlTemplate>
-                <Grid ColumnDefinitions="*,Auto">
-
-                    <ToggleButton Name="PART_ToggleButton"
-                                  Grid.Column="0"
-                                  HorizontalAlignment="Stretch"
-                                  Focusable="False"
-                                  Padding="12,0"
-                                  IsChecked="{TemplateBinding IsDropDownOpen, Mode=TwoWay}"
-                                  Background="{TemplateBinding Background}"
-                                  BorderBrush="{TemplateBinding BorderBrush}"
-                                  BorderThickness="{TemplateBinding BorderThickness}">
-                        <ToggleButton.Template>
-                            <ControlTemplate>
-                                <Border Background="{TemplateBinding Background}"
-                                        BorderBrush="{TemplateBinding BorderBrush}"
-                                        BorderThickness="{TemplateBinding BorderThickness}"
-                                        CornerRadius="10">
-                                    <Border.Transitions>
-                                        <Transitions>
-                                            <BrushTransition Property="Background" Duration="0:0:0.14" />
-                                            <BrushTransition Property="BorderBrush" Duration="0:0:0.14" />
-                                        </Transitions>
-                                    </Border.Transitions>
-                                    <ContentPresenter Content="{TemplateBinding Content}"
-                                                      Margin="{TemplateBinding Padding}"
-                                                      HorizontalAlignment="Stretch"
-                                                      VerticalAlignment="Center" />
-                                </Border>
-                            </ControlTemplate>
-                        </ToggleButton.Template>
-
-                        <Grid ColumnDefinitions="*,Auto">
-                            <ContentPresenter Grid.Column="0"
-                                              Content="{TemplateBinding SelectedItem}"
-                                              ContentTemplate="{TemplateBinding ItemTemplate}"
-                                              HorizontalAlignment="Left"
-                                              VerticalAlignment="Center" />
-                            <Path Grid.Column="1"
-                                  Margin="10,0,12,0"
-                                  Width="9" Height="6"
-                                  VerticalAlignment="Center"
-                                  Data="M 0 0 L 4.5 5 L 9 0"
-                                  Stroke="{TemplateBinding Foreground}"
-                                  StrokeThickness="1.4" />
-                        </Grid>
-                    </ToggleButton>
-
-                    <Popup Name="PART_Popup"
-                           Grid.Column="0"
-                           Placement="Bottom"
-                           Focusable="False"
-                           IsOpen="{TemplateBinding IsDropDownOpen}"
-                           VerticalOffset="6">
-                        <Border Background="{DynamicResource Surface}"
-                                BorderBrush="{DynamicResource Slate200}"
-                                BorderThickness="1"
-                                CornerRadius="12"
-                                Padding="6"
-                                MinWidth="{TemplateBinding MinWidth}"
-                                BoxShadow="{DynamicResource ShadowCard}">
-                            <ScrollViewer MaxHeight="240">
-                                <!--
-                                    A ListBox, not an ItemsControl.
-
-                                    The rows have to be real containers and not just
-                                    drawn content: an ItemsControl inside the popup makes
-                                    plain content presenters, so there is no row for a
-                                    hover or a chosen state to belong to - which is why the
-                                    first three attempts at this produced a list that
-                                    could not be pointed at. A ListBox makes them, binds
-                                    the choice straight back to the control that opened
-                                    it, and closes the popup when one is made.
-                                -->
-                                <ListBox Classes="filterList"
-                                         Background="Transparent"
-                                         BorderThickness="0"
-                                         Padding="0"
-                                         MaxHeight="220"
-                                         ItemsSource="{TemplateBinding ItemsSource}"
-                                         ItemTemplate="{TemplateBinding ItemTemplate}"
-                                         SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=ComboBox}, Mode=TwoWay}"
-                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                                    <ListBox.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel />
-                                        </ItemsPanelTemplate>
-                                    </ListBox.ItemsPanel>
-                                </ListBox>
-                            </ScrollViewer>
-                        </Border>
-                    </Popup>
-                </Grid>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <Border.Transitions>
+                        <Transitions>
+                            <BrushTransition Property="Background" Duration="0:0:0.14" />
+                            <BrushTransition Property="BorderBrush" Duration="0:0:0.14" />
+                        </Transitions>
+                    </Border.Transitions>
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="Center" />
+                </Border>
             </ControlTemplate>
         </Setter>
     </Style>
 
-    <!-- The pointer deepens the fill rather than darkening it, and the open state gets a
-         hairline rather than a second fill: a control that keeps changing while its list
-         is already open is a control that will not settle. -->
-    <Style Selector="ComboBox.filter:pointerover /template/ ToggleButton">
+    <Style Selector="Button.filterChip:pointerover">
         <Setter Property="Background" Value="{DynamicResource Brand100}" />
-        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate900}" />
     </Style>
 
-    <Style Selector="ComboBox.filter:pressed /template/ ToggleButton">
+    <Style Selector="Button.filterChip:pressed">
         <Setter Property="Background" Value="{DynamicResource Brand100}" />
-    </Style>
-
-    <Style Selector="ComboBox.filter:open /template/ ToggleButton">
-        <Setter Property="BorderBrush" Value="{DynamicResource Brand200}" />
     </Style>
 
     <!--
-        "Сбросить", and it only exists while something is being filtered out - so there is
         never a control on the screen that is there and does nothing.
     -->
     <Style Selector="Button.ghostClear">
@@ -311,6 +208,26 @@
 
         The faint foreground is the same faint the other shell uses for its icon buttons.
     -->
+
+    <Style Selector="Button.icon">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="Button.icon:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Slate100}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
+    </Style>
+
+    <Style Selector="Button.icon:pressed">
+        <Setter Property="Background" Value="{DynamicResource Slate200}" />
+    </Style>
+
     <!--
         Mode switching, rebuilt.
 
@@ -345,33 +262,26 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="16,0" />
-        <Setter Property="Height" Value="36" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="Height" Value="34" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
         <Setter Property="Cursor" Value="Hand" />
 
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.14" />
-                <BrushTransition Property="Foreground" Duration="0:0:0.14" />
-                <BrushTransition Property="BorderBrush" Duration="0:0:0.14" />
-            </Transitions>
-        </Setter>
-
+        <!--
+            The template is written out because ToggleButton paints no background of its own
+            here, which is why every tab used to carry a Border inside it to do the painting.
+            Painting it here instead means one less element per tab and - the reason it was
+            worth doing - the pointer states below have something real to change.
+        -->
         <Setter Property="Template">
             <ControlTemplate>
-                <Border Background="{TemplateBinding Background}"
+                <Border x:Name="Pill"
+                        Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="10">
-                    <Border.Transitions>
-                        <Transitions>
-                            <BrushTransition Property="Background" Duration="0:0:0.14" />
-                            <BrushTransition Property="BorderBrush" Duration="0:0:0.14" />
-                        </Transitions>
-                    </Border.Transitions>
+                        CornerRadius="9">
                     <ContentPresenter Content="{TemplateBinding Content}"
                                       Margin="{TemplateBinding Padding}"
                                       HorizontalAlignment="Center"
@@ -382,38 +292,34 @@
     </Style>
 
     <Style Selector="ToggleButton.tab:pointerover">
-        <Setter Property="Background" Value="{DynamicResource Slate50}" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate900}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate300}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate800}" />
     </Style>
 
     <Style Selector="ToggleButton.tab:pressed">
-        <Setter Property="Background" Value="{DynamicResource Slate100}" />
-    </Style>
-
-    <Style Selector="ToggleButton.tab:checked">
-        <Setter Property="Background" Value="{DynamicResource Brand600}" />
-        <Setter Property="Foreground" Value="White" />
-    </Style>
-
-    <Style Selector="ToggleButton.tab:checked:pointerover">
-        <Setter Property="Background" Value="{DynamicResource Brand700}" />
-    </Style>
-
-    <Style Selector="ToggleButton.tab:checked:pressed">
-        <Setter Property="Background" Value="{DynamicResource Brand700}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate400}" />
     </Style>
 
     <!--
-        The two screens that cannot be reached without a project.
+        Difference one of this step, listed rather than fudged: the active tab carries a
+        subtle shadow in the WPF theme. ToggleButton has no BoxShadow property in this
+        engine, so the shadow would have to live on a Border around its content. That is the
+        way to get it, but it is a visible difference against the screenshot beside it
+        and therefore a decision rather than a detail.
+    -->
 
-        The TEXT goes quiet and nothing else. Fading the pill as well - which is what this
-        used to do - made the bar look broken rather than busy, and a broken bar is read as
-        a fault in the program instead of as a door that is shut.
+    <!--
+        Difference two: a disabled tab in the WPF theme is greyed and loses the pointer.
+        Here a disabled ToggleButton simply stops reacting, so the greying is done
+        explicitly - otherwise a disabled tab would look exactly like an enabled one, which
+        is how a person learns to click something that cannot be clicked.
     -->
     <Style Selector="ToggleButton.tab:disabled">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate300}" />
-        <Setter Property="Cursor" Value="Arrow" />
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
+
+    <Style Selector="ToggleButton.tab:disabled /template/ ContentPresenter">
+        <Setter Property="Opacity" Value="1" />
     </Style>
 
     <!--

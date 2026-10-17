@@ -61,11 +61,11 @@
                      is bound from the view model instead. Chosen is a white pill standing
                      above the track; the rest are transparent. -->
                 <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Background="Transparent" BorderBrush="{DynamicResource Slate200}"
-                          BorderThickness="1" CornerRadius="13" Padding="3">
+                        Background="{DynamicResource Slate200At70}" CornerRadius="11" Padding="3">
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <ToggleButton Classes="tab" AutomationProperties.Name="Мои проекты"
-                                        IsChecked="{Binding IsProjectsSelected, Mode=OneWay}"
+                                      Background="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
+                                      Foreground="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToProjectsCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="7">
                                 <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="13"
@@ -75,7 +75,8 @@
                             </StackPanel>
                         </ToggleButton>
                         <ToggleButton Classes="tab" AutomationProperties.Name="Выбор режима"
-                                        IsChecked="{Binding IsStartSelected, Mode=OneWay}"
+                                      Background="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
+                                      Foreground="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToModeSelectCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="7">
                                 <TextBlock Text="&#xE71C;" FontFamily="Segoe MDL2 Assets" FontSize="13"
@@ -87,47 +88,27 @@
                         <ToggleButton Classes="tab" AutomationProperties.Name="Уникальные папки"
                                       IsEnabled="{Binding CanOpenUniqueFoldersTab}"
                                       ToolTip.Tip="Открывается только внутри проекта"
-                                        IsChecked="{Binding IsUniqueFoldersSelected, Mode=OneWay}"
+                                      Background="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
+                                      Foreground="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToUniqueFoldersCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="7">
                                 <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                            Opacity="0.85"
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                                 <TextBlock Text="Уникальные папки" />
-                                  <!--
-                                       The padlock. These two screens cannot be reached without an open
-                                       project, and that has to be said on the face of the tab rather than
-                                       left to be worked out: the colour alone was not enough, and a tab
-                                       that cannot be pressed should look like it cannot be pressed. It
-                                       wears the same quiet grey as the label, so the lock is an
-                                       explanation rather than an alarm.
-                                  -->
-                                  <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="10"
-                                             IsVisible="{Binding CanOpenUniqueFoldersTab, Converter={StaticResource Not}}"
-                                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                             </StackPanel>
                         </ToggleButton>
                         <ToggleButton Classes="tab" AutomationProperties.Name="Комбинированный"
                                       IsEnabled="{Binding CanOpenCombinedTab}"
                                       ToolTip.Tip="Открывается только внутри проекта"
-                                        IsChecked="{Binding IsCombinedSelected, Mode=OneWay}"
+                                      Background="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
+                                      Foreground="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToCombinedCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="7">
                                 <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                            Opacity="0.85"
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                                 <TextBlock Text="Комбинированный" />
-                                  <!--
-                                       The padlock. These two screens cannot be reached without an open
-                                       project, and that has to be said on the face of the tab rather than
-                                       left to be worked out: the colour alone was not enough, and a tab
-                                       that cannot be pressed should look like it cannot be pressed. It
-                                       wears the same quiet grey as the label, so the lock is an
-                                       explanation rather than an alarm.
-                                  -->
-                                  <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="10"
-                                             IsVisible="{Binding CanOpenCombinedTab, Converter={StaticResource Not}}"
-                                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                             </StackPanel>
                         </ToggleButton>
                     </StackPanel>
