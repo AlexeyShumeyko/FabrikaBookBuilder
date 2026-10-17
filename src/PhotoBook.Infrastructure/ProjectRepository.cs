@@ -22,9 +22,15 @@ namespace PhotoBook.Infrastructure
     {
         private readonly IImageService _imageService;
 
-        public ProjectRepository(IImageService imageService)
+        /// <summary>
+        /// The index, so that saving a project also brings its list entry up to date.
+        /// </summary>
+        private readonly IProjectListService _list;
+
+        public ProjectRepository(IImageService imageService, IProjectListService list)
         {
             _imageService = imageService;
+            _list = list;
         }
 
         public async Task SaveAsync(Project project, string filePath)
@@ -46,6 +52,12 @@ namespace PhotoBook.Infrastructure
                 var json = JsonSerializer.Serialize(project, options);
 
                 await File.WriteAllTextAsync(filePath, json);
+
+                // The index entry is updated from here rather than by whoever happens to call
+                // this. There are a dozen save paths across the two editors and not all of them wait
+                // for the answer; the place that actually writes the file is the one that cannot be
+                // forgotten. A project's id is its file name, which is how the store lays them out.
+                await _list.RefreshFromProjectAsync(Path.GetFileNameWithoutExtension(filePath), project);
             }
             catch (Exception ex)
             {

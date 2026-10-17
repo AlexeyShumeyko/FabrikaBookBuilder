@@ -36,12 +36,12 @@ namespace PhotoBook.Shell.Converters
                 });
             }
 
-            return status switch
-            {
-                ProjectStatus.SuccessfullyCompleted => "Готов к печати",
-                ProjectStatus.Ready => "В процессе сборки",
-                _ => "Черновик"
-            };
+            // The words live in one place now - ProjectStatusText - because this badge and
+            // the status filter in the list are the same sentence about the same project, and
+            // when they were written out separately they disagreed: the filter labelled
+            // "готов к печати" selected the runs whose cards said "в процессе сборки", and
+            // a person could not tell whether pressing it had done anything.
+            return ProjectStatusText.Of(status);
         }
 
         public object? ConvertBack(

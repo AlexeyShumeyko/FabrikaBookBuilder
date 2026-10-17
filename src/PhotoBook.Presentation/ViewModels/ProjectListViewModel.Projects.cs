@@ -32,84 +32,52 @@ namespace PhotoBook.Presentation.ViewModels
 
             try
             {
-
+                // The index, and nothing else.
+                //
+                // This used to open and parse every project file in the folder, one after
+                // another, so that each card could be given its real book count, its real
+                // spread count and three photograph paths. Thirty-nine cards meant reading
+                // 1.2 MB on the way to this screen - every time the tab was pressed - and the
+                // cost grew with the total size of everything on the machine rather than with
+                // the number of cards.
+                //
+                // Those four things are now written into the index whenever a project is
+                // saved, by the repository, which is the one place a project file is written
+                // and therefore the one place that cannot forget. So the list reads what is
+                // already known and draws.
                 var projects = await _projectListService.GetAllProjectsAsync();
+
                 Projects.Clear();
 
-                // A card is a copy. The list re-sorts and reloads while a project is
-                // being opened, and the editor has to keep the record it was handed.
                 foreach (var project in projects.OrderByDescending(p => p.LastModified))
                 {
-                    if (string.IsNullOrEmpty(project.Id))
-                    {
-                        continue;
-                    }
+                    if (string.IsNullOrEmpty(project.Id)) continue;
 
-                    // The stored counts go stale whenever a run is edited, so the file is
-                    // opened and the real numbers read back. That is why showing the list
-                    // touches every project file.
-                    int actualPageCount = project.PageCount;
-                    int actualBookCount = project.BookCount;
-                    Project? previewSource = null;
-
-                    if (!string.IsNullOrEmpty(project.FilePath) && File.Exists(project.FilePath))
-                    {
-                        try
-                        {
-                            var loadedProject = await _projects.LoadAsync(project.FilePath);
-                            if (loadedProject != null && loadedProject.Books != null && loadedProject.Books.Count > 0)
-                            {
-                                actualPageCount = loadedProject.Books.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
-                                actualBookCount = loadedProject.Books.Count;
-
-                                // The mockup's project card leads with a strip of three
-                                // 48x48 photos plus a "+N" tile. The project is already
-                                // fully loaded here, so the paths are simply read off it
-                                // rather than re-opened per card.
-                                previewSource = loadedProject;
-
-                                if (actualPageCount != project.PageCount || actualBookCount != project.BookCount)
-                                {
-                                    project.PageCount = actualPageCount;
-                                    project.BookCount = actualBookCount;
-                                    Background.Run(
-                                        async () => await _projectListService.SaveProjectInfoAsync(project),
-                                        "save project index");
-                                }
-                            }
-                        }
-                        catch
-                        {
-                        }
-                    }
-
+                    // A card is a copy. The list re-sorts and reloads while a project is
+                    // being opened, and the editor has to keep the record it was handed.
                     var projectCopy = new ProjectInfo
                     {
                         Id = project.Id,
                         Name = project.Name,
                         FilePath = project.FilePath,
                         Mode = project.Mode,
-                        BookCount = actualBookCount,
-                        PageCount = actualPageCount,
+                        BookCount = project.BookCount,
+                        PageCount = project.PageCount,
                         Status = project.Status,
                         CreatedDate = project.CreatedDate,
                         LastModified = project.LastModified
                     };
 
-                    // Preview strip: 3 photos + "+N". Filled before the card is added to
-                    // Projects so the template's first layout pass already has the data.
-                    if (previewSource != null)
-                    {
-                        FillPreviewPhotos(previewSource, projectCopy);
-                    }
+                    foreach (var photo in project.PreviewPhotos) projectCopy.PreviewPhotos.Add(photo);
+                    projectCopy.TotalPhotoCount = project.TotalPhotoCount;
 
                     Projects.Add(projectCopy);
                 }
 
-                // The filters are applied once, over the finished list. Per project
-                // would rebuild the visible set dozens of times for states nobody can
-                // see - the intermediate results last microseconds, and the grid has
-                // not been laid out yet.
+                // The filters are applied once, over the finished list. Per project would
+                // rebuild the visible set dozens of times for states nobody can see - the
+                // intermediate results last microseconds, and the grid has not been laid
+                // out yet.
                 ApplyFilters();
             }
             catch (Exception ex)
@@ -120,55 +88,53 @@ namespace PhotoBook.Presentation.ViewModels
             {
                 IsLoading = false;
             }
+
+            // Projects saved by a build before the index carried pictures still have none to
+            // show. They are filled in here, after the list is already on screen and already
+            // useful - once per project, ever, rather than on every visit.
+            _ = BackfillPreviewsAsync();
         }
 
         /// <summary>
-        /// How many photos the card shows as thumbnails. The mockup uses three, then
-        /// puts the remainder in a "+N" tile.
+        /// Gives a picture strip to the projects that were saved before the index carried one.
         /// </summary>
-        private const int PreviewPhotoLimit = 3;
-
-        /// <summary>
-        /// Fills a project card's preview strip from an already-loaded project.
+        /// <remarks>
+        /// Deliberately after <see cref="LoadProjectsAsync"/> has finished and never awaited by
+        /// it: the whole point of the change was that this screen does not wait on the disk. A
+        /// project with no strip shows plain tiles until this reaches it, and has one for good
+        /// afterwards.
         ///
-        /// Covers come first, then spreads, book by book, because that is the order the
-        /// photos appear in the finished book. Only paths that still exist on disk are
-        /// taken: a project can outlive a moved or deleted photo, and a broken image in
-        /// the strip would be worse than one tile fewer.
-        /// </summary>
-        private static void FillPreviewPhotos(Project project, ProjectInfo target)
+        /// Failures are swallowed one project at a time. A photograph that has been moved or
+        /// deleted is not a reason to leave the rest of the list without pictures.
+        /// </remarks>
+        private async Task BackfillPreviewsAsync()
         {
-            if (project?.Books == null) return;
+            var needing = Projects.Where(p => p.PreviewPhotos.Count == 0).ToList();
+            if (needing.Count == 0) return;
 
-            int total = 0;
-
-            foreach (var book in project.Books)
+            foreach (var entry in needing)
             {
-                if (book == null) continue;
-
-                // The cover is a separate object from Pages, and it is the first thing
-                // the reader sees, so it leads the strip.
-                if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
+                try
                 {
-                    total++;
-                    if (target.PreviewPhotos.Count < PreviewPhotoLimit && File.Exists(book.Cover.SourcePath))
-                        target.PreviewPhotos.Add(book.Cover.SourcePath);
+                    if (string.IsNullOrEmpty(entry.FilePath) || !File.Exists(entry.FilePath)) continue;
+
+                    var loaded = await _projects.LoadAsync(entry.FilePath);
+                    if (loaded is null) continue;
+
+                    ProjectCardData.Fill(loaded, entry);
+
+                    if (entry.PreviewPhotos.Count == 0) continue;
+
+                    await _projectListService.SaveProjectInfoAsync(entry);
                 }
-
-                if (book.Pages == null) continue;
-
-                foreach (var page in book.Pages)
+                catch
                 {
-                    if (page == null || string.IsNullOrEmpty(page.SourcePath)) continue;
-
-                    total++;
-                    if (target.PreviewPhotos.Count < PreviewPhotoLimit && File.Exists(page.SourcePath))
-                        target.PreviewPhotos.Add(page.SourcePath);
+                    // One unreadable project is one project with no strip. The list is already
+                    // on screen and everything else is fine.
                 }
             }
-
-            target.TotalPhotoCount = total;
         }
+
 
         private bool CanDeleteProject(ProjectInfo? projectInfo)
         {

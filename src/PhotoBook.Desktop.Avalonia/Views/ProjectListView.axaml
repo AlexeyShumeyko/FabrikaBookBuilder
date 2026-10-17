@@ -38,54 +38,49 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- ============================ section header ======================== -->
-        <Border Grid.Row="0" Classes="card" Padding="24">
-            <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+        <!--
+            ============================ control panel ==========================
+
+            One row, three things: what this screen is, what you want to see, and the one
+            action you can take.
+
+            The filters were a separate bar and the panel looked empty without them, which
+            is the wrong way round: the filters are how you choose what to see ON this
+            screen, so they belong to this screen's panel, and a panel that only carries a
+            heading is a heading pretending to be a panel.
+
+            It is a single row on purpose. Nothing in it is taller than the heading was, so
+            the panel gives back no vertical space - which matters more than usual here,
+            because the thing below it is a grid of cards and every pixel of height is a
+            row of photographs the photographer can see.
+        -->
+        <Border Grid.Row="0" Classes="card" Padding="20,18"
+                IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}}">
+            <Grid ColumnDefinitions="*,Auto,Auto" >
+
+                <!-- The heading. -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
                     <TextBlock Text="Проекты фотокниг" Classes="t20Bold" />
                     <TextBlock Classes="t12" Margin="0,2,0,0"
                                Foreground="{DynamicResource Slate500}"
                                Text="Управляйте подготовленными макетами и запускайте их в автоматический экспорт" />
                 </StackPanel>
 
-                <!-- The one action on this screen. -->
-                <Button Grid.Column="2" Classes="createProject"
-                        AutomationProperties.Name="Создать проект"
-                        Command="{Binding CreateProjectCommand}">
-                    <StackPanel Orientation="Horizontal" Spacing="9">
-                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                   VerticalAlignment="Center" Opacity="0.95" />
-                        <TextBlock Text="Создать проект" Foreground="White"
-                                   VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
-            </Grid>
-        </Border>
+                <!--
+                    The two questions: which editor, and how far along. Two, because those
+                    are the two anybody asks with twenty projects in the folder. The words
+                    are the card badges' own words - see ProjectStatusText - so a card can
+                    never come back saying something different from the filter that chose it.
 
-        <!--
-            Finding one project among several.
+                    These are borderless on purpose. Inside a white panel a boxed control
+                    reads as a foreign object dropped in; borderless reads as belonging, and
+                    it takes its shape from the pointer on hover instead of from a frame.
+                -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2"
+                            VerticalAlignment="Center">
 
-            Four controls, because there are four different questions somebody actually
-            asks: where is the one I want (search), which of these am I working on (mode
-            and status), and in what order should I look at them (sort). Anything beyond
-            these - a date range, a photograph count, a size - has no question behind it
-            yet, and an empty-looking filter is worse than a missing one because it
-            promises something and then filters nothing.
-
-            The count on the right is the true total unless something is narrowing, in
-            which case it reads "7 из 39". A total that silently changed with the filter
-            would be a lie about how many projects exist.
-        -->
-        <Border Grid.Row="1" Margin="0,16,0,0" IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}}">
-            <Grid ColumnDefinitions="Auto,*,Auto">
-
-                <TextBox Grid.Column="0" Classes="filterSearch" Width="300" HorizontalAlignment="Left"
-                         Watermark="Поиск по названию проекта"
-                         AutomationProperties.Name="Поиск по названию проекта"
-                         Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                     <ComboBox Classes="filter" AutomationProperties.Name="Фильтр по режиму"
+                              ToolTip.Tip="Каким редактором собран проект"
                               ItemsSource="{Binding ModeChoices}"
                               SelectedItem="{Binding SelectedMode, Mode=TwoWay}">
                         <ComboBox.ItemTemplate>
@@ -96,6 +91,7 @@
                     </ComboBox>
 
                     <ComboBox Classes="filter" AutomationProperties.Name="Фильтр по статусу"
+                              ToolTip.Tip="Как готово собрание"
                               ItemsSource="{Binding StatusChoices}"
                               SelectedItem="{Binding SelectedStatus, Mode=TwoWay}">
                         <ComboBox.ItemTemplate>
@@ -105,54 +101,69 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
 
-                    <ComboBox Classes="filter" AutomationProperties.Name="Сортировка"
-                              ItemsSource="{Binding SortChoices}"
-                              SelectedItem="{Binding SelectedSort, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Label}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+                    <!-- Appears only when something is being filtered out, so it is never a
+                         control that is there and does nothing. -->
+                    <Button Classes="ghostClear" IsVisible="{Binding IsNarrowed}"
+                            AutomationProperties.Name="Сбросить фильтры"
+                            ToolTip.Tip="Показать все проекты"
+                            Command="{Binding ClearFiltersCommand}">
+                        <TextBlock Text="Сбросить" />
+                    </Button>
 
-                <Button Margin="10,0,0,0" Classes="secondary" Padding="12,0"
-                        Height="34" IsVisible="{Binding IsNarrowed}"
-                        ToolTip.Tip="Показать все проекты"
-                        AutomationProperties.Name="Сбросить фильтры"
-                        Command="{Binding ClearFiltersCommand}">
-                    <TextBlock Text="Сбросить" />
-                </Button>
-
-                  <!--
-                      The count is the true total, and says so in words: a bare number beside
-                      three filters reads as "the filter returned 39", which is a different
-                      and wrong thing to believe. While something narrows the list it reads
-                      "7 из 39", which is honest about both numbers.
-                  -->
-                  <TextBlock Text="{Binding FilterSummary}" VerticalAlignment="Center"
-                             Margin="16,0,0,0" Classes="t12"
-                             Foreground="{DynamicResource Slate500}" />
-
+                    <!-- The count, in words. A bare number next to two filters reads as "the
+                         filter returned 39", which is a different and wrong thing to
+                         believe; while narrowing it reads "7 из 39", which is honest about
+                         both numbers. -->
+                    <TextBlock Text="{Binding FilterSummary}" VerticalAlignment="Center"
+                               Margin="12,0,0,0" Classes="t12"
+                               Foreground="{DynamicResource Slate400}" />
                 </StackPanel>
+
+                <!--
+                    The one action on the screen.
+
+                    It is deliberately the same weight as the export button on the other
+                    screens rather than the loudest thing in the window: the photographer is
+                    mostly looking, and the loudest control on a screen is the one they get
+                    invited to press. Thirty-eight pixels, a hair of breathing room either
+                    side of the mark, and states for the pointer - a filled button that gives
+                    nothing back when pressed does not feel pressed, which is most of why it
+                    used to look unfinished.
+                -->
+                <Button Grid.Column="2" Classes="createProject" Margin="20,0,0,0"
+                        AutomationProperties.Name="Создать проект"
+                        Command="{Binding CreateProjectCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                   VerticalAlignment="Center" Opacity="0.9" />
+                        <TextBlock Text="Создать проект" Foreground="White"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
             </Grid>
         </Border>
 
-        <!-- ================================ body ============================== -->
-        <Panel Grid.Row="2" Margin="0,24,0,0">
+        <!-- The empty screen gets the panel's heading on its own; there is nothing to filter. -->
+        <Border Grid.Row="0" Classes="card" Padding="20,18"
+                IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}, ConverterParameter=empty}">
+            <StackPanel>
+                <TextBlock Text="Проекты фотокниг" Classes="t20Bold" />
+                <TextBlock Classes="t12" Margin="0,2,0,0"
+                           Foreground="{DynamicResource Slate500}"
+                           Text="Управляйте подготовленными макетами и запускайте их в автоматический экспорт" />
+            </StackPanel>
+        </Border>
 
-            <!-- loading veil -->
-            <Border IsVisible="{Binding IsLoading}" Background="#B3F8FAFC" CornerRadius="16">
-                <Border Background="White" CornerRadius="12" Padding="24"
-                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                        BoxShadow="{DynamicResource ShadowSubtle}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock Text="&#xE9D5;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                   Foreground="{DynamicResource Slate400}" />
-                        <TextBlock Text="Загрузка проектов..." Classes="t12Medium"
-                                   Foreground="{DynamicResource Slate600}" />
-                    </StackPanel>
-                </Border>
-            </Border>
+        <!-- ================================ body ============================== -->
+        <Panel Grid.Row="1" Margin="0,20,0,0">
+
+            <!-- No loading plate, and there is nothing to load.
+                 The list used to open and parse every project file to draw the cards, so a
+                 plate over the grid was honest about what was happening - except that it was
+                 painted UNDER the cards, so it never covered anything and only showed
+                 through the gaps as a tint that vanished when loading ended. The cost it was
+                 warning about is gone: the list reads the index, and a plate that flashes
+                 for three milliseconds is worse than no plate at all. -->
 
             <!-- error banner -->
             <Border IsVisible="{Binding ErrorMessage, Converter={StaticResource NotEmpty}}"

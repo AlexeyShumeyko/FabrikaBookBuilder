@@ -107,11 +107,22 @@ namespace PhotoBook.Core
         //  re-read from the project file each time the list loads.
 
         /// <summary>Up to three photo paths shown as the card's preview strip.</summary>
-        [JsonIgnore]
+        /// <summary>
+        /// The photographs a card shows, and the total behind the "+N" tile.
+        /// </summary>
+        /// <remarks>
+        /// <b>Persisted, on purpose.</b> Both used to be marked "do not save", which meant the
+        /// list had to open every project file to draw every card: thirty-nine cards meant
+        /// reading and parsing 1.2 MB on the way to the screen, every time the tab was pressed.
+        /// The cost of the list grew with the total size of everything on the machine instead of
+        /// with the number of cards. They are written whenever a project is saved - see
+        /// <c>ProjectCardData</c> and <c>ProjectRepository.SaveAsync</c>.
+        /// </remarks>
+        [JsonPropertyName("previewPhotos")]
         public ObservableCollection<string> PreviewPhotos { get; } = new ObservableCollection<string>();
 
         /// <summary>How many photos the project uses in total, across all books.</summary>
-        [JsonIgnore]
+        [JsonPropertyName("totalPhotoCount")]
         public int TotalPhotoCount
         {
             get => _totalPhotoCount;

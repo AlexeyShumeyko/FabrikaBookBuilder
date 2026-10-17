@@ -249,6 +249,12 @@ namespace PhotoBook.Application
                         Status = projectInfo.Status,
                         LastModified = DateTime.Now
                     };
+
+                    // The card's pictures and its total travel with the record. They used to
+                    // be dropped here, which is part of why the list had to open every project
+                    // file to draw a card: nothing had ever written them down.
+                    foreach (var photo in projectInfo.PreviewPhotos) allProjects[existingIndex].PreviewPhotos.Add(photo);
+                    allProjects[existingIndex].TotalPhotoCount = projectInfo.TotalPhotoCount;
                 }
                 else
                 {
@@ -389,6 +395,41 @@ namespace PhotoBook.Application
         /// <summary>
         /// How far the project has been filled in.
         /// </summary>
+
+        /// <inheritdoc />
+        public async Task RefreshFromProjectAsync(string projectId, Project project)
+        {
+            if (string.IsNullOrEmpty(projectId) || project is null) return;
+
+            await _indexGate.WaitAsync();
+            try
+            {
+                var all = await ReadAllProjects_NoLock();
+                var index = all.FindIndex(p => p.Id == projectId);
+                if (index < 0) return;
+
+                // LastModified is deliberately NOT touched here.
+                //
+                // A project being filled in for the first time has not been worked on, and
+                // saying otherwise floats it to the top of the list with a date that is a lie
+                // about the last time a photographer touched it. The editors already bump
+                // the date when a project is genuinely saved.
+                ProjectCardData.Fill(project, all[index]);
+
+                await WriteAllProjects_NoLock(all);
+            }
+            catch (Exception ex)
+            {
+                // A project that saved correctly must not be reported as failed because its
+                // list entry did not refresh. The next save, or the next time the project is
+                // opened, puts it right.
+                _logging.LogError("Не удалось обновить запись проекта в списке после сохранения", ex);
+            }
+            finally
+            {
+                _indexGate.Release();
+            }
+        }
         private ProjectStatus DetermineStatus(Project project)
         {
             if (project.Books == null || project.Books.Count == 0)

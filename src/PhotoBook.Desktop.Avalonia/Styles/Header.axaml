@@ -46,25 +46,22 @@
     <Style Selector="Button.primary:pressed">
         <Setter Property="Background" Value="{DynamicResource Brand700}" />
     </Style>
-
     <!--
-        The one action on a screen, and the only one that should look like a decision.
+        The one action on a screen. Deliberately not the loudest thing in the window: the
+        photographer is mostly looking, and the loudest control on a screen is the one they
+        are invited to press.
 
-        It had no pointer states at all - the same fill on hover, on press and while held
-        down - and that, more than its size, is what made it read as a control that had been
-        dropped onto the panel rather than designed into it. A filled button that gives
-        nothing back when pressed does not feel pressed.
-
-        Forty pixels tall, thirteen-point text, and a glyph with room to breathe beside it.
-        Its own class rather than a larger `primary`, because the primary buttons on other
-        screens are deliberately a different weight and should not be dragged along.
+        Thirty-eight pixels, not forty-two. It had been given a height of its own that
+        nothing else in the program uses, which made it read as a prop rather than as a
+        button - and a 14-pixel mark beside 13-pixel text is a mark that outweighs the word.
+        The mark is 12 now and the word is the same size, which is what a mark is for.
     -->
     <Style Selector="Button.createProject">
         <Setter Property="Background" Value="{DynamicResource Brand600}" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Padding" Value="18,0" />
-        <Setter Property="Height" Value="42" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="15,0" />
+        <Setter Property="Height" Value="38" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="White" />
@@ -72,7 +69,7 @@
 
         <Setter Property="Template">
             <ControlTemplate>
-                <Border Background="{TemplateBinding Background}" CornerRadius="12">
+                <Border Background="{TemplateBinding Background}" CornerRadius="10">
                     <ContentPresenter Content="{TemplateBinding Content}"
                                       Margin="{TemplateBinding Padding}"
                                       HorizontalAlignment="Center"
@@ -91,45 +88,73 @@
     </Style>
 
     <!--
-        A filter control: three of them in a row, so they are quiet, equal and obviously
-        related. Flat white with a hairline and a small radius - a filled or large-radius box
-        here would compete with the card list it sits above.
+        A filter, living inside the control panel rather than in a bar of its own.
+
+        Borderless, and that is the whole of it. Inside a white panel a control with a grey
+        frame and a grey fill reads as an object that arrived from another program; the same
+        control with nothing behind it reads as part of the panel, and it takes its shape
+        from the pointer instead of from a border. The shape it takes on hover is a soft
+        tint of the panel's own grey, so it belongs twice over.
     -->
     <Style Selector="ComboBox.filter">
-        <Setter Property="Height" Value="34" />
-        <Setter Property="MinWidth" Value="168" />
-        <Setter Property="Padding" Value="12,0" />
-        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="MinWidth" Value="132" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="Background" Value="{DynamicResource Surface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
         <Setter Property="Cursor" Value="Hand" />
     </Style>
 
     <Style Selector="ComboBox.filter:pointerover">
-        <Setter Property="BorderBrush" Value="{DynamicResource Slate300}" />
+        <Setter Property="Background" Value="{DynamicResource Slate100}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate900}" />
+    </Style>
+
+    <!-- The platform paints a box inside the dropdown's own template, which is the grey
+         frame this control is supposed to have stopped wearing. -->
+    <Style Selector="ComboBox.filter /template/ ToggleButton">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style Selector="ComboBox.filter:open /template/ ToggleButton">
+        <Setter Property="Background" Value="{DynamicResource Slate100}" />
     </Style>
 
     <!--
-        The search box carries the only text anybody types here, so it is the one control in
-        the bar allowed to be wide. Its width is set in the view because it has to take the
-        space the three filters do not.
+        "Сбросить", and it only exists while something is being filtered out - so there is
+        never a control on the screen that is there and does nothing.
     -->
-    <Style Selector="TextBox.filterSearch">
-        <Setter Property="Height" Value="34" />
-        <Setter Property="Padding" Value="12,0" />
-        <Setter Property="CornerRadius" Value="10" />
+    <Style Selector="Button.ghostClear">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="Height" Value="32" />
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="Background" Value="{DynamicResource Surface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate800}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Brand600}" />
+        <Setter Property="Cursor" Value="Hand" />
+
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
     </Style>
 
-    <Style Selector="TextBox.filterSearch:focus">
-        <Setter Property="BorderBrush" Value="{DynamicResource Brand500}" />
+    <Style Selector="Button.ghostClear:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Brand50}" />
     </Style>
 
     <!--

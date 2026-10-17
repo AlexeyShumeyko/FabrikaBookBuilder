@@ -2,37 +2,42 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PhotoBook.Core;
 
 namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>
-    /// Finding one project out of several.
+    /// Narrowing a long list of projects down to the ones in hand.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Four controls, and the argument for each of them is the same: somebody with twenty
-    /// projects cannot find the one they want. A search by name solves "where is it"; a filter
-    /// by mode or status solves "show me only the ones I was working on"; a sort solves
-    /// "which of these did I touch last".
+    /// Two questions, because there are two questions somebody actually asks with twenty
+    /// projects on the machine: <b>which editor am I working in</b>, and <b>which of those
+    /// runs are finished</b>.
     /// </para>
     /// <para>
-    /// Nothing here filters the collection that was loaded. <see cref="Projects"/> stays what
-    /// is on disk, so clearing a filter brings everything back without touching the disk
-    /// again - and so the count shown beside the filters is always the true total, not the
-    /// number that survived the last change.
+    /// There is deliberately no search box and no sorting control.
     /// </para>
     /// <para>
-    /// The rebuild is a walk over the list, not a re-read: a few hundred cards is nothing,
-    /// and re-reading would mean the delay the owner is complaining about arriving again
-    /// every time a letter is typed.
+    /// Search was tried and removed: the list is already ordered by what was touched last,
+    /// so the project somebody is looking for is almost always in the first screenful, and a
+    /// box they have to focus, clear and re-focus is worse than scrolling once. Sorting by
+    /// name was removed for a stronger reason - projects are named after the job and the
+    /// useful order is the one that matches the work, which is the order they are already
+    /// in.
+    /// </para>
+    /// <para>
+    /// The words in the status filter are the words on the cards, read from
+    /// <see cref="ProjectStatusText"/>. They are not written out again here on purpose: when
+    /// they were, the filter labelled "готов к печати" selected the runs whose cards said
+    /// "в процессе сборки", and there was no way for a person to tell that pressing it had
+    /// done anything.
     /// </para>
     /// </remarks>
     public partial class ProjectListViewModel
     {
-        /// <summary>Which way to narrow the list.</summary>
+        /// <summary>Which editor a project belongs to.</summary>
         public enum ModeChoice
         {
             All,
@@ -40,47 +45,31 @@ namespace PhotoBook.Presentation.ViewModels
             Combined
         }
 
-        /// <summary>Which state of a run to narrow to.</summary>
+        /// <summary>How far along a run is.</summary>
         public enum StatusChoice
         {
             All,
             Draft,
-            Ready,
+            InProgress,
             Completed
         }
 
-        /// <summary>Which order to put them in.</summary>
-        public enum SortChoice
-        {
-            ByChanged,
-            ByName
-        }
-
         /// <summary>
-        /// One option as the person reads it, paired with the value it stands for.
+        /// One option as the person reads it, paired with the state it stands for.
         /// </summary>
         /// <remarks>
-        /// Paired rather than using the enum's own name because "NotFilled" is what the code
-        /// calls a run with an empty slot and "Черновик" is what a photographer calls it. The
+        /// Paired rather than using the enum's own name for the same reason the card is: the
         /// name in the code is not an argument for putting it on the screen.
         /// </remarks>
         public sealed record Choice<T>(T Value, string Label) where T : struct, Enum;
 
-        private string _searchText = string.Empty;
         private ModeChoice _modeChoice = ModeChoice.All;
         private StatusChoice _statusChoice = StatusChoice.All;
-        private SortChoice _sortChoice = SortChoice.ByChanged;
 
-        /// <summary>The cards actually shown. Rebuilt, not queried.</summary>
-        /// <remarks>
-        /// A view filter over a collection would avoid the copy, but this list also has to be
-        /// sorted, and a sort cannot be expressed as a filter. One collection that holds
-        /// exactly what is on screen is easier to reason about than a filtered view over a
-        /// second sorted one.
-        /// </remarks>
+        /// <summary>The cards actually shown.</summary>
         public ObservableCollection<ProjectInfo> FilteredProjects { get; } = new();
 
-        /// <summary>What the controls offer, in the order they are read.</summary>
+        /// <summary>The two editors.</summary>
         public IReadOnlyList<Choice<ModeChoice>> ModeChoices { get; } = new[]
         {
             new Choice<ModeChoice>(ModeChoice.All, "Все режимы"),
@@ -88,33 +77,16 @@ namespace PhotoBook.Presentation.ViewModels
             new Choice<ModeChoice>(ModeChoice.Combined, "Комбинированный")
         };
 
-        /// <inheritdoc cref="ModeChoices"/>
+        /// <summary>The three states a run can be in, in the words its own cards use.</summary>
         public IReadOnlyList<Choice<StatusChoice>> StatusChoices { get; } = new[]
         {
             new Choice<StatusChoice>(StatusChoice.All, "Любой статус"),
-            new Choice<StatusChoice>(StatusChoice.Draft, "Черновик"),
-            new Choice<StatusChoice>(StatusChoice.Ready, "Готов к печати"),
-            new Choice<StatusChoice>(StatusChoice.Completed, "Выгружен")
+            new Choice<StatusChoice>(StatusChoice.Draft, ProjectStatusText.Of(ProjectStatus.NotFilled)),
+            new Choice<StatusChoice>(StatusChoice.InProgress, ProjectStatusText.Of(ProjectStatus.Ready)),
+            new Choice<StatusChoice>(StatusChoice.Completed, ProjectStatusText.Of(ProjectStatus.SuccessfullyCompleted))
         };
 
-        /// <inheritdoc cref="ModeChoices"/>
-        public IReadOnlyList<Choice<SortChoice>> SortChoices { get; } = new[]
-        {
-            new Choice<SortChoice>(SortChoice.ByChanged, "По изменению"),
-            new Choice<SortChoice>(SortChoice.ByName, "По названию")
-        };
-
-        /// <summary>What the person is typing. Empty matches everything.</summary>
-        public string SearchText
-        {
-            get => _searchText;
-            set
-            {
-                if (SetProperty(ref _searchText, value ?? string.Empty)) ApplyFilters();
-            }
-        }
-
-        /// <inheritdoc cref="SearchText"/>
+        /// <summary>Which editor to show.</summary>
         public Choice<ModeChoice>? SelectedMode
         {
             get => ModeChoices.FirstOrDefault(c => c.Value == _modeChoice);
@@ -127,7 +99,7 @@ namespace PhotoBook.Presentation.ViewModels
             }
         }
 
-        /// <inheritdoc cref="SearchText"/>
+        /// <summary>Which state to show.</summary>
         public Choice<StatusChoice>? SelectedStatus
         {
             get => StatusChoices.FirstOrDefault(c => c.Value == _statusChoice);
@@ -140,41 +112,26 @@ namespace PhotoBook.Presentation.ViewModels
             }
         }
 
-        /// <inheritdoc cref="SearchText"/>
-        public Choice<SortChoice>? SelectedSort
-        {
-            get => SortChoices.FirstOrDefault(c => c.Value == _sortChoice);
-            set
-            {
-                if (value is null || value.Value == _sortChoice) return;
-                _sortChoice = value.Value;
-                OnPropertyChanged();
-                ApplyFilters();
-            }
-        }
+        /// <summary>Whether anything is being filtered out.</summary>
+        public bool IsNarrowed => _modeChoice != ModeChoice.All || _statusChoice != StatusChoice.All;
 
         /// <summary>
-        /// Whether the cards on screen are the whole list. Drives the "nothing found" note.
+        /// "12 из 39" while narrowing, and the plain total when not.
         /// </summary>
-        public bool IsNarrowed =>
-            !string.IsNullOrWhiteSpace(_searchText) ||
-            _modeChoice != ModeChoice.All ||
-            _statusChoice != StatusChoice.All;
+        /// <remarks>
+        /// In words when it is a total. A bare number beside two filters reads as "the filter
+        /// returned 39", which is a different and wrong thing to believe.
+        /// </remarks>
+        public string FilterSummary =>
+            IsNarrowed ? $"{FilteredProjects.Count} из {Projects.Count}" : $"Всего: {Projects.Count}";
 
-        /// <summary>"12 из 39" while a filter is on, and just the total when it is not.</summary>
-        public string FilterSummary => IsNarrowed
-            ? $"{FilteredProjects.Count} из {Projects.Count}"
-            : $"Всего: {Projects.Count}";
-
-        /// <summary>Puts everything back. One control, for the moment somebody gives up.</summary>
+        /// <summary>Puts both filters back. One control, for the moment somebody gives up.</summary>
         [RelayCommand]
         private void ClearFilters()
         {
-            _searchText = string.Empty;
             _modeChoice = ModeChoice.All;
             _statusChoice = StatusChoice.All;
 
-            OnPropertyChanged(nameof(SearchText));
             OnPropertyChanged(nameof(SelectedMode));
             OnPropertyChanged(nameof(SelectedStatus));
 
@@ -184,15 +141,6 @@ namespace PhotoBook.Presentation.ViewModels
         private void ApplyFilters()
         {
             var wanted = Projects.AsEnumerable();
-
-            if (!string.IsNullOrWhiteSpace(_searchText))
-            {
-                // Ordinal-ignore-case, because somebody typing a name in Cyrillic should not
-                // have to match the letter case the file was created with.
-                var needle = _searchText.Trim();
-                wanted = wanted.Where(p =>
-                    p.Name is not null && p.Name.Contains(needle, StringComparison.OrdinalIgnoreCase));
-            }
 
             wanted = _modeChoice switch
             {
@@ -204,17 +152,16 @@ namespace PhotoBook.Presentation.ViewModels
             wanted = _statusChoice switch
             {
                 StatusChoice.Draft => wanted.Where(p => p.Status == ProjectStatus.NotFilled),
-                StatusChoice.Ready => wanted.Where(p => p.Status == ProjectStatus.Ready),
+                StatusChoice.InProgress => wanted.Where(p => p.Status == ProjectStatus.Ready),
                 StatusChoice.Completed => wanted.Where(p => p.Status == ProjectStatus.SuccessfullyCompleted),
                 _ => wanted
             };
 
-            var ordered = _sortChoice == SortChoice.ByName
-                ? wanted.OrderBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase)
-                : wanted.OrderByDescending(p => p.LastModified);
-
             FilteredProjects.Clear();
-            foreach (var project in ordered) FilteredProjects.Add(project);
+            foreach (var project in wanted.OrderByDescending(p => p.LastModified))
+            {
+                FilteredProjects.Add(project);
+            }
 
             OnPropertyChanged(nameof(IsNarrowed));
             OnPropertyChanged(nameof(FilterSummary));

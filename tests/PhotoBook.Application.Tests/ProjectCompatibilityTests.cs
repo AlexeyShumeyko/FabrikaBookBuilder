@@ -35,7 +35,7 @@ public class ProjectCompatibilityTests : IDisposable
         return path;
     }
 
-    private static IProjectRepository Repository() => new ProjectRepository(new ImageService());
+    private static IProjectRepository Repository() => new ProjectRepository(new ImageService(), new QuietProjectListService());
 
     [Fact]
     public async Task Opens_a_project_written_by_1_1_1()
