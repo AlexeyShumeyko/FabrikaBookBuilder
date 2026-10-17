@@ -197,12 +197,37 @@ while (-not $target_button -and (Get-Date) -lt $deadline) {
     }
     $buttons = $matched
 
-    if ($buttons.Count -gt 0 -and $position -lt $buttons.Count) {
-        $candidate = $buttons[$position]
-        if (-not $candidate.Current.BoundingRectangle.IsEmpty) { $target_button = $candidate }
+    # The card belonging to THIS project, which is the nearest open button to the project's
+    # name on the screen - not the button at a position.
+    #
+    # Position was correct while the list held three cards and stopped being correct the
+    # moment it held thirty: the order cards are drawn in is not the order the index is
+    # sorted in, so a position opens whichever project happens to be Nth. Both sides then
+    # photograph different projects and the comparison measures the difference between two
+    # projects rather than the difference between two programs.
+    $label = $null
+    $texts = $win.FindAll(
+        [System.Windows.Automation.TreeScope]::Descendants,
+        (New-Object System.Windows.Automation.PropertyCondition(
+            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+            [System.Windows.Automation.ControlType]::Text)))
+    for ($i = 0; $i -lt $texts.Count; $i++) {
+        if ($texts[$i].Current.Name -eq $chosen) { $label = $texts[$i]; break }
     }
-    $seen = $buttons.Count
 
+    if ($label) {
+        $at = $label.Current.BoundingRectangle
+        $best = [double]::MaxValue
+        foreach ($b in $buttons) {
+            $r = $b.Current.BoundingRectangle
+            if ($r.IsEmpty) { continue }
+            $dx = $r.X + $r.Width / 2 - $at.X
+            $dy = $r.Y + $r.Height / 2 - $at.Y
+            $d = [math]::Sqrt($dx * $dx + $dy * $dy)
+            if ($d -lt $best) { $best = $d; $target_button = $b }
+        }
+    }
+    $seen = @("{0} open buttons, name found: {1}" -f $buttons.Count, ($null -ne $label))
     if (-not $target_button) { Start-Sleep -Seconds 1 }
 }
 if (-not $target_button) { throw "no card at position $position ('$chosen'); the tree offered $seen buttons" }
@@ -224,11 +249,15 @@ $h = $rect.Bottom - $rect.Top
 $bmp = New-Object System.Drawing.Bitmap $w, $h
 $g = [System.Drawing.Graphics]::FromImage($bmp)
 try {
+    # Opening a project takes seconds, and seconds is long enough for something
+    # else to take the front. Asked again here, where it matters: a check at the
+    # start of the sequence has said nothing about the moment of the photograph.
+    Assert-WindowInFront $proc.MainWindowHandle
     $g.CopyFromScreen($rect.Left, $rect.Top, 0, 0, $bmp.Size)
     $bmp.Save($Out, [System.Drawing.Imaging.ImageFormat]::Png)
 }
 finally { $g.Dispose(); $bmp.Dispose() }
 
 Write-Host "saved $Out"
-
+if (-not $target_button) { throw "no card for '$chosen'; the tree offered $seen" }
 Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue

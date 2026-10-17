@@ -52,37 +52,38 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- centre: the four screens. The two editor tabs are greyed until a project
-                     of that mode is open, because a mode is reached through a project and not
-                     by choosing a tab. -->
+                <!-- centre: the four screens, as one grouped control. The two editor tabs are
+                     greyed until a project of that mode is open, because a mode is reached
+                     through a project and not by choosing a tab.
+
+                     Which tab is the chosen one cannot be asked of :checked - the platform
+                     theme's rule for a checked toggle button wins over this file's - so it
+                     is bound from the view model instead. Chosen is a white pill standing
+                     above the track; the rest are transparent. -->
                 <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Background="{DynamicResource Slate200At70}" CornerRadius="12" Padding="4">
-                    <StackPanel Orientation="Horizontal">
+                        Background="{DynamicResource Slate200At70}" CornerRadius="11" Padding="3">
+                    <StackPanel Orientation="Horizontal" Spacing="2">
                         <ToggleButton Classes="tab" AutomationProperties.Name="Мои проекты"
                                       Background="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
                                       Foreground="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToProjectsCommand}">
-                                          <Border CornerRadius="8" Background="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                           Opacity="0.8"
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           Opacity="0.85"
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                                 <TextBlock Text="Мои проекты" />
                             </StackPanel>
-                                      </Border>
                         </ToggleButton>
                         <ToggleButton Classes="tab" AutomationProperties.Name="Выбор режима"
                                       Background="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
                                       Foreground="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToModeSelectCommand}">
-                                          <Border CornerRadius="8" Background="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="&#xE71C;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                           Opacity="0.8"
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <TextBlock Text="&#xE71C;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           Opacity="0.85"
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                                 <TextBlock Text="Выбор режима" />
                             </StackPanel>
-                                      </Border>
                         </ToggleButton>
                         <ToggleButton Classes="tab" AutomationProperties.Name="Уникальные папки"
                                       IsEnabled="{Binding CanOpenUniqueFoldersTab}"
@@ -90,14 +91,12 @@
                                       Background="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
                                       Foreground="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToUniqueFoldersCommand}">
-                                          <Border CornerRadius="8" Background="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                           Opacity="0.8"
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           Opacity="0.85"
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                                 <TextBlock Text="Уникальные папки" />
                             </StackPanel>
-                                      </Border>
                         </ToggleButton>
                         <ToggleButton Classes="tab" AutomationProperties.Name="Комбинированный"
                                       IsEnabled="{Binding CanOpenCombinedTab}"
@@ -105,57 +104,78 @@
                                       Background="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
                                       Foreground="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                       Command="{Binding GoToCombinedCommand}">
-                                          <Border CornerRadius="8" Background="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                           Opacity="0.8"
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           Opacity="0.85"
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
                                 <TextBlock Text="Комбинированный" />
                             </StackPanel>
-                                      </Border>
                         </ToggleButton>
                     </StackPanel>
                 </Border>
 
-                <!-- right: the three header buttons. Stubs until the later steps, and the
-                     tooltips say so rather than letting them be discovered. Six apart, the
-                     way the other shell spaces them; the divider sits twelve from the group
-                     and none from its own edge. -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <!-- right: three zones, and the dividers are what say so.
 
-                    <!-- Undo and redo belong to the folders editor alone: it is the only screen
-                         whose panel does not already carry the controls a person changes most,
-                         so two sets of arrows there would be two sets to read. -->
-                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,4,0"
+                       [ undo / redo ] | [ theme, help, contacts ] | [ sign in ]
+
+                     Undo and redo belong to the folders editor alone: it is the only screen
+                     whose panel does not already carry the controls a person changes most, so
+                     two sets of arrows there would be two sets to read.
+
+                     Two dividers rather than one. The bar reads left to right as navigation,
+                     then history, then utilities, then who you are; a single divider leaves
+                     the first two running together and the last two looking like one
+                     crowded end. -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+
+                    <StackPanel Orientation="Horizontal" Spacing="2"
                                 IsVisible="{Binding ShowUndoRedo}">
-                        <Button Classes="icon" AutomationProperties.Name="Отменить"
+                        <Button Classes="utility" AutomationProperties.Name="Отменить"
                                 ToolTip.Tip="Отменить (Ctrl+Z)"
                                 Command="{Binding UndoCommand}">
-                            <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                            <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
                         </Button>
-                        <Button Classes="icon" AutomationProperties.Name="Вернуть"
+                        <Button Classes="utility" AutomationProperties.Name="Вернуть"
                                 ToolTip.Tip="Вернуть (Ctrl+Y)"
                                 Command="{Binding RedoCommand}">
-                            <TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                            <TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
                         </Button>
                     </StackPanel>
 
-                    <Border Width="1" Height="24" Background="{DynamicResource Slate200}"
-                            Margin="0,0,6,0" VerticalAlignment="Center" />
-                    <Button Classes="icon" ToolTip.Tip="Тема оформления — в разработке"
+                    <Border Width="1" Height="22" Background="{DynamicResource Slate200}"
+                            Margin="10,0" VerticalAlignment="Center" />
+
+                    <Button Classes="utility" ToolTip.Tip="Тема оформления — в разработке"
                             AutomationProperties.Name="Тема оформления">
-                        <TextBlock Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                   Foreground="{DynamicResource Slate400}" />
+                        <TextBlock Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
                     </Button>
-                    <Button Classes="icon" Click="OnHelpClick" ToolTip.Tip="Помощь и журнал работы программы"
+                    <Button Classes="utility" Click="OnHelpClick" ToolTip.Tip="Помощь и журнал работы программы"
                             AutomationProperties.Name="Помощь">
-                        <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                   Foreground="{DynamicResource Slate400}" />
+                        <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
                     </Button>
-                    <Button Classes="icon" ToolTip.Tip="Контакты — в разработке"
+                    <Button Classes="utility" ToolTip.Tip="Контакты — в разработке"
                             AutomationProperties.Name="Контакты">
-                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                   Foreground="{DynamicResource Slate400}" />
+                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
+                    </Button>
+
+                    <Border Width="1" Height="22" Background="{DynamicResource Slate200}"
+                            Margin="10,0" VerticalAlignment="Center" />
+
+                    <!--
+                        A placeholder, and it says so. A stub that looks finished and is not is
+                        how somebody files a report that a button does nothing; the other two
+                        stubs in this bar say the same thing in their tooltips and this one is
+                        no different. Signing in against an account on the site is later work -
+                        this is its seat.
+
+                        No glyph in front of the word. The person mark is already on screen a
+                        few pixels to the left as "contacts", and two identical marks in one
+                        bar is worse than one mark fewer: a person reaches for the wrong one
+                        and cannot tell why it did nothing.
+                    -->
+                    <Button Classes="account" ToolTip.Tip="Вход в аккаунт — в разработке"
+                            AutomationProperties.Name="Вход">
+                        <TextBlock Text="Войти" />
                     </Button>
                 </StackPanel>
             </Grid>

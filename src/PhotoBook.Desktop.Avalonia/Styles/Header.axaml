@@ -67,47 +67,193 @@
         <Setter Property="Background" Value="{DynamicResource Slate200}" />
     </Style>
 
+    <!--
+        Navigation.
+
+        Four screens used to be four buttons in a row, and that is a form. They are one
+        control now: a grey track with four slots in it, and the current screen is a white
+        pill sitting above the others. That single cue - chosen sits higher than not chosen -
+        is what makes a bar of modes read as navigation rather than as a row of buttons.
+
+        The colour of chosen versus not chosen comes from the view model, not from :checked.
+        The platform theme's rule for a checked toggle button is applied after this file's and
+        wins, so a tab that took its colour from :checked would be a tab that looks the same
+        whichever screen is showing. Binding it is the only way it can be relied on.
+
+        The frame, though, is free - nothing binds it - so that is what the pointer uses. A
+        ring on hover rather than a fill: a fill would fight the binding that says which tab
+        is chosen, and a ring says the same thing without competing.
+    -->
     <Style Selector="ToggleButton.tab">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="8" />
-        <Setter Property="Padding" Value="14,6" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
         <Setter Property="Cursor" Value="Hand" />
+
+        <!--
+            The template is written out because ToggleButton paints no background of its own
+            here, which is why every tab used to carry a Border inside it to do the painting.
+            Painting it here instead means one less element per tab and - the reason it was
+            worth doing - the pointer states below have something real to change.
+        -->
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border x:Name="Pill"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="9">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
     </Style>
 
-    <!--
-        The selected tab does NOT get its colours from here. The platform theme's rule for a
-        checked toggle button is applied after this one and wins, which is why the checked
-        rule below is kept for shape only and the colour is bound straight from the state -
-        see SelectedTabToBrushConverter, and the note there about what was measured.
+    <Style Selector="ToggleButton.tab:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate300}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate800}" />
+    </Style>
 
-        Checked shape, kept so the tab still reads as "chosen" even if a future converter
-        change forgets the colour.
-    -->
-    <Style Selector="RadioButton.tab:checked">
-        <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+    <Style Selector="ToggleButton.tab:pressed">
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate400}" />
     </Style>
 
     <!--
         Difference one of this step, listed rather than fudged: the active tab carries a
         subtle shadow in the WPF theme. ToggleButton has no BoxShadow property in this
-        engine, so the shadow would have to live on a Border around its content. That is
-        the way to get it, but it is a visible difference against the screenshot beside it
+        engine, so the shadow would have to live on a Border around its content. That is the
+        way to get it, but it is a visible difference against the screenshot beside it
         and therefore a decision rather than a detail.
     -->
 
     <!--
-        Difference two: a disabled tab in the WPF theme is greyed and loses the pointer. Here
-        a disabled ToggleButton simply stops reacting, so the greying is done explicitly -
-        otherwise a disabled tab would look exactly like an enabled one, which is how a
-        person learns to click something that cannot be clicked.
+        Difference two: a disabled tab in the WPF theme is greyed and loses the pointer.
+        Here a disabled ToggleButton simply stops reacting, so the greying is done
+        explicitly - otherwise a disabled tab would look exactly like an enabled one, which
+        is how a person learns to click something that cannot be clicked.
     -->
-    <Style Selector="RadioButton.tab:disabled /template/ ContentPresenter">
-        <Setter Property="Opacity" Value="0.45" />
+    <Style Selector="ToggleButton.tab:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
+
+    <Style Selector="ToggleButton.tab:disabled /template/ ContentPresenter">
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
+    <!--
+        Utility icons: a small family, not three floating things.
+
+        The step between them is two pixels rather than six. At six they each sat in their own
+        space and read as three separate controls a person happened to be able to reach; at
+        two they read as one group of three, which is what they are.
+    -->
+    <Style Selector="Button.utility">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="Padding" Value="9" />
+        <Setter Property="Width" Value="34" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
+        <Setter Property="Cursor" Value="Hand" />
+
+        <!--
+            The template is written out for the same reason as the tab's, and it is not
+            tidiness: the platform paints a disabled button's fill inside its own template,
+            so a rule that sets Background on the button is a rule that loses. Two grey
+            blocks in the bar cannot be argued out of existence from a style.
+        -->
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        CornerRadius="9">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.utility:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Slate100}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+    </Style>
+
+    <Style Selector="Button.utility:pressed">
+        <Setter Property="Background" Value="{DynamicResource Slate200}" />
+    </Style>
+
+    <!--
+        A disabled utility icon is still an icon.
+
+        The platform paints a filled background on a disabled button, which turned the two
+        history arrows into two grey blocks - heavier than everything else in the bar and
+        pulling the eye to the one pair of controls a person cannot use. Nothing there, and
+        the glyph faint: they are there when there is something to undo, and quiet when there
+        is not.
+    -->
+    <Style Selector="Button.utility:disabled">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Opacity" Value="0.35" />
+    </Style>
+
+    <!--
+        The account control.
+
+        A sign-in is not a utility icon and is not drawn as one. It has a label, because a
+        labelled control says what state the program is in - signed out - to somebody who has
+        never seen the program before, while a lone glyph says it only to somebody who already
+        knows. It is an outline rather than a filled brand button on purpose: working on a
+        photograph is what this program is for, and the account is not that.
+    -->
+    <Style Selector="Button.account">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate300}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+        <Setter Property="Cursor" Value="Hand" />
+
+        <!-- Written out for the same reason as the utility button's: the platform owns the
+             paint otherwise, and the outline this control is made of is the whole of it. -->
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="10">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.account:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brand500}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brand600}" />
+        <Setter Property="Background" Value="{DynamicResource Brand50}" />
+    </Style>
+
+    <Style Selector="Button.account:pressed">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brand600}" />
+        <Setter Property="Background" Value="{DynamicResource Brand100}" />
     </Style>
 
 <!--
