@@ -77,7 +77,24 @@
                     reads as a foreign object dropped in; borderless reads as belonging, and
                     it takes its shape from the pointer on hover instead of from a frame.
                 -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                  <!--
+                       One gap between everything here, and every part of it a fixed width.
+
+                       The group sat in an auto-sized column, so its width was whatever
+                       its contents happened to be that minute. Two things inside it
+                       change with the answer: "Сбросить" arrives when something is
+                       filtered out, and the count is a different length every time. Both
+                       shoved the two filters sideways, which is what "the panel breathes"
+                       looked like from the other side of the screen.
+
+                       So: ten pixels between everything, and a fixed width on each part.
+                       The space for "Сбросить" is reserved whether the button is in it or
+                       not - the place is decided once, here, instead of every time a filter
+                       changes. The button still only exists while there is something to
+                       undo, because a control that is there and does nothing is worse than a
+                       gap.
+                   -->
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10"
                             VerticalAlignment="Center">
 
                     <controls:FilterDropDown AutomationName="Фильтр по режиму"
@@ -92,12 +109,16 @@
 
                     <!-- Appears only when something is being filtered out, so it is never a
                          control that is there and does nothing. -->
-                    <Button Classes="ghostClear" IsVisible="{Binding IsNarrowed}"
-                            AutomationProperties.Name="Сбросить фильтры"
-                            ToolTip.Tip="Показать все проекты"
-                            Command="{Binding ClearFiltersCommand}">
-                        <TextBlock Text="Сбросить" />
-                    </Button>
+                      <!-- Its place is reserved. See the note above the group. -->
+                      <Border Width="84" HorizontalAlignment="Center">
+                          <Button Classes="ghostClear" IsVisible="{Binding IsNarrowed}"
+                                  AutomationProperties.Name="Сбросить фильтры"
+                                  ToolTip.Tip="Показать все проекты"
+                                  HorizontalAlignment="Center"
+                                  Command="{Binding ClearFiltersCommand}">
+                              <TextBlock Text="Сбросить" />
+                          </Button>
+                      </Border>
 
                     <!-- The count, in words. A bare number next to two filters reads as "the
                          filter returned 39", which is a different and wrong thing to
@@ -119,7 +140,7 @@
                          with each other rather than hanging off its left edge.
                      -->
                     <TextBlock Text="{Binding FilterSummary}" VerticalAlignment="Center"
-                               Margin="12,0,0,0" Classes="t12" MinWidth="70"
+                               Margin="0,0,0,0" Classes="t12" Width="78"
                                TextAlignment="Right"
                                Foreground="{DynamicResource Slate400}" />
                 </StackPanel>
@@ -329,21 +350,46 @@
                                                VerticalAlignment="Center"
                                                Text="{Binding Name}" />
 
-                                    <Border Grid.Column="1" Margin="8,0,0,0" CornerRadius="8"
-                                            Padding="9,4" BorderThickness="1"
-                                            VerticalAlignment="Center"
-                                            IsVisible="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=visibility}"
-                                            Background="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tintbg}"
-                                            BorderBrush="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tintborder}">
-                                        <StackPanel Orientation="Horizontal" Spacing="5">
-                                            <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="11"
-                                                       VerticalAlignment="Center"
-                                                       Foreground="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tinticon}"
-                                                       Text="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=icon}" />
-                                            <TextBlock Classes="t11Semi" VerticalAlignment="Center"
-                                                       Foreground="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tinttext}"
-                                                       Text="{Binding Mode, Converter={StaticResource AppModeToLabel}}" />
-                                        </StackPanel>
+                                      <!--
+                                          A ceiling, and this is the whole of the fix.
+
+                                          The heading is two columns: the name takes what is
+                                          left, this badge takes what it needs. On a wide screen
+                                          the name simply runs out of room and shortens, which is
+                                          correct. On a narrow one there is less room than the two
+                                          of them want, and the column that has no ceiling takes
+                                          all of it - so the badge pushed the name to nothing and
+                                          then, once even the badge was wider than the card, pushed
+                                          itself over the edge. Which is why it showed up on one
+                                          monitor and not on the other, and looked like the name was
+                                          trimming badly rather than the badge being unbounded.
+
+                                          A hundred and sixty is the badge's own width when its
+                                          words are whole. Past that it gives way first, and its
+                                          label shortens too - so on any screen the name is the
+                                          thing that gives up space, and the rest of the card keeps
+                                          its shape.
+                                      -->
+                                      <Border Grid.Column="1" Margin="8,0,0,0" CornerRadius="8"
+                                              MaxWidth="160"
+                                              Padding="9,4" BorderThickness="1"
+                                              IsVisible="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=visibility}"
+                                              Background="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tintbg}"
+                                              BorderBrush="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tintborder}">
+                                          <StackPanel Orientation="Horizontal" Spacing="5">
+                                              <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                                     VerticalAlignment="Center"
+                                                     Foreground="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tinticon}"
+                                                     Text="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=icon}" />
+
+                                              <!-- The label shortens too, once the badge is told it may not
+                                                   be wider than it is: a badge whose words are cut off says less
+                                                   than a shorter name beside it. -->
+                                              <TextBlock Classes="t11Semi" VerticalAlignment="Center"
+                                                     TextTrimming="CharacterEllipsis"
+                                                     Foreground="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tinttext}"
+                                                     Text="{Binding Mode, Converter={StaticResource AppModeToLabel}}" />
+                                          </StackPanel>
                                     </Border>
                                 </Grid>
                                   <!--
