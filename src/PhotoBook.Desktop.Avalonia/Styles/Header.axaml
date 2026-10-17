@@ -39,6 +39,99 @@
         <Setter Property="Cursor" Value="Hand" />
     </Style>
 
+    <Style Selector="Button.primary:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Brand700}" />
+    </Style>
+
+    <Style Selector="Button.primary:pressed">
+        <Setter Property="Background" Value="{DynamicResource Brand700}" />
+    </Style>
+
+    <!--
+        The one action on a screen, and the only one that should look like a decision.
+
+        It had no pointer states at all - the same fill on hover, on press and while held
+        down - and that, more than its size, is what made it read as a control that had been
+        dropped onto the panel rather than designed into it. A filled button that gives
+        nothing back when pressed does not feel pressed.
+
+        Forty pixels tall, thirteen-point text, and a glyph with room to breathe beside it.
+        Its own class rather than a larger `primary`, because the primary buttons on other
+        screens are deliberately a different weight and should not be dragged along.
+    -->
+    <Style Selector="Button.createProject">
+        <Setter Property="Background" Value="{DynamicResource Brand600}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="18,0" />
+        <Setter Property="Height" Value="42" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Cursor" Value="Hand" />
+
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}" CornerRadius="12">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.createProject:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Brand700}" />
+    </Style>
+
+    <Style Selector="Button.createProject:pressed">
+        <Setter Property="Background" Value="{DynamicResource Brand700}" />
+    </Style>
+
+    <!--
+        A filter control: three of them in a row, so they are quiet, equal and obviously
+        related. Flat white with a hairline and a small radius - a filled or large-radius box
+        here would compete with the card list it sits above.
+    -->
+    <Style Selector="ComboBox.filter">
+        <Setter Property="Height" Value="34" />
+        <Setter Property="MinWidth" Value="168" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="ComboBox.filter:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate300}" />
+    </Style>
+
+    <!--
+        The search box carries the only text anybody types here, so it is the one control in
+        the bar allowed to be wide. Its width is set in the view because it has to take the
+        space the three filters do not.
+    -->
+    <Style Selector="TextBox.filterSearch">
+        <Setter Property="Height" Value="34" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate800}" />
+    </Style>
+
+    <Style Selector="TextBox.filterSearch:focus">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brand500}" />
+    </Style>
+
     <!--
         An icon button is an icon and nothing else: no plate, no frame, no fill. The other
         shell's version is a transparent rounded rectangle with 8 of padding around a 14px

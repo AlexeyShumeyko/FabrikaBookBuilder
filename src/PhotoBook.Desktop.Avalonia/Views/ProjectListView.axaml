@@ -34,6 +34,7 @@
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -47,21 +48,97 @@
                                Text="Управляйте подготовленными макетами и запускайте их в автоматический экспорт" />
                 </StackPanel>
 
-                <Button Grid.Column="1" Classes="primary" Padding="16,10"
-                        VerticalAlignment="Center"
+                <!-- The one action on this screen. -->
+                <Button Grid.Column="2" Classes="createProject"
                         AutomationProperties.Name="Создать проект"
                         Command="{Binding CreateProjectCommand}">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                   Foreground="White" />
-                        <TextBlock Text="Создать проект" Foreground="White" />
+                    <StackPanel Orientation="Horizontal" Spacing="9">
+                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   VerticalAlignment="Center" Opacity="0.95" />
+                        <TextBlock Text="Создать проект" Foreground="White"
+                                   VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
             </Grid>
         </Border>
 
+        <!--
+            Finding one project among several.
+
+            Four controls, because there are four different questions somebody actually
+            asks: where is the one I want (search), which of these am I working on (mode
+            and status), and in what order should I look at them (sort). Anything beyond
+            these - a date range, a photograph count, a size - has no question behind it
+            yet, and an empty-looking filter is worse than a missing one because it
+            promises something and then filters nothing.
+
+            The count on the right is the true total unless something is narrowing, in
+            which case it reads "7 из 39". A total that silently changed with the filter
+            would be a lie about how many projects exist.
+        -->
+        <Border Grid.Row="1" Margin="0,16,0,0" IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}}">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+
+                <TextBox Grid.Column="0" Classes="filterSearch" Width="300" HorizontalAlignment="Left"
+                         Watermark="Поиск по названию проекта"
+                         AutomationProperties.Name="Поиск по названию проекта"
+                         Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <ComboBox Classes="filter" AutomationProperties.Name="Фильтр по режиму"
+                              ItemsSource="{Binding ModeChoices}"
+                              SelectedItem="{Binding SelectedMode, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <ComboBox Classes="filter" AutomationProperties.Name="Фильтр по статусу"
+                              ItemsSource="{Binding StatusChoices}"
+                              SelectedItem="{Binding SelectedStatus, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <ComboBox Classes="filter" AutomationProperties.Name="Сортировка"
+                              ItemsSource="{Binding SortChoices}"
+                              SelectedItem="{Binding SelectedSort, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                <Button Margin="10,0,0,0" Classes="secondary" Padding="12,0"
+                        Height="34" IsVisible="{Binding IsNarrowed}"
+                        ToolTip.Tip="Показать все проекты"
+                        AutomationProperties.Name="Сбросить фильтры"
+                        Command="{Binding ClearFiltersCommand}">
+                    <TextBlock Text="Сбросить" />
+                </Button>
+
+                  <!--
+                      The count is the true total, and says so in words: a bare number beside
+                      three filters reads as "the filter returned 39", which is a different
+                      and wrong thing to believe. While something narrows the list it reads
+                      "7 из 39", which is honest about both numbers.
+                  -->
+                  <TextBlock Text="{Binding FilterSummary}" VerticalAlignment="Center"
+                             Margin="16,0,0,0" Classes="t12"
+                             Foreground="{DynamicResource Slate500}" />
+
+                </StackPanel>
+            </Grid>
+        </Border>
+
         <!-- ================================ body ============================== -->
-        <Panel Grid.Row="1" Margin="0,24,0,0">
+        <Panel Grid.Row="2" Margin="0,24,0,0">
 
             <!-- loading veil -->
             <Border IsVisible="{Binding IsLoading}" Background="#B3F8FAFC" CornerRadius="16">
@@ -86,6 +163,27 @@
             </Border>
 
             <!-- empty state: gone the moment there is one project -->
+
+            <!--
+                A filter that matched nothing, which is a different thing from having no
+                projects at all. The empty state below says "create your first project",
+                which is nonsense to somebody with thirty of them - so the two are kept
+                apart, and this one offers the way back instead.
+            -->
+            <Border IsVisible="{Binding HasNoMatches}" MaxWidth="520"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Classes="card" Padding="24">
+                <StackPanel Spacing="14" HorizontalAlignment="Center">
+                    <TextBlock Text="Ничего не найдено" Classes="t16Bold" />
+                    <TextBlock Classes="t12" TextAlignment="Center"
+                               Foreground="{DynamicResource Slate500}"
+                               Text="Ни один проект не подходит под выбранные условия" />
+                    <Button Classes="createProject" AutomationProperties.Name="Сбросить фильтры пусто"
+                            Command="{Binding ClearFiltersCommand}">
+                        <TextBlock Text="Сбросить фильтры" Foreground="White" />
+                    </Button>
+                </StackPanel>
+            </Border>
             <Border Classes="card" Padding="24" MaxWidth="520"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}, ConverterParameter=empty}">
@@ -122,7 +220,7 @@
                  that looks like it has six projects.
             -->
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <ItemsControl ItemsSource="{Binding Projects}">
+            <ItemsControl ItemsSource="{Binding FilteredProjects}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                     <!-- Three columns, every card in a row as tall as the tallest card beside it.

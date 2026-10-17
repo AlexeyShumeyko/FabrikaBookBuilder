@@ -105,6 +105,12 @@ namespace PhotoBook.Presentation.ViewModels
 
                     Projects.Add(projectCopy);
                 }
+
+                // The filters are applied once, over the finished list. Per project
+                // would rebuild the visible set dozens of times for states nobody can
+                // see - the intermediate results last microseconds, and the grid has
+                // not been laid out yet.
+                ApplyFilters();
             }
             catch (Exception ex)
             {
