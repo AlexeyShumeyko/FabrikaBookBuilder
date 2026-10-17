@@ -35,7 +35,21 @@ namespace PhotoBook.Shell.Converters
             Type targetType,
             object? parameter,
             CultureInfo culture)
-            => value is string path ? _cache?.Get(path, Width(parameter)) : null;
+        {
+            if (value is not string path) return null;
+
+            // A small picture is asked for here - every caller of this converter draws into a
+            // thumbnail-sized box - so the thumbnail is drawn when there is one. The original
+            // is still what the record names, and still what gets opened, exported and
+            // measured from; this only decides which of the two is decoded to fill a box.
+            //
+            // "original" as the parameter asks for the whole file, for the rare caller that
+            // means it.
+            var wantsOriginal = (parameter as string)?.Equals("original", StringComparison.OrdinalIgnoreCase) == true;
+            var file = wantsOriginal ? path : PreviewFile.PreferThumbnail(path);
+
+            return _cache?.Get(file, Width(parameter));
+        }
 
         public object? ConvertBack(
             object? value,
