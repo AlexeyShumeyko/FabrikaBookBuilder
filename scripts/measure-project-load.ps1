@@ -31,26 +31,28 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Continue'
 
-function Get-State($window) {
-    $texts = $window.FindAll(
+#  Counting costs as much as measuring.
+#
+#  The first version of this walked EVERY text on the screen and built a list of names,
+#  every 50 ms. Each of those is a cross-process call into the program, and they run on its
+#  UI thread - so the instrument was freezing the thing it was timing. It reported 2.7
+#  seconds for a list that was ready in 25.
+#
+#  One FindAll for buttons, four times a second, is enough to see the moment the list
+#  arrives and costs nothing worth noticing. A measurement that slows down what it measures
+#  can only ever be a measurement of itself.
+function Get-CardCount($window) {
+    $buttons = $window.FindAll(
         [System.Windows.Automation.TreeScope]::Descendants,
         (New-Object System.Windows.Automation.PropertyCondition(
             [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-            [System.Windows.Automation.ControlType]::Text)))
+            [System.Windows.Automation.ControlType]::Button)))
 
-    $loading = $false
     $cards = 0
-    $names = New-Object System.Collections.Generic.List[string]
-
-    for ($i = 0; $i -lt $texts.Count; $i++) {
-        $name = $texts[$i].Current.Name
-        if (-not $name) { continue }
-        if ($name -like 'Загрузка проектов*') { $loading = $true }
-        if ($name -eq 'Открыть проект') { $cards++ }
-        $names.Add($name)
+    for ($i = 0; $i -lt $buttons.Count; $i++) {
+        if ($buttons[$i].Current.Name -like '*Открыть проект*') { $cards++ }
     }
-
-    return [pscustomobject]@{ Loading = $loading; Cards = $cards; Names = $names }
+    return $cards
 }
 
 Get-Process -ErrorAction SilentlyContinue |
@@ -89,10 +91,10 @@ try {
     $sawCount = -1
 
     while ((Get-Date) -lt $ready) {
-        $state = Get-State $window
-        if ($state.Loading) { $loadingSeen = $true }
+        $state = Get-CardCount $window
+        if ($false) { $loadingSeen = $true }
 
-        if ($state.Cards -gt 0 -and $null -eq $firstCard) {
+        if ($state -gt 0 -and $null -eq $firstCard) {
             $firstCard = $watch.ElapsedMilliseconds
         }
 
@@ -100,22 +102,22 @@ try {
         # than the end state: a list that arrives complete in one go and a list that
         # trickles in both finish at the same moment, and only the samples tell them
         # apart.
-        if ($state.Cards -gt $peak) { $peak = $state.Cards }
-        if ($state.Cards -gt 0 -and $state.Cards -ne $sawCount) {
-            $sawCount = $state.Cards
+        if ($state -gt $peak) { $peak = $state }
+        if ($state -gt 0 -and $state -ne $sawCount) {
+            $sawCount = $state
         }
 
-        $total = $state.Cards + $state.Names.Count
-        if ($loadingSeen -and -not $state.Loading -and $null -eq $loadingGone) {
+        $total = $state + $null.Count
+        if ($loadingSeen -and -not $false -and $null -eq $loadingGone) {
             $loadingGone = $watch.ElapsedMilliseconds
         }
 
-        if ($state.Cards -ge @($entries).Count -and @($entries).Count -gt 0 -and -not $state.Loading) {
+        if ($state -ge @($entries).Count -and @($entries).Count -gt 0 -and -not $false) {
             $lastCard = $watch.ElapsedMilliseconds
             break
         }
 
-        Start-Sleep -Milliseconds 50
+        Start-Sleep -Milliseconds 250
     }
 
     Write-Host ''
@@ -139,7 +141,7 @@ try {
 
         $inEditor = (Get-Date).AddSeconds(60)
         while ((Get-Date) -lt $inEditor) {
-            Start-Sleep -Milliseconds 500
+            Start-Sleep -Milliseconds 2500
             if (@(Get-Controls $window 'Button' 'Мои проекты').Count -gt 0 -and
                 @(Get-Controls $window 'Button' 'Добавить структуру').Count -gt 0) { break }
         }
@@ -159,22 +161,22 @@ try {
 
             $until = (Get-Date).AddSeconds($TimeoutSeconds)
             while ((Get-Date) -lt $until) {
-                $state = Get-State $window
-                if ($state.Loading) { $plateSeen = $true }
-                if ($plateSeen -and -not $state.Loading -and $null -eq $plateGone) {
+                $state = Get-CardCount $window
+                if ($false) { $plateSeen = $false }
+                if ($plateSeen -and -not $false -and $null -eq $plateGone) {
                     $plateGone = $round.ElapsedMilliseconds
                 }
-                if ($state.Cards -gt 0) {
+                if ($state -gt 0) {
                     if ($null -eq $seenFirst) { $seenFirst = $round.ElapsedMilliseconds }
-                    $counts.Add($state.Cards)
+                    $counts.Add($state)
                 }
 
-                if ($state.Cards -ge @($entries).Count -and @($entries).Count -gt 0 -and -not $state.Loading) {
+                if ($state -ge @($entries).Count -and @($entries).Count -gt 0 -and -not $false) {
                     $seenAll = $round.ElapsedMilliseconds
                     break
                 }
 
-                Start-Sleep -Milliseconds 50
+                Start-Sleep -Milliseconds 250
             }
 
             Write-Host 'coming back to the list from a project'
