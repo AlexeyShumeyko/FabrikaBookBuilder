@@ -57,7 +57,7 @@
         -->
         <Border Grid.Row="0" Classes="card" Padding="20"
                 IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}}">
-            <Grid ColumnDefinitions="*,Auto,Auto" MinHeight="52">
+            <Grid ColumnDefinitions="4*,Auto,*,Auto" MinHeight="52">
 
                 <!-- The heading. -->
                 <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
@@ -128,11 +128,18 @@
                                               Items="{Binding StatusChoices}"
                                               SelectedItem="{Binding SelectedStatus, Mode=TwoWay}" />
 
-                    <TextBlock Text="{Binding FilterSummary}" VerticalAlignment="Center"
-                               Classes="t12" Width="78"
-                               TextAlignment="Left"
-                               Foreground="{DynamicResource Slate400}" />
                 </StackPanel>
+
+                <!--
+                     The count, in the middle of the space between the filters and the
+                     button rather than tucked against the filters with a hole left over.
+
+                     It sits in a column that shares whatever is left, so it is the same
+                     distance from the filters and from the button at every window width,
+                     and it is a fixed 78 wide so the two answers - "Всего: 39" and "8 из
+                     39" - begin at the same x whichever way the word lands inside it.
+                 -->                <TextBlock Grid.Column="2" HorizontalAlignment="Center"
+                           VerticalAlignment="Center"                           Text="{Binding FilterSummary}" Classes="t12" Width="78"                           TextAlignment="Left"                           Foreground="{DynamicResource Slate400}" />
 
                 <!--
                     The one action on the screen.
@@ -145,7 +152,7 @@
                     nothing back when pressed does not feel pressed, which is most of why it
                     used to look unfinished.
                 -->
-                <Button Grid.Column="2" Classes="createProject" Margin="20,0,0,0"
+                <Button Grid.Column="3" Classes="createProject" Margin="20,0,0,0"
                         AutomationProperties.Name="Создать проект"
                         Command="{Binding CreateProjectCommand}">
                     <!--
@@ -353,17 +360,40 @@
                                       rather than two, because two columns is two things each asking
                                       how wide they want to be and this is one thing that is told.
                                   -->
-                                  <Grid Margin="0,12,0,0">
-                                      <TextBlock Classes="t16Bold"
-                                                 MaxWidth="{Binding $parent[Grid].Bounds.Width}"
-                                                 Margin="0,0,168,0"
-                                                 HorizontalAlignment="Left"
-                                                 TextTrimming="CharacterEllipsis"
-                                                 VerticalAlignment="Center"
-                                                 Text="{Binding Name}" />
+                                  <!--
+                                      The name and the badge, and who gives way.
 
-                                      <Border HorizontalAlignment="Right" Width="160"
-                                              Margin="8,0,0,0" CornerRadius="8"
+                                      The name is in a column of its own and told the width of that
+                                      column - which is what the column is for. An earlier version
+                                      told it a width worked out from a margin, one hundred and
+                                      sixty-eight pixels being the badge's share, and the arithmetic
+                                      was thirteen pixels out: on a card with a long name the row
+                                      came out thirteen pixels wider than the card, the badge ate
+                                      them out of the card's own right-hand padding, and it ended up
+                                      against the corner. Measured, after the fact: a card with a
+                                      short name put the badge twenty-one pixels from the edge, a
+                                      card with a long one put it eight.
+
+                                      Reading the column's own width back to the name cannot be out,
+                                      because it is the same number the column was just given.
+
+                                      The badge is a number and not an autosize, so its left edge is
+                                      the same distance from the corner whatever its label says. A
+                                      ceiling was tried and changed nothing: a ceiling still lets a
+                                      short label be short.
+                                  -->
+                                  <Grid ColumnDefinitions="*,168" Margin="0,12,0,0">
+                                      <Border Grid.Column="0" ClipToBounds="True">
+                                          <TextBlock Classes="t16Bold"
+                                                     MaxWidth="{Binding $parent[Border].Bounds.Width}"
+                                                     HorizontalAlignment="Left"
+                                                     TextTrimming="CharacterEllipsis"
+                                                     VerticalAlignment="Center"
+                                                     Text="{Binding Name}" />
+                                      </Border>
+
+                                      <Border Grid.Column="1" Width="160" HorizontalAlignment="Right"
+                                              CornerRadius="8"
                                               Padding="9,4" BorderThickness="1"
                                               VerticalAlignment="Center"
                                               IsVisible="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=visibility}"
@@ -375,9 +405,9 @@
                                                          Foreground="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tinticon}"
                                                          Text="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=icon}" />
 
-                                              <!-- The label shortens too, once the badge is told it may not be
-                                                   wider than it is: a badge whose words are cut off says less
-                                                   than a shorter name beside it. -->
+                                              <!-- The label shortens too, once the badge is told it may not
+                                                   be wider than it is: a badge whose words are cut off says
+                                                   less than a shorter name beside it. -->
                                               <TextBlock Classes="t11Semi" VerticalAlignment="Center"
                                                          TextTrimming="CharacterEllipsis"
                                                          Foreground="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tinttext}"

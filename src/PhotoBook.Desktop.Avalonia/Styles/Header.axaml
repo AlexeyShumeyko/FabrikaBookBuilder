@@ -143,13 +143,20 @@
         <Setter Property="Foreground" Value="{DynamicResource Slate800}" />
         <Setter Property="Cursor" Value="Hand" />
         <!--
-             Centred, because a person reading the control sees a gap between the words and the
-             chevron and reads it as a mistake. It was left-aligned on purpose - a word in a fixed
-             box moves when it changes length either way - and that is still true: the word now
-             moves by the same amount but in the middle of the control, where it is not watched.
-             The chevron stays against the right-hand edge, where a chevron belongs.
-         -->
-        <Setter Property="HorizontalContentAlignment" Value="Center" />
+             Centred, and written into the template below rather than set here.
+
+             It was a setter on HorizontalContentAlignment, and a property that arrives
+             from a style is not there for the first layout pass - so the words were drawn
+             against the left edge and moved to the middle a moment later, which reads as
+             a small slide every time a filter is chosen. It cannot happen if the control is
+             told where its content goes before it has any content to put there.
+
+             Centred rather than left because a person reading the control sees the gap
+             between the words and the chevron and reads it as a mistake. A word in a
+             fixed box moves when its length changes either way; here it moves in the
+             middle of the control, where nobody is watching it. The chevron stays against
+             the right-hand edge, where a chevron belongs.
+        -->
 
         <Setter Property="Transitions">
             <Transitions>
@@ -173,7 +180,7 @@
                         </Transitions>
                     </Border.Transitions>
                     <ContentPresenter Content="{TemplateBinding Content}"
-                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      HorizontalAlignment="Center"
                                       VerticalAlignment="Center" />
                 </Border>
             </ControlTemplate>
