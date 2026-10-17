@@ -26,7 +26,20 @@ namespace PhotoBook.Shell.Views;
 public sealed class ThreeColumnPanel : Panel
 {
     private const int Columns = 3;
-    private const double EdgeMargin = 24;
+
+    /// <summary>
+    /// The space between two cards, across and down.
+    /// </summary>
+    /// <remarks>
+    /// This number used to live in two places at once - here and in the margin on the card
+    /// itself - and the gap between rows came out 48 pixels where the released program
+    /// has 25. It also meant the last column stopped short of the right-hand edge by
+    /// exactly one margin, while the control panel above the list ran to it, so the two
+    /// blocks did not line up.
+    ///
+    /// One place for it, and the card carries no margin of its own.
+    /// </remarks>
+    private const double Gutter = 24;
 
     protected override Size MeasureOverride(Size availableSize)
     {
@@ -52,19 +65,21 @@ public sealed class ThreeColumnPanel : Panel
             bool rowEnds = i % Columns == Columns - 1 || i == Children.Count - 1;
             if (rowEnds)
             {
-                totalHeight += rowHeight + EdgeMargin;
+                totalHeight += rowHeight + Gutter;
                 rowHeight = 0;
             }
         }
 
-        return new Size(width, Math.Max(0, totalHeight - EdgeMargin));
+        return new Size(width, Math.Max(0, totalHeight - Gutter));
     }
 
     protected override Size ArrangeOverride(Size finalSize)
     {
         if (Children.Count == 0) return finalSize;
 
-        double columnWidth = Math.Max(0, finalSize.Width / Columns);
+        // The same arithmetic as the measure pass, or the cards are laid out into a
+        // width that was never asked for.
+        double columnWidth = Math.Max(0, (finalSize.Width - Gutter * (Columns - 1)) / Columns);
         double y = 0;
         double rowHeight = 0;
 
@@ -73,13 +88,13 @@ public sealed class ThreeColumnPanel : Panel
             if (i % Columns == 0) rowHeight = 0;
             rowHeight = Math.Max(rowHeight, Children[i].DesiredSize.Height);
 
-            double x = (i % Columns) * columnWidth;
+            double x = (i % Columns) * (columnWidth + Gutter);
             Children[i].Arrange(new Rect(x, y, columnWidth, rowHeight));
 
             bool rowEnds = i % Columns == Columns - 1 || i == Children.Count - 1;
             if (rowEnds)
             {
-                y += rowHeight + EdgeMargin;
+                y += rowHeight + Gutter;
                 rowHeight = 0;
             }
         }

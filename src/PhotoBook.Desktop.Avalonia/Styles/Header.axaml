@@ -103,22 +103,38 @@
     <!--
         The two filters, living inside the control panel rather than in a bar of their own.
 
-        They were borderless and grey. Borderless was right - a framed control inside a
-        white panel reads as something that arrived from another program. Grey was not: the
-        only shape these controls took was the panel's own grey on hover, and grey on grey
-        is the one combination that looks like a control nobody finished drawing.
+        Borderless was right and grey was not. A framed control inside a white panel reads
+        as something that arrived from another program; the same control with nothing
+        behind it reads as part of the panel. But the only shape these controls were given
+        was the panel's own grey on hover, and grey on grey is the one combination that
+        looks like a control nobody finished drawing.
 
         So they wear the brand instead. A whisper of it - Brand50, which is #EEF2FF, barely
         a shade off the white they sit on - and the pointer deepens it to Brand100 rather
         than darkening it. A filter that changes colour on the way in is saying "this one is
-        live", and it says it in the only colour the program has for meaning anything.
+        live", and it says it in the only colour this program has for meaning anything.
 
-        The open state gets a hairline in Brand200. That ring is the whole of the "you are
-        choosing right now" signal, and it is a ring rather than a fill because a fill that
-        changes again while the list is already open is a control that keeps moving.
+        Same width, both of them: the two labels are different lengths and letting the
+        controls size themselves left them a matched pair that did not match.
 
-        Same width, both of them. The two labels are different lengths and letting the
-        controls size themselves left them as a matched pair that did not match.
+        The template below is written out because the list that comes down was the part
+        that was never dressed. The control had a colour and a shape; the thing that
+        actually appears when you open it arrived as the platform ships it - a grey slab,
+        square corners, rows the height of a text line - which against the rest of this
+        window looks like a window from another operating system that happened to open on
+        top of it. Styling the popup's border from outside reached nothing, because the
+        popup lives in a window of its own and the theme builds it out of parts this
+        program never sees. So the template is written here, the same way the tab is.
+
+        Two names inside it are not decoration and must keep their spelling:
+        PART_ToggleButton and PART_Popup. The control looks the two up by name, and
+        without them the list silently refuses to open.
+
+        The one subtlety worth writing down: there are two sets of TemplateBinding in this
+        template and they do not mean the same thing. The one on the toggle button's own
+        ContentPresenter belongs to the template nested inside it and reads the toggle. The
+        ones in that toggle's content belong to the template out here and read this
+        ComboBox - which is why the label can be written as SelectedItem at all.
     -->
     <Style Selector="ComboBox.filter">
         <Setter Property="Height" Value="34" />
@@ -140,33 +156,119 @@
                 <BrushTransition Property="Foreground" Duration="0:0:0.14" />
             </Transitions>
         </Setter>
+
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid ColumnDefinitions="*,Auto">
+
+                    <ToggleButton Name="PART_ToggleButton"
+                                  Grid.Column="0"
+                                  HorizontalAlignment="Stretch"
+                                  Focusable="False"
+                                  Padding="12,0"
+                                  IsChecked="{TemplateBinding IsDropDownOpen, Mode=TwoWay}"
+                                  Background="{TemplateBinding Background}"
+                                  BorderBrush="{TemplateBinding BorderBrush}"
+                                  BorderThickness="{TemplateBinding BorderThickness}">
+                        <ToggleButton.Template>
+                            <ControlTemplate>
+                                <Border Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        CornerRadius="10">
+                                    <Border.Transitions>
+                                        <Transitions>
+                                            <BrushTransition Property="Background" Duration="0:0:0.14" />
+                                            <BrushTransition Property="BorderBrush" Duration="0:0:0.14" />
+                                        </Transitions>
+                                    </Border.Transitions>
+                                    <ContentPresenter Content="{TemplateBinding Content}"
+                                                      Margin="{TemplateBinding Padding}"
+                                                      HorizontalAlignment="Stretch"
+                                                      VerticalAlignment="Center" />
+                                </Border>
+                            </ControlTemplate>
+                        </ToggleButton.Template>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <ContentPresenter Grid.Column="0"
+                                              Content="{TemplateBinding SelectedItem}"
+                                              ContentTemplate="{TemplateBinding ItemTemplate}"
+                                              HorizontalAlignment="Left"
+                                              VerticalAlignment="Center" />
+                            <Path Grid.Column="1"
+                                  Margin="10,0,12,0"
+                                  Width="9" Height="6"
+                                  VerticalAlignment="Center"
+                                  Data="M 0 0 L 4.5 5 L 9 0"
+                                  Stroke="{TemplateBinding Foreground}"
+                                  StrokeThickness="1.4" />
+                        </Grid>
+                    </ToggleButton>
+
+                    <Popup Name="PART_Popup"
+                           Grid.Column="0"
+                           Placement="Bottom"
+                           Focusable="False"
+                           IsOpen="{TemplateBinding IsDropDownOpen}"
+                           VerticalOffset="6">
+                        <Border Background="{DynamicResource Surface}"
+                                BorderBrush="{DynamicResource Slate200}"
+                                BorderThickness="1"
+                                CornerRadius="12"
+                                Padding="6"
+                                MinWidth="{TemplateBinding MinWidth}"
+                                BoxShadow="{DynamicResource ShadowCard}">
+                            <ScrollViewer MaxHeight="240">
+                                <!--
+                                    A ListBox, not an ItemsControl.
+
+                                    The rows have to be real containers and not just
+                                    drawn content: an ItemsControl inside the popup makes
+                                    plain content presenters, so there is no row for a
+                                    hover or a chosen state to belong to - which is why the
+                                    first three attempts at this produced a list that
+                                    could not be pointed at. A ListBox makes them, binds
+                                    the choice straight back to the control that opened
+                                    it, and closes the popup when one is made.
+                                -->
+                                <ListBox Classes="filterList"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         Padding="0"
+                                         MaxHeight="220"
+                                         ItemsSource="{TemplateBinding ItemsSource}"
+                                         ItemTemplate="{TemplateBinding ItemTemplate}"
+                                         SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=ComboBox}, Mode=TwoWay}"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </ScrollViewer>
+                        </Border>
+                    </Popup>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
     </Style>
 
-    <Style Selector="ComboBox.filter:pointerover">
+    <!-- The pointer deepens the fill rather than darkening it, and the open state gets a
+         hairline rather than a second fill: a control that keeps changing while its list
+         is already open is a control that will not settle. -->
+    <Style Selector="ComboBox.filter:pointerover /template/ ToggleButton">
         <Setter Property="Background" Value="{DynamicResource Brand100}" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate900}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
     </Style>
 
-    <!-- The platform paints a box inside the dropdown's own template, which is the grey
-         frame these controls were supposed to have stopped wearing. It is told to stop
-         twice - once for the resting shape and once while the list is open, because the
-         platform has a separate rule for the open one. -->
-    <Style Selector="ComboBox.filter /template/ ToggleButton">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
+    <Style Selector="ComboBox.filter:pressed /template/ ToggleButton">
+        <Setter Property="Background" Value="{DynamicResource Brand100}" />
     </Style>
 
     <Style Selector="ComboBox.filter:open /template/ ToggleButton">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-    </Style>
-
-    <Style Selector="ComboBox.filter:open">
         <Setter Property="BorderBrush" Value="{DynamicResource Brand200}" />
-    </Style>
-
-    <Style Selector="ComboBox.filter:pressed">
-        <Setter Property="Background" Value="{DynamicResource Brand100}" />
     </Style>
 
     <!--
@@ -209,34 +311,45 @@
 
         The faint foreground is the same faint the other shell uses for its icon buttons.
     -->
-    <Style Selector="Button.icon">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Padding" Value="8" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
-        <Setter Property="Cursor" Value="Hand" />
-    </Style>
+    <!--
+        Mode switching, rebuilt.
 
-    <Style Selector="Button.icon:pointerover">
-        <Setter Property="Background" Value="{DynamicResource Slate100}" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
-    </Style>
+        The version before this could not be read. The chosen screen was a white pill with
+        a hairline on a white bar, and the two screens that cannot be reached without a
+        project were drawn in almost the same grey as the ones that can. Two things were
+        wrong at the root rather than in the details.
 
-    <Style Selector="Button.icon:pressed">
-        <Setter Property="Background" Value="{DynamicResource Slate200}" />
-    </Style>
+        The first is that the appearance was bound from the view model onto Background and
+        Foreground. A binding on Foreground overrides the rule that should have quieted a
+        disabled tab, so "cannot be pressed" and "can be pressed" came out the same colour,
+        and the one difference that was left - an Opacity - faded the whole control and made
+        the bar look broken instead of busy. Appearance now belongs to the styles, where
+        :checked and :disabled are separate facts about a control rather than two values
+        competing over one property.
 
+        The second is that nothing said which screen was live. The chosen one now wears the
+        brand: a solid Brand600 pill with white text, the loudest thing in the header, which
+        reads from across the room. The live-but-not-chosen ones are quiet ink. The two that
+        need a project are quieter still and carry a small padlock, so the reason is on the
+        tab rather than in a tooltip nobody opens.
+
+        Order matters here. :checked is written after :pointerover so hovering the chosen
+        tab cannot repaint it, and :checked:pointerover is the one place that pill is
+        allowed to change - deeper, not lighter, because a filled control pressed should
+        look pressed.
+
+        The template is written out because ToggleButton paints no background of its own
+        here, which is why every tab once carried a Border inside it to do the painting.
+    -->
     <Style Selector="ToggleButton.tab">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="15,0" />
+        <Setter Property="Padding" Value="16,0" />
         <Setter Property="Height" Value="36" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate500}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
         <Setter Property="Cursor" Value="Hand" />
 
         <Setter Property="Transitions">
@@ -249,8 +362,7 @@
 
         <Setter Property="Template">
             <ControlTemplate>
-                <Border x:Name="Pill"
-                        Background="{TemplateBinding Background}"
+                <Border Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="10">
@@ -269,34 +381,39 @@
         </Setter>
     </Style>
 
-    <!--
-        Hover: a breath of white, not a ring. With the chosen tab a white pill, a frame
-        round the unchosen ones would put a second shape into the control and make it
-        busy. The text darkening does the rest of the work.
-    -->
     <Style Selector="ToggleButton.tab:pointerover">
-        <Setter Property="Background" Value="#B3FFFFFF" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate800}" />
+        <Setter Property="Background" Value="{DynamicResource Slate50}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate900}" />
     </Style>
 
     <Style Selector="ToggleButton.tab:pressed">
-        <Setter Property="Background" Value="#80FFFFFF" />
+        <Setter Property="Background" Value="{DynamicResource Slate100}" />
+    </Style>
+
+    <Style Selector="ToggleButton.tab:checked">
+        <Setter Property="Background" Value="{DynamicResource Brand600}" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+
+    <Style Selector="ToggleButton.tab:checked:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Brand700}" />
+    </Style>
+
+    <Style Selector="ToggleButton.tab:checked:pressed">
+        <Setter Property="Background" Value="{DynamicResource Brand700}" />
     </Style>
 
     <!--
-        Difference one of this step, listed rather than fudged: the active tab carries a
-        subtle shadow in the WPF theme. ToggleButton has no BoxShadow property in this
-        engine, so the shadow lives on the pill's own border inside the template above.
+        The two screens that cannot be reached without a project.
 
-        Difference two: a disabled tab in the WPF theme is greyed and loses the pointer.
-        Here a disabled ToggleButton simply stops reacting, so the greying is done
-        explicitly - otherwise a disabled tab would look exactly like an enabled one, which
-        is how a person learns to click something that cannot be clicked. It is the TEXT
-        that goes quiet, not the whole control: fading the pill too made the bar look
-        broken rather than busy.
+        The TEXT goes quiet and nothing else. Fading the pill as well - which is what this
+        used to do - made the bar look broken rather than busy, and a broken bar is read as
+        a fault in the program instead of as a door that is shut.
     -->
     <Style Selector="ToggleButton.tab:disabled">
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource Slate300}" />
+        <Setter Property="Cursor" Value="Arrow" />
     </Style>
 
     <!--

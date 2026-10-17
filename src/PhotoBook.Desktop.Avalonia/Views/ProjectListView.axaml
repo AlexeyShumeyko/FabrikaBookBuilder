@@ -79,7 +79,8 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
                             VerticalAlignment="Center">
 
-                    <ComboBox Classes="filter" AutomationProperties.Name="Фильтр по режиму"
+                    <ComboBox Classes="filter"
+                              AutomationProperties.Name="Фильтр по режиму"
                               ToolTip.Tip="Каким редактором собран проект"
                               ItemsSource="{Binding ModeChoices}"
                               SelectedItem="{Binding SelectedMode, Mode=TwoWay}">
@@ -90,7 +91,8 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
 
-                    <ComboBox Classes="filter" AutomationProperties.Name="Фильтр по статусу"
+                    <ComboBox Classes="filter"
+                              AutomationProperties.Name="Фильтр по статусу"
                               ToolTip.Tip="Как готово собрание"
                               ItemsSource="{Binding StatusChoices}"
                               SelectedItem="{Binding SelectedStatus, Mode=TwoWay}">
@@ -149,12 +151,20 @@
             </Grid>
         </Border>
 
-        <!-- The empty screen gets the panel's heading on its own; there is nothing to filter. -->
+        <!-- The empty screen gets the panel's heading on its own; there is nothing to filter.
+
+             Same 52 pixels of content as the panel above it, and that is the whole point.
+             Without it this panel was five pixels shorter, and the two are swapped for one
+             another every time the list is opened: ProjectsCount is briefly nothing while
+             the projects are read, so the short one appeared for a moment and the panel
+             visibly shrank and then grew back. A panel that changes height when you come
+             back to it looks like the program is still loading; it was, but it should not
+             be something you can watch. -->
         <Border Grid.Row="0" Classes="card" Padding="20"
                 IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}, ConverterParameter=empty}">
-            <StackPanel>
-                <TextBlock Text="Проекты фотокниг" Classes="t20Bold" />
-                <TextBlock Classes="t12" Margin="0,2,0,0"
+            <StackPanel MinHeight="52">
+                <TextBlock Text="Проекты фотокниг" Classes="t20Bold" VerticalAlignment="Center" />
+                <TextBlock Classes="t12" Margin="0,2,0,0" VerticalAlignment="Center"
                            Foreground="{DynamicResource Slate500}"
                            Text="Управляйте подготовленными макетами и запускайте их в автоматический экспорт" />
             </StackPanel>
@@ -236,7 +246,16 @@
                  than the window, and a screen that silently cuts its own list is a screen
                  that looks like it has six projects.
             -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <!--
+                 The negative right margin is the scrollbar's place. It used to
+                 take ten pixels out of the list, which is why the block of cards
+                 stopped short of the control panel above it even though both measured
+                 the same. Pushed out past the edge, it sits in the margin the window
+                 already has, and the cards line up with the panel.
+             -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          >
             <ItemsControl ItemsSource="{Binding FilteredProjects}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -252,7 +271,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Classes="card" Padding="20" Margin="0,0,24,24" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                        <Border Classes="card" Padding="20" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
                             <!--
                                 The content sits at the top and the button comes straight after
                                 it. Pinning the button to the bottom of the card was tried and
