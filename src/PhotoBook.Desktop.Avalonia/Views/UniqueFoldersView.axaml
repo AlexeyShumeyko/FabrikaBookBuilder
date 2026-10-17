@@ -30,7 +30,7 @@
 
         <!-- =========================== control panel ========================== -->
         <Border Grid.Row="0" Classes="card" Padding="20">
-            <Grid ColumnDefinitions="Auto,*,Auto">
+            <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="52">
 
                 <Border Grid.Column="0" Width="48" Height="48" CornerRadius="12"
                         Background="{DynamicResource Emerald50}"

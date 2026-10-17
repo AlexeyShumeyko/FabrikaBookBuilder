@@ -53,7 +53,7 @@
 
         <!-- ============================ control panel ============================ -->
         <Border Grid.Row="1" Classes="card" Padding="20" Margin="0,0,0,24">
-            <Grid>
+            <Grid MinHeight="52">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" MinWidth="300" />
                     <ColumnDefinition Width="Auto" />

@@ -56,7 +56,7 @@
         -->
         <Border Grid.Row="0" Classes="card" Padding="20"
                 IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}}">
-            <Grid ColumnDefinitions="*,Auto,Auto" >
+            <Grid ColumnDefinitions="*,Auto,Auto" MinHeight="52">
 
                 <!-- The heading. -->
                 <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
@@ -76,7 +76,7 @@
                     reads as a foreign object dropped in; borderless reads as belonging, and
                     it takes its shape from the pointer on hover instead of from a frame.
                 -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2"
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
                             VerticalAlignment="Center">
 
                     <ComboBox Classes="filter" AutomationProperties.Name="Фильтр по режиму"
@@ -161,7 +161,7 @@
         </Border>
 
         <!-- ================================ body ============================== -->
-        <Panel Grid.Row="2" Margin="0,20,0,0">
+        <Panel Grid.Row="2" Margin="0,24,0,0">
 
             <!-- No loading plate, and there is nothing to load.
                  The list used to open and parse every project file to draw the cards, so a
@@ -312,45 +312,61 @@
                                     </Border>
                                 </Grid>
                                   <!--
-                                      Three picture slots, always three.
+                                      Three 48px previews and the remainder.
 
-                                      This row used to disappear when a project had no
-                                      photographs in it. A card is only as tall as its
-                                      content, so the card got shorter - and because every
-                                      card in a row is arranged to the height of the tallest
-                                      among them, the SAME card was one size on its own and
-                                      another size the moment it moved beside one that had
-                                      photographs. The grid changed shape depending on what
-                                      happened to be in the projects.
+                                      This row is a FIXED height and is always there.
+                                      That is the whole of the fix for cards changing
+                                      size: before, the row disappeared with the
+                                      photographs, so a card with none in it was shorter -
+                                      and since every card in a row is arranged to the
+                                      height of the tallest among them, the same card was
+                                      one size on its own and another size beside one
+                                      that had photographs. The grid changed shape
+                                      depending on what happened to be in the projects.
 
-                                      So the slots are fixed and an empty one shows an
-                                      empty tile. It says the true thing - this run has
-                                      nothing here yet - and it leaves every card exactly one
-                                      size, which is what a grid is for.
+                                      The space is reserved, and an empty project shows
+                                      that space and nothing else - no frames, no
+                                      placeholders. A photograph that has not been put
+                                      in yet is not a thing to draw a box around.
                                   -->
-                                  <ItemsControl ItemsSource="{Binding PreviewPhotos, Converter={StaticResource PreviewSlots}}"
-                                                Margin="0,16,0,0">
-                                      <ItemsControl.ItemsPanel>
-                                          <ItemsPanelTemplate>
-                                              <StackPanel Orientation="Horizontal" Spacing="8" />
-                                          </ItemsPanelTemplate>
-                                      </ItemsControl.ItemsPanel>
-                                      <ItemsControl.ItemTemplate>
-                                          <DataTemplate>
-                                              <Border Width="48" Height="48" CornerRadius="8"
-                                                      ClipToBounds="True"
-                                                      BorderThickness="1"
-                                                      Background="{DynamicResource Slate100}"
-                                                      BorderBrush="{DynamicResource Slate200}">
-                                                  <!-- 96 for a 48-pixel tile: two times the drawn size, so a card that lands on a
-                                                       high-density screen is not scaling a 48-pixel bitmap back up. -->
-                                                  <Image Stretch="UniformToFill"
-                                                         IsVisible="{Binding !IsEmpty}"
-                                                         Source="{Binding Path, Converter={StaticResource FilePathToBitmap}, ConverterParameter=96}" />
-                                              </Border>
-                                          </DataTemplate>
-                                      </ItemsControl.ItemTemplate>
-                                  </ItemsControl>
+                                  <StackPanel Orientation="Horizontal" Margin="0,16,0,0"
+                                              Spacing="8" Height="48">
+                                      <ItemsControl ItemsSource="{Binding PreviewPhotos}">
+                                          <ItemsControl.ItemsPanel>
+                                              <ItemsPanelTemplate>
+                                                  <StackPanel Orientation="Horizontal" />
+                                              </ItemsPanelTemplate>
+                                          </ItemsControl.ItemsPanel>
+                                          <ItemsControl.ItemTemplate>
+                                              <DataTemplate>
+                                                  <Border Width="48" Height="48" CornerRadius="8"
+                                                          ClipToBounds="True"
+                                                          BorderThickness="1"
+                                                          Background="{DynamicResource Slate100}"
+                                                          BorderBrush="{DynamicResource Slate200}">
+                                                      <!-- 96 for a 48-pixel tile: two times the drawn size, so a card that lands on a
+                                                                 high-density screen is not scaling a 48-pixel bitmap back up. -->
+                                                      <Image Stretch="UniformToFill"
+                                                             Source="{Binding Converter={StaticResource FilePathToBitmap}, ConverterParameter=96}" />
+                                                  </Border>
+                                              </DataTemplate>
+                                          </ItemsControl.ItemTemplate>
+                                      </ItemsControl>
+
+                                      <Border Width="48" Height="48" CornerRadius="8"
+                                              Background="{DynamicResource Slate100}"
+                                              IsVisible="{Binding RemainingPhotoCount, Converter={StaticResource NotEmpty}}">
+                                          <StackPanel Orientation="Horizontal" Spacing="0"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center">
+                                              <TextBlock Text="+" Classes="t11Semi"
+                                                         Foreground="{DynamicResource Slate500}" />
+                                              <TextBlock Text="{Binding RemainingPhotoCount}"
+                                                         Classes="t11Semi"
+                                                         Foreground="{DynamicResource Slate500}" />
+                                          </StackPanel>
+                                      </Border>
+                                  </StackPanel>
 
                                 <!-- Two numbers side by side, each behind its own glyph, the figure in bold and
                                      the unit after it. They sit on one row on purpose: stacked,

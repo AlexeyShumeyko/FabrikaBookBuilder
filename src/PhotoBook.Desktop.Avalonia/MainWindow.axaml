@@ -61,7 +61,8 @@
                      is bound from the view model instead. Chosen is a white pill standing
                      above the track; the rest are transparent. -->
                 <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Background="Transparent" CornerRadius="12" Padding="3">
+                        Background="Transparent" BorderBrush="{DynamicResource Slate200}"
+                          BorderThickness="1" CornerRadius="13" Padding="3">
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <ToggleButton Classes="tab" AutomationProperties.Name="Мои проекты"
                                       Background="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
