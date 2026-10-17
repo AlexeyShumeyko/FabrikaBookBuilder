@@ -142,7 +142,14 @@
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{DynamicResource Slate800}" />
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <!--
+             Centred, because a person reading the control sees a gap between the words and the
+             chevron and reads it as a mistake. It was left-aligned on purpose - a word in a fixed
+             box moves when it changes length either way - and that is still true: the word now
+             moves by the same amount but in the middle of the control, where it is not watched.
+             The chevron stays against the right-hand edge, where a chevron belongs.
+         -->
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
 
         <Setter Property="Transitions">
             <Transitions>

@@ -41,6 +41,16 @@ public static class FilterTap {
 }
 "@
 
+# The automation element is a snapshot of a tree that keeps moving. Asking for a fresh one
+# each time is what makes a second reading mean anything: holding on to the element taken
+# before the click lets the second reading answer with the first answer, which is
+# indistinguishable from a filter that did nothing - and that is exactly how this scenario
+# reported a working filter as broken.
+function Get-WindowFresh {
+    $proc = Get-Process -Name 'PhotoBook.Desktop.Avalonia' | Select-Object -First 1
+    return [System.Windows.Automation.AutomationElement]::FromHandle($proc.MainWindowHandle)
+}
+
 function Get-CountText($Window) {
     foreach ($t in (Get-Controls $Window 'Text')) {
         if ($t.Current.Name -match '^(Всего|\d+ из)') { return $t.Current.Name }
@@ -72,7 +82,7 @@ try {
     Set-WindowInFront $app.Process.MainWindowHandle $app.Process.Id | Out-Null
     Start-Sleep -Milliseconds 800
 
-    $before = Get-CountText $w
+    $before = Get-CountText (Get-WindowFresh)
     Write-Host ('  счётчик до:        {0}' -f $before)
 
     $r = $chip[0].Current.BoundingRectangle
@@ -80,7 +90,7 @@ try {
     Click-At ([int]($r.X + 40)) ([int]($r.Y + $rowOffset))
 
     $w = $app.Window
-    $after = Get-CountText $w
+    $after = Get-CountText (Get-WindowFresh)
     Write-Host ('  счётчик после:     {0}' -f $after)
 
     $after2 = @(Get-Controls $app.Window 'Button' $name)[0].Current.BoundingRectangle
