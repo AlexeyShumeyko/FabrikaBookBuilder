@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -267,13 +268,30 @@ public partial class CombinedModeView : UserControl, IPendingRename
         if (ZoneUnder(e.Source) is not Control zone) return;
 
         // The upload zone takes a drop the same way it takes a click: the same command.
-        Execute(
-            zone.Name == "DropZone"
-                ? nameof(CombinedModeViewModel.LoadFilesCommand)
-                : nameof(CombinedModeViewModel.LoadPageFileCommand),
-            zone);
-    }
+        if (zone.Name == "DropZone")
+        {
+            Execute(nameof(CombinedModeViewModel.LoadFilesCommand), zone);
+            e.Handled = true;
+            return;
+        }
 
+        // A slot takes the photograph that was dragged onto it.
+        //
+        // It used to run the command a CLICK on a slot runs, which asks which file to use.
+        // That is the right question when a person asks it and the wrong one here: they are
+        // already holding the answer in their hand, and the window that opened over their
+        // work made the drag look like it had done nothing at all. Dropping is a statement,
+        // not a question - which is the difference the other shell's three drop targets
+        // encode and one handler cannot.
+        if (zone.DataContext is not Page page) return;
+
+        var dropped = e.Data.Get(DataFormats.Files) as IEnumerable<string>;
+        var path = dropped?.FirstOrDefault(f => !string.IsNullOrWhiteSpace(f));
+        if (string.IsNullOrEmpty(path) || Model is not { } model) return;
+
+        model.DropFileOnSlot(page, path!, DropAction.ThisBookOnly);
+        e.Handled = true;
+    }
     /// <summary>The nearest zone above whatever was hit: the upload zone, or a slot.</summary>
     private static Control? ZoneUnder(object? source)
     {
