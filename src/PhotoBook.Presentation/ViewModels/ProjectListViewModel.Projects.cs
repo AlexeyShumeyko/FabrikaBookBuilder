@@ -141,7 +141,7 @@ namespace PhotoBook.Presentation.ViewModels
                         if (loaded is null) continue;
 
                         var copy = new ProjectInfo();
-                        ProjectCardData.Fill(loaded, copy);
+                        ProjectCardData.Fill(_files, loaded, copy);
                         if (copy.PreviewPhotos.Count == 0) continue;
 
                         results.Add((entry, copy.PreviewPhotos.ToArray(), copy.TotalPhotoCount));

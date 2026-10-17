@@ -30,6 +30,14 @@ namespace PhotoBook.Application
         /// </summary>
         bool DirectoryExists(string path);
 
+        /// <summary>Whether a file is there right now.</summary>
+        /// <remarks>
+        /// Added for preview picking: the layer above asks what is on disk through here and
+        /// never touches the disk itself, so "does this photograph still exist" has one answer
+        /// in the program rather than a direct File.Exists wherever somebody needed one.
+        /// </remarks>
+        bool FileExists(string path);
+
         /// <summary>
         /// Creates a folder if it is not already there. The export writes into a folder the
         /// user picked, which may legitimately not exist yet, and creating it is a decision

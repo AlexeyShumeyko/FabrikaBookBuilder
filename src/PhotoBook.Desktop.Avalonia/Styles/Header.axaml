@@ -60,16 +60,29 @@
         <Setter Property="Background" Value="{DynamicResource Brand600}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="Padding" Value="15,0" />
-        <Setter Property="Height" Value="38" />
+        <Setter Property="Padding" Value="20,0" />
+        <Setter Property="Height" Value="40" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="Cursor" Value="Hand" />
 
+        <!-- Light, not heavy: the fill LIFTS on hover and settles on press. A button that
+             darkens on hover is telling the person it is a door; this one is a lamp. -->
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.14" />
+            </Transitions>
+        </Setter>
+
         <Setter Property="Template">
             <ControlTemplate>
-                <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                <Border Background="{TemplateBinding Background}" CornerRadius="11">
+                    <Border.Transitions>
+                        <Transitions>
+                            <BrushTransition Property="Background" Duration="0:0:0.14" />
+                        </Transitions>
+                    </Border.Transitions>
                     <ContentPresenter Content="{TemplateBinding Content}"
                                       Margin="{TemplateBinding Padding}"
                                       HorizontalAlignment="Center"
@@ -80,7 +93,7 @@
     </Style>
 
     <Style Selector="Button.createProject:pointerover">
-        <Setter Property="Background" Value="{DynamicResource Brand700}" />
+        <Setter Property="Background" Value="{DynamicResource Brand500}" />
     </Style>
 
     <Style Selector="Button.createProject:pressed">
@@ -185,47 +198,38 @@
         <Setter Property="Background" Value="{DynamicResource Slate200}" />
     </Style>
 
-    <!--
-        Navigation.
-
-        Four screens used to be four buttons in a row, and that is a form. They are one
-        control now: a grey track with four slots in it, and the current screen is a white
-        pill sitting above the others. That single cue - chosen sits higher than not chosen -
-        is what makes a bar of modes read as navigation rather than as a row of buttons.
-
-        The colour of chosen versus not chosen comes from the view model, not from :checked.
-        The platform theme's rule for a checked toggle button is applied after this file's and
-        wins, so a tab that took its colour from :checked would be a tab that looks the same
-        whichever screen is showing. Binding it is the only way it can be relied on.
-
-        The frame, though, is free - nothing binds it - so that is what the pointer uses. A
-        ring on hover rather than a fill: a fill would fight the binding that says which tab
-        is chosen, and a ring says the same thing without competing.
-    -->
     <Style Selector="ToggleButton.tab">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="14,0" />
-        <Setter Property="Height" Value="34" />
+        <Setter Property="Padding" Value="15,0" />
+        <Setter Property="Height" Value="36" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate500}" />
         <Setter Property="Cursor" Value="Hand" />
 
-        <!--
-            The template is written out because ToggleButton paints no background of its own
-            here, which is why every tab used to carry a Border inside it to do the painting.
-            Painting it here instead means one less element per tab and - the reason it was
-            worth doing - the pointer states below have something real to change.
-        -->
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.14" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.14" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.14" />
+            </Transitions>
+        </Setter>
+
         <Setter Property="Template">
             <ControlTemplate>
                 <Border x:Name="Pill"
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="9">
+                        CornerRadius="10">
+                    <Border.Transitions>
+                        <Transitions>
+                            <BrushTransition Property="Background" Duration="0:0:0.14" />
+                            <BrushTransition Property="BorderBrush" Duration="0:0:0.14" />
+                        </Transitions>
+                    </Border.Transitions>
                     <ContentPresenter Content="{TemplateBinding Content}"
                                       Margin="{TemplateBinding Padding}"
                                       HorizontalAlignment="Center"
@@ -235,35 +239,35 @@
         </Setter>
     </Style>
 
+    <!--
+        Hover: a breath of white, not a ring. With the chosen tab a white pill, a frame
+        round the unchosen ones would put a second shape into the control and make it
+        busy. The text darkening does the rest of the work.
+    -->
     <Style Selector="ToggleButton.tab:pointerover">
-        <Setter Property="BorderBrush" Value="{DynamicResource Slate300}" />
+        <Setter Property="Background" Value="#B3FFFFFF" />
         <Setter Property="Foreground" Value="{DynamicResource Slate800}" />
     </Style>
 
     <Style Selector="ToggleButton.tab:pressed">
-        <Setter Property="BorderBrush" Value="{DynamicResource Slate400}" />
+        <Setter Property="Background" Value="#80FFFFFF" />
     </Style>
 
     <!--
         Difference one of this step, listed rather than fudged: the active tab carries a
         subtle shadow in the WPF theme. ToggleButton has no BoxShadow property in this
-        engine, so the shadow would have to live on a Border around its content. That is the
-        way to get it, but it is a visible difference against the screenshot beside it
-        and therefore a decision rather than a detail.
-    -->
+        engine, so the shadow lives on the pill's own border inside the template above.
 
-    <!--
         Difference two: a disabled tab in the WPF theme is greyed and loses the pointer.
         Here a disabled ToggleButton simply stops reacting, so the greying is done
         explicitly - otherwise a disabled tab would look exactly like an enabled one, which
-        is how a person learns to click something that cannot be clicked.
+        is how a person learns to click something that cannot be clicked. It is the TEXT
+        that goes quiet, not the whole control: fading the pill too made the bar look
+        broken rather than busy.
     -->
     <Style Selector="ToggleButton.tab:disabled">
-        <Setter Property="Opacity" Value="0.4" />
-    </Style>
-
-    <Style Selector="ToggleButton.tab:disabled /template/ ContentPresenter">
-        <Setter Property="Opacity" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate300}" />
+        <Setter Property="Opacity" Value="0.75" />
     </Style>
 
     <!--

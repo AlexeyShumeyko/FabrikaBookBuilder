@@ -414,7 +414,7 @@ namespace PhotoBook.Application
                 // saying otherwise floats it to the top of the list with a date that is a lie
                 // about the last time a photographer touched it. The editors already bump
                 // the date when a project is genuinely saved.
-                ProjectCardData.Fill(project, all[index]);
+                ProjectCardData.Fill(_files, project, all[index]);
 
                 await WriteAllProjects_NoLock(all);
             }

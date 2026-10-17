@@ -43,6 +43,7 @@
             <conv:AppModeToLabelConverter x:Key="AppModeToLabel" />
             <conv:LastModifiedTextConverter x:Key="LastModifiedText" />
             <conv:FilePathToBitmapConverter x:Key="FilePathToBitmap" />
+    <conv:PreviewSlotsConverter x:Key="PreviewSlots" />
             <conv:NotEmptyConverter x:Key="NotEmpty" />
             <conv:CardWidthConverter x:Key="CardWidth" />
             <conv:AdaptiveCardSizeConverter x:Key="AdaptiveCardSize" />

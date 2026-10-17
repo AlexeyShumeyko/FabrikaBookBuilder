@@ -167,6 +167,13 @@ namespace PhotoBook.Infrastructure
             }
         }
 
+        /// <inheritdoc />
+        public bool FileExists(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return false;
+            return System.IO.File.Exists(path);
+        }
+
         /// <summary>
         /// Creating a folder can fail for reasons the caller can do nothing about - no
         /// permission, a path that is a file, a disk that is full. The failure is reported

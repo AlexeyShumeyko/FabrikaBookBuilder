@@ -40,6 +40,11 @@ namespace PhotoBook.Shell.Converters
                 // hover is the platform's, on top of whichever of these two is underneath.
                 "bg" => selected ? Solid("#FFFFFF") : Solid("Transparent"),
 
+                // The hairline is what makes the chosen tab visible now that the grey
+                // track behind all four is gone. A white pill on a white bar needs one
+                // edge to say "this one".
+                "border" => selected ? Solid("#E2E8F0") : Solid("Transparent"),
+
                 "fg" => selected ? Solid("#4F46E5") : Solid("#475569"),
 
                 _ => Solid("Transparent")

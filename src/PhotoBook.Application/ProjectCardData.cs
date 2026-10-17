@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.IO;
 using PhotoBook.Core;
 
 namespace PhotoBook.Application
@@ -34,7 +33,7 @@ namespace PhotoBook.Application
         /// Only paths that still exist are taken. A project can outlive a photograph that was
         /// moved or deleted, and a broken image in the strip is worse than one tile fewer.
         /// </remarks>
-        public static void Fill(Project? project, ProjectInfo entry)
+        public static void Fill(IFileService files, Project? project, ProjectInfo entry)
         {
             if (project is null || entry is null) return;
 
@@ -44,7 +43,7 @@ namespace PhotoBook.Application
             entry.PageCount = (first?.Pages is null ? 0 : Enumerable.Count(first.Pages, p => !p.IsCover));
             entry.Status = StatusOf(project);
 
-            FillPreviews(project, entry);
+            FillPreviews(files, project, entry);
         }
 
         /// <summary>
@@ -74,7 +73,7 @@ namespace PhotoBook.Application
             return ProjectStatus.Ready;
         }
 
-        private static void FillPreviews(Project project, ProjectInfo entry)
+        private static void FillPreviews(IFileService files, Project project, ProjectInfo entry)
         {
             entry.PreviewPhotos.Clear();
             entry.TotalPhotoCount = 0;
@@ -90,26 +89,26 @@ namespace PhotoBook.Application
                 // appear in the finished book, and the card is a preview of the book.
                 if (book.Cover is not null)
                 {
-                    AddIfUsable(book.Cover.SourcePath, entry);
+                    AddIfUsable(files, book.Cover.SourcePath, entry);
                 }
 
                 var pages = book.Pages;
                 if (pages is null) continue;
                 foreach (var page in pages)
                 {
-                    AddIfUsable(page?.SourcePath, entry);
+                    AddIfUsable(files, page?.SourcePath, entry);
                 }
             }
         }
 
-        private static void AddIfUsable(string? path, ProjectInfo entry)
+        private static void AddIfUsable(IFileService files, string? path, ProjectInfo entry)
         {
             if (string.IsNullOrEmpty(path)) return;
 
             entry.TotalPhotoCount++;
 
             if (entry.PreviewPhotos.Count >= PreviewLimit) return;
-            if (!File.Exists(path)) return;
+            if (!files.FileExists(path)) return;
 
             entry.PreviewPhotos.Add(path);
         }
