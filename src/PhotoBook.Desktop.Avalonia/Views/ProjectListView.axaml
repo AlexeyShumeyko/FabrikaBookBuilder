@@ -103,8 +103,24 @@
                          filter returned 39", which is a different and wrong thing to
                          believe; while narrowing it reads "7 из 39", which is honest about
                          both numbers. -->
+                    <!--
+                         A fixed width, so the filters beside it do not move.
+
+                         The count grows and shrinks with the answer it gives -
+                         "Всего: 39", "8 из 39", "39 из 39" - and because the group is
+                         pushed to the right of the panel, every one of those widths
+                         shoved the two filters left and right by a few pixels. The
+                         filters were fixed first and the count was then the last thing
+                         still moving them, which is the same fault one element over.
+
+                         Seventy pixels is the width of the longest of the three, so
+                         every answer sits in the same box and the filters stand still.
+                         The words are right-aligned inside it, so the figures line up
+                         with each other rather than hanging off its left edge.
+                     -->
                     <TextBlock Text="{Binding FilterSummary}" VerticalAlignment="Center"
-                               Margin="12,0,0,0" Classes="t12"
+                               Margin="12,0,0,0" Classes="t12" MinWidth="70"
+                               TextAlignment="Right"
                                Foreground="{DynamicResource Slate400}" />
                 </StackPanel>
 

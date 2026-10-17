@@ -71,17 +71,21 @@
         on one screen, and there is no reason to risk it when a class says which one is
         meant.
 
-        Thirty-four pixels tall with the label inset, which is the difference between a
-        list and a wall of text. The chosen row is not filled: in a list three items long a
-        block of colour is loud, and the row already says it in the brand colour at
-        semibold.
+        Forty pixels tall with the label inset, in fourteen-point semibold. It was
+        thirty-four and twelve-point medium, which was legible if you were sitting at the
+        screen and not much of anything if you were not. The list now matches the box it
+        belongs to: it is exactly as wide as the filter that opened it, so the two are
+        plainly one thing.
+
+        The chosen row is not filled: in a list of three or four items a block of colour is
+        loud, and the row already says it in the brand colour at semibold.
     -->
     <Style Selector="ListBox.filterList ListBoxItem">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Height" Value="34" />
+        <Setter Property="Height" Value="40" />
         <Setter Property="Padding" Value="10,0" />
         <Setter Property="Cursor" Value="Hand" />
 

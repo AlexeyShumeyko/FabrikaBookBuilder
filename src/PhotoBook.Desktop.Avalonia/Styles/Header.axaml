@@ -114,6 +114,18 @@
         what this wore before - is the one combination that looks like a control nobody
         finished drawing.
 
+        The width is fixed, and that is the whole of the second half of this rule.
+        It used to be a floor, so each box was as wide as its own wording and the panel
+        breathed in and out as the filter changed: 112 pixels for "Черновик", 166 for
+        "В процессе сборки", 167 for "Комбинированный", measured on screen. Switching a
+        filter moved everything beside it.
+
+        One hundred and sixty-eight is the width of the two longest, so the widest filter
+        fits exactly as it does now and the rest sit inside it with room to spare, on the
+        left where a word belongs. A short label is left-aligned rather than centred,
+        because a centred word in a fixed box moves when the word changes length, which is
+        the same fault in a smaller hat.
+
         The chevron is drawn in the control's own template rather than taken from the
         platform's, and takes its colour from the text, so it stays quiet at rest and
         darkens with the label on hover.
@@ -125,6 +137,7 @@
         <Setter Property="CornerRadius" Value="11" />
         <Setter Property="Padding" Value="14,0" />
         <Setter Property="Height" Value="38" />
+        <Setter Property="Width" Value="168" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{DynamicResource Slate800}" />

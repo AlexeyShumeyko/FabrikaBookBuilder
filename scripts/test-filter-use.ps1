@@ -19,7 +19,11 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$Which = 'mode'
+    [string]$Which = 'mode',
+
+    # Which row to press. Row 1 is whatever is already chosen, so choosing it again
+    # changes nothing and looks exactly like a control that does not work.
+    [int]$Row = 2
 )
 
 $ErrorActionPreference = 'Stop'
@@ -53,8 +57,8 @@ function Click-At([int]$x, [int]$y) {
 }
 
 # The chip is 38 tall. Below it: six of gap, six of the list's own padding, then the rows
-# at 34 apiece. The second row's middle is therefore 38 + 6 + 6 + 34 + 17.
-$secondRow = 38 + 6 + 6 + 34 + 17
+# at 40 apiece. A row's middle is therefore 38 + 6 + 6 + (row - 1) * 40 + 20.
+$rowOffset = 38 + 6 + 6 + (($Row - 1) * 40) + 20
 
 $app = Start-TestApp
 try {
@@ -73,11 +77,14 @@ try {
 
     $r = $chip[0].Current.BoundingRectangle
     Click-At ([int]($r.X + $r.Width / 2)) ([int]($r.Y + $r.Height / 2))
-    Click-At ([int]($r.X + 40)) ([int]($r.Y + $secondRow))
+    Click-At ([int]($r.X + 40)) ([int]($r.Y + $rowOffset))
 
     $w = $app.Window
     $after = Get-CountText $w
     Write-Host ('  счётчик после:     {0}' -f $after)
+
+    $after2 = @(Get-Controls $app.Window 'Button' $name)[0].Current.BoundingRectangle
+    Write-Host ('  рамка после:       x {0}..{1}  ширина {2}' -f [int]$after2.X, [int]($after2.X + $after2.Width), [int]$after2.Width)
 
     # Whether the list closed is answered by the picture below rather than by a count:
     # an earlier version counted the windows on the desktop, which said six, because there
