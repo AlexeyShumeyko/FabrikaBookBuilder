@@ -446,12 +446,29 @@
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Border Name="SlotCard" Classes="slotCard"
-                                                            Margin="0,0,16,16" ClipToBounds="True"
+                                                            Margin="0,0,16,16"
                                                             PointerPressed="OnSlotPressed"
                                                             PointerEntered="OnSlotPointerEntered"
                                                             PointerExited="OnSlotPointerExited"
                                                             BorderBrush="{Binding Converter={StaticResource PageCaption}, ConverterParameter=border}"
                                                             BorderThickness="{Binding Converter={StaticResource PageCaption}, ConverterParameter=borderthickness}">
+                                                        <!--
+                                                            The card draws its frame and clips
+                                                            nothing; the frame host below rounds
+                                                            its own top corners.
+
+                                                            One border did both, and the
+                                                            photograph's square corner lay over
+                                                            the inside half of the stroke, so the
+                                                            line was cut off exactly where it
+                                                            turned - and the cover, whose stroke
+                                                            is two pixels of colour rather than a
+                                                            hairline, showed it worst. Only the
+                                                            top two corners are round: the
+                                                            caption sits under the photograph on
+                                                            white, and rounding the bottom two
+                                                            would show that white through it.
+                                                        -->
                                                         <Grid>
 
                                                             <!--
@@ -479,7 +496,9 @@
                                                                 <RowDefinition Height="Auto" />
                                                             </Grid.RowDefinitions>
 
-                                                            <Grid Grid.Row="0" Background="{DynamicResource Slate100}">
+                                                            <Border Grid.Row="0" CornerRadius="12,12,0,0" ClipToBounds="True"
+                                                                    Background="{DynamicResource Slate100}">
+                                                                <Grid>
                                                                 <Grid.Width>
                                                                     <MultiBinding Converter="{StaticResource AdaptiveCardSize}"
                                                                                   ConverterParameter="width,150">
@@ -560,6 +579,7 @@
                                                                                Margin="0,6,0,0" />
                                                                 </StackPanel>
                                                             </Grid>
+                                                                </Border>
 
                                                             <!--
                                                                 Footer: what this slot is on the left, what you

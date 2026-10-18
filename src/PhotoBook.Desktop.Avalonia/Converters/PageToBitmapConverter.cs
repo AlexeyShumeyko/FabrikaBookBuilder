@@ -54,13 +54,20 @@ namespace PhotoBook.Shell.Converters
         {
             if (value is not Page page || _cache is null) return null;
 
-            var path = !string.IsNullOrEmpty(page.ThumbnailPath)
-                ? page.ThumbnailPath
-                : page.SourcePath;
+            bool hasReducedCopy = !string.IsNullOrEmpty(page.ThumbnailPath);
+
+            var path = hasReducedCopy ? page.ThumbnailPath : page.SourcePath;
 
             if (string.IsNullOrEmpty(path)) return null;
 
-            var bitmap = _cache.Get(path, BitmapScale.Pixels(Width(parameter)));
+            // A reduced copy is already smaller than the cell and is drawn as it is: asking a
+            // decoder to make it the cell's size only invents the pixels it is short of, and
+            // the cell discards them again on the way down. An original is the other way
+            // round - it is enormous and the cell wants a fraction of it - so it is still
+            // decoded down to the cell's own width, on the monitor's scale.
+            var bitmap = hasReducedCopy
+                ? _cache.GetReduced(path)
+                : _cache.Get(path, BitmapScale.Pixels(Width(parameter)));
 
             // Saying so is this converter's job, not only the cache's. Without it a
             // photograph that cannot be read draws as an empty slot, and an empty slot is

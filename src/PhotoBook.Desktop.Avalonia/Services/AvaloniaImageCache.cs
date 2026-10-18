@@ -134,6 +134,54 @@ namespace PhotoBook.Shell.Services
         /// <summary>Decodes at full size. Only for the one place that really does need it.</summary>
         public Bitmap? Get(string filePath) => Get(filePath, 0);
 
+        /// <summary>
+        /// Decodes a reduced copy at whatever size it already is, and never grows it.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// A reduced copy is bounded - the thumbnail service never writes one larger than 500
+        /// pixels on its long side - and a cell draws it smaller than that. Asking the decoder
+        /// for the cell's width anyway made it grow the picture to fit, an interpolation of
+        /// pixels that were never there, and then the cell drew it back down and threw the
+        /// result of that away. The released program hands its reduced copies to the renderer
+        /// untouched, and so does this.
+        /// </para>
+        /// <para>
+        /// Not for originals, and the reason is in the name of the method rather than in a
+        /// check inside it: reading an 18 MB scan whole is what this cache exists to prevent.
+        /// </para>
+        /// </remarks>
+        public Bitmap? GetReduced(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath)) return null;
+
+            string key = "natural|" + filePath;
+            if (_cache.TryGetValue(key, out var cached)) return cached;
+
+            Bitmap? decoded;
+            try
+            {
+                if (!File.Exists(filePath))
+                {
+                    decoded = null;
+                }
+                else
+                {
+                    using var stream = File.OpenRead(filePath);
+                    decoded = new Bitmap(stream);
+                }
+            }
+            catch
+            {
+                decoded = null;
+            }
+
+            if (_cache.Count >= MaxCached) Shed(_cache.Count / 4);
+            _cache[key] = decoded;
+
+            return decoded;
+        }
+
         private static string Key(string filePath, int targetWidth) => targetWidth + "|" + filePath;
 
         private void Shed(int count)
