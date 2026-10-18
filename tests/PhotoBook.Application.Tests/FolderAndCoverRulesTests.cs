@@ -77,8 +77,12 @@ public sealed class FolderAndCoverRulesTests : IDisposable
 
         Assert.False(result.IsValid);
         Assert.Equal(b, result.ProblemFolder);
+
+        // The message names the folder, says how many files are in it, and says what to do.
+        // Four: that folder is the one carrying the extra photograph.
         Assert.Contains("b", result.ErrorMessage!);
-        Assert.Contains("3", result.ErrorMessage!);
+        Assert.Contains("- 4 и не совпадает", result.ErrorMessage!);
+        Assert.Contains("Удалите проблемную папку", result.ErrorMessage!);
     }
 
     [Fact]

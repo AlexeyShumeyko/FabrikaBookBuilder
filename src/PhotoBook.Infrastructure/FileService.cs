@@ -101,7 +101,6 @@ namespace PhotoBook.Infrastructure
                         .ToList();
 
                     var majorityCount = groupsByCount.First().Key;
-                    var majorityFolders = groupsByCount.First().ToList();
                     var problemFolders = folderFileCounts
                         .Where(kvp => kvp.Value != majorityCount)
                         .ToList();
@@ -110,21 +109,20 @@ namespace PhotoBook.Infrastructure
                     {
                         var problemFolder = problemFolders.First();
                         var folderName = System.IO.Path.GetFileName(problemFolder.Key);
-                        var majorityName = System.IO.Path.GetFileName(majorityFolders[0].Key);
 
-                        // Three sentences, in the order they are needed: what was found, the
-                        // rule that makes it a problem, and what to do about it. The version
-                        // this replaced was written for whoever wrote it - "expected 8 (as in
-                        // 1 of 2 folders)" answers a question nobody asked.
+                        // Three lines, in the order they are needed: what was found,
+                        // the rule that makes it a problem, and what to do about it. The
+                        // version before this was written for whoever wrote it - "expected 8
+                        // (as in 1 of 2 folders)" answers a question nobody asked.
                         return new ValidationResult
                         {
                             IsValid = false,
                             ErrorMessage =
-                                "В выбранных папках разное количество фотографий. " +
-                                $"В папке «{folderName}» — {problemFolder.Value}, " +
-                                $"в папке «{majorityName}» — {majorityCount}. " +
-                                "Один проект собирается из папок с одинаковым количеством фотографий. " +
-                                $"Уберите из списка папку «{folderName}» или выберите папку, содержащую {majorityCount} фото.",
+                                $"Количество файлов в папке «{folderName}» - {problemFolder.Value} и не совпадает с большинством выбранных папок." +
+                                Environment.NewLine +
+                                "Один проект собирается из папок только с одинаковым количеством файлов." +
+                                Environment.NewLine +
+                                "Удалите проблемную папку из списка",
                             ProblemFolder = problemFolder.Key
                         };
                     }
