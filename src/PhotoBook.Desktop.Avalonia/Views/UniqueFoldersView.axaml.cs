@@ -175,9 +175,26 @@ public partial class UniqueFoldersView : UserControl, IPendingRename
     private void OnMovePageRightClick(object? sender, RoutedEventArgs e)
         => Execute(nameof(UniqueFoldersViewModel.MovePageDownCommand), sender);
 
-    /// <summary>Promotes a slot to be its book's cover.</summary>
-    private void OnAssignCoverClick(object? sender, RoutedEventArgs e)
-        => Execute(nameof(UniqueFoldersViewModel.AssignCoverCommand), sender);
+    /// <summary>
+    /// What the pointer offers on a slot: a spread is offered promotion to be the cover, and
+    /// the cover is offered a different photograph.
+    /// </summary>
+    /// <remarks>
+    /// One button and two commands, chosen by the slot. Offering "make this the cover" on the
+    /// cover would be offering it something it already is; what the cover can be given is a
+    /// different picture, which is what it is offered instead.
+    /// </remarks>
+    private void OnSlotActionClick(object? sender, RoutedEventArgs e)
+    {
+        var page = (sender as Control)?.DataContext as Page;
+        if (page is null) return;
+
+        Execute(
+            page.IsCover
+                ? nameof(UniqueFoldersViewModel.SelectCoverCommand)
+                : nameof(UniqueFoldersViewModel.AssignCoverCommand),
+            sender);
+    }
 
     private void Execute(string command, object? sender)
     {

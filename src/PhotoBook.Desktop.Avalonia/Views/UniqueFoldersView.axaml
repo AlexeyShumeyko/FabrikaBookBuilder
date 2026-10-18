@@ -111,7 +111,7 @@
                             ToolTip.Tip="Догрузить новые папки или заменить все папки проекта"
                             Command="{Binding LoadFoldersCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <TextBlock Text="&#xE8E9;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                            <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                        Foreground="{DynamicResource Slate400}" />
                             <TextBlock Text="Добавить или заменить папки" />
                         </StackPanel>
@@ -121,7 +121,7 @@
                             AutomationProperties.Name="Сохранить проект"
                             Command="{Binding SaveProjectCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <TextBlock Text="&#xE8E7;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                            <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                        Foreground="{DynamicResource Slate400}" />
                             <TextBlock Text="Сохранить проект" />
                         </StackPanel>
@@ -171,7 +171,7 @@
                             <StackPanel>
 
                                 <!-- ============================= header ==================== -->
-                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                <Grid ColumnDefinitions="Auto,Auto,*,Auto">
 
                                     <Border Grid.Column="0" Width="28" Height="28" CornerRadius="8"
                                             Background="{DynamicResource Indigo50}"
@@ -183,19 +183,29 @@
                                                    Text="{Binding BookIndex, StringFormat={}{0:D2}}" />
                                     </Border>
 
-                                    <StackPanel Grid.Column="1" Margin="12,0,0,0"
-                                                VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Name}" Classes="t14Bold"
-                                                   Foreground="{DynamicResource Slate900}"
-                                                   TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Classes="t12"
-                                                   Foreground="{DynamicResource Slate400}"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   ToolTip.Tip="{Binding FolderPath}"
-                                                   Text="{Binding FolderPath, StringFormat='(Папка: {0})'}" />
-                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="t14Bold"
+                                               Foreground="{DynamicResource Slate900}"
+                                               Margin="12,0,0,0" VerticalAlignment="Center"
+                                               MaxWidth="460" TextTrimming="CharacterEllipsis" />
 
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                    <!--
+                                        The path on the same line, as the released program has
+                                        it, and only when there is one. It was stacked under
+                                        the name on a line of its own, which made a two-word
+                                        book title into a two-line heading and pushed the
+                                        actions down with it.
+                                    -->
+                                    <TextBlock Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center"
+                                               HorizontalAlignment="Left" TextAlignment="Left"
+                                               TextTrimming="CharacterEllipsis" MaxWidth="460"
+                                               ToolTip.Tip="{Binding FolderPath}"
+                                               IsVisible="{Binding FolderPath, Converter={StaticResource NotEmpty}}"
+                                               Classes="t12" Foreground="{DynamicResource Slate400}">
+                                        <TextBlock Text="(Папка: " />
+                                        <TextBlock Text="{Binding FolderPath}" />
+                                    </TextBlock>
+
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal"
                                                 Spacing="6" VerticalAlignment="Center">
                                         <!--
                                             The action comes before the state. That is the
@@ -219,13 +229,22 @@
                                             </StackPanel>
                                         </Button>
 
-                                        <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                                   Classes="t12Semi" VerticalAlignment="Center"
-                                                   Foreground="{Binding IsValid, Converter={StaticResource BookStatus}, ConverterParameter=brush}"
-                                                   Text="{Binding IsValid, Converter={StaticResource BookStatus}, ConverterParameter=glyph}" />
-                                        <TextBlock Classes="t12Semi" VerticalAlignment="Center"
-                                                   Foreground="{Binding IsValid, Converter={StaticResource BookStatus}, ConverterParameter=brush}"
-                                                   Text="{Binding IsValid, Converter={StaticResource BookStatus}, ConverterParameter=text}" />
+                                        <!--
+                                            The structure line used to be here, saying "structure
+                                            complete" or not. Removed: it reads the same property
+                                            the export button reads, and in this mode it is the
+                                            export button that decides - a book here cannot lose
+                                            a spread or change its shape, the only way to be
+                                            incomplete is a folder that held fewer photographs
+                                            than the book has room for, and that is caught when
+                                            the folders are loaded.
+
+                                            It was also disagreeing with that button on screen:
+                                            the button enabled and the line saying otherwise,
+                                            which means the line was answering from a stale
+                                            value. Two labels for one condition is one too many;
+                                            the one that gates the action stays.
+                                        -->
 
                                         <Button Classes="icon" Margin="8,0,0,0"
                                                 AutomationProperties.Name="Удалить книгу"
@@ -307,14 +326,19 @@
 
                                                     <!-- the caption, and the two arrows -->
                                                     <Grid Margin="10,8,10,10" ColumnDefinitions="*,Auto">
-                                                        <!-- The caption and the action share the left half of the row, and only one
+                                                        <!-- The action and the caption share the left half of the row, and only one
                          of them is ever on screen: the caption normally, the action while the
                          pointer is on the card. The action is a real button rather than styled
                          text because it has to be reachable from the keyboard and show up in
-                         automation. Neither is bound to a converter: which one is showing is
-                         a fact about the pointer, and the pointer is not in the model. Binding
-                         the caption's visibility to the slot instead - "hide the caption on
-                         every spread" - is what put the two words on top of each other. -->
+                         automation. Neither is bound to a converter for visibility: which one
+                         is showing is a fact about the pointer, and the pointer is not in the
+                         model. Binding the caption's visibility to the slot instead - "hide
+                         the caption on every spread" - is what put the two words on top of
+                         each other.
+
+                         What the action SAYS is the slot's own business and is bound: a
+                         spread is offered promotion, and the cover is offered a different
+                         photograph, because it cannot be promoted to be what it already is. -->
                                                     <Grid Grid.Column="0">
                                                         <TextBlock Name="PageCaption" Classes="t12"
                                                                    VerticalAlignment="Center"
@@ -325,11 +349,11 @@
                                                         <Button Name="AssignCoverAction" Classes="ghost"
                                                                 Padding="0" HorizontalAlignment="Left"
                                                                 IsVisible="False"
-                                                                AutomationProperties.Name="Назначить обложкой"
-                                                                Click="OnAssignCoverClick">
-                                                            <TextBlock Classes="t12Semi"
-                                                                       Foreground="{DynamicResource Emerald600}"
-                                                                       Text="Назначить обложкой" />
+                                                                AutomationProperties.Name="{Binding Converter={StaticResource PageCaption}, ConverterParameter=actionname}"
+                                                                Click="OnSlotActionClick">
+                                                            <TextBlock Classes="t14Bold"
+                                                                       Foreground="{Binding Converter={StaticResource PageCaption}, ConverterParameter=actionbrush}"
+                                                                       Text="{Binding Converter={StaticResource PageCaption}, ConverterParameter=actiontext}" />
                                                         </Button>
                                                     </Grid>
 

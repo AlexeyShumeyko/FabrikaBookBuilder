@@ -58,6 +58,23 @@ namespace PhotoBook.Shell.Converters
                 // than as a failed conversion.
                 "borderthickness" => isCover ? new Thickness(2) : new Thickness(1),
 
+                // What the action says while the pointer is on the card. Two of them, and
+                // they are not two labels for one thing: a spread can be promoted to be the
+                // cover, and the cover cannot be promoted to be the cover - it already is
+                // one. What it can be given is a different photograph, so that is what it
+                // offers, and the released program does exactly this.
+                "actiontext" => page is null
+                    ? string.Empty
+                    : page.IsCover ? "Заменить" : "Назначить обложкой",
+
+                // Violet for the cover's own action and green for the promotion, as in the
+                // released program: the colour says which of the two things this is.
+                "actionbrush" => isCover ? Brush("#4F46E5") : Brush("#059669"),
+
+                "actionname" => page is null
+                    ? string.Empty
+                    : page.IsCover ? "Заменить обложку" : "Назначить обложкой",
+
                 // Null rather than an empty string: a role nobody asked for should leave the
                 // property alone, and an empty string would be read as a value of some kind.
                 _ => null

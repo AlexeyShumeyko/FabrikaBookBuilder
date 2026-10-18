@@ -161,18 +161,55 @@
         <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
     </Style>
 
+    <!--
+        The words inside these buttons take the button's own colour.
+
+        The shared TextBlock style sets a foreground, and a value set on the control beats
+        one handed down through a property - so a template that only passes Foreward on
+        leaves the label in the default ink. That is how "Экспортировать" came out as dark
+        words on a violet button.
+    -->
+    <Style Selector="Button.primary TextBlock">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+
+    <Style Selector="Button.primary:disabled TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
+    </Style>
+
+    <Style Selector="Button.outline TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+    </Style>
+
+    <Style Selector="Button.outline:disabled TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
+    </Style>
+
     <Style Selector="Button.ghost">
-        <Setter Property="Background" Value="{DynamicResource Slate100}" />
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="12" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <ControlTemplate>
-                <Border Background="{TemplateBinding Background}"
+                <!--
+                    Nothing at rest, slate on hover. It was slate all the time, which is what
+                    put a grey box around "сбросить порядок" on every book - and around the
+                    cover action too, where the released program draws plain words and nothing
+                    else. The words still change on hover, so the pointer still has an answer.
+                -->
+                <Border x:Name="Root"
+                        Background="{TemplateBinding Background}"
                         CornerRadius="{TemplateBinding CornerRadius}"
                         Padding="{TemplateBinding Padding}">
+                    <Border.Transitions>
+                        <Transitions>
+                            <BrushTransition Property="Background" Duration="0:0:0.14" />
+                        </Transitions>
+                    </Border.Transitions>
                     <ContentPresenter Content="{TemplateBinding Content}"
                                       VerticalAlignment="Center"
                                       TextElement.Foreground="{TemplateBinding Foreground}" />
@@ -181,8 +218,16 @@
         </Setter>
     </Style>
 
-    <Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
-        <Setter Property="Opacity" Value="0.85" />
+    <Style Selector="Button.ghost:pointerover /template/ Border#Root">
+        <Setter Property="Background" Value="{DynamicResource Slate100}" />
+    </Style>
+
+    <Style Selector="Button.ghost:pressed /template/ Border#Root">
+        <Setter Property="Opacity" Value="0.9" />
+    </Style>
+
+    <Style Selector="Button.ghost TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
     </Style>
 
     <!--
