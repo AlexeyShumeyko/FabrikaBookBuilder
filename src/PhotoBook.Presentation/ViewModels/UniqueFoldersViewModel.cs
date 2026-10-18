@@ -127,7 +127,7 @@ namespace PhotoBook.Presentation.ViewModels
 
             Books = new ObservableCollection<Book>();
             LoadFoldersCommand = new AsyncRelayCommand(LoadFoldersAsync);
-            SelectCoverCommand = new RelayCommand<Book>(SelectCoverAsync);
+            SelectCoverCommand = new AsyncRelayCommand<Book?>(SelectCoverAsync);
             ExportCommand = new AsyncRelayCommand(ExportAsync, () => Project?.IsValid ?? false);
             ExportWithFolderCommand = new AsyncRelayCommand(ExportWithFolderAsync, () => Project?.IsValid ?? false);
             BackCommand = new AsyncRelayCommand(async () =>
@@ -297,5 +297,17 @@ namespace PhotoBook.Presentation.ViewModels
 
         /// <summary>Promotes a spread to be the book's cover, keeping the file it points at.</summary>
         public ICommand AssignCoverCommand { get; }
+
+        /// <summary>The book a slot belongs to.</summary>
+        /// <remarks>
+        /// Asked for by the slot's own action rather than found in the view. A cover belongs
+        /// to its book and not to any spread, so the action that replaces a cover is a
+        /// command about a book - and which book a cover is can only be answered by the
+        /// model that holds the list.
+        /// </remarks>
+        public Book? BookOf(Page? page) =>
+            page is null
+                ? null
+                : Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
     }
 }

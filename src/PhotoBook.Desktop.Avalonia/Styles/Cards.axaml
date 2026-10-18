@@ -68,7 +68,7 @@
         <Setter Property="Foreground" Value="White" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Template">
             <ControlTemplate>
@@ -121,7 +121,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
@@ -190,26 +190,24 @@
         <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <ControlTemplate>
                 <!--
-                    Nothing at rest, slate on hover. It was slate all the time, which is what
-                    put a grey box around "сбросить порядок" on every book - and around the
-                    cover action too, where the released program draws plain words and nothing
-                    else. The words still change on hover, so the pointer still has an answer.
+                    No box, ever - not at rest and not under the pointer. It was slate all
+                    the time, which put a grey slab around "сбросить порядок" on every book
+                    and around the cover action; then it was slate only on hover, which is
+                    still a box, and a box around four words is what the eye reads first.
+
+                    What the pointer gets instead is the words turning darker. On a white
+                    card that is enough, and nothing is drawn behind it at all.
                 -->
                 <Border x:Name="Root"
-                        Background="{TemplateBinding Background}"
+                        Background="Transparent"
                         CornerRadius="{TemplateBinding CornerRadius}"
                         Padding="{TemplateBinding Padding}">
-                    <Border.Transitions>
-                        <Transitions>
-                            <BrushTransition Property="Background" Duration="0:0:0.14" />
-                        </Transitions>
-                    </Border.Transitions>
                     <ContentPresenter Content="{TemplateBinding Content}"
                                       VerticalAlignment="Center"
                                       TextElement.Foreground="{TemplateBinding Foreground}" />
@@ -218,12 +216,12 @@
         </Setter>
     </Style>
 
-    <Style Selector="Button.ghost:pointerover /template/ Border#Root">
-        <Setter Property="Background" Value="{DynamicResource Slate100}" />
+    <Style Selector="Button.ghost:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource Slate900}" />
     </Style>
 
-    <Style Selector="Button.ghost:pressed /template/ Border#Root">
-        <Setter Property="Opacity" Value="0.9" />
+    <Style Selector="Button.ghost:pressed">
+        <Setter Property="Foreground" Value="{DynamicResource Slate500}" />
     </Style>
 
     <Style Selector="Button.ghost TextBlock">

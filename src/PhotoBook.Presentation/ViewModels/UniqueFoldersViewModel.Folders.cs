@@ -204,9 +204,17 @@ namespace PhotoBook.Presentation.ViewModels
             }
         }
 
-        private async void SelectCoverAsync(Book? book)
+        /// <summary>
+        /// Asks for a photograph and makes it this book's cover.
+        /// </summary>
+        /// <remarks>
+        /// A Task, run by an async command, rather than an async void. As a void it threw
+        /// into the dispatcher: the file dialog was closed without a choice, which is the
+        /// ordinary way to say no, and saying no took the program down.
+        /// </remarks>
+        private async Task SelectCoverAsync(Book? book)
         {
-            if (book == null) return;
+            if (book is null) return;
 
             var files = await _fileService.GetJpegFilesAsync(book.FolderPath!);
             var selectedFiles = await _files.PickImagesAsync();

@@ -186,14 +186,25 @@ public partial class UniqueFoldersView : UserControl, IPendingRename
     /// </remarks>
     private void OnSlotActionClick(object? sender, RoutedEventArgs e)
     {
+        var editor = DataContext as UniqueFoldersViewModel;
         var page = (sender as Control)?.DataContext as Page;
-        if (page is null) return;
+        if (editor is null || page is null) return;
 
-        Execute(
-            page.IsCover
-                ? nameof(UniqueFoldersViewModel.SelectCoverCommand)
-                : nameof(UniqueFoldersViewModel.AssignCoverCommand),
-            sender);
+        // A cover is replaced, and the command behind that is about a book; a spread is
+        // promoted, and that one is about the spread. Passing a page to the book command is
+        // what used to throw, and it took the program down.
+        var command = editor.AssignCoverCommand;
+        object? argument = page;
+
+        if (page.IsCover)
+        {
+            var book = editor.BookOf(page);
+            if (book is null) return;
+            command = editor.SelectCoverCommand;
+            argument = book;
+        }
+
+        if (command.CanExecute(argument)) command.Execute(argument);
     }
 
     private void Execute(string command, object? sender)
