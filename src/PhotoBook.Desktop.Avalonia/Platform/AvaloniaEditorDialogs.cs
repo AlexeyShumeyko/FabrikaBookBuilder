@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Platform.Storage;
 using PhotoBook.Application;
 using PhotoBook.Core;
 using PhotoBook.Shell.Views;
@@ -21,19 +19,23 @@ namespace PhotoBook.Shell.Platform
     /// happened, which is the failure this replaced.
     /// </para>
     /// <para>
-    /// The folder picker is the platform's own rather than a window written here. The other
-    /// shell has its own browser - 292 lines of markup and 396 of code - because that is what
-    /// a desktop application could use at the time. This engine ships one with the system
-    /// conventions of the machine it is running on, which is both less code and a better
-    /// answer on a machine whose language is not the product's. It is a visible difference
-    /// from the reference and it is recorded as one.
+    /// The folder picker is a window written here rather than the platform's. The platform
+    /// ships one and it does one thing: it opens a file list. It cannot show what is already
+    /// chosen, and it cannot say how many photographs a folder holds before you commit to it -
+    /// and both of those are the question. Choosing photographs for a book is the work, and it
+    /// deserves a window that answers it rather than a file list that asks for it again.
     /// </para>
     /// </remarks>
     internal class AvaloniaEditorDialogs : IEditorDialogs
     {
         private readonly IExportService _export;
+        private readonly IFileService _files;
 
-        public AvaloniaEditorDialogs(IExportService exportService) => _export = exportService;
+        public AvaloniaEditorDialogs(IExportService exportService, IFileService fileService)
+        {
+            _export = exportService;
+            _files = fileService;
+        }
 
         public async Task<string?> AskToExport(Project project)
         {
@@ -53,18 +55,8 @@ namespace PhotoBook.Shell.Platform
 
         public async Task<List<string>?> PickFolders(List<string> existingFolders)
         {
-            var storage = MainWindow()?.StorageProvider;
-            if (storage is null || !storage.CanOpen) return null;
-
-            var picked = (await storage.OpenFolderPickerAsync(new FolderPickerOpenOptions
-            {
-                Title = "Выберите папки с фотографиями",
-                AllowMultiple = true
-            })).ToList();
-
-            return picked.Count == 0
-                ? null
-                : picked.Select(f => f.TryGetLocalPath()).Where(p => p is not null).Select(p => p!).ToList();
+            var window = new FolderBrowserWindow(_files, existingFolders);
+            return await window.ShowDialog<List<string>?>(OwnerOf(() => window));
         }
 
         public async Task<int?> AskPageNumber(int maxPageNumber)
