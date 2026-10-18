@@ -83,9 +83,25 @@
                             <BrushTransition Property="Background" Duration="0:0:0.14" />
                         </Transitions>
                     </Border.Transitions>
+                    <!--
+                         Stretch, not centre, and that is the whole of the slide.
+
+                         Centring the content put the words and the chevron in as one centred
+                         pair. A chip is drawn before its text arrives - the choice is bound to
+                         the view model, which is not populated on the first frame - so the chip
+                         first showed a lone chevron in the middle, and when the words arrived
+                         both of them moved. That is the jump: words appearing against the left
+                         edge and then sliding to the middle.
+
+                         Letting the content fill the control ends it, because the columns stop
+                         depending on the words: the chevron is Auto and sits against the
+                         right-hand edge from the first frame, and the words take what is left
+                         and centre themselves in it. Text arriving then only appears, and
+                         nothing already drawn moves.
+                    -->
                     <ContentPresenter Content="{TemplateBinding Content}"
                                       Margin="{TemplateBinding Padding}"
-                                      HorizontalAlignment="Center"
+                                      HorizontalAlignment="Stretch"
                                       VerticalAlignment="Center" />
                 </Border>
             </ControlTemplate>
@@ -137,13 +153,24 @@
         <Setter Property="CornerRadius" Value="11" />
         <Setter Property="Padding" Value="14,0" />
         <Setter Property="Height" Value="38" />
-        <Setter Property="Width" Value="168" />
+        <Setter Property="Width" Value="180" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{DynamicResource Slate800}" />
         <Setter Property="Cursor" Value="Hand" />
         <!--
-             Centred, and written into the template below rather than set here.
+             180 wide, which is the longest label the two filters can be given plus the
+             chrome around it. Measured: the labels are 108 pixels ("Уникальные папки"),
+             111 ("Комбинированный") and 78 ("В процессе сборки") at this size, and the
+             space left for the words inside 168 was 98 - so the longer two did not fit,
+             and a word that does not fit is not centred: it starts at the left and runs
+             out under the chevron, which is what made the control look left-aligned after
+             a choice was made in it.
+
+             The label also carries TextTrimming, so that at another screen's scale the
+             answer is an ellipsis rather than a word lying on top of its neighbour.
+
+             Filling the width, and written into the template below rather than set here.
 
              It was a setter on HorizontalContentAlignment, and a property that arrives
              from a style is not there for the first layout pass - so the words were drawn
@@ -151,11 +178,14 @@
              a small slide every time a filter is chosen. It cannot happen if the control is
              told where its content goes before it has any content to put there.
 
-             Centred rather than left because a person reading the control sees the gap
-             between the words and the chevron and reads it as a mistake. A word in a
-             fixed box moves when its length changes either way; here it moves in the
-             middle of the control, where nobody is watching it. The chevron stays against
-             the right-hand edge, where a chevron belongs.
+             Stretch, not Centre. Centring hands the content over as one block - the words
+             and the chevron together - and a block is as wide as its widest line, so the
+             chevron stood 5 pixels further from the right-hand edge on "Любой статус" than
+             on "Все режимы" and moved again every time the value changed. Filling the
+             width gives the content the whole box instead, and the chevron, which is in a
+             column of its own that is never asked to grow, stays against the right-hand
+             edge where a chevron belongs. What centres the words is then a property of
+             the words themselves - see the label in FilterDropDown.axaml.
         -->
 
         <Setter Property="Transitions">
@@ -180,7 +210,7 @@
                         </Transitions>
                     </Border.Transitions>
                     <ContentPresenter Content="{TemplateBinding Content}"
-                                      HorizontalAlignment="Center"
+                                      HorizontalAlignment="Stretch"
                                       VerticalAlignment="Center" />
                 </Border>
             </ControlTemplate>

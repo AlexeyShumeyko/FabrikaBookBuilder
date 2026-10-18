@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Avalonia;
 using Avalonia.Controls;
@@ -38,13 +39,14 @@ namespace PhotoBook.Shell.Controls;
 public sealed partial class FilterDropDown : UserControl
 {
     private bool _suppressListEcho;
+    private object? _pendingChoice;
 
     public FilterDropDown()
     {
         InitializeComponent();
 
-        PART_Button.Click += OnButtonClick;
-        PART_List.SelectionChanged += OnListSelectionChanged;
+        Chip.Click += OnButtonClick;
+        Choices.SelectionChanged += OnListSelectionChanged;
     }
 
     /// <summary>The choices on offer. A plain enumerable of anything with a label.</summary>
@@ -83,7 +85,7 @@ public sealed partial class FilterDropDown : UserControl
 
         if (change.Property == ItemsProperty)
         {
-            PART_List.ItemsSource = Items;
+            Choices.ItemsSource = Items;
         }
 
         // The program can change the choice without the list being open - clearing the
@@ -94,16 +96,16 @@ public sealed partial class FilterDropDown : UserControl
         if (change.Property == SelectedItemProperty)
         {
             _suppressListEcho = true;
-            PART_List.SelectedItem = SelectedItem;
+            Choices.SelectedItem = SelectedItem;
             _suppressListEcho = false;
         }
     }
 
     private void OnButtonClick(object? sender, RoutedEventArgs e)
     {
-        PART_Popup.IsOpen = !PART_Popup.IsOpen;
+        Menu.IsOpen = !Menu.IsOpen;
 
-        if (!PART_Popup.IsOpen)
+        if (!Menu.IsOpen)
         {
             return;
         }
@@ -111,9 +113,9 @@ public sealed partial class FilterDropDown : UserControl
         // Open on the row that is chosen, so a person opening a list of three sees which of
         // the three they are on instead of having to hunt for it.
         _suppressListEcho = true;
-        PART_List.SelectedItem = SelectedItem;
+        Choices.SelectedItem = SelectedItem;
         _suppressListEcho = false;
-        PART_List.ScrollIntoView(PART_List.SelectedItem);
+        Choices.ScrollIntoView(Choices.SelectedItem);
     }
 
     private void OnListSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -123,12 +125,38 @@ public sealed partial class FilterDropDown : UserControl
             return;
         }
 
-        if (PART_List.SelectedItem is null)
+        if (Choices.SelectedItem is null)
         {
             return;
         }
 
-        SelectedItem = PART_List.SelectedItem;
-        PART_Popup.IsOpen = false;
+        // The list goes first and the choice is applied when it has gone.
+        //
+        // Applied together, the words change while the popup is still being taken down,
+        // and for the two hundred milliseconds that takes they are drawn in the box the
+        // previous label was measured into - the chip's words jump to the left edge and
+        // then slide back to the middle. Measured: wrong for 200 ms, right afterwards,
+        // every time a value is chosen by hand. The same change made from the program
+        // never showed it, because nothing was being taken down at the time.
+        //
+        // Choosing the order rather than the timing is the whole of the fix: the value
+        // lands on a chip that is no longer sharing a moment with a closing window, and
+        // the words are laid out once, correctly.
+        _pendingChoice = Choices.SelectedItem;
+        Menu.Closed += ApplyPendingChoice;
+        Menu.IsOpen = false;
+    }
+
+    private void ApplyPendingChoice(object? sender, EventArgs e)
+    {
+        Menu.Closed -= ApplyPendingChoice;
+
+        if (_pendingChoice is null)
+        {
+            return;
+        }
+
+        SelectedItem = _pendingChoice;
+        _pendingChoice = null;
     }
 }

@@ -57,7 +57,7 @@
         -->
         <Border Grid.Row="0" Classes="card" Padding="20"
                 IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}}">
-            <Grid ColumnDefinitions="4*,Auto,*,Auto" MinHeight="52">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto" MinHeight="52">
 
                 <!-- The heading. -->
                 <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
@@ -100,10 +100,9 @@
                     contents the minute they are asked, which is how the count alone was
                     moving two controls by several pixels every time it answered differently.
 
-                    The count is left-aligned in its box. Both answers - "Всего: 39" and
-                    "8 из 39" - then begin at the same x, which is where a sentence is read
-                    from. Right-aligned they would both end at the same x instead, with
-                    their heads at different distances from the filters.
+                    The count does not move the group. It sits in its own column, and a
+                    column is either the width you asked for or it is what is left, so the
+                    group beside it stands still whatever the count happens to say.
                 -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10"
                             VerticalAlignment="Center">
@@ -131,15 +130,40 @@
                 </StackPanel>
 
                 <!--
-                     The count, in the middle of the space between the filters and the
-                     button rather than tucked against the filters with a hole left over.
+                     The count, and the air around it.
 
-                     It sits in a column that shares whatever is left, so it is the same
-                     distance from the filters and from the button at every window width,
-                     and it is a fixed 78 wide so the two answers - "Всего: 39" and "8 из
-                     39" - begin at the same x whichever way the word lands inside it.
-                 -->                <TextBlock Grid.Column="2" HorizontalAlignment="Center"
-                           VerticalAlignment="Center"                           Text="{Binding FilterSummary}" Classes="t12" Width="78"                           TextAlignment="Left"                           Foreground="{DynamicResource Slate400}" />
+                     The question is how far the count stands from the filter on one side and
+                     from the button on the other. They were not the same distance, and the
+                     count moving when the answer changes is what made it visible.
+
+                     Centring the words with TextAlignment does not work here at all:
+                     measured, every frame read the same, at the left, settled as well as
+                     immediate. The words are centred as an element instead - a Border of a
+                     fixed 78, the width of the longer of the two answers, with the TextBlock
+                     centred inside it.
+
+                     What made the count move was not the centring. It was the same thing
+                     that made the filter's words jump: the answer changed while the list
+                     was still being taken down, and for the two hundred milliseconds that
+                     takes the words were drawn in the box the previous answer had been
+                     measured into. The order is fixed in FilterDropDown - the list goes
+                     first, and the value lands once it has gone.
+
+                     Forty pixels on the left and twenty on the right, and not the other way
+                     round, because the button carries twenty of its own on that side: the
+                     count is a fixed distance from the filter and lands in the middle of
+                     the gap, so the two come out equal whatever the answer says. 56 and 56
+                     with "Всего: 39", 61 and 61 with "8 из 39".
+                 -->
+                <Border Grid.Column="2" Width="78" HorizontalAlignment="Center"
+                        VerticalAlignment="Center" Margin="40,0,20,0">
+                    <TextBlock Classes="t12"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource Slate400}"
+                               Text="{Binding FilterSummary}" />
+                </Border>
 
                 <!--
                     The one action on the screen.
@@ -186,7 +210,7 @@
                 <TextBlock Text="Проекты фотокниг" Classes="t20Bold" VerticalAlignment="Center" />
                 <TextBlock Classes="t12" Margin="0,2,0,0" VerticalAlignment="Center"
                            Foreground="{DynamicResource Slate500}"
-                           Text="Управляйте подготовленными макетами и запускайте их в автоматический экспорт" />
+                           Text="Управляйте макетами" />
             </StackPanel>
         </Border>
 
@@ -363,36 +387,49 @@
                                   <!--
                                       The name and the badge, and who gives way.
 
-                                      The name is in a column of its own and told the width of that
-                                      column - which is what the column is for. An earlier version
-                                      told it a width worked out from a margin, one hundred and
-                                      sixty-eight pixels being the badge's share, and the arithmetic
-                                      was thirteen pixels out: on a card with a long name the row
-                                      came out thirteen pixels wider than the card, the badge ate
-                                      them out of the card's own right-hand padding, and it ended up
-                                      against the corner. Measured, after the fact: a card with a
-                                      short name put the badge twenty-one pixels from the edge, a
-                                      card with a long one put it eight.
+                                      The badge is pinned to the right of the card's own padding and
+                                      the name is given whatever is left, so the two do not argue.
+                                      What that costs is written down here, because it was measured
+                                      repeatedly and it is not obvious.
 
-                                      Reading the column's own width back to the name cannot be out,
-                                      because it is the same number the column was just given.
+                                      A star column is not a cap. Avalonia gives one at least what its
+                                      contents ask for, and a TextBlock asked to shorten its words
+                                      reports the shortened words PLUS the three dots - so on a card whose
+                                      name does not fit, the row asks for seven pixels more than the card
+                                      has and the badge goes out with it. Measured at a window of 1000:
+                                      twenty pixels from the corner where the name fits, thirteen where
+                                      it does not. Without trimming at all it is four, because then the
+                                      name asks for its whole self.
 
-                                      The badge is a number and not an autosize, so its left edge is
-                                      the same distance from the corner whatever its label says. A
-                                      ceiling was tried and changed nothing: a ceiling still lets a
-                                      short label be short.
+                                      Telling the name the width of its own column was tried and is in
+                                      this file's history: it holds the gap at twenty, but a binding to a
+                                      width reads the width the previous layout pass ended at, so moving
+                                      the window to a screen at another scale arrives with the cap in the
+                                      old scale, the row grows, and the badge jumps to the corner until
+                                      another pass runs - which is what un-maximising and re-maximising
+                                      does. Between the two, the version that never jumps was chosen.
+
+                                      The only way to have both - the gap always at twenty, and no jump - is
+                                      for the badge not to share a row with the name. That is a change to
+                                      the card's shape and it belongs to whoever owns the design.
                                   -->
-                                  <Grid ColumnDefinitions="*,168" Margin="0,12,0,0">
-                                      <Border Grid.Column="0" ClipToBounds="True">
-                                          <TextBlock Classes="t16Bold"
-                                                     MaxWidth="{Binding $parent[Border].Bounds.Width}"
-                                                     HorizontalAlignment="Left"
-                                                     TextTrimming="CharacterEllipsis"
-                                                     VerticalAlignment="Center"
-                                                     Text="{Binding Name}" />
-                                      </Border>
+                                  <Grid ColumnDefinitions="*,Auto" Margin="0,12,0,0" HorizontalAlignment="Stretch">
+                                      <TextBlock Grid.Column="0" Classes="t16Bold"
+                                                 HorizontalAlignment="Stretch"
+                                                 TextTrimming="CharacterEllipsis"
+                                                 VerticalAlignment="Center"
+                                                 Text="{Binding Name}" />
 
-                                      <Border Grid.Column="1" Width="160" HorizontalAlignment="Right"
+                                      <!--
+                                          Sized by its own words rather than by a number. It was
+                                          160 wide whatever it carried, which is wider than any of
+                                          the labels: measured, 145 for "Комбинированный" and 122
+                                          for "В процессе сборки". Pinned right, so the gap from
+                                          the card's edge is the card's own padding whatever the
+                                          badge says.
+                                      -->
+                                      <Border Grid.Column="1" HorizontalAlignment="Right"
+                                              Margin="12,0,0,0"
                                               CornerRadius="8"
                                               Padding="9,4" BorderThickness="1"
                                               VerticalAlignment="Center"
@@ -412,9 +449,10 @@
                                                          TextTrimming="CharacterEllipsis"
                                                          Foreground="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tinttext}"
                                                          Text="{Binding Mode, Converter={StaticResource AppModeToLabel}}" />
-                                          </StackPanel>
-                                      </Border>
-                                  </Grid>
+                                           </StackPanel>
+                                       </Border>
+                                   </Grid>
+
                                   <!--
                                       Three 48px previews and the remainder.
 

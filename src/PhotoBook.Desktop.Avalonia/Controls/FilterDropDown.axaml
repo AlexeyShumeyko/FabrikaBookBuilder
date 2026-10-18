@@ -2,49 +2,67 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="using:PhotoBook.Shell.Controls"
              x:Class="PhotoBook.Shell.Controls.FilterDropDown"
-             Width="168">
+             x:Name="Root"
+             Width="180">
 
     <!--
         A filter, written out rather than borrowed.
 
-        This was a ComboBox with its template replaced, and it did not work: the list opened
-        and nothing in it could be chosen, because the list sits in a popup - a window of
-        its own - and the binding that would have carried the choice back could not be
-        written across that boundary. So the choice never reached the program and the popup
-        had nothing to close it.
+        Everything inside this file refers to this file's own controls BY NAME. The first
+        version reached for them by walking up the tree looking for an ancestor of a given
+        type. A name is resolved while the file is being read and an ancestor is not, so
+        that is the form to use here.
 
-        A control of its own does not have that problem, because there is no boundary to
-        cross: the code that owns the button and owns the list is in the same class, and
-        closing the list on a choice is two lines rather than an arrangement of bindings.
-
-        Closing on a click outside is not here because it does not need to be: a popup
-        dismisses itself when light dismiss is on, which is the default, and it is left on
-        deliberately.
+        The jump a person saw was not where the words sit but when the control finds out
+        what it has to say - and that is written down at the label below, which is where
+        the answer is.
 
         Nothing here decides how a filter looks beyond its own box - the chip is a Button
-        carrying the filterChip class, and the rows are the program's own list rows. What
-        is here is the behaviour a list of choices owes the person using it.
+        carrying the filterChip class, and the rows are the program's own list rows. What is
+        here is the behaviour a list of choices owes the person using it.
     -->
     <Grid>
-        <Button Name="PART_Button"
+        <Button x:Name="Chip"
                 Classes="filterChip"
-                AutomationProperties.Name="{Binding AutomationName, RelativeSource={RelativeSource AncestorType={x:Type controls:FilterDropDown}}}">
+                AutomationProperties.Name="{Binding #Root.AutomationName}">
             <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0"
-                           VerticalAlignment="Center"
-                           HorizontalAlignment="Center"
-                           Text="{Binding SelectedItem.Label, RelativeSource={RelativeSource AncestorType={x:Type controls:FilterDropDown}}}" />
+                <!--
+                    The words are centred as an element.
+
+                    TextAlignment on a stretched TextBlock was measured doing nothing at
+                    all: every frame of every state read the same, at the far left, settled
+                    as well as immediate. Centring is therefore left to
+                    HorizontalAlignment, with a Border handing the words the whole column.
+
+                    The Border also clips, so a word too long for the column is cut rather
+                    than laid over the chevron or over the control beside it. It is cut, not
+                    trimmed: trimming needs the words to be given the column's width, and a
+                    width is what cannot be told to a control from inside a pass that is
+                    still deciding how wide the column is.
+
+                    What used to make the words jump to the left and slide back was not
+                    this at all - it is in the code-behind, and it was the order of two
+                    things.
+                -->
+                <Border Grid.Column="0" ClipToBounds="True">
+                    <TextBlock x:Name="Label"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               VerticalAlignment="Center"
+                               Text="{Binding #Root.SelectedItem.Label}" />
+                </Border>
+
                 <Path Grid.Column="1"
                       Margin="12,0,0,0"
                       Width="10" Height="6"
                       VerticalAlignment="Center"
                       Data="M 0 0 L 5 6 L 10 0"
-                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                      Stroke="{Binding #Chip.Foreground}"
                       StrokeThickness="1.5" />
             </Grid>
         </Button>
 
-        <Popup Name="PART_Popup"
+        <Popup x:Name="Menu"
                Placement="Bottom"
                VerticalOffset="6"
                IsLightDismissEnabled="True">
@@ -53,16 +71,16 @@
                     BorderThickness="1"
                     CornerRadius="12"
                     Padding="6"
-                    Width="{Binding Bounds.Width, RelativeSource={RelativeSource AncestorType={x:Type controls:FilterDropDown}}}"
+                    MinWidth="{Binding #Root.Bounds.Width}"
                     BoxShadow="{DynamicResource ShadowCard}">
-                <ListBox Name="PART_List"
+                <ListBox x:Name="Choices"
                          Classes="filterList"
                          Background="Transparent"
                          BorderThickness="0"
                          Padding="0"
                          MaxHeight="280"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ItemsSource="{Binding Items, RelativeSource={RelativeSource AncestorType={x:Type controls:FilterDropDown}}}">
+                         ItemsSource="{Binding #Root.Items}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
