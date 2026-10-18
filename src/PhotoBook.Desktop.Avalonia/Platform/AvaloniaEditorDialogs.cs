@@ -19,11 +19,12 @@ namespace PhotoBook.Shell.Platform
     /// happened, which is the failure this replaced.
     /// </para>
     /// <para>
-    /// The folder picker is a window written here rather than the platform's. The platform
-    /// ships one and it does one thing: it opens a file list. It cannot show what is already
-    /// chosen, and it cannot say how many photographs a folder holds before you commit to it -
-    /// and both of those are the question. Choosing photographs for a book is the work, and it
-    /// deserves a window that answers it rather than a file list that asks for it again.
+    /// The folder picker is a panel over the window rather than a second window, and it is
+    /// written here rather than handed to the platform. The platform ships one and it does one
+    /// thing: it opens a file list. It cannot show what is already chosen, and it cannot say
+    /// how many photographs a folder holds before you commit to it - and both of those are the
+    /// question. Choosing photographs for a book is the work, and it deserves a panel that
+    /// answers it rather than a file list that asks for it again.
     /// </para>
     /// </remarks>
     internal class AvaloniaEditorDialogs : IEditorDialogs
@@ -55,8 +56,16 @@ namespace PhotoBook.Shell.Platform
 
         public async Task<List<string>?> PickFolders(List<string> existingFolders)
         {
-            var window = new FolderBrowserWindow(_files, existingFolders);
-            return await window.ShowDialog<List<string>?>(OwnerOf(() => window));
+            // A panel over the page rather than a second window. A frameless white window on a
+            // white page had no edge to say it was on top, and dimming the page says it for it.
+            var main = MainWindow() as MainWindow;
+            if (main is null)
+            {
+                throw new InvalidOperationException(
+                    "Проводник папок открывается поверх окна программы, а окна нет.");
+            }
+
+            return await main.ShowSheetAsync(new FolderBrowserView(_files, existingFolders));
         }
 
         public async Task<int?> AskPageNumber(int maxPageNumber)

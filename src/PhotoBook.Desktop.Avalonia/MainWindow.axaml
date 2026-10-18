@@ -19,6 +19,20 @@
         every other card. Nothing about it runs to the edge of the window, which is the whole
         of the difference.
     -->
+    <!--
+        Two layers. The page, and above it a sheet that dims it.
+
+        A dialog used to be a second window: a white rectangle with no border of its own,
+        floating on a page that is also white. There was nothing to say which one was on top,
+        and nothing about it belonging to this program - it read as another program's window
+        that happened to be in front. Dimming the page behind a panel that has its own surface,
+        its own border and its own shadow says all of that without a word.
+
+        The layer sits over the whole window, header included, so the page behind is plainly
+        the same page and not a different one.
+    -->
+    <Grid Background="{DynamicResource AppBackground}">
+
     <DockPanel LastChildFill="True" Background="{DynamicResource AppBackground}">
 
     <Border DockPanel.Dock="Top" Padding="32,10"
@@ -189,4 +203,17 @@
         -->
         <ContentControl x:Name="ScreenHost" />
     </DockPanel>
+
+    <!-- ================================ sheet ================================
+         The dimming layer and nothing else. What is in it is put there by code and taken
+         out again when it has answered; the layer itself knows no more than that.
+    -->
+    <Border x:Name="SheetLayer" IsVisible="False" Background="#8C0F172A">
+        <Grid Margin="28">
+            <ContentControl x:Name="SheetHost"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            MaxWidth="1120" MaxHeight="760" />
+        </Grid>
+    </Border>
+    </Grid>
 </Window>

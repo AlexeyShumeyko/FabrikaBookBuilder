@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -64,4 +65,28 @@ public partial class MainWindow : Window
     /// </remarks>
     private async void OnHelpClick(object? sender, RoutedEventArgs e)
         => await new HelpWindow().ShowDialog(this);
+
+    /// <summary>
+    /// Puts a panel over the page, dims the page, and waits for the panel's answer.
+    /// </summary>
+    /// <remarks>
+    /// One at a time, and the layer goes down again whichever way it ends - an answer, a
+    /// refusal, or an exception thrown out of the panel. A layer left up over a dead panel
+    /// would dim the page for the rest of the session with nothing on it to explain why.
+    /// </remarks>
+    public async Task<T?> ShowSheetAsync<T>(OverlaySheet<T> sheet) where T : class
+    {
+        SheetHost.Content = sheet;
+        SheetLayer.IsVisible = true;
+
+        try
+        {
+            return await sheet.Answer;
+        }
+        finally
+        {
+            SheetLayer.IsVisible = false;
+            SheetHost.Content = null;
+        }
+    }
 }

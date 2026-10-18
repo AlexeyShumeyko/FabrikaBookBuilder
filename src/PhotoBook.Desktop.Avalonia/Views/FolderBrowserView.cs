@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
@@ -17,47 +17,50 @@ using PhotoBook.Application;
 namespace PhotoBook.Shell.Views;
 
 /// <summary>
-/// Picks the folders a project's photographs come from.
+/// Picks the folders a project's photographs come from. A panel over the page, not a second
+/// window.
 /// </summary>
 /// <remarks>
 /// <para>
-/// The platform's own folder picker was doing this job and is gone. It could pick folders and
-/// nothing else: it could not show what was already chosen, it could not say how many
-/// photographs a folder holds before committing to it, and it answered a question about a
-/// photographer's work with a file list.
+/// It was a frameless white window over a white page, and there was nothing in that to say
+/// which one was on top. Dimming the page and putting the panel on it answers it, and answers
+/// the second question as well - whether the panel belongs to this program or to another one
+/// that happened to be in front of it.
 /// </para>
 /// <para>
-/// What changed from the reference's browser, on purpose:
+/// Four decisions that are not the obvious ones, and why they went this way:
 /// </para>
 /// <list type="bullet">
-/// <item><b>A tick per folder, not a hidden modifier.</b> The reference asks for Ctrl and Shift
-/// to choose more than one, and opens a message box when you did not. A row that is either in
-/// or out says the same thing without being told.</item>
-/// <item><b>Adding is the tick.</b> There is no separate step between choosing and having
-/// chosen, and nothing to confirm before the chosen list means something.</item>
-/// <item><b>An empty folder is marked before it is refused.</b> A folder with no photographs in
-/// it can never be accepted, and the reference only discovered that after you had committed to
-/// it. The count is on the row for that reason.</item>
+/// <item><b>The tick is the only way to choose.</b> The rest of the row opens the folder.
+/// Ticking used to shift the layout - the message about a folder you cannot use appeared and
+/// pushed the list down while the pointer was still travelling - and a double click to open
+/// something is not a thing a hand can do when the row is moving. Now opening a folder and
+/// choosing a folder are two different targets, and neither moves anything.</item>
+/// <item><b>A chosen folder is a name, and clicking it walks to it.</b> It showed the whole
+/// path and removed the folder when pressed, which is what an accidental click costs: a walk
+/// back down to find it. Only the cross removes it.</item>
+/// <item><b>The message area has a fixed height.</b> A message that appears must not move the
+/// list under the pointer. It is always the same box, and a long message scrolls inside it.</item>
+/// <item><b>Opens next to the project's folders, not inside one.</b> Which of several folders
+/// to open inside is a question with no good answer; the directory holding them is the place
+/// where all of them can be seen at once.</item>
 /// </list>
 /// <para>
-/// Reading folders happens off the drawing thread. The reference did it on that thread, which is
-/// why opening it on a folder of scan files stopped answering for a moment.
+/// Reading folders happens off the drawing thread.
 /// </para>
 /// </remarks>
-public class FolderBrowserWindow : Window
+public class FolderBrowserView : OverlaySheet<List<string>>
 {
     private readonly IFileService _files;
 
     private readonly List<string> _selected = new();
-    private readonly ObservableCollection<ChosenFolder> _chosen = new();
+    private readonly List<ChosenFolder> _chosen = new();
     private readonly Stack<string> _history = new();
     private readonly List<FolderEntry> _folders = new();
 
     private string _currentPath = string.Empty;
     private bool _validating;
     private bool _hasError;
-    private DateTime _lastRowClick = DateTime.MinValue;
-    private string _lastRowPath = string.Empty;
 
     private readonly StackPanel _placesBox = new() { Spacing = 2 };
     private readonly StackPanel _foldersBox = new() { Spacing = 4 };
@@ -65,41 +68,49 @@ public class FolderBrowserWindow : Window
     private readonly TextBlock _pathText = new();
     private readonly TextBlock _chosenCount = new();
     private readonly TextBlock _foundCaption = new();
-    private readonly TextBlock _errorText = new();
+    private readonly TextBlock _logText = new();
     private readonly TextBox _filter = new();
     private readonly Button _back = new();
     private readonly Button _ok = new();
-    private Border _errorBanner = new();
+    private readonly Border _logBox = new();
 
-    public FolderBrowserWindow(IFileService fileService, List<string>? existingFolders = null)
+    public FolderBrowserView(IFileService fileService, List<string>? existingFolders = null)
     {
         _files = fileService;
 
-        Title = "Проводник папок";
-        Width = 1020;
-        Height = 660;
-        MinWidth = 900;
-        MinHeight = 520;
-        CanResize = true;
-        ShowInTaskbar = false;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        Background = Brushes.Transparent;
-        SystemDecorations = SystemDecorations.None;
         FontFamily = new FontFamily("Inter");
-
         Content = Build();
-
-        KeyDown += OnKeyDown;
 
         if (existingFolders is not null)
         {
             foreach (var folder in existingFolders.Where(f => !string.IsNullOrWhiteSpace(f)))
             {
+                if (_selected.Contains(folder)) continue;
                 _selected.Add(folder);
                 _chosen.Add(new ChosenFolder(folder));
             }
         }
 
+        RefreshChosen();
+
+        // Next to the project's folders rather than inside one of them: with several folders
+        // there is no right one to open, and the directory holding them is where they can all
+        // be seen. With no folders at all, the Desktop.
+        var first = _chosen.FirstOrDefault(c => Directory.Exists(c.Path))?.Path;
+        var start = first is null
+            ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+            : System.IO.Path.GetDirectoryName(first) ?? first;
+
+        _ = NavigateAsync(start, remember: false);
+        _ = RevalidateAsync();
+
+        KeyDown += OnKeyDown;
+    }
+
+    // ------------------------------------------------------------------ the sheet --
+
+    private Control Build()
+    {
         _ok.Content = "Загрузить структуру";
         _ok.Padding = new Thickness(16, 10);
         _ok.FontSize = 13;
@@ -111,52 +122,40 @@ public class FolderBrowserWindow : Window
         _ok.Cursor = new Cursor(StandardCursorType.Hand);
         _ok.Click += async (_, _) => await ConfirmAsync();
 
-        RefreshChosen();
+        var root = new Grid { RowDefinitions = new RowDefinitions("Auto,*,Auto,Auto") };
 
-        // Opens where the last selection was: a photographer's photographs are not on the
-        // Desktop, and the reference always opened on the Desktop whatever was already chosen.
-        var start = FirstExisting(_selected) ?? Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-        _ = NavigateAsync(start, remember: false);
+        var header = HeaderBand();
+        Grid.SetRow(header, 0);
+        root.Children.Add(header);
 
-        if (_chosen.Count > 0) _ = RevalidateAsync();
-    }
-
-    // ------------------------------------------------------------------ the window --
-
-    private Control Build()
-    {
-        _errorBanner = ErrorBanner();
-
-        // The body is the only part that grows. A panel in a stack is measured with infinite
-        // height, so a "*" row inside one asks for everything and the window becomes as tall
-        // as the file system - which is what the first version of this did, and it is why the
-        // header had scrolled off the top.
         var body = new Grid
         {
-            Margin = new Thickness(20, 18, 20, 0),
-            ColumnDefinitions = new ColumnDefinitions("196,12,*,12,256"),
-            RowDefinitions = new RowDefinitions("Auto,*")
+            Margin = new Thickness(20, 16, 20, 0),
+            ColumnDefinitions = new ColumnDefinitions("200,14,*,14,264")
         };
-        Grid.SetColumnSpan(_errorBanner, 5);
-        body.Children.Add(_errorBanner);
 
-        body.Children.Add(PlacesPanel());
-        Grid.SetRow(body.Children[1], 1);
+        var places = PlacesPanel();
+        Grid.SetColumn(places, 0);
+        body.Children.Add(places);
 
-        body.Children.Add(FolderColumn());
-        Grid.SetColumn(body.Children[2], 2);
-        Grid.SetRow(body.Children[2], 1);
+        var folders = FoldersColumn();
+        Grid.SetColumn(folders, 2);
+        body.Children.Add(folders);
 
-        body.Children.Add(ChosenPanel());
-        Grid.SetColumn(body.Children[3], 4);
-        Grid.SetRow(body.Children[3], 1);
+        var chosen = ChosenPanel();
+        Grid.SetColumn(chosen, 4);
+        body.Children.Add(chosen);
+
+        Grid.SetRow(body, 1);
+        root.Children.Add(body);
+
+        var log = LogArea();
+        Grid.SetRow(log, 2);
+        root.Children.Add(log);
 
         _foundCaption.FontSize = 12;
         _foundCaption.Foreground = Ink.Text2;
         _foundCaption.VerticalAlignment = VerticalAlignment.Center;
-
-        var footRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-        footRow.Children.Add(_foundCaption);
 
         var buttons = new StackPanel
         {
@@ -164,36 +163,17 @@ public class FolderBrowserWindow : Window
             Spacing = 8,
             Children =
             {
-                PlainButton("Отмена", accent: false, onClick: () => Close(null)),
+                PlainButton("Отмена", accent: false, onClick: Leave),
                 _ok
             }
         };
         Grid.SetColumn(buttons, 1);
-        footRow.Children.Add(buttons);
 
-        // Every row is set by hand. A grid puts anything without a row in the first one, and a
-        // header laid out on top of a footer looks like a window that came apart rather than
-        // like a mistake in a row number.
-        var root = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto") };
-
-        var header = HeaderBand();
-        Grid.SetRow(header, 0);
-        root.Children.Add(header);
-
-        var topRule = new Border { Height = 1, Background = Ink.Border };
-        Grid.SetRow(topRule, 1);
-        root.Children.Add(topRule);
-
-        Grid.SetRow(body, 2);
-        root.Children.Add(body);
-
-        var footer = new StackPanel
+        var footer = new Grid
         {
-            Children =
-            {
-                new Border { Height = 1, Background = Ink.Border, Margin = new Thickness(0, 18, 0, 0) },
-                new StackPanel { Margin = new Thickness(20, 14, 20, 18), Children = { footRow } }
-            }
+            Margin = new Thickness(20, 16, 20, 20),
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            Children = { _foundCaption, buttons }
         };
         Grid.SetRow(footer, 3);
         root.Children.Add(footer);
@@ -201,61 +181,67 @@ public class FolderBrowserWindow : Window
         return new Border
         {
             Background = Ink.Surface,
-            CornerRadius = new CornerRadius(16),
+            CornerRadius = new CornerRadius(20),
             BorderBrush = Ink.Border,
             BorderThickness = new Thickness(1),
-            BoxShadow = new BoxShadows(BoxShadow.Parse("0 12 50 0 #40000000")),
+            BoxShadow = new BoxShadows(BoxShadow.Parse("0 24 70 0 #520F172A")),
             Child = root
         };
     }
 
     private Control HeaderBand()
     {
-        var title = new TextBlock
-        {
-            Text = "Проводник папок проекта",
-            FontSize = 16,
-            FontWeight = FontWeight.Bold,
-            Foreground = Ink.Heading,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(12, 0, 0, 0)
-        };
-
         var close = new Button
         {
-            Content = Glyph((char)0xE711, 13, Ink.Text2),
+            Content = Glyph((char)0xE711, 14, Ink.Text2),
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
             Padding = new Thickness(8),
             Cursor = new Cursor(StandardCursorType.Hand)
         };
-        close.Click += (_, _) => Close(null);
+        AutomationProperties.SetName(close, "Закрыть");
+        close.Click += (_, _) => Leave();
+
+        var column = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
+        column.Children.Add(new TextBlock
+        {
+            Text = "Проводник папок проекта",
+            FontSize = 17,
+            FontWeight = FontWeight.Bold,
+            Foreground = Ink.Heading
+        });
+        column.Children.Add(new TextBlock
+        {
+            Text = "Отметьте галочкой папки с фотографиями — по одной на книгу",
+            FontSize = 12,
+            Foreground = Ink.Text2
+        });
+
+        var tile = new Border
+        {
+            Width = 40,
+            Height = 40,
+            CornerRadius = new CornerRadius(12),
+            Background = Ink.AccentTint,
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = Icon.Stroke(IconGeometry.Folder, 18, Ink.Accent)
+        };
 
         var grid = new Grid
         {
             ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
-            Children =
-            {
-                new Border
-                {
-                    Width = 36,
-                    Height = 36,
-                    CornerRadius = new CornerRadius(10),
-                    Background = Ink.AccentTint,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Child = Icon.Stroke(IconGeometry.Folder, 16, Ink.Accent)
-                }
-            }
+            Children = { tile }
         };
-        Grid.SetColumn(title, 1);
-        grid.Children.Add(title);
+        Grid.SetColumn(column, 1);
+        column.Margin = new Thickness(14, 0, 0, 0);
+        grid.Children.Add(column);
         Grid.SetColumn(close, 2);
         grid.Children.Add(close);
 
         return new Border
         {
             Background = Ink.Muted,
-            CornerRadius = new CornerRadius(16, 16, 0, 0),
+            CornerRadius = new CornerRadius(20, 20, 0, 0),
             Padding = new Thickness(24, 18),
             Child = grid
         };
@@ -265,30 +251,19 @@ public class FolderBrowserWindow : Window
 
     private Control PlacesPanel()
     {
-        _placesBox.Children.Clear();
-
         foreach (var (name, path) in Places())
         {
             bool exists = Directory.Exists(path);
 
-            var icon = Icon.Stroke(IconGeometry.Drive, 13, Ink.Warn);
+            var icon = Icon.Stroke(IconGeometry.Drive, 14, Ink.Warn);
             icon.Opacity = exists ? 1 : 0.35;
-
-            var label = new TextBlock
-            {
-                Text = name,
-                FontSize = 12,
-                Foreground = exists ? Ink.Text : Ink.Faint,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                VerticalAlignment = VerticalAlignment.Center
-            };
 
             var row = new Button
             {
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
                 CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(10, 7),
+                Padding = new Thickness(10, 8),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 HorizontalContentAlignment = HorizontalAlignment.Left,
                 IsEnabled = exists,
@@ -298,22 +273,38 @@ public class FolderBrowserWindow : Window
                     Orientation = Orientation.Horizontal,
                     Spacing = 8,
                     VerticalAlignment = VerticalAlignment.Center,
-                    Children = { icon, label }
+                    Children =
+                    {
+                        icon,
+                        new TextBlock
+                        {
+                            Text = name,
+                            FontSize = 12,
+                            Foreground = exists ? Ink.Text : Ink.Faint,
+                            TextTrimming = TextTrimming.CharacterEllipsis,
+                            VerticalAlignment = VerticalAlignment.Center
+                        }
+                    }
                 }
             };
 
-            if (exists) row.Click += (_, _) => Navigate(path);
+            if (exists)
+            {
+                AutomationProperties.SetName(row, name);
+                row.Click += (_, _) => Navigate(path);
+            }
+
             _placesBox.Children.Add(row);
         }
 
         return Box(new StackPanel
         {
-            Spacing = 4,
+            Spacing = 6,
             Children = { Caption("Места", 6), _placesBox }
-        }, 10, 10);
+        }, 10, 12);
     }
 
-    private Control FolderColumn()
+    private Control FoldersColumn()
     {
         _back.Content = new StackPanel
         {
@@ -341,6 +332,7 @@ public class FolderBrowserWindow : Window
         _back.BorderBrush = Ink.Border;
         _back.BorderThickness = new Thickness(1);
         _back.Cursor = new Cursor(StandardCursorType.Hand);
+        AutomationProperties.SetName(_back, "Назад");
         _back.Click += (_, _) => GoBack();
 
         _pathText.FontFamily = new FontFamily("Consolas");
@@ -350,9 +342,10 @@ public class FolderBrowserWindow : Window
         _pathText.VerticalAlignment = VerticalAlignment.Center;
         _pathText.Margin = new Thickness(16, 0, 16, 0);
 
-        _filter.Watermark = "Поиск по имени";
+        _filter.Watermark = "Поиск по имени папки";
         _filter.FontSize = 12;
-        _filter.Width = 240;
+        _filter.Height = 34;
+        _filter.Width = 260;
         _filter.HorizontalAlignment = HorizontalAlignment.Left;
         _filter.CornerRadius = new CornerRadius(10);
         _filter.Background = Ink.Surface;
@@ -361,15 +354,12 @@ public class FolderBrowserWindow : Window
         _filter.Padding = new Thickness(10, 7);
         _filter.TextChanged += (_, _) => BuildFolderRows();
 
-        // Two columns only. With a third one holding the search box the path and the button
-        // fought over the middle and the path came and went - drawn once in the right place
-        // and once, faint, on top of the button, and after opening a folder not drawn at all.
-        // The search sits on its own line under them, which is where it is easier to reach
-        // anyway.
         var bar = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
         bar.Children.Add(_back);
         Grid.SetColumn(_pathText, 1);
         bar.Children.Add(_pathText);
+
+        var search = new StackPanel { Margin = new Thickness(0, 12, 0, 0), Children = { _filter } };
 
         var scroll = new ScrollViewer
         {
@@ -378,13 +368,7 @@ public class FolderBrowserWindow : Window
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto
         };
 
-        var search = new StackPanel { Margin = new Thickness(0, 10, 0, 0), Children = { _filter } };
-
-        var column = new Grid
-        {
-            RowDefinitions = new RowDefinitions("Auto,Auto,*"),
-            Margin = new Thickness(0, 12, 0, 0)
-        };
+        var column = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,*"), Margin = new Thickness(0, 14, 0, 0) };
         column.Children.Add(bar);
         Grid.SetRow(search, 1);
         column.Children.Add(search);
@@ -421,29 +405,39 @@ public class FolderBrowserWindow : Window
         }, 12, 12);
     }
 
-    private Border ErrorBanner()
+    /// <summary>
+    /// The one place the window says anything about the choice, and it is always this big.
+    /// </summary>
+    /// <remarks>
+    /// It is a fixed height and it is always there. A message that arrives by growing a
+    /// banner pushes the list down under a pointer that is already moving towards a row, and
+    /// the row under the pointer is then a different one - which is how "I clicked the folder
+    /// and it chose another" happens. Here nothing moves, and a message longer than the box
+    /// scrolls inside it.
+    /// </remarks>
+    private Control LogArea()
     {
-        _errorText.FontSize = 12;
-        _errorText.Foreground = Ink.DangerInk;
-        _errorText.TextWrapping = TextWrapping.Wrap;
-        _errorText.LineHeight = 18;
-        _errorText.Margin = new Thickness(10, 0, 0, 0);
+        _logText.FontSize = 12;
+        _logText.Foreground = Ink.Text2;
+        _logText.TextWrapping = TextWrapping.Wrap;
+        _logText.LineHeight = 18;
+        _logText.VerticalAlignment = VerticalAlignment.Top;
 
-        return new Border
+        _logBox.Background = Ink.Muted;
+        _logBox.BorderBrush = Ink.Border;
+        _logBox.BorderThickness = new Thickness(1);
+        _logBox.CornerRadius = new CornerRadius(12);
+        _logBox.Height = 92;
+        _logBox.Margin = new Thickness(20, 16, 20, 0);
+        _logBox.Padding = new Thickness(16, 14);
+        _logBox.Child = new ScrollViewer
         {
-            Background = Ink.Danger,
-            BorderBrush = Ink.DangerLine,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(14, 12),
-            Margin = new Thickness(20, 16, 20, 0),
-            IsVisible = false,
-            Child = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Children = { Icon.Stroke(IconGeometry.Warning, 14, Ink.DangerMark), _errorText }
-            }
+            Content = _logText,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
         };
+
+        return _logBox;
     }
 
     // --------------------------------------------------------------- the behaviour --
@@ -469,14 +463,6 @@ public class FolderBrowserWindow : Window
         }
     }
 
-    /// <summary>
-    /// Reads a folder's subfolders off the drawing thread.
-    /// </summary>
-    /// <remarks>
-    /// The count of photographs comes with the listing rather than on demand. It is the one
-    /// number that decides whether a folder can be used at all, and asking for it later means
-    /// asking for it again after every change.
-    /// </remarks>
     private async Task NavigateAsync(string path, bool remember)
     {
         if (string.IsNullOrEmpty(path)) return;
@@ -507,7 +493,15 @@ public class FolderBrowserWindow : Window
 
     private void Navigate(string path) => _ = NavigateAsync(path, remember: true);
 
-    /// <summary>The subfolders of a path, or null when it cannot be read at all.</summary>
+    /// <summary>
+    /// The subfolders of a path with the number of photographs in each, or null when the path
+    /// cannot be read at all.
+    /// </summary>
+    /// <remarks>
+    /// The count comes with the listing rather than on demand: it is the one number that says
+    /// whether a folder can be used, and asking for it later means asking for it again after
+    /// every change.
+    /// </remarks>
     private static List<FolderEntry>? ReadFolders(string path)
     {
         if (!Directory.Exists(path)) return null;
@@ -567,7 +561,7 @@ public class FolderBrowserWindow : Window
     private void BuildFolderRows()
     {
         _foldersBox.Children.Clear();
-        _foundCaption.Text = $"Найдено подпапок: {_folders.Count}";
+        _foundCaption.Text = $"Подпапок в этой папке: {_folders.Count}";
 
         var needle = _filter.Text?.Trim() ?? string.Empty;
         int shown = 0;
@@ -588,11 +582,20 @@ public class FolderBrowserWindow : Window
                 Text = needle.Length > 0 ? "Ничего не найдено" : "В этой папке нет подпапок",
                 FontSize = 12,
                 Foreground = Ink.Faint,
-                Margin = new Thickness(12, 10, 0, 0)
+                Margin = new Thickness(12, 12, 0, 0)
             });
         }
     }
 
+    /// <summary>
+    /// One folder: a tick that chooses it, and the rest of the row that opens it.
+    /// </summary>
+    /// <remarks>
+    /// Two controls rather than one row with two meanings. When the whole row chose, ticking a
+    /// folder made the list jump - the message about a folder that cannot be used arrived and
+    /// moved everything under the pointer - and then opening a folder needed a double click on
+    /// a row that was still moving. Nothing here moves, and neither action depends on the other.
+    /// </remarks>
     private Control FolderRow(FolderEntry folder)
     {
         bool chosen = _selected.Contains(folder.FullPath);
@@ -609,17 +612,29 @@ public class FolderBrowserWindow : Window
             Child = chosen ? Icon.Stroke(IconGeometry.Tick, 11, Brushes.White) : null
         };
 
-        var row = new Button
+        var choose = new Button
         {
-            Tag = folder.FullPath,
-            Background = chosen ? Ink.AccentTint : Brushes.Transparent,
-            BorderBrush = chosen ? Ink.AccentLine : Brushes.Transparent,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(10),
-            Padding = new Thickness(12, 9),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0),
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Margin = new Thickness(0, 0, 12, 0),
+            Content = tick
+        };
+        AutomationProperties.SetName(choose, chosen
+            ? $"Убрать {folder.Name} из выбранных"
+            : $"Выбрать папку {folder.Name}");
+        choose.Click += (_, _) => Toggle(folder);
+
+        var open = new Button
+        {
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Left,
             Cursor = new Cursor(StandardCursorType.Hand),
+            Margin = new Thickness(10, 0, 0, 0),
             Content = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -627,12 +642,11 @@ public class FolderBrowserWindow : Window
                 VerticalAlignment = VerticalAlignment.Center,
                 Children =
                 {
-                    tick,
-                    Icon.Stroke(IconGeometry.Folder, 14, Ink.Warn),
+                    Icon.Stroke(IconGeometry.Folder, 15, Ink.Warn),
                     new TextBlock
                     {
                         Text = folder.Name,
-                        FontSize = 12,
+                        FontSize = 13,
                         FontWeight = FontWeight.SemiBold,
                         Foreground = Ink.Text,
                         TextTrimming = TextTrimming.CharacterEllipsis,
@@ -640,7 +654,7 @@ public class FolderBrowserWindow : Window
                     },
                     new TextBlock
                     {
-                        FontSize = 10,
+                        FontSize = 11,
                         Foreground = folder.Files == 0 ? Ink.DangerMark : Ink.Faint,
                         VerticalAlignment = VerticalAlignment.Center,
                         Text = folder.Files == 0 ? "нет фото" : Files(folder.Files)
@@ -648,23 +662,32 @@ public class FolderBrowserWindow : Window
                 }
             }
         };
+        AutomationProperties.SetName(open, $"Открыть папку {folder.Name}");
+        ToolTip.SetTip(open, folder.FullPath);
+        open.Click += (_, _) => Navigate(folder.FullPath);
+
+        var row = new Border
+        {
+            Background = chosen ? Ink.AccentTint : Brushes.Transparent,
+            BorderBrush = chosen ? Ink.AccentLine : Brushes.Transparent,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(12, 10),
+            Child = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("Auto,*")
+            }
+        };
+
+        // Both children are placed by hand. A grid does not move the second child along for
+        // you - it leaves it in the first column, where it lands on top of the first one and
+        // the folder's mark is drawn across the tick.
+        ((Grid)row.Child).Children.Add(choose);
+        Grid.SetColumn(open, 1);
+        ((Grid)row.Child).Children.Add(open);
 
         if (folder.Files == 0)
-            ToolTip.SetTip(row, "В папке нет JPG или JPEG — для книги она не подойдёт");
-
-        row.Click += (_, _) =>
-        {
-            var now = DateTime.UtcNow;
-            bool twice = _lastRowPath == folder.FullPath && (now - _lastRowClick).TotalMilliseconds < 350;
-            _lastRowClick = now;
-            _lastRowPath = folder.FullPath;
-
-            // One click takes the folder or lets it go; two in a row open it. The reference
-            // asked for a modifier key to choose more than one and never opened a folder at
-            // all without one, which made both actions cost something nobody could see.
-            if (twice) Navigate(folder.FullPath);
-            else Toggle(folder);
-        };
+            ToolTip.SetTip(row, "В папке нет фотографий — для книги она не подойдёт");
 
         return row;
     }
@@ -695,44 +718,73 @@ public class FolderBrowserWindow : Window
 
         foreach (var entry in _chosen)
         {
-            // The path takes the row and gives up first; the mark sits at the end of it and stays.
-            // In a panel the two size themselves and the long path pushes the mark off the
-            // edge, which is how a row ended up with no way to take anything out of it.
-            var line = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-
-            var path = new TextBlock
+            var walk = new Button
             {
-                Text = entry.Path,
-                FontSize = 11,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                Foreground = entry.HasError ? Ink.DangerStrong : Ink.Text2,
-                FontWeight = entry.HasError ? FontWeight.SemiBold : FontWeight.Normal,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            line.Children.Add(path);
-
-            var mark = entry.HasError
-                ? Icon.Stroke(IconGeometry.Warning, 11, Ink.DangerMark)
-                : Icon.Stroke(IconGeometry.Close, 11, Ink.Faint);
-            mark.Margin = new Thickness(8, 0, 0, 0);
-            Grid.SetColumn(mark, 1);
-            line.Children.Add(mark);
-
-            var row = new Button
-            {
-                Background = entry.HasError ? Ink.Danger : Brushes.Transparent,
+                Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
-                CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(8, 6),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 HorizontalContentAlignment = HorizontalAlignment.Left,
                 Cursor = new Cursor(StandardCursorType.Hand),
-                Content = line
+                Content = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 8,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Children =
+                    {
+                        new TextBlock
+                        {
+                            Text = entry.Name,
+                            FontSize = 12,
+                            TextTrimming = TextTrimming.CharacterEllipsis,
+                            Foreground = entry.HasError ? Ink.DangerStrong : Ink.Text,
+                            FontWeight = entry.HasError ? FontWeight.SemiBold : FontWeight.Normal,
+                            VerticalAlignment = VerticalAlignment.Center
+                        }
+                    }
+                }
             };
 
-            ToolTip.SetTip(row, entry.HasError ? entry.ErrorMessage ?? string.Empty : "Убрать из списка");
+            AutomationProperties.SetName(walk, $"Перейти к папке {entry.Name}");
+            ToolTip.SetTip(walk, entry.Path);
 
-            row.Click += (_, _) =>
+            // Clicking a chosen folder walks to the directory holding it. It used to remove
+            // it, which is what an accidental click costs and what nobody can undo from the
+            // keyboard: the folder has to be found again and ticked once more.
+            walk.Click += (_, _) => WalkTo(entry.Path);
+
+            var row = new Border
+            {
+                Background = entry.HasError ? Ink.Danger : Brushes.Transparent,
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(4),
+                Child = new Grid
+                {
+                    ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+                    Children = { walk }
+                }
+            };
+
+            // The mark and the cross are both here. A folder that cannot be used is exactly
+            // the one a person wants to get rid of, and showing its problem in place of the
+            // cross left no way to do that at all.
+            if (entry.HasError)
+            {
+                var mark = Icon.Stroke(IconGeometry.Warning, 12, Ink.DangerMark);
+                mark.Margin = new Thickness(6, 0, 2, 0);
+                ((StackPanel)walk.Content).Children.Add(mark);
+            }
+
+            var drop = new Button
+            {
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(6),
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Content = Icon.Stroke(IconGeometry.Close, 12, Ink.Faint)
+            };
+            drop.Click += (_, _) =>
             {
                 _selected.RemoveAll(p => string.Equals(p, entry.Path, StringComparison.OrdinalIgnoreCase));
                 _chosen.Remove(entry);
@@ -740,6 +792,9 @@ public class FolderBrowserWindow : Window
                 BuildFolderRows();
                 _ = RevalidateAsync();
             };
+            AutomationProperties.SetName(drop, $"Убрать {entry.Name} из выбранных");
+            Grid.SetColumn(drop, 1);
+            ((Grid)row.Child).Children.Add(drop);
 
             _chosenBox.Children.Add(row);
         }
@@ -752,7 +807,7 @@ public class FolderBrowserWindow : Window
                 FontSize = 11,
                 Foreground = Ink.Faint,
                 TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(2, 4, 0, 0)
+                Margin = new Thickness(4, 6, 0, 0)
             });
         }
 
@@ -760,17 +815,27 @@ public class FolderBrowserWindow : Window
     }
 
     /// <summary>
-    /// Checks the chosen folders, and marks the one that cannot be used.
+    /// Shows the directory a chosen folder sits in.
+    /// </summary>
+    /// <remarks>
+    /// The parent, not the folder. The chosen folder is already in the list on the right;
+    /// opening its own contents would put the pointer somewhere the choice is not.
+    /// </remarks>
+    private void WalkTo(string folderPath)
+    {
+        var parent = System.IO.Path.GetDirectoryName(folderPath);
+        if (string.IsNullOrEmpty(parent) || !Directory.Exists(parent)) return;
+        Navigate(parent);
+    }
+
+    /// <summary>
+    /// Checks the chosen folders and reports in the fixed box below.
     /// </summary>
     /// <remarks>
     /// Every change re-checks rather than only at the end, because the answer is what tells
-    /// somebody they are finished. A folder that has emptied itself, or that holds something
-    /// other than photographs, is no use for a book, and finding that out only on "load" would
-    /// make the button the thing that reports errors.
-    ///
-    /// Older results are dropped rather than applied: a check that took time can finish after
-    /// the list has changed again, and the older answer would be describing a list that is no
-    /// longer there.
+    /// somebody they are finished. Older results are dropped rather than applied: a check that
+    /// took time can finish after the list has changed again, and the older answer would be
+    /// describing a list that is no longer there.
     /// </remarks>
     private async Task RevalidateAsync()
     {
@@ -808,7 +873,6 @@ public class FolderBrowserWindow : Window
                              string.Equals(entry.Path, result.ProblemFolder, StringComparison.OrdinalIgnoreCase);
 
             entry.HasError = isProblem;
-            entry.ErrorMessage = isProblem ? result.ErrorMessage : null;
         }
 
         SetError(result.ErrorMessage);
@@ -818,8 +882,24 @@ public class FolderBrowserWindow : Window
     private void SetError(string? message)
     {
         _hasError = message is not null;
-        _errorBanner.IsVisible = _hasError;
-        if (message is not null) _errorText.Text = message;
+
+        if (message is null)
+        {
+            _logBox.Background = Ink.Muted;
+            _logBox.BorderBrush = Ink.Border;
+            _logText.Foreground = Ink.Text2;
+            _logText.Text = _chosen.Count == 0
+                ? "Отметьте галочкой папки с фотографиями. Для каждой книги нужна своя папка, и во всех папках должно быть поровну фотографий."
+                : "Всё в порядке — папки можно загружать.";
+        }
+        else
+        {
+            _logBox.Background = Ink.Danger;
+            _logBox.BorderBrush = Ink.DangerLine;
+            _logText.Foreground = Ink.DangerInk;
+            _logText.Text = message;
+        }
+
         _ok.IsEnabled = _chosen.Count > 0 && !_hasError;
     }
 
@@ -838,17 +918,14 @@ public class FolderBrowserWindow : Window
             return;
         }
 
-        // The answer goes back as the dialog's result, and a window closed without deciding returns
-        // nothing at all - which is how "clear the project" stays distinguishable from
-        // "never mind".
-        Close(_selected.ToList());
+        Finish(_selected.ToList());
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape)
         {
-            Close(null);
+            Leave();
             e.Handled = true;
             return;
         }
@@ -858,7 +935,8 @@ public class FolderBrowserWindow : Window
         // Enter belongs to the search box while the search box has it.
         if (ReferenceEquals(e.Source, _filter)) return;
 
-        if (FocusManager?.GetFocusedElement() is Button { Tag: string path } && Directory.Exists(path))
+        if (TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is Button { Tag: string path }
+            && Directory.Exists(path))
         {
             Navigate(path);
             e.Handled = true;
@@ -870,34 +948,6 @@ public class FolderBrowserWindow : Window
             _ = ConfirmAsync();
             e.Handled = true;
         }
-    }
-
-    /// <summary>
-    /// "1 файл", "4 файла", "11 файлов".
-    /// </summary>
-    /// <remarks>
-    /// The count is on every row, and a row that says "1 файлов" in a list of eleven is the
-    /// kind of thing a person stops trusting. Teens are their own case: "11 файлов", not
-    /// "11 файла".
-    /// </remarks>
-    private static string Files(int n)
-    {
-        string word = (n % 100) is >= 11 and <= 14 ? "файлов"
-            : (n % 10) == 1 ? "файл"
-            : (n % 10) is >= 2 and <= 4 ? "файла"
-            : "файлов";
-
-        return $"{n} {word}";
-    }
-
-    private static string? FirstExisting(IEnumerable<string> paths)
-    {
-        foreach (var path in paths)
-        {
-            if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path)) return path;
-        }
-
-        return null;
     }
 
     // ------------------------------------------------------------------ chrome bits --
@@ -951,6 +1001,21 @@ public class FolderBrowserWindow : Window
         Foreground = brush
     };
 
+    /// <summary>"1 файл", "4 файла", "11 файлов".</summary>
+    /// <remarks>
+    /// The count is on every row, and a row that says "1 файлов" in a list of eleven is the
+    /// kind of thing a person stops trusting. Teens are their own case: "11 файлов".
+    /// </remarks>
+    private static string Files(int n)
+    {
+        string word = (n % 100) is >= 11 and <= 14 ? "файлов"
+            : (n % 10) == 1 ? "файл"
+            : (n % 10) is >= 2 and <= 4 ? "файла"
+            : "файлов";
+
+        return $"{n} {word}";
+    }
+
     private sealed class FolderEntry
     {
         public FolderEntry(string fullPath, int files)
@@ -969,32 +1034,26 @@ public class FolderBrowserWindow : Window
     /// A folder that has been chosen, and whether it can be used.
     /// </summary>
     /// <remarks>
-    /// Observable because the tray is rebuilt from it and the answer arrives after the window
+    /// Observable because the tray is rebuilt from it and the answer arrives after the panel
     /// is already on screen.
     /// </remarks>
     private sealed class ChosenFolder : ObservableObject
     {
         private bool _hasError;
-        private string? _errorMessage;
 
         public ChosenFolder(string path) => Path = path;
 
         public string Path { get; }
+        public string Name => System.IO.Path.GetFileName(Path);
 
         public bool HasError
         {
             get => _hasError;
             set => SetProperty(ref _hasError, value);
         }
-
-        public string? ErrorMessage
-        {
-            get => _errorMessage;
-            set => SetProperty(ref _errorMessage, value);
-        }
     }
 
-    /// <summary>The shapes this window draws, on a 24 grid.</summary>
+    /// <summary>The shapes this panel draws, on a 24 grid.</summary>
     private static class IconGeometry
     {
         public static Geometry Folder =>
@@ -1021,8 +1080,8 @@ public class FolderBrowserWindow : Window
     /// </summary>
     /// <remarks>
     /// Strokes rather than glyphs out of an icon font, for the reason the folders screen gives:
-    /// a glyph and a line of type have different heights and nothing aligns them, and the
-    /// weight of the line never quite matches the weight of the words beside it.
+    /// a glyph and a line of type have different heights and nothing aligns them, and the weight
+    /// of the line never quite matches the weight of the words beside it.
     /// </remarks>
     private static class Icon
     {

@@ -61,7 +61,7 @@ namespace PhotoBook.Infrastructure
                         return new ValidationResult
                         {
                             IsValid = false,
-                            ErrorMessage = $"Папка не существует: {folderName}",
+                            ErrorMessage = $"Папка «{folderName}» больше не существует. Возможно, её переместили или удалили.",
                             ProblemFolder = folder
                         };
                     }
@@ -77,7 +77,7 @@ namespace PhotoBook.Infrastructure
                         return new ValidationResult
                         {
                             IsValid = false,
-                            ErrorMessage = $"В папке {folderName} найдены файлы не в формате JPG/JPEG.",
+                            ErrorMessage = $"В папке «{folderName}» есть файлы, кроме фотографий. Программа читает только JPG и JPEG — уберите эти файлы или выберите другую папку.",
                             ProblemFolder = folder
                         };
                     }
@@ -87,7 +87,7 @@ namespace PhotoBook.Infrastructure
                         return new ValidationResult
                         {
                             IsValid = false,
-                            ErrorMessage = $"В папке {folderName} не найдено JPG/JPEG файлов.",
+                            ErrorMessage = $"В папке «{folderName}» нет фотографий. Выберите папку, в которой есть файлы JPG или JPEG.",
                             ProblemFolder = folder
                         };
                     }
@@ -110,15 +110,20 @@ namespace PhotoBook.Infrastructure
                     {
                         var problemFolder = problemFolders.First();
                         var folderName = System.IO.Path.GetFileName(problemFolder.Key);
+                        var majorityName = System.IO.Path.GetFileName(majorityFolders[0].Key);
 
+                        // Written for the person reading it rather than for the person who
+                        // wrote it. "Ожидается 8 (как у 1 из 2 папок)" answers a question
+                        // nobody asked: who counted, which two, and why one of them decides.
+                        // The two numbers that matter are which folder and how many, and the
+                        // thing to do about it is the only part worth the sentence.
                         return new ValidationResult
                         {
                             IsValid = false,
                             ErrorMessage =
-                                $"❌ Количество файлов в папке \"{folderName}\" не совпадает с большинством папок.\n\n" +
-                                $"Ожидается: {majorityCount} файлов (как у {majorityFolders.Count} из {folderFileCounts.Count} папок)\n" +
-                                $"Найдено: {problemFolder.Value} файлов\n\n" +
-                                $"Удалите проблемную папку из списка и попробуйте снова.",
+                                $"В папке «{folderName}» — {problemFolder.Value} фото, а в папке «{majorityName}» — {majorityCount}. " +
+                                "Каждая книга состоит из одинакового числа разворотов, поэтому в выбранных папках должно быть поровну фотографий. " +
+                                $"Уберите «{folderName}» из списка или выберите папку с {majorityCount} фото.",
                             ProblemFolder = problemFolder.Key
                         };
                     }
