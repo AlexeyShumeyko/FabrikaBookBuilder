@@ -4,6 +4,24 @@
              FontFamily="Inter">
 
     <!--
+        Two steps up on this screen, and only this screen, for the reason the other two give.
+
+        This screen is mostly small print: counters under the project name, a folder path, a
+        caption under every spread. At twelve pixels none of it can be read without leaning
+        in. The body goes to thirteen and the project and book names to fifteen - the project
+        name is this screen's heading, and at fourteen it did not look like one. Written here
+        rather than in Typography.axaml, so the dialogs keep the twelve they are sized for.
+    -->
+    <UserControl.Styles>
+        <Style Selector="TextBlock.t12">
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="TextBlock.t14Bold">
+            <Setter Property="FontSize" Value="15" />
+        </Style>
+    </UserControl.Styles>
+
+    <!--
         Transcribed from doc\DESIGN_SPEC.md section 5, number by number.
 
             panel         padding 20, radius 16
@@ -32,11 +50,16 @@
         <Border Grid.Row="0" Classes="card" Padding="20">
             <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="52">
 
+                <!-- Sky, like the mode card on the screen this one is chosen from. It was emerald:
+                     green was the old accent and it was given up, and the only thing left of
+                     it here was this tile, which is why the screen looked like it belonged
+                     to something else. The structure line below the books still turns green
+                     when a book is complete, because that is a state and not an accent. -->
                 <Border Grid.Column="0" Width="48" Height="48" CornerRadius="12"
-                        Background="{DynamicResource Emerald50}"
-                        BorderBrush="{DynamicResource Emerald100}" BorderThickness="1">
+                        Background="{DynamicResource Sky50}"
+                        BorderBrush="{DynamicResource Sky100}" BorderThickness="1">
                     <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="20"
-                               Foreground="{DynamicResource Emerald600}"
+                               Foreground="{DynamicResource Sky600}"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
 
@@ -83,21 +106,23 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
                             VerticalAlignment="Center">
 
-                    <Button Classes="secondary" Padding="12,10"
+                    <Button Classes="outline" Padding="12,10"
                             AutomationProperties.Name="Добавить или заменить папки"
                             ToolTip.Tip="Догрузить новые папки или заменить все папки проекта"
                             Command="{Binding LoadFoldersCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <TextBlock Text="&#xE8E9;" FontFamily="Segoe MDL2 Assets" FontSize="12" />
+                            <TextBlock Text="&#xE8E9;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                       Foreground="{DynamicResource Slate400}" />
                             <TextBlock Text="Добавить или заменить папки" />
                         </StackPanel>
                     </Button>
 
-                    <Button Classes="secondary" Padding="12,10"
+                    <Button Classes="outline" Padding="12,10"
                             AutomationProperties.Name="Сохранить проект"
                             Command="{Binding SaveProjectCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <TextBlock Text="&#xE8E7;" FontFamily="Segoe MDL2 Assets" FontSize="12" />
+                            <TextBlock Text="&#xE8E7;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                       Foreground="{DynamicResource Slate400}" />
                             <TextBlock Text="Сохранить проект" />
                         </StackPanel>
                     </Button>
@@ -123,9 +148,16 @@
              Books are containers, not a flat list. The mockup drew a header and a grid with
              no box around them, and that turned out to be unreadable once a book held
              sixteen spreads. A deliberate departure, recorded in the spec. -->
-        <ScrollViewer Grid.Row="1" Margin="0,24,0,0"
+        <ScrollViewer Grid.Row="1" Classes="contentScroll" Margin="0,24,-20,0"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
+            <!--
+                The bar hangs in the window's own margin and the books finish at the same
+                right-hand edge as the panel above them, which is how the projects list does
+                it. Twenty pixels are taken back here and handed over by the padding, so
+                nothing is lost and the bar is no longer pressed against the last book.
+            -->
+            <Border Padding="0,0,20,0">
             <ItemsControl ItemsSource="{Binding Books}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -300,11 +332,6 @@
                                                                        Text="Назначить обложкой" />
                                                         </Button>
                                                     </Grid>
-<TextBlock Classes="t12"
-                                                                   VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                   Foreground="{Binding Converter={StaticResource PageCaption}, ConverterParameter=brush}"
-                                                                   Text="{Binding Converter={StaticResource PageCaption}, ConverterParameter=text}" />
 
                                                         <Border Grid.Column="1"
                                                                 Background="{DynamicResource Slate100}"
@@ -341,6 +368,7 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+            </Border>
         </ScrollViewer>
     </Grid>
 </UserControl>

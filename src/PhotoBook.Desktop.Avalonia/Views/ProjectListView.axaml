@@ -334,7 +334,7 @@
                  panel's edge and the scrollbar hangs in the window's own margin
                  instead of pressed against the last card.
              -->
-            <ScrollViewer Classes="projectsScroll"
+            <ScrollViewer Classes="contentScroll"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
                           Margin="0,0,-20,0">

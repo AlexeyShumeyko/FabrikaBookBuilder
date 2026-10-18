@@ -76,23 +76,23 @@
     -->
 
     <!--
-        The list of projects, and only the list of projects.
+        The blocks of content that own the right-hand edge of the window: the cards on the
+        projects list, and the books here.
 
-        The bar is pushed outside the block of cards so the cards can finish at the same
-        right-hand edge as the control panel above them. Pushing it out is only half of
-        that: a bar pressed flat against the last card looks like part of the card, which
-        is what it was asked to stop looking like.
+        The bar is pushed outside the block so the content can finish at the same right-hand
+        edge as the control panel above it. Pushing it out is only half of that: a bar pressed
+        flat against the last card looks like part of the card, which is what it was asked to
+        stop looking like.
 
-        So this bar gets a wider trough - twenty-two instead of ten - and the handle, which
-        sits in the middle of it, ends up eight pixels clear of the cards. The wider trough
+        So these bars get a wider trough - twenty-two instead of ten - and the handle, which
+        sits in the middle of it, ends up eight pixels clear of the content. The wider trough
         is invisible: it is transparent, and the window's own margin is wide enough to hold
         it.
 
-        Only this scroller. The books on the other screens keep the ten-pixel trough the
-        other shell has, because those screens were not part of this change and a change
-        nobody asked for is still a change.
+        Only those two scrollers. A scroller inside a dialog, or one inside a card, keeps the
+        ten-pixel trough: a change nobody asked for is still a change.
     -->
-    <Style Selector="ScrollViewer.projectsScroll /template/ ScrollBar">
+    <Style Selector="ScrollViewer.contentScroll /template/ ScrollBar">
         <Setter Property="Width" Value="22" />
         <Setter Property="MinWidth" Value="22" />
     </Style>

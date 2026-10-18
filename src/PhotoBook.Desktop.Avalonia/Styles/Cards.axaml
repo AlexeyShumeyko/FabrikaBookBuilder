@@ -65,6 +65,7 @@
 
     <Style Selector="Button.primary">
         <Setter Property="Background" Value="{DynamicResource Brand600}" />
+        <Setter Property="Foreground" Value="White" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="12" />
         <Setter Property="FontSize" Value="12" />
@@ -74,8 +75,14 @@
                 <Border Background="{TemplateBinding Background}"
                         CornerRadius="{TemplateBinding CornerRadius}"
                         Padding="{TemplateBinding Padding}">
+                    <!--
+                        The words and the mark take the button's own colour rather than
+                        whatever the theme hands them, so that a disabled button - which is
+                        given slate-400 below - turns both of them and not just the label.
+                    -->
                     <ContentPresenter Content="{TemplateBinding Content}"
-                                      VerticalAlignment="Center" />
+                                      VerticalAlignment="Center"
+                                      TextElement.Foreground="{TemplateBinding Foreground}" />
                 </Border>
             </ControlTemplate>
         </Setter>
@@ -83,6 +90,75 @@
 
     <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
         <Setter Property="Opacity" Value="0.92" />
+    </Style>
+
+    <!--
+        A disabled primary button goes grey, as the released one does. Left violet it reads
+        as a button that is momentarily not answering, which is a different thing from a
+        button that cannot be pressed at all.
+    -->
+    <Style Selector="Button.primary:disabled">
+        <Setter Property="Background" Value="{DynamicResource Slate200}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
+    </Style>
+
+    <!--
+        A button in a control panel, as opposed to the one on a card.
+
+        The released program has two of these and they are deliberately not the same thing.
+        A card's own button is a filled one, and the grey it is filled with is what keeps it
+        from looking like the card it sits on. A panel's buttons sit on white next to a filled
+        one, and filling them grey as well gives a row of three grey blocks - heavier than
+        the panel they sit in, and a different shape from every other button in the product.
+
+        So these are white with a hairline and the same small shadow the dialogs use, and
+        their icons are muted to slate-400 while the words stay slate-700: an icon at the
+        same weight as its own label reads as one smudge instead of a mark and a word.
+    -->
+    <Style Selector="Button.outline">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}"
+                        BoxShadow="{DynamicResource ShadowSm}">
+                    <Border.Transitions>
+                        <Transitions>
+                            <BrushTransition Property="Background" Duration="0:0:0.14" />
+                            <BrushTransition Property="BorderBrush" Duration="0:0:0.14" />
+                        </Transitions>
+                    </Border.Transitions>
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.outline:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Slate50}" />
+    </Style>
+
+    <Style Selector="Button.outline:pressed /template/ Border">
+        <Setter Property="Opacity" Value="0.9" />
+    </Style>
+
+    <Style Selector="Button.outline:disabled">
+        <Setter Property="Background" Value="{DynamicResource Slate100}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate100}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
     </Style>
 
     <Style Selector="Button.ghost">
