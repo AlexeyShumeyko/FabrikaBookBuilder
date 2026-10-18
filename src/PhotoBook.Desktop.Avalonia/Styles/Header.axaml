@@ -514,8 +514,14 @@
     <!--
         A mode card on the start screen: the whole card is the choice, so the control has to
         be one that can be pressed, focused and reached by automation. Padding 24, a 1px
-        slate frame, radius 16, and the frame takes the product's colour on hover - which is
-        what makes a screen-sized block read as a card rather than as a form field.
+        slate frame, radius 16, the card shadow, and on hover the frame takes the product's
+        colour and the shadow deepens - which is what makes a screen-sized block read as a
+        card rather than as a form field.
+
+        The template is written out because the built-in one paints a grey wash over the
+        content on hover. The released program had no wash: its card was a Border, and a
+        Border has nothing to wash. Hover is the frame changing colour and the shadow
+        deepening, and nothing else - a screen-sized block that greys out reads as disabled.
     -->
     <Style Selector="Button.modeCard">
         <Setter Property="Background" Value="{DynamicResource Surface}" />
@@ -526,10 +532,33 @@
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <!--
+                    The shadow lives on the Border rather than on the Button: in this engine
+                    BoxShadow is a Border's property and there is no Button one, so a setter
+                    naming it on the Button does not compile.
+                -->
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}"
+                        BoxShadow="{DynamicResource ShadowCard}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
     </Style>
 
     <Style Selector="Button.modeCard:pointerover">
         <Setter Property="BorderBrush" Value="{DynamicResource Brand500}" />
+    </Style>
+
+    <Style Selector="Button.modeCard:pointerover /template/ Border">
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowHover}" />
     </Style>
 
 </Styles>

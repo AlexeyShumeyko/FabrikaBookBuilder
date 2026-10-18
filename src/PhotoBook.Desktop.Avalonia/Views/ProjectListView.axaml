@@ -6,6 +6,32 @@
              FontFamily="Inter">
 
     <!--
+        Two steps up on this screen, and only this screen.
+
+        A project name is the one thing on this screen a person scans for from across the
+        room, and sixteen pixels of Inter is not enough weight to be found. It goes to
+        seventeen and stays bold. The body - the panel's subtitle, the counts under the rule,
+        the call to action - goes from twelve to thirteen.
+
+        Written here rather than in Typography.axaml: a twelve-pixel body is right in a
+        dialog where the words are two lines long, and a scale that moves for one screen
+        stops being a scale. These rules sit closer to their controls than the shared ones do,
+        so they win on this screen only.
+
+        The badge stays where it is. It is a label rather than a sentence, and at thirteen it
+        would be the loudest thing on a card that has a name, a row of photographs and a
+        button on it.
+    -->
+    <UserControl.Styles>
+        <Style Selector="TextBlock.t12">
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="TextBlock.t16Bold">
+            <Setter Property="FontSize" Value="17" />
+        </Style>
+    </UserControl.Styles>
+
+    <!--
         Transcribed from doc\DESIGN_SPEC.md section 3, number by number, the same way the
         header was. Nothing here is a value looked at by eye:
 

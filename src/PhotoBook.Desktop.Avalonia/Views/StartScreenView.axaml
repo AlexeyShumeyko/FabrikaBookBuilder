@@ -4,20 +4,44 @@
              FontFamily="Inter">
 
     <!--
+        One step up on this screen, and only this screen.
+
+        The type scale is the product's and stays as it is - 9/10/11/12/14/16/18/20/24 - but a
+        screen that is nothing but paragraphs is read at a glance rather than studied, and at
+        twelve pixels Inter reads thin. The body goes to thirteen here and the two names to
+        nineteen; the headings are already large enough that moving them would only make the
+        page taller.
+
+        It is written here, in the view, rather than in Typography.axaml on purpose. The same
+        twelve-pixel body is right in a dialog where the words are two lines long, and a
+        scale that moves for one screen stops being a scale. These two rules sit closer to
+        their controls than the shared ones do, so they win on this screen only.
+    -->
+    <UserControl.Styles>
+        <Style Selector="TextBlock.t12">
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+    </UserControl.Styles>
+
+    <!--
         Transcribed from doc\DESIGN_SPEC.md section 4, number by number, and checked against
         the other shell's markup for the places where the two differ on purpose.
 
-            container     max 896, margin 32/16, blocks 32 apart
-            badge         padding 10/4, radius 8, 12 semibold, brand
-            heading       24 bold, centred
+            container     max 1200, margin 32/16, blocks 32 apart
+            heading       20 bold, centred, brand
             subtitle      12 slate-500, wraps at 560
             grid          two equal columns, gap 24
-            mode card     padding 24, 1px slate-200, radius 16, brand frame on hover
-            icon tile     48x48, radius 16, 20 below it, glyph 20
-            mode name     18 bold
+            mode card     padding 24, 1px slate-200, radius 16, shadow, brand frame on hover
+            tile + name   48x48 tile radius 16 beside the name, glyph 20, row 20 below
+            mode name     19 bold
             description   12 slate-600, line height 19
             feature list  20 above, 10 between, check 12, text 8 across
             card footer   rule inside the card, 32 above it, 12 semibold in the mode's colour
+
+        There is one heading on this screen and it is twenty pixels, not the twenty-four of
+        the original: there is nothing else at that size on the page now, and the cards carry
+        the detail. The copy above them is that heading and one line. Both are departures,
+        listed with the others below.
 
         Four departures, each recorded rather than quietly copied:
 
@@ -36,25 +60,57 @@
            two cards on this screen are not the same length - the combined one carries an
            extra highlighted box. Equal heights are what the frame is for: a row of cards
            of different heights reads as a mistake whichever engine drew it.
+        5. The container is 1200 wide, not the 896 of the released program. At 896 each card
+           was 430 and its text wrapped into six or seven lines, so the cards came out 535
+           tall and the page wanted a vertical scrollbar on a screen with room to spare -
+           which reads as "there is more below" where there is nothing more below. At 1200 the
+           cards are 580, the tallest text is four lines, the cards are 450 tall, and the whole
+           screen fits with room over at 1520x800 and again at 1280x800. The scrollbar is still
+           there and still automatic: at 1000x640 the content runs past the bottom and the page
+           scrolls. Wider than this and the lines are too long to read comfortably.
+        6. The tile sits beside the name rather than above it, and the name is 19 rather
+           than 18. Stacked, with twenty of air between them, the two read as two headings:
+           a picture with a caption, then a title, then a paragraph. Beside each other the
+           tile is a mark for the name it belongs to, and the row is as tall as the tile, so
+           nothing below it moved.
+        7. The 24-pixel heading is gone and what is above the cards is one line of twenty
+           bold in the brand colour, and one line of text under it. The heading said "two ways
+           to make photo books", which is what the two cards underneath were already saying,
+           and the line under it went on to explain what a mode is - on a screen whose entire
+           content is two choices. It also said a mode could be changed later by opening a
+           project made in the other mode. There is no such thing anywhere in the program: a
+           project keeps the mode it was made in, and nothing offers to change it. So the
+           copy above now says what the choice is and the one fact that decides it - it is
+           made once.
+
+           The line was a chip first: a violet rounded rectangle around twelve-pixel
+           semibold words, drawn the way the mode badges are drawn, which made the one line
+           that names the screen look like a badge sitting on a card. It is the heading of
+           this screen, so it is a heading: twenty bold in the brand colour, and the chip
+           gone - at that size the chip would have read as a button.
     -->
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel MaxWidth="896" Margin="32,16,32,32" HorizontalAlignment="Center">
+        <StackPanel MaxWidth="1200" Margin="32,16,32,32" HorizontalAlignment="Center">
 
             <!-- ============================== heading ============================== -->
             <StackPanel>
-                <Border Background="{DynamicResource Brand50}" CornerRadius="8" Padding="10,4"
-                        HorizontalAlignment="Center">
-                    <TextBlock Text="Выберите режим" Classes="t12Semi"
-                               Foreground="{DynamicResource Brand600}" />
-                </Border>
-
-                <TextBlock Text="Два способа собрать фотокниги" Classes="t24Bold"
-                           HorizontalAlignment="Center" Margin="0,8,0,0" />
+                <!--
+                    The heading of the screen, and not a label above one. It was a chip:
+                    a violet rounded rectangle around twelve-pixel semibold words, the way
+                    the mode badges are drawn - which made the one line that names the
+                    screen look like a badge on a card. At twenty bold, with the chip gone
+                    and the brand colour kept in the words, it reads as what it is, and the
+                    eye has something to land on before the cards.
+                -->
+                <TextBlock Text="Выберите режим создания проекта"
+                           FontSize="20" FontWeight="Bold"
+                           HorizontalAlignment="Center"
+                           Foreground="{DynamicResource Brand600}" />
 
                 <TextBlock Classes="t12" HorizontalAlignment="Center" TextAlignment="Center"
                            TextWrapping="Wrap" MaxWidth="560" Margin="0,8,0,0"
                            Foreground="{DynamicResource Slate500}"
-                           Text="Режим выбирается один раз — при создании проекта. Он определяет, как фотографии попадут в книги, а переключить его позже можно, открыв проект, созданный в нужном режиме." />
+                           Text="Выбранный режим определяет формат работы с книгами. Режим выбирается один раз при создании проекта" />
             </StackPanel>
 
             <!-- A fixed 24-wide spacer column rather than a spacing property: this engine's grid has
@@ -68,16 +124,31 @@
                     <Grid RowDefinitions="*,Auto">
 
                         <StackPanel Grid.Row="0">
-                            <Border Width="48" Height="48" CornerRadius="16" Margin="0,0,0,20"
-                                    HorizontalAlignment="Left"
-                                    Background="{DynamicResource Sky50}">
-                                <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets"
-                                           FontSize="20" Foreground="{DynamicResource Sky600}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
+                            <!--
+                                The tile and the name on one line.
 
-                            <TextBlock Text="Уникальные папки" FontSize="18" FontWeight="Bold"
-                                       Foreground="{DynamicResource Slate900}" />
+                                Stacked, the tile sat above the name with a full 20 of air
+                                between them, and the card read as two headings: a picture
+                                with a caption under it, then a second heading, then a third
+                                block of text. Beside each other, the tile is a mark for the
+                                name it belongs to, the way a mark is anywhere else in the
+                                product - and the row is as tall as the tile, so nothing
+                                after it moves by a pixel.
+                            -->
+                            <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,20">
+                                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="16"
+                                        VerticalAlignment="Center"
+                                        Background="{DynamicResource Sky50}">
+                                    <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets"
+                                               FontSize="20" Foreground="{DynamicResource Sky600}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+
+                                <TextBlock Grid.Column="1" Text="Уникальные папки"
+                                           FontSize="19" FontWeight="Bold"
+                                           Margin="14,0,0,0" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Slate900}" />
+                            </Grid>
 
                             <TextBlock Classes="t12" TextWrapping="Wrap" Margin="0,8,0,0"
                                        LineHeight="19" Foreground="{DynamicResource Slate600}"
@@ -136,16 +207,20 @@
                     <Grid RowDefinitions="*,Auto">
 
                         <StackPanel Grid.Row="0">
-                            <Border Width="48" Height="48" CornerRadius="16" Margin="0,0,0,20"
-                                    HorizontalAlignment="Left"
-                                    Background="{DynamicResource Brand50}">
-                                <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets"
-                                           FontSize="20" Foreground="{DynamicResource Brand600}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
+                            <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,20">
+                                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="16"
+                                        VerticalAlignment="Center"
+                                        Background="{DynamicResource Brand50}">
+                                    <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets"
+                                               FontSize="20" Foreground="{DynamicResource Brand600}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
 
-                            <TextBlock Text="Комбинированный" FontSize="18" FontWeight="Bold"
-                                       Foreground="{DynamicResource Slate900}" />
+                                <TextBlock Grid.Column="1" Text="Комбинированный"
+                                           FontSize="19" FontWeight="Bold"
+                                           Margin="14,0,0,0" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Slate900}" />
+                            </Grid>
 
                             <TextBlock Classes="t12" TextWrapping="Wrap" Margin="0,8,0,0"
                                        LineHeight="19" Foreground="{DynamicResource Slate600}"
