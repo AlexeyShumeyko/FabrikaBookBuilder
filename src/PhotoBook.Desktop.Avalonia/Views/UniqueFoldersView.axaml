@@ -317,30 +317,67 @@
                                                      off. Clipping the inner panel instead
                                                      clips to a rectangle and changes
                                                      nothing. -->
-                                                    <Panel Height="190">
-                                                        <!-- 360 for a cell a little under that wide, in layout units - the converter turns it
-                                                                  into device pixels by the monitor's own scaling, which is what keeps a
-                                                                  photo sharp on a dense screen instead of stretched back up.
-                                                                  Fit, not fill: a photograph that is cropped to the cell loses the
-                                                                  edges a photographer chose, and moving the window to a
-                                                                  monitor with a different scaling used to crop more of it. -->
-                                                        <Image Stretch="Uniform"
-                                                               Source="{Binding Converter={StaticResource PageToBitmap}, ConverterParameter=360}" />
+                                                    <Panel>
+                                                    <!--
+                                                        The frame keeps the book's own format,
+                                                        both sides at once.
 
-                                                        <!-- the file name, on the photograph -->
-                                                        <Border VerticalAlignment="Top"
-                                                                HorizontalAlignment="Left" Margin="10"
-                                                                Background="{DynamicResource Slate900}"
-                                                                CornerRadius="6" Padding="8,4"
-                                                                IsVisible="{Binding FileName, Converter={StaticResource NotEmpty}}">
-                                                            <TextBlock Text="{Binding FileName}"
-                                                                       FontFamily="Consolas"
-                                                                       FontSize="12"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="White"
-                                                                       TextTrimming="CharacterEllipsis" />
-                                                        </Border>
-                                                    </Panel>
+                                                        Only the width was asked for here, and
+                                                        the height was pinned at 190: so on a
+                                                        narrow window the frame got shorter
+                                                        while its height stayed, the photo
+                                                        inside was scaled to fit what was left,
+                                                        and the card showed white above and
+                                                        below it. The count per row was right -
+                                                        it is decided from the width - and that
+                                                        is why it only showed once the row
+                                                        filled up.
+
+                                                        The height comes from the same two
+                                                        numbers as the width, so a frame and
+                                                        the photograph in it are always the same
+                                                        shape, and resizing the window resizes
+                                                        both by the same factor.
+                                                    -->
+                                                    <Panel.Height>
+                                                        <MultiBinding Converter="{StaticResource AdaptiveCardSize}"
+                                                                      ConverterParameter="height">
+                                                            <Binding Path="Bounds.Width"
+                                                                     RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                                            <Binding Path="." />
+                                                        </MultiBinding>
+                                                    </Panel.Height>
+
+                                                    <!-- Fill, not fit - as the released program
+                                                         does it. The frame is the book's own
+                                                         format and the photograph is drawn to
+                                                         it, so filling crops nothing; fitting
+                                                         left white above and below, which is the
+                                                         half-empty look this replaces.
+
+                                                         360 for a cell a little under that wide,
+                                                         in layout units - the converter turns it
+                                                         into device pixels by the monitor's own
+                                                         scaling, which is what keeps a photo
+                                                         sharp on a dense screen instead of
+                                                         stretched back up. -->
+                                                    <Image Stretch="UniformToFill"
+                                                           Source="{Binding Converter={StaticResource PageToBitmap}, ConverterParameter=360}" />
+
+                                                    <!-- the file name, on the photograph -->
+                                                    <Border VerticalAlignment="Top"
+                                                            HorizontalAlignment="Left" Margin="10"
+                                                            Background="{DynamicResource Slate900}"
+                                                            CornerRadius="6" Padding="8,4"
+                                                            IsVisible="{Binding FileName, Converter={StaticResource NotEmpty}}">
+                                                        <TextBlock Text="{Binding FileName}"
+                                                                   FontFamily="Consolas"
+                                                                   FontSize="12"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="White"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                    </Border>
+                                                </Panel>
 
                                                     <!-- the caption, and the two arrows -->
                                                     <Grid Margin="10,8,10,10" ColumnDefinitions="*,Auto">
