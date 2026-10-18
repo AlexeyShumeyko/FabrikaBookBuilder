@@ -8,6 +8,7 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
+using Avalonia.VisualTree;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -51,12 +52,46 @@ namespace PhotoBook.Shell.Views;
 /// </remarks>
 public class FolderBrowserView : OverlaySheet<List<string>>
 {
+    /// <summary>
+    /// The panel is this size and no other, which is the point of the two numbers.
+    /// </summary>
+    /// <remarks>
+    /// Measured, not chosen. Before this it was measured by whatever it contained, and a
+    /// folder list grows with the number of folders in it - so the same panel was 714 tall on
+    /// one folder and 1552 on another, which is taller than the window it sits in. 1112 is the
+    /// width it settled on by itself in every state measured, and 714 is the height with a
+    /// full list in it and the message box at its full height: the state that has the most in
+    /// it, and therefore the one worth fixing at.
+    ///
+    /// On a window too small for that, the panel takes what there is rather than running off
+    /// the edge. It is never larger.
+    /// </remarks>
+    private const double FixedWidth = 1112;
+    private const double FixedHeight = 714;
+    private const double SmallestWidth = 820;
+    private const double SmallestHeight = 480;
+
+    /// <summary>The gap the window leaves around the panel.</summary>
+    private const double SheetMargin = 28;
+
     private readonly IFileService _files;
 
     private readonly List<string> _selected = new();
     private readonly List<ChosenFolder> _chosen = new();
-    private readonly Stack<string> _history = new();
     private readonly List<FolderEntry> _folders = new();
+
+    /// <summary>
+    /// Where the pointer has been, and where in that list it is now.
+    /// </summary>
+    /// <remarks>
+    /// A stack was the wrong shape for it. Going back popped one entry and moved, and then the
+    /// next move pushed the place you had just left back on top of it - so back, back, back
+    /// walked into a circle between two folders and never reached the disk it started from.
+    /// A list with a position in it is what a walk is: going back moves the position, and
+    /// going somewhere new forgets everything after it.
+    /// </remarks>
+    private readonly List<string> _history = new();
+    private int _historyAt = -1;
 
     private string _currentPath = string.Empty;
     private bool _validating;
@@ -105,6 +140,30 @@ public class FolderBrowserView : OverlaySheet<List<string>>
         _ = RevalidateAsync();
 
         KeyDown += OnKeyDown;
+    }
+
+    /// <summary>
+    /// Keeps the panel at its size, or at the size of the window when the window is smaller.
+    /// </summary>
+    /// <remarks>
+    /// The size is set here rather than written once on the control because it depends on the
+    /// window: a fixed width on a narrow window runs off both edges, and a panel that runs off
+    /// the edge is worse than a small one. It shrinks only when it has to and never grows.
+    /// </remarks>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        if (TopLevel.GetTopLevel(this) is not { } top) return;
+
+        FitTo(top);
+        top.SizeChanged += (_, _) => FitTo(top);
+    }
+
+    private void FitTo(TopLevel top)
+    {
+        Width = Math.Clamp(top.Bounds.Width - SheetMargin * 2, SmallestWidth, FixedWidth);
+        Height = Math.Clamp(top.Bounds.Height - SheetMargin * 2, SmallestHeight, FixedHeight);
     }
 
     // ------------------------------------------------------------------ the sheet --
@@ -212,7 +271,7 @@ public class FolderBrowserView : OverlaySheet<List<string>>
         });
         column.Children.Add(new TextBlock
         {
-            Text = "Отметьте галочкой папки с фотографиями — по одной на книгу",
+            Text = "Выберите папки с фотографиями. В одной папке — одна книга.",
             FontSize = 12,
             Foreground = Ink.Text2
         });
@@ -323,8 +382,8 @@ public class FolderBrowserView : OverlaySheet<List<string>>
                 }
             }
         };
-        _back.Padding = new Thickness(12, 9);
-        _back.FontSize = 13;
+        _back.Padding = new Thickness(10, 7);
+        _back.FontSize = 12;
         _back.FontWeight = FontWeight.SemiBold;
         _back.CornerRadius = new CornerRadius(12);
         _back.Background = Ink.Surface;
@@ -336,30 +395,34 @@ public class FolderBrowserView : OverlaySheet<List<string>>
         _back.Click += (_, _) => GoBack();
 
         _pathText.FontFamily = new FontFamily("Consolas");
-        _pathText.FontSize = 12;
+        _pathText.FontSize = 11.5;
         _pathText.Foreground = Ink.Text2;
         _pathText.TextTrimming = TextTrimming.CharacterEllipsis;
         _pathText.VerticalAlignment = VerticalAlignment.Center;
-        _pathText.Margin = new Thickness(16, 0, 16, 0);
+        _pathText.Margin = new Thickness(12, 0, 12, 0);
 
-        _filter.Watermark = "Поиск по имени папки";
+        _filter.Watermark = "Поиск";
         _filter.FontSize = 12;
-        _filter.Height = 34;
-        _filter.Width = 260;
-        _filter.HorizontalAlignment = HorizontalAlignment.Left;
-        _filter.CornerRadius = new CornerRadius(10);
+        _filter.Height = 30;
+        _filter.Width = 190;
+        _filter.HorizontalAlignment = HorizontalAlignment.Right;
+        _filter.VerticalAlignment = VerticalAlignment.Center;
+        _filter.CornerRadius = new CornerRadius(9);
         _filter.Background = Ink.Surface;
         _filter.BorderBrush = Ink.Border;
         _filter.BorderThickness = new Thickness(1);
-        _filter.Padding = new Thickness(10, 7);
+        _filter.Padding = new Thickness(9, 5);
         _filter.TextChanged += (_, _) => BuildFolderRows();
 
-        var bar = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
+        // One line: back, the path, and the search. They were three rows, and the two rows
+        // above the list are the ones the list could least afford to give away - they are
+        // where the eye goes before it goes anywhere else.
+        var bar = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
         bar.Children.Add(_back);
         Grid.SetColumn(_pathText, 1);
         bar.Children.Add(_pathText);
-
-        var search = new StackPanel { Margin = new Thickness(0, 12, 0, 0), Children = { _filter } };
+        Grid.SetColumn(_filter, 2);
+        bar.Children.Add(_filter);
 
         var scroll = new ScrollViewer
         {
@@ -368,11 +431,9 @@ public class FolderBrowserView : OverlaySheet<List<string>>
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto
         };
 
-        var column = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,*"), Margin = new Thickness(0, 14, 0, 0) };
+        var column = new Grid { RowDefinitions = new RowDefinitions("Auto,*"), Margin = new Thickness(0, 12, 0, 0) };
         column.Children.Add(bar);
-        Grid.SetRow(search, 1);
-        column.Children.Add(search);
-        Grid.SetRow(scroll, 2);
+        Grid.SetRow(scroll, 1);
         column.Children.Add(scroll);
 
         return column;
@@ -478,11 +539,29 @@ public class FolderBrowserView : OverlaySheet<List<string>>
             return;
         }
 
-        if (remember && !string.IsNullOrEmpty(_currentPath) && _currentPath != path) _history.Push(_currentPath);
+        if (remember && !string.IsNullOrEmpty(_currentPath) && _currentPath != path)
+        {
+            // Everywhere after the current place is where you had been going before you went
+            // back. It is dropped: having come back to change your mind, the old continuation
+            // is not a continuation any more.
+            if (_historyAt < _history.Count - 1)
+                _history.RemoveRange(_historyAt + 1, _history.Count - _historyAt - 1);
+
+            _history.Add(path);
+            _historyAt = _history.Count - 1;
+        }
+        else if (_historyAt < 0)
+        {
+            // Where the panel opened is not a step in the walk, it is where the walk starts.
+            // Recording it means opening somewhere, going up to the Desktop and coming back
+            // retraces Desktop - start - Desktop, and three presses of Назад look like a loop
+            // between two folders rather than a route that ran out.
+            _historyAt = -1;
+        }
 
         _currentPath = path;
         _pathText.Text = path;
-        _back.IsEnabled = _history.Count > 0;
+        _back.IsEnabled = _historyAt > 0;
         _filter.Text = string.Empty;
 
         _folders.Clear();
@@ -555,7 +634,9 @@ public class FolderBrowserView : OverlaySheet<List<string>>
 
     private void GoBack()
     {
-        if (_history.Count > 0) _ = NavigateAsync(_history.Pop(), remember: false);
+        if (_historyAt <= 0) return;
+        _historyAt--;
+        _ = NavigateAsync(_history[_historyAt], remember: false);
     }
 
     private void BuildFolderRows()
@@ -889,8 +970,8 @@ public class FolderBrowserView : OverlaySheet<List<string>>
             _logBox.BorderBrush = Ink.Border;
             _logText.Foreground = Ink.Text2;
             _logText.Text = _chosen.Count == 0
-                ? "Отметьте галочкой папки с фотографиями. Для каждой книги нужна своя папка, и во всех папках должно быть поровну фотографий."
-                : "Всё в порядке — папки можно загружать.";
+                ? "Выберите папки с фотографиями. Количество фотографий во всех выбранных папках должно быть одинаковым."
+                : "Папки готовы к загрузке.";
         }
         else
         {

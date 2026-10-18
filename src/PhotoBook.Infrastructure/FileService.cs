@@ -61,7 +61,7 @@ namespace PhotoBook.Infrastructure
                         return new ValidationResult
                         {
                             IsValid = false,
-                            ErrorMessage = $"Папка «{folderName}» больше не существует. Возможно, её переместили или удалили.",
+                            ErrorMessage = $"Папка «{folderName}» не найдена. Проверьте, не была ли она перемещена или удалена.",
                             ProblemFolder = folder
                         };
                     }
@@ -77,7 +77,7 @@ namespace PhotoBook.Infrastructure
                         return new ValidationResult
                         {
                             IsValid = false,
-                            ErrorMessage = $"В папке «{folderName}» есть файлы, кроме фотографий. Программа читает только JPG и JPEG — уберите эти файлы или выберите другую папку.",
+                            ErrorMessage = $"В папке «{folderName}» есть файлы, отличные от фотографий. Программа обрабатывает только файлы JPG и JPEG. Уберите эти файлы из папки или выберите другую папку.",
                             ProblemFolder = folder
                         };
                     }
@@ -87,7 +87,7 @@ namespace PhotoBook.Infrastructure
                         return new ValidationResult
                         {
                             IsValid = false,
-                            ErrorMessage = $"В папке «{folderName}» нет фотографий. Выберите папку, в которой есть файлы JPG или JPEG.",
+                            ErrorMessage = $"В папке «{folderName}» нет фотографий. Выберите папку, содержащую файлы JPG или JPEG.",
                             ProblemFolder = folder
                         };
                     }
@@ -112,18 +112,19 @@ namespace PhotoBook.Infrastructure
                         var folderName = System.IO.Path.GetFileName(problemFolder.Key);
                         var majorityName = System.IO.Path.GetFileName(majorityFolders[0].Key);
 
-                        // Written for the person reading it rather than for the person who
-                        // wrote it. "Ожидается 8 (как у 1 из 2 папок)" answers a question
-                        // nobody asked: who counted, which two, and why one of them decides.
-                        // The two numbers that matter are which folder and how many, and the
-                        // thing to do about it is the only part worth the sentence.
+                        // Three sentences, in the order they are needed: what was found, the
+                        // rule that makes it a problem, and what to do about it. The version
+                        // this replaced was written for whoever wrote it - "expected 8 (as in
+                        // 1 of 2 folders)" answers a question nobody asked.
                         return new ValidationResult
                         {
                             IsValid = false,
                             ErrorMessage =
-                                $"В папке «{folderName}» — {problemFolder.Value} фото, а в папке «{majorityName}» — {majorityCount}. " +
-                                "Каждая книга состоит из одинакового числа разворотов, поэтому в выбранных папках должно быть поровну фотографий. " +
-                                $"Уберите «{folderName}» из списка или выберите папку с {majorityCount} фото.",
+                                "В выбранных папках разное количество фотографий. " +
+                                $"В папке «{folderName}» — {problemFolder.Value}, " +
+                                $"в папке «{majorityName}» — {majorityCount}. " +
+                                "Один проект собирается из папок с одинаковым количеством фотографий. " +
+                                $"Уберите из списка папку «{folderName}» или выберите папку, содержащую {majorityCount} фото.",
                             ProblemFolder = problemFolder.Key
                         };
                     }
