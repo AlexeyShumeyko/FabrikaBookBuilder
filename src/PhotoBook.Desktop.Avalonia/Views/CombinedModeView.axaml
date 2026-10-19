@@ -38,6 +38,52 @@
            parameter of the size converter, so the two can never disagree.
     -->
 
+    <UserControl.Styles>
+        <!--
+            The upload zone answers the pointer.
+
+            It used to be a grey box with a dashed line in it, and nothing happened when
+            the pointer went over it - so the one place on the screen that takes files
+            looked the same as the one place that does not. The line takes the product's
+            colour, the box takes a tint of it, and the mark goes a shade darker, all of
+            it over a moment rather than at once: a zone that brightens when the pointer
+            arrives says "here", and a zone that does not say nothing at all.
+
+            The colours live here and not on the elements. A value set on the element
+            itself beats a style, so a colour written down in the markup could never be
+            changed by the style that answers the pointer - which is why the first version
+            of this did nothing at all.
+        -->
+        <Style Selector="Border#DropZone">
+            <Setter Property="Background" Value="{DynamicResource Slate50}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.16" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border#DropZone:pointerover">
+            <Setter Property="Background" Value="{DynamicResource Brand50}" />
+        </Style>
+
+        <Style Selector="Rectangle#DropZoneFrame">
+            <Setter Property="Stroke" Value="{DynamicResource Slate300}" />
+        </Style>
+
+        <Style Selector="Border#DropZone:pointerover Rectangle#DropZoneFrame">
+            <Setter Property="Stroke" Value="{DynamicResource Brand400}" />
+        </Style>
+
+        <Style Selector="Path#DropZoneMark">
+            <Setter Property="Stroke" Value="{DynamicResource Brand500}" />
+        </Style>
+
+        <Style Selector="Border#DropZone:pointerover Path#DropZoneMark">
+            <Setter Property="Stroke" Value="{DynamicResource Brand600}" />
+        </Style>
+    </UserControl.Styles>
+
     <Grid MaxWidth="1600" Margin="32,24" HorizontalAlignment="Stretch"
           RowDefinitions="Auto,Auto,*">
 
@@ -67,9 +113,10 @@
                             Background="{DynamicResource Indigo50}"
                             BorderBrush="{DynamicResource Indigo100}" BorderThickness="1"
                             BoxShadow="0 1 4 0 #0D0F172A">
-                        <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="20"
-                                   Foreground="{DynamicResource Indigo600}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Path Width="20" Height="20" Stretch="Uniform"
+                              Stroke="{DynamicResource Indigo600}" StrokeThickness="1.7"
+                              StrokeLineCap="Round"
+                              Data="M 5 5.5 V 19 M 9.5 4 V 19 M 14 6.5 V 19 M 18 8.5 V 19 M 3.4 19 H 20" />
                     </Border>
 
                     <StackPanel VerticalAlignment="Center">
@@ -84,7 +131,10 @@
                                     AutomationProperties.Name="Переименовать проект"
                                     ToolTip.Tip="Переименовать проект"
                                     Click="OnProjectNamePencilClick">
-                                <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="12" />
+                                <Path Width="13" Height="13" Stretch="Uniform"
+                                      Stroke="{DynamicResource Slate500}" StrokeThickness="1.7"
+                                      StrokeLineCap="Round"
+                                      Data="M 4 20 L 4 15.5 L 15.5 4 L 20 8.5 L 8.5 20 Z M 13.5 6 L 18 10.5" />
                             </Button>
 
                             <!-- 240 and not 360: this panel also carries the run fields,
@@ -105,48 +155,63 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- centre: the run. Star columns on both sides hold it in the middle. -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10"
-                            VerticalAlignment="Center" Margin="24,0">
-                    <StackPanel>
-                        <TextBlock Text="Книг" Classes="t10" Margin="0,0,0,4"
-                                   Foreground="{DynamicResource Slate500}" />
-                        <TextBox Classes="numberField"
-                                 Text="{Binding NumberOfBooks}"
-                                 AutomationProperties.Name="Количество книг" />
-                    </StackPanel>
+                <!-- centre: the run. Labels on one line, the fields and the button on the next.
 
-                    <StackPanel>
-                        <TextBlock Text="Разворотов" Classes="t10" Margin="0,0,0,4"
-                                   Foreground="{DynamicResource Slate500}" />
-                        <TextBox Classes="numberField"
-                                 Text="{Binding SpreadsPerBook}"
-                                 AutomationProperties.Name="Разворотов в книге" />
-                    </StackPanel>
+                     It used to be a row of stacks - label over field, label over field,
+                     and a button aligned to the bottom - so the button sat against the
+                     bottom of the boxes while their labels were above them, and the
+                     three things a person reads together were on three different
+                     levels. Two rows and one grid: the labels on one line, the boxes and
+                     the button on the next, all sharing it. -->
+                <Grid Grid.Column="1" Margin="24,0" VerticalAlignment="Center"
+                      RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,Auto,Auto">
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Книг" Classes="t10"
+                               Margin="0,0,10,5"
+                               Foreground="{DynamicResource Slate500}" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Разворотов" Classes="t10"
+                               Margin="0,0,10,5"
+                               Foreground="{DynamicResource Slate500}" />
+
+                    <TextBox Grid.Row="1" Grid.Column="0" Classes="numberField"
+                             Margin="0,0,10,0" VerticalAlignment="Center"
+                             Text="{Binding NumberOfBooks}"
+                             AutomationProperties.Name="Количество книг" />
+                    <TextBox Grid.Row="1" Grid.Column="1" Classes="numberField"
+                             Margin="0,0,16,0" VerticalAlignment="Center"
+                             Text="{Binding SpreadsPerBook}"
+                             AutomationProperties.Name="Разворотов в книге" />
 
                     <!-- One button, two labels. A second button appearing with the first
                          book is exactly what used to reshape this panel. -->
-                    <Button Classes="primary" Padding="16,8" VerticalAlignment="Bottom"
+                    <Button Grid.Row="1" Grid.Column="2" Classes="primary"
+                            Padding="16,10" VerticalAlignment="Center"
                             AutomationProperties.Name="Добавить структуру"
                             Command="{Binding ConfirmStructureCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                       Foreground="White" />
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <Path Width="14" Height="14" Stretch="Uniform"
+                                  Stroke="White" StrokeThickness="1.8" StrokeLineCap="Round"
+                                  Data="M 12 5 V 19 M 5 12 H 19" />
                             <TextBlock Text="{Binding StructureButtonText}" Foreground="White" />
                         </StackPanel>
                     </Button>
-                </StackPanel>
+                </Grid>
 
                 <!-- right: what you do with the project -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
                             VerticalAlignment="Center" HorizontalAlignment="Right">
-                    <Button Classes="secondary" Padding="12,10"
+                    <!-- The same button the folders screen has: white, a hairline, a small
+                         shadow. A flat grey slab on a white card read as a disabled thing
+                         next to the violet one, and the two were not the same kind of
+                         button at all. -->
+                    <Button Classes="outline" Padding="14,10"
                             AutomationProperties.Name="Сохранить проект"
                             ToolTip.Tip="Сохранить проект и вернуться к списку проектов"
                             Command="{Binding SaveProjectCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                       Foreground="{DynamicResource Slate400}" />
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <Path Width="14" Height="14" Stretch="Uniform"
+                                  Stroke="{DynamicResource Slate400}" StrokeThickness="1.8"
+                                  StrokeLineCap="Round"
+                                  Data="M 12 3.2 V 14.4 M 8.2 10.8 L 12 14.6 L 15.8 10.8 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
                             <TextBlock Text="Сохранить проект" />
                         </StackPanel>
                     </Button>
@@ -158,9 +223,10 @@
                             AutomationProperties.Name="Экспортировать все книги"
                             ToolTip.Tip="Выгрузка всех книг проекта в одну папку"
                             Command="{Binding ExportCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                       Foreground="White" />
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <Path Width="14" Height="14" Stretch="Uniform"
+                                  Stroke="White" StrokeThickness="1.8" StrokeLineCap="Round"
+                                  Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
                             <TextBlock Text="Экспортировать все книги" Foreground="White" />
                         </StackPanel>
                     </Button>
@@ -197,18 +263,26 @@
                         middle of a square grey box.
                     -->
                     <Border x:Name="DropZone" Grid.Row="1" Margin="0,14,0,0" Cursor="Hand"
-                            Background="{DynamicResource Slate50}" CornerRadius="14"
+                            CornerRadius="14"
                             PointerPressed="OnUploadAreaClick"
                             AutomationProperties.Name="Загрузить фото">
                         <Grid Margin="2">
-                            <Rectangle RadiusX="13" RadiusY="13" StrokeThickness="1.5"
-                                       StrokeDashArray="5,4" Stroke="{DynamicResource Slate300}"
+                            <Rectangle x:Name="DropZoneFrame" RadiusX="13" RadiusY="13" StrokeThickness="1.5"
+                                       StrokeDashArray="5,4"
                                        IsHitTestVisible="False" />
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
                                         Margin="18,22">
-                                <TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets"
-                                           FontSize="26" Foreground="{DynamicResource Brand500}"
-                                           HorizontalAlignment="Center" />
+                                <!--
+                                    A cloud with an arrow going into it, drawn rather than
+                                    fetched from an icon font. The mark on the zone says
+                                    what the zone is for - files go in here - and the
+                                    earlier one was an arrow over a line, which says the
+                                    same thing less clearly and is a glyph from a font
+                                    that has no business being here.
+                                -->
+                                <Path x:Name="DropZoneMark" Width="34" Height="34" Stretch="Uniform"
+                                      StrokeThickness="1.6" StrokeLineCap="Round"
+                                      Data="M 7 19.5 A 4 4 0 0 1 7.6 11.6 A 5.2 5.2 0 0 1 17.4 10.4 A 3.9 3.9 0 0 1 20.4 17.4 A 3.1 3.1 0 0 1 19.6 20.4 H 8 A 3 3 0 0 1 7 19.5 Z M 13 21.5 V 13.5 M 10.4 16.1 L 13 13.5 L 15.6 16.1" />
                                 <TextBlock Text="Перетащите снимки сюда" Classes="t12Semi"
                                            Foreground="{DynamicResource Slate700}"
                                            HorizontalAlignment="Center" Margin="0,9,0,0" />

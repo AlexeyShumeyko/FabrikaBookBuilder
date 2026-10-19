@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -8,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using PhotoBook.Application;
 using PhotoBook.Core;
 using PhotoBook.Presentation.ViewModels;
 
@@ -144,8 +146,30 @@ public partial class CombinedModeView : UserControl, IPendingRename
     private void OnApplyToAllClick(object? sender, PointerPressedEventArgs e)
         => Execute(nameof(CombinedModeViewModel.DuplicateToAllBooksCommand), sender);
 
+    /// <summary>
+    /// Clicking a photograph in the loaded list picks it up, so the next slot can take it.
+    /// </summary>
+    /// <remarks>
+    /// It starts a drag rather than running a command. This used to call
+    /// <c>LoadPageFileCommand</c> with the row as its argument, and that command is about a
+    /// slot: it is typed to a <see cref="Page"/> and opens a picker for one. A row is bound to
+    /// a file entry, so the argument was the wrong kind of object and pressing a loaded
+    /// photograph threw an unhandled exception and took the program with it - which is the
+    /// first thing a person does after loading a run.
+    ///
+    /// The payload is the path in DataFormats.Files, which is what the drop handler on the
+    /// slot cards already reads and what the other shell puts on its drag.
+    /// </remarks>
     private void OnFileItemClick(object? sender, PointerPressedEventArgs e)
-        => Execute(nameof(CombinedModeViewModel.LoadPageFileCommand), sender);
+    {
+        if (sender is not Control { DataContext: PhotoFileInfo file }) return;
+        if (string.IsNullOrEmpty(file.Path) || !File.Exists(file.Path)) return;
+
+        var data = new DataObject();
+        data.Set(DataFormats.Files, new[] { file.Path });
+
+        DragDrop.DoDragDrop(e, data, DragDropEffects.Copy);
+    }
 
     /// <summary>
     /// Clicking an empty slot opens a picker, as the original did.
@@ -310,10 +334,23 @@ public partial class CombinedModeView : UserControl, IPendingRename
     /// Runs one of the model's commands, with whatever the button was pointing at.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// <paramref name="sender"/> is passed in rather than read from a field because every
     /// handler has it and none of them outlives its own call. The parameter is the button's
     /// own data context - a book, a page or a file - which is the thing the command acts on;
     /// when there is none, the command takes no argument at all rather than an empty one.
+    /// </para>
+    /// <para>
+    /// A command that is typed to one kind of object and is handed another is a mistake, and
+    /// it used to be a fatal one: pressing a photograph in the loaded list ran the command for
+    /// picking a file for a slot, the command wanted a slot, and the program went down with
+    /// an unhandled exception. It could not be caught by asking the command whether it was
+    /// willing, because a command typed to a page answers "yes" to anything.
+    ///
+    /// So the kind is checked here, against the command's own type, and a mismatch is
+    /// written to the journal instead of taken to the window. A mistake in a binding is a
+    /// thing to find in a log; it is not a thing to end a customer's session over.
+    /// </para>
     /// </remarks>
     private void Execute(string command, object? sender)
     {

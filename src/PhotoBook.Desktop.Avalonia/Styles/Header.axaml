@@ -500,6 +500,12 @@
         <Setter Property="Background" Value="{DynamicResource Surface}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
         <Setter Property="BorderThickness" Value="1" />
+        <!--
+            The number in the middle of the box. Left-aligned it sat against the frame with
+            a gap on the other side, and two boxes side by side each with their digit
+            hugging the left looked like the digits were falling out of them.
+        -->
+        <Setter Property="TextAlignment" Value="Center" />
     </Style>
 
     <Style Selector="TextBox.searchField">
