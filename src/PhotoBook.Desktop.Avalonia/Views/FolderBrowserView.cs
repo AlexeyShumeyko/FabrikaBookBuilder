@@ -81,6 +81,11 @@ public class FolderBrowserView : OverlaySheet<List<string>>
     private readonly List<FolderEntry> _folders = new();
 
     /// <summary>
+    /// The folders the list is actually showing, which is what "choose all" acts on.
+    /// </summary>
+    private readonly List<FolderEntry> _visible = new();
+
+    /// <summary>
     /// Where the pointer has been, and where in that list it is now.
     /// </summary>
     /// <remarks>
@@ -107,6 +112,7 @@ public class FolderBrowserView : OverlaySheet<List<string>>
     private readonly TextBox _filter = new();
     private readonly Button _back = new();
     private readonly Button _ok = new();
+    private readonly Button _selectAll = new();
     private readonly Border _logBox = new();
 
     public FolderBrowserView(IFileService fileService, List<string>? existingFolders = null)
@@ -216,6 +222,29 @@ public class FolderBrowserView : OverlaySheet<List<string>>
         _foundCaption.Foreground = Ink.Text2;
         _foundCaption.VerticalAlignment = VerticalAlignment.Center;
 
+        // Taking everything, and taking it back, sit beside the count of what is on screen -
+        // that is the thing the count is about. It is here and not above the list because
+        // the list is the one part of this panel with no room to give away.
+        _selectAll.Content = "Выбрать все";
+        _selectAll.Padding = new Thickness(12, 7);
+        _selectAll.FontSize = 12;
+        _selectAll.FontWeight = FontWeight.SemiBold;
+        _selectAll.CornerRadius = new CornerRadius(10);
+        _selectAll.Background = Brushes.Transparent;
+        _selectAll.Foreground = Ink.Accent;
+        _selectAll.BorderThickness = new Thickness(0);
+        _selectAll.Cursor = new Cursor(StandardCursorType.Hand);
+        _selectAll.VerticalAlignment = VerticalAlignment.Center;
+        _selectAll.Margin = new Thickness(12, 0, 0, 0);
+        _selectAll.Click += (_, _) => ToggleEveryVisible();
+
+        var left = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { _foundCaption, _selectAll }
+        };
+
         var buttons = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -232,7 +261,7 @@ public class FolderBrowserView : OverlaySheet<List<string>>
         {
             Margin = new Thickness(20, 16, 20, 20),
             ColumnDefinitions = new ColumnDefinitions("*,Auto"),
-            Children = { _foundCaption, buttons }
+            Children = { left, buttons }
         };
         Grid.SetRow(footer, 3);
         root.Children.Add(footer);
@@ -645,6 +674,7 @@ public class FolderBrowserView : OverlaySheet<List<string>>
         _foundCaption.Text = $"Подпапок в этой папке: {_folders.Count}";
 
         var needle = _filter.Text?.Trim() ?? string.Empty;
+        _visible.Clear();
         int shown = 0;
 
         foreach (var folder in _folders)
@@ -652,6 +682,7 @@ public class FolderBrowserView : OverlaySheet<List<string>>
             if (needle.Length > 0 &&
                 folder.Name.IndexOf(needle, StringComparison.CurrentCultureIgnoreCase) < 0) continue;
 
+            _visible.Add(folder);
             _foldersBox.Children.Add(FolderRow(folder));
             shown++;
         }
@@ -666,6 +697,70 @@ public class FolderBrowserView : OverlaySheet<List<string>>
                 Margin = new Thickness(12, 12, 0, 0)
             });
         }
+
+        UpdateSelectAll();
+    }
+
+    /// <summary>
+    /// Chooses everything on screen, or gives it all back.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Only what the list is showing. With a search typed in, "выбрать все" that reached
+    /// behind the search would add folders the person cannot see and cannot undo one at a
+    /// time.
+    /// </para>
+    /// <para>
+    /// One press instead of twenty. A client's order is twenty books in twenty folders, and
+    /// asking for twenty separate clicks before anything happens is a tax on the ordinary
+    /// case rather than on an unusual one.
+    /// </para>
+    /// <para>
+    /// Empty folders are taken along with the rest. They are shown as "нет фото" and the
+    /// check refuses them afterwards, and the point of this button is the same as the point of
+    /// ticking by hand: what is visible is what was asked for, and the refusal explains
+    /// itself.
+    /// </para>
+    /// </remarks>
+    private void ToggleEveryVisible()
+    {
+        if (_visible.Count == 0) return;
+
+        bool allChosen = _visible.TrueForAll(f => _selected.Contains(f.FullPath));
+
+        foreach (var folder in _visible)
+        {
+            if (allChosen)
+            {
+                _selected.Remove(folder.FullPath);
+                var entry = _chosen.FirstOrDefault(c =>
+                    string.Equals(c.Path, folder.FullPath, StringComparison.OrdinalIgnoreCase));
+                if (entry is not null) _chosen.Remove(entry);
+            }
+            else if (!_selected.Contains(folder.FullPath))
+            {
+                _selected.Add(folder.FullPath);
+                _chosen.Add(new ChosenFolder(folder.FullPath));
+            }
+        }
+
+        RefreshChosen();
+        BuildFolderRows();
+        _ = RevalidateAsync();
+    }
+
+    /// <summary>
+    /// The button reads as what it will do, not as what it is.
+    /// </summary>
+    /// <remarks>
+    /// "Выбрать все" on a list where everything is already chosen would do the opposite of
+    /// what it says, which is worse than having no button at all.
+    /// </remarks>
+    private void UpdateSelectAll()
+    {
+        bool allChosen = _visible.Count > 0 && _visible.TrueForAll(f => _selected.Contains(f.FullPath));
+        _selectAll.Content = allChosen ? "Снять выбор" : "Выбрать все";
+        _selectAll.IsEnabled = _visible.Count > 0;
     }
 
     /// <summary>
