@@ -150,6 +150,14 @@ namespace PhotoBook.Shell.Services
         /// Not for originals, and the reason is in the name of the method rather than in a
         /// check inside it: reading an 18 MB scan whole is what this cache exists to prevent.
         /// </para>
+        /// <para>
+        /// A file that is not there yet is answered without being remembered. Reduced copies
+        /// are built after the screen is already laid out, so "not there" is the normal state
+        /// of the first second and a half of a cold start - and a cache that remembered it
+        /// would hand out that answer to every later request, including the one made after the
+        /// file has been written. That is how a project can open, generate every preview, and
+        /// still show nothing but empty frames.
+        /// </para>
         /// </remarks>
         public Bitmap? GetReduced(string filePath)
         {
@@ -158,18 +166,13 @@ namespace PhotoBook.Shell.Services
             string key = "natural|" + filePath;
             if (_cache.TryGetValue(key, out var cached)) return cached;
 
+            if (!File.Exists(filePath)) return null;
+
             Bitmap? decoded;
             try
             {
-                if (!File.Exists(filePath))
-                {
-                    decoded = null;
-                }
-                else
-                {
-                    using var stream = File.OpenRead(filePath);
-                    decoded = new Bitmap(stream);
-                }
+                using var stream = File.OpenRead(filePath);
+                decoded = new Bitmap(stream);
             }
             catch
             {

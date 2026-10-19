@@ -126,6 +126,14 @@ namespace PhotoBook.Presentation.ViewModels
 
             // Previews that already exist are attached first: the path is computed by one
             // helper now, rather than by three copies of the same formula in two view models.
+            //
+            // Only the previews that are on disk. Attaching the path a preview WILL have - so
+            // that a slot with no picture yet asks for a file instead of reading the original
+            // - was tried and does not work: the binding is not re-evaluated when the file
+            // appears, and the screen opens, builds all hundred and eighty previews, and goes
+            // on showing empty frames. The cost of that idea is written down here so it is not
+            // tried a third time; the working answer is to make the previews before the first
+            // layout rather than during it.
             if (Project != null && Project.Books != null && Project.Books.Count > 0)
             {
                 foreach (var book in Project.Books)
@@ -160,12 +168,17 @@ namespace PhotoBook.Presentation.ViewModels
 
                     Ui.Invoke(() =>
                     {
+                        // Told to look again whenever a reduced copy now exists, whether or
+                        // not the path string differs. The path is attached before the
+                        // previews are built, so comparing the two strings finds no change on
+                        // a cold start and nothing is told to redraw - the project opens,
+                        // builds every preview, and goes on showing empty frames.
                         foreach (var book in Project.Books)
                         {
                             if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
                             {
                                 var thumb = _thumbnails.GetExistingPath(book.Cover.SourcePath!);
-                                if (thumb != null && book.Cover.ThumbnailPath != thumb)
+                                if (thumb != null)
                                 {
                                     book.Cover.ThumbnailPath = thumb;
                                     book.Cover.RaiseThumbnailChanged();
@@ -175,7 +188,7 @@ namespace PhotoBook.Presentation.ViewModels
                             foreach (var page in book.Pages.Where(p => !string.IsNullOrEmpty(p.SourcePath)))
                             {
                                 var thumb = _thumbnails.GetExistingPath(page.SourcePath!);
-                                if (thumb != null && page.ThumbnailPath != thumb)
+                                if (thumb != null)
                                 {
                                     page.ThumbnailPath = thumb;
                                     page.RaiseThumbnailChanged();
