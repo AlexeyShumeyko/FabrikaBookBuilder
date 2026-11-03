@@ -99,7 +99,16 @@
 
         <!-- ============================ control panel ============================ -->
         <Border Grid.Row="1" Classes="card" Padding="20" Margin="0,0,0,24">
-            <Grid MinHeight="52">
+            <!--
+                58, not 52. The content of this panel is a label line over the row of boxes and
+                the structure button, and that is 58 with every control at the size the other
+                two screens give it. Holding it to 52 made the structure button 32 pixels tall
+                beside a 38-pixel export button in the same row - two violet buttons of two
+                different sizes read as one of them being less of a button. The height the
+                three panels share is therefore 58, and the other two take the same value;
+                nothing inside those panels changes shape.
+            -->
+            <Grid MinHeight="58">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" MinWidth="300" />
                     <ColumnDefinition Width="Auto" />

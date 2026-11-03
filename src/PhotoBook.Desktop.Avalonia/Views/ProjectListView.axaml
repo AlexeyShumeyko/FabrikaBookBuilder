@@ -83,7 +83,7 @@
         -->
         <Border Grid.Row="0" Classes="card" Padding="20"
                 IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}}">
-            <Grid ColumnDefinitions="*,Auto,Auto,Auto" MinHeight="52">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto" MinHeight="58">
 
                 <!-- The heading. -->
                 <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
@@ -232,7 +232,7 @@
              be something you can watch. -->
         <Border Grid.Row="0" Classes="card" Padding="20"
                 IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}, ConverterParameter=empty}">
-            <StackPanel MinHeight="52">
+            <StackPanel MinHeight="58">
                 <TextBlock Text="Проекты фотокниг" Classes="t20Bold" VerticalAlignment="Center" />
                 <TextBlock Classes="t12" Margin="0,2,0,0" VerticalAlignment="Center"
                            Foreground="{DynamicResource Slate500}"
