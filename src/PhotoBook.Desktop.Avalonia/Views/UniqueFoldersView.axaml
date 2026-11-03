@@ -382,8 +382,18 @@
                                                          scaling, which is what keeps a photo
                                                          sharp on a dense screen instead of
                                                          stretched back up. -->
-                                                    <Image Stretch="UniformToFill"
-                                                           Source="{Binding Converter={StaticResource PageToBitmap}, ConverterParameter=360}" />
+                                                    <Image Stretch="UniformToFill">
+                                                        <Image.Source>
+                                                            <!-- MultiBinding: the page object alone is
+                                                                 evaluated once per card, so a slot filled
+                                                                 later kept drawing nothing. -->
+                                                            <MultiBinding Converter="{StaticResource PageToBitmap}" ConverterParameter="360">
+                                                                <Binding />
+                                                                <Binding Path="SourcePath" />
+                                                                <Binding Path="ThumbnailPath" />
+                                                            </MultiBinding>
+                                                        </Image.Source>
+                                                    </Image>
 
                                                     <!-- the file name, on the photograph -->
                                                     <Border VerticalAlignment="Top"

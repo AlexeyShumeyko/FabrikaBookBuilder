@@ -52,6 +52,7 @@
 
             <conv:PageToBitmapConverter x:Key="PageToBitmap" />
             <conv:PageStateConverter x:Key="PageState" />
+            <conv:RunFieldFrameConverter x:Key="RunFieldFrame" />
             <conv:PhotoUsageToBrushConverter x:Key="PhotoUsageBrush" />
         </ResourceDictionary>
     </Application.Resources>

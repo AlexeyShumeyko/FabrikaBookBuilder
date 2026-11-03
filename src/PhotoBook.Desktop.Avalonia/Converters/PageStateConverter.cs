@@ -63,6 +63,41 @@ namespace PhotoBook.Shell.Converters
         /// <summary>The roles whose answer is a colour.</summary>
         private static readonly string[] BrushRoles = { "slotbrush", "filledbrush", "structurecomplete" };
 
+        /// <summary>
+        /// The roles that answer with a value the markup would otherwise have to compute.
+        /// </summary>
+        /// <remarks>
+        /// The three of them read a bool - a label that is accented, a book that is filled -
+        /// rather than the object those facts belong to. That is not a detail: bound to the
+        /// object, the question is answered once, when the card is built, and a spread that
+        /// becomes run-wide afterwards kept its grey label and a book that fills up kept its
+        /// red counter. Bound to the fact, it is answered when the fact changes.
+        /// </remarks>
+        private static (bool Known, object? Answer) FromFlag(string role, bool flag) => role switch
+        {
+            // The slot's own state, read from a property that changes when it changes. Bound
+            // to the page itself these were answered once, when the card was built, and a
+            // photograph dropped into a slot stayed invisible behind the "slot is empty"
+            // frame - which is why the screen used to rebuild the whole list on every drop.
+            "hasphoto" => (true, !flag),      // IsEmpty
+            "empty" => (true, flag),          // IsEmpty
+            "imageerror" => (true, !flag),    // HasImage
+
+            "slotbrush" => (true, Solid(flag ? "#4F46E5" : "#64748B")),
+            "slotweight" => (true, flag ? FontWeight.Bold : FontWeight.Normal),
+            "filledbrush" => (true, Solid(flag ? "#059669" : "#EF4444")),
+            "filledsemi" => (true, flag ? FontWeight.SemiBold : FontWeight.Normal),
+            "structurecomplete" => (true, Solid(flag ? "#059669" : "#EF4444")),
+
+            // The empty slot's own caption, decided from IsCover. It used to be asked for with
+            // the bool and answered only for a page - so the bold line in the middle of an
+            // empty frame was never there at all, and the frame said nothing but "drop a photo
+            // here" in ten-point grey.
+            "slotempty" => (true, flag ? "Обложка" : "Слот пуст"),
+
+            _ => (false, null)
+        };
+
         /// <summary>What a colour role answers when nothing is known about the state.</summary>
         private static readonly IBrush FallbackBrush = new SolidColorBrush(Color.Parse("#64748B"));
 
@@ -73,6 +108,12 @@ namespace PhotoBook.Shell.Converters
             CultureInfo culture)
         {
             var role = (parameter as string)?.ToLowerInvariant() ?? string.Empty;
+
+            if (value is bool flag)
+            {
+                var (known, answer) = FromFlag(role, flag);
+                if (known) return answer;
+            }
 
             if (value is Page page)
             {
@@ -87,31 +128,10 @@ namespace PhotoBook.Shell.Converters
                 };
             }
 
-            if (value is Book book)
-            {
-                return role switch
-                {
-                    "filled" => book.IsFilled,
-                    "filledbrush" => book.IsFilled ? Solid("#059669") : Solid("#EF4444"),
-
-                    // The progress line goes semibold once it is done. The other shell does
-                    // it with a trigger on a style; here it is a value, because the weight
-                    // is a property rather than a brush.
-                    "filledsemi" => book.IsFilled
-                        ? global::Avalonia.Media.FontWeight.SemiBold
-                        : global::Avalonia.Media.FontWeight.Normal,
-
-                    _ => Fallback(role)
-                };
-            }
-
             // The first book in the run carries no line above it. Every one after it does:
             // without the line, two books read as two separate things, and the eye stops
             // at the gap and never notices there is a third.
             if (role == "notfirst" && value is int index) return index > 1;
-
-            if (role == "structurecomplete" && value is bool complete)
-                return Solid(complete ? "#059669" : "#EF4444");
 
             return Fallback(role);
         }

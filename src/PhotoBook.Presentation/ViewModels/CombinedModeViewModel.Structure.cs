@@ -341,6 +341,12 @@ namespace PhotoBook.Presentation.ViewModels
         }
 
         /// <summary>
+        /// Starts the measurement of a slot's photograph without waiting for it.
+        /// </summary>
+        private void FillSlotDimensionsSoon(PhotoBook.Core.Page page)
+            => Background.Run(() => FillSlotDimensionsAsync(page), "fill slot dimensions");
+
+        /// <summary>
         /// Fills a slot's pixel size once a photo lands in it, then re-shapes the book.
         ///
         /// The frame ratio is the median of a book's own photo sizes, so a photo dropped
@@ -348,28 +354,51 @@ namespace PhotoBook.Presentation.ViewModels
         /// the "frames did not adapt" symptom. Fire-and-forget, exactly like the thumbnail
         /// load beside it: the photo appears at once and the frame follows a moment later.
         /// </summary>
+        /// <remarks>
+        /// What happens after the await runs on the drawing thread, and that is the fix for a
+        /// visible defect rather than tidiness. The measurement resumes on the thread pool, and
+        /// the two lines below write into a page and then rebuild the book's slot collections -
+        /// collections an ItemsControl is bound to. Clearing one of those from a pool thread made
+        /// the list duplicate its own item containers: dropping a photo into a book with two
+        /// spreads painted a dozen filled frames into that one book, while the project on disk
+        /// was correct all along and reopening it showed the single photo in the right slot.
+        /// </remarks>
         private async Task FillSlotDimensionsAsync(PhotoBook.Core.Page? page)
         {
             if (page == null || page.HasDimensions || string.IsNullOrEmpty(page.SourcePath)) return;
 
+            var path = page.SourcePath;
+
             try
             {
-                var (width, height) = await _imageService.GetImageDimensionsAsync(page.SourcePath);
+                var (width, height) = await _imageService.GetImageDimensionsAsync(path);
                 if (width <= 0 || height <= 0) return;
 
-                page.ImageWidth = width;
-                page.ImageHeight = height;
-
-                var book = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
-                book?.UpdatePageSlots();
-
-                OnPropertyChanged(nameof(Books));
+                RunOnUi(() => ApplySlotDimensions(page, path, width, height));
             }
             catch (Exception ex)
             {
                 // The photo itself still shows; only the frame stays on the default ratio.
                 _loggingService.LogError("Не удалось прочитать размер фото для слота", ex);
             }
+        }
+
+        /// <summary>The write-back half of <see cref="FillSlotDimensionsAsync"/>.</summary>
+        private void ApplySlotDimensions(PhotoBook.Core.Page page, string path, int width, int height)
+        {
+            // The slot may have been emptied or given another photo while the file was being
+            // measured; a size that belongs to neither is worse than a frame on the default.
+            if (!string.Equals(page.SourcePath, path, StringComparison.OrdinalIgnoreCase)) return;
+
+            page.ImageWidth = width;
+            page.ImageHeight = height;
+
+            // The frame follows the size; the slots themselves are unchanged, so they are not
+            // rebuilt - see Book.RefreshSlots.
+            var book = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
+            book?.RefreshSlots();
+
+            OnPropertyChanged(nameof(Books));
         }
 
         public void DropFileOnSlot(PhotoBook.Core.Page page, string filePath, DropAction action, List<Book>? selectedBooks = null)
@@ -381,7 +410,6 @@ namespace PhotoBook.Presentation.ViewModels
 
             if (action == DropAction.ThisBookOnly)
             {
-                var book = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
                 var targetBook = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
 
                 if (!string.IsNullOrEmpty(page.SourcePath) && page.SourcePath != filePath)
@@ -392,15 +420,16 @@ namespace PhotoBook.Presentation.ViewModels
                 _images.InvalidateFile(filePath);
                 page.SourcePath = filePath;
 
-                if (targetBook != null)
-                {
-                    targetBook.UpdatePageSlots();
-                }
+                // The photograph is in a slot that already existed: nothing about the book's
+                // shape changed, and rebuilding the slot lists to say so is what made the
+                // cards churn. What does change is the export naming and the frame ratio.
+                targetBook?.RefreshSlots();
 
                 OnPropertyChanged(nameof(Books));
                 LoadThumbnailForPage(page);
-                Background.Run(() => FillSlotDimensionsAsync(page), "fill slot dimensions");
+                FillSlotDimensionsSoon(page);
                 UpdateExportCommands();
+                RaiseStructureProgress();
             }
             else if (action == DropAction.AllBooks)
             {
@@ -425,8 +454,9 @@ namespace PhotoBook.Presentation.ViewModels
                     }
                 }
 
-                Background.Run(() => FillSlotDimensionsAsync(page), "fill slot dimensions");
+                FillSlotDimensionsSoon(page);
                 UpdateExportCommands();
+                RaiseStructureProgress();
             }
             else if (action == DropAction.SelectedBooks && selectedBooks != null)
             {
@@ -450,8 +480,9 @@ namespace PhotoBook.Presentation.ViewModels
                     }
                 }
 
-                Background.Run(() => FillSlotDimensionsAsync(page), "fill slot dimensions");
+                FillSlotDimensionsSoon(page);
                 UpdateExportCommands();
+                RaiseStructureProgress();
             }
         }
     }

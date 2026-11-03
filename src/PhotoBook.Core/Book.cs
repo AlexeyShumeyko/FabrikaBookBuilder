@@ -108,6 +108,24 @@ namespace PhotoBook.Core
             OnPropertyChanged(nameof(AllSlotsPages));
         }
 
+        /// <summary>
+        /// Re-reads what depends on WHICH photographs the book holds, without rebuilding the
+        /// slots themselves.
+        /// </summary>
+        /// <remarks>
+        /// The slot lists are the book's structure - a cover and N spreads - and putting a
+        /// photograph into one of them does not change the structure. <see cref="UpdatePageSlots"/>
+        /// was called for that anyway, and emptying a collection the screen is bound to and
+        /// refilling it in the same breath is what left a dozen stale frames in one book after
+        /// a drop while the file on disk was right: the counters and the captions come from the
+        /// pages themselves, and a page announces its own change.
+        /// </remarks>
+        public void RefreshSlots()
+        {
+            RefreshExportFileNames();
+            UpdateFrameAspect();
+        }
+
         // ------------------------------------------------------------------
         //  Card frame ratio - the whole policy lives in these four constants
         // ------------------------------------------------------------------

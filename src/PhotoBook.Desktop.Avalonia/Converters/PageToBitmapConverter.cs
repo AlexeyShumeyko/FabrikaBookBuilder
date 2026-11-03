@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia.Media.Imaging;
@@ -29,7 +30,12 @@ namespace PhotoBook.Shell.Converters
     /// binding that re-evaluates does not decode again.</item>
     /// </list>
     /// </remarks>
-    public class PageToBitmapConverter : IValueConverter
+    /// <remarks>
+    /// A MultiBinding, not a Binding, and the extra values are not used: a binding to the page
+    /// object alone is evaluated once, when the card is built. The list of them is what makes
+    /// it run again when the slot is given a photograph or a reduced copy arrives.
+    /// </remarks>
+    public class PageToBitmapConverter : IMultiValueConverter
     {
         private static AvaloniaImageCache? _cache;
         private static IJournal? _journal;
@@ -47,12 +53,12 @@ namespace PhotoBook.Shell.Converters
         }
 
         public object? Convert(
-            object? value,
+            IList<object?> values,
             Type targetType,
             object? parameter,
             CultureInfo culture)
         {
-            if (value is not Page page || _cache is null) return null;
+            if (values is null || values.Count == 0 || values[0] is not Page page || _cache is null) return null;
 
             bool hasReducedCopy = !string.IsNullOrEmpty(page.ThumbnailPath);
 
@@ -89,9 +95,9 @@ namespace PhotoBook.Shell.Converters
             return bitmap;
         }
 
-        public object? ConvertBack(
+        public object[] ConvertBack(
             object? value,
-            Type targetType,
+            Type[] targetTypes,
             object? parameter,
             CultureInfo culture)
             => throw new NotSupportedException();

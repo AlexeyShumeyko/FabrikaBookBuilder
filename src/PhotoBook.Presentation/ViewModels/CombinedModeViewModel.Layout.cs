@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -259,6 +260,74 @@ namespace PhotoBook.Presentation.ViewModels
 
         private System.Threading.Timer? _generateTimer;
 
+        /// <summary>Set while a field is handing its number over, so the box keeps the text.</summary>
+        private bool _typingRunNumber;
+
+        // What the two run fields say, character for character.
+        //
+        // Strings, and the numbers behind them stay numbers, on purpose. Bound straight to an
+        // int, a field somebody has just emptied is a failed conversion - and the engine answers
+        // that by printing the converter's own words under the box: a technical sentence in a
+        // control panel, with the panel grown to fit it. The released program answered it with a
+        // red frame. So the box keeps whatever was typed, the number keeps the last value that
+        // made sense, the frame goes red while the text is not a number, and the structure
+        // button waits rather than building a run out of a field nobody has filled in.
+        private string _numberOfBooksText = "1";
+        private string _spreadsPerBookText = "1";
+
+        /// <summary>True while both run fields hold a number the run can be built from.</summary>
+        public bool RunNumbersAreValid => NumberOfBooksIsValid && SpreadsPerBookIsValid;
+
+        /// <summary>True while the books box holds a number. Drives its red frame.</summary>
+        public bool NumberOfBooksIsValid => TryReadRunNumber(_numberOfBooksText, out _);
+
+        /// <summary>True while the spreads box holds a number. Drives its red frame.</summary>
+        public bool SpreadsPerBookIsValid => TryReadRunNumber(_spreadsPerBookText, out _);
+
+        /// <summary>How many books the run is asked for, as typed.</summary>
+        public string NumberOfBooksText
+        {
+            get => _numberOfBooksText;
+            set
+            {
+                if (!SetProperty(ref _numberOfBooksText, value, nameof(NumberOfBooksText))) return;
+
+                RaiseRunFieldState();
+
+                if (TryReadRunNumber(value, out var books))
+                {
+                    AsTyping(() => NumberOfBooks = books);
+                    return;
+                }
+
+                // No number in the box: nothing is confirmed and the button waits. The setter
+                // of the number has already told the command about the good case.
+                IsStructureConfirmed = false;
+                NotifyStructureAvailability();
+            }
+        }
+
+        /// <summary>How many spreads each book of the run is asked to have, as typed.</summary>
+        public string SpreadsPerBookText
+        {
+            get => _spreadsPerBookText;
+            set
+            {
+                if (!SetProperty(ref _spreadsPerBookText, value, nameof(SpreadsPerBookText))) return;
+
+                RaiseRunFieldState();
+
+                if (TryReadRunNumber(value, out var spreads))
+                {
+                    AsTyping(() => SpreadsPerBook = spreads);
+                    return;
+                }
+
+                IsStructureConfirmed = false;
+                NotifyStructureAvailability();
+            }
+        }
+
         public int NumberOfBooks
         {
             get => _numberOfBooks;
@@ -269,11 +338,10 @@ namespace PhotoBook.Presentation.ViewModels
 
                 if (SetProperty(ref _numberOfBooks, value))
                 {
+                    if (!_typingRunNumber) SetRunText(ref _numberOfBooksText, nameof(NumberOfBooksText), value);
+
                     IsStructureConfirmed = false;
-                    if (ConfirmStructureCommand is RelayCommand confirmCmd)
-                    {
-                        confirmCmd.NotifyCanExecuteChanged();
-                    }
+                    NotifyStructureAvailability();
                 }
             }
         }
@@ -297,13 +365,75 @@ namespace PhotoBook.Presentation.ViewModels
                 // pressed, and GenerateStructure asks first, exactly as it does for books.
                 if (SetProperty(ref _spreadsPerBook, value))
                 {
+                    if (!_typingRunNumber) SetRunText(ref _spreadsPerBookText, nameof(SpreadsPerBookText), value);
+
                     IsStructureConfirmed = false;
-                    if (ConfirmStructureCommand is RelayCommand confirmCmd)
-                    {
-                        confirmCmd.NotifyCanExecuteChanged();
-                    }
+                    NotifyStructureAvailability();
                 }
             }
+        }
+
+        /// <summary>
+        /// Writes a number the code chose into the box that shows it - a project being reopened,
+        /// a book being duplicated. Never during typing: there the box owns its text.
+        /// </summary>
+        private void SetRunText(ref string field, string propertyName, int value)
+        {
+            if (!SetProperty(ref field, value.ToString(CultureInfo.InvariantCulture), propertyName)) return;
+            RaiseRunFieldState();
+        }
+
+        private void RaiseRunFieldState()
+        {
+            OnPropertyChanged(nameof(NumberOfBooksIsValid));
+            OnPropertyChanged(nameof(SpreadsPerBookIsValid));
+            OnPropertyChanged(nameof(RunNumbersAreValid));
+        }
+
+        /// <summary>
+        /// The number to build the run from, when the text is one. Anything else - empty, half
+        /// typed, out of range - leaves the last good number alone and is answered by the red
+        /// frame instead.
+        /// </summary>
+        private static bool TryReadRunNumber(string? text, out int number)
+        {
+            number = 0;
+
+            if (!int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)) return false;
+            if (parsed < 1 || parsed > 99) return false;
+
+            number = parsed;
+            return true;
+        }
+
+        /// <summary>Tells the structure button to re-read whether it can be pressed.</summary>
+        private void NotifyStructureAvailability()
+        {
+            if (ConfirmStructureCommand is RelayCommand confirmCmd)
+            {
+                confirmCmd.NotifyCanExecuteChanged();
+            }
+        }
+
+        /// <summary>Assigns a number that came from the box, without sending the text back.</summary>
+        private void AsTyping(Action assign)
+        {
+            _typingRunNumber = true;
+            try
+            {
+                assign();
+            }
+            finally
+            {
+                _typingRunNumber = false;
+            }
+        }
+
+        /// <summary>Raises the panel's run counter after a drop changed what is filled.</summary>
+        private void RaiseStructureProgress()
+        {
+            OnPropertyChanged(nameof(StructureProgress));
+            OnPropertyChanged(nameof(StructureIsComplete));
         }
 
         public bool IsLoading

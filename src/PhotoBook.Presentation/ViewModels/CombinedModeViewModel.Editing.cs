@@ -147,13 +147,12 @@ namespace PhotoBook.Presentation.ViewModels
                     page.SourcePath = file;
 
                     var book = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
-                    if (book != null)
-                    {
-                        book.UpdatePageSlots();
-                    }
+                    // The slot already existed: the photo goes into it, and the book's shape
+                    // and naming are refreshed rather than rebuilt.
+                    book?.RefreshSlots();
 
-                    // Size first, then the frame: UpdatePageSlots is what re-shapes the
-                    // book, so it has to run after the size is known.
+                    // Size first, then the frame: the refresh re-shapes the book from the
+                    // sizes it knows, so it has to run after the size is known.
                     await FillSlotDimensionsAsync(page);
 
                     await LoadThumbnailForPage(page);
@@ -199,7 +198,11 @@ namespace PhotoBook.Presentation.ViewModels
 
                     targetPage.SourcePath = page.SourcePath;
                     CopyDimensions(page, targetPage);
-                    book.UpdatePageSlots();
+
+                    // Each book gets the photograph in a slot it already has. Rebuilding the
+                    // slot collections here is what turned one action into a screenful of
+                    // stale frames.
+                    book.RefreshSlots();
                     tasks.Add(LoadThumbnailForPage(targetPage));
                 }
             }

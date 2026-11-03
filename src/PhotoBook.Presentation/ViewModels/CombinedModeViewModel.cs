@@ -71,7 +71,12 @@ namespace PhotoBook.Presentation.ViewModels
             LoadFilesCommand = new AsyncRelayCommand(LoadFilesAsync);
             ClearFilesCommand = new RelayCommand(ClearFiles);
             GenerateStructureCommand = new AsyncRelayCommand(GenerateStructure);
-            ConfirmStructureCommand = new RelayCommand(ConfirmStructure, () => NumberOfBooks > 0 && SpreadsPerBook > 0);
+            // The fields are text, so "both numbers are there" is a separate question from
+            // "both fields are filled": an emptied box keeps the last number it had, and the
+            // button waits until there is something to build the run from.
+            ConfirmStructureCommand = new RelayCommand(
+                ConfirmStructure,
+                () => NumberOfBooks > 0 && SpreadsPerBook > 0 && RunNumbersAreValid);
             ExportCommand = new AsyncRelayCommand(ExportAsync, () => Project?.IsValid ?? false);
             ExportWithFolderCommand = new AsyncRelayCommand(ExportWithFolderAsync, () => Project?.IsValid ?? false);
             // Enabled as soon as there is anything to save. Not tied to
