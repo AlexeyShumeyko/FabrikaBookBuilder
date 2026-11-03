@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Windows.Input;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -11,6 +12,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using PhotoBook.Application;
 using PhotoBook.Core;
+using PhotoBook.Presentation;
 using PhotoBook.Presentation.ViewModels;
 
 namespace PhotoBook.Shell.Views;
@@ -344,12 +346,13 @@ public partial class CombinedModeView : UserControl, IPendingRename
     /// A command that is typed to one kind of object and is handed another is a mistake, and
     /// it used to be a fatal one: pressing a photograph in the loaded list ran the command for
     /// picking a file for a slot, the command wanted a slot, and the program went down with
-    /// an unhandled exception. It could not be caught by asking the command whether it was
-    /// willing, because a command typed to a page answers "yes" to anything.
+    /// an unhandled exception. Asking the command whether it was willing did not help either:
+    /// <c>RelayCommand&lt;Page&gt;.CanExecute</c> raises on a foreign argument before it can
+    /// answer, which is the trap that made the first attempt at guarding this look correct.
     ///
-    /// So the kind is checked here, against the command's own type, and a mismatch is
-    /// written to the journal instead of taken to the window. A mistake in a binding is a
-    /// thing to find in a log; it is not a thing to end a customer's session over.
+    /// So the argument's kind is compared with the command's own declared kind before either
+    /// method is called, and a mismatch is a refusal. A binding that points at the wrong
+    /// object does nothing here rather than taking the window with it.
     /// </para>
     /// </remarks>
     private void Execute(string command, object? sender)
@@ -357,18 +360,12 @@ public partial class CombinedModeView : UserControl, IPendingRename
         var model = Model;
         if (model is null) return;
 
-        if (typeof(CombinedModeViewModel).GetProperty(command)?.GetValue(model)
-            is not System.Windows.Input.ICommand target)
+        var commandProperty = typeof(CombinedModeViewModel).GetProperty(command);
+        if (commandProperty?.GetValue(model) is not ICommand target)
             return;
 
         var parameter = (sender as Control)?.DataContext;
 
-        if (parameter is null)
-        {
-            if (target.CanExecute(null)) target.Execute(null);
-            return;
-        }
-
-        if (target.CanExecute(parameter)) target.Execute(parameter);
+        CommandTypeHelper.TryExecute(target, parameter);
     }
 }

@@ -34,6 +34,7 @@
     <ProjectReference Include="..\..\src\PhotoBook.Application\PhotoBook.Application.csproj" />
     <ProjectReference Include="..\..\src\PhotoBook.Core\PhotoBook.Core.csproj" />
     <ProjectReference Include="..\..\src\PhotoBook.Infrastructure\PhotoBook.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\PhotoBook.Presentation\PhotoBook.Presentation.csproj" />
   </ItemGroup>
 
   <ItemGroup>
