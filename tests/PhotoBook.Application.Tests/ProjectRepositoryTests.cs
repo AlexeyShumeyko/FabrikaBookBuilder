@@ -25,7 +25,7 @@ public class ProjectRepositoryTests : IDisposable
         try { Directory.Delete(_root, recursive: true); } catch { }
     }
 
-    private IProjectRepository Repository() => new ProjectRepository(_images, new QuietProjectListService());
+    private IProjectRepository Repository() => new ProjectRepository(_images, new QuietProjectListService(), new ThumbnailProvider());
 
     private string At(string name) => Path.Combine(_root, name);
 

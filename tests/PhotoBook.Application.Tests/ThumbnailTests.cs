@@ -60,10 +60,10 @@ public sealed class ThumbnailTests : IDisposable
     {
         var path = ThumbnailStore.GetPath(@"D:\Album\001.jpg");
 
-        Assert.EndsWith("_thumb.jpg", path);
+        Assert.EndsWith($"_thumb{ThumbnailStore.MaxPixelSize}.jpg", path);
         Assert.Equal(ThumbnailStore.Directory, Path.GetDirectoryName(path));
 
-        var id = Path.GetFileName(path).Replace("_thumb.jpg", string.Empty);
+        var id = Path.GetFileName(path).Replace($"_thumb{ThumbnailStore.MaxPixelSize}.jpg", string.Empty);
         Assert.Equal(16, id.Length);
         Assert.All(id, c => Assert.True(Uri.IsHexDigit(c), $"not a hex digit: {c}"));
     }

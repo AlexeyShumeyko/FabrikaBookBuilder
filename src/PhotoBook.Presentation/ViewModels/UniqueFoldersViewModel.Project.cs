@@ -136,19 +136,7 @@ namespace PhotoBook.Presentation.ViewModels
             // layout rather than during it.
             if (Project != null && Project.Books != null && Project.Books.Count > 0)
             {
-                foreach (var book in Project.Books)
-                {
-                    if (book.Cover != null)
-                    {
-                        book.Cover.ThumbnailPath = _thumbnails.GetExistingPath(book.Cover.SourcePath ?? string.Empty);
-                    }
-
-                    foreach (var page in book.Pages)
-                    {
-                        if (page != null)
-                            page.ThumbnailPath = _thumbnails.GetExistingPath(page.SourcePath ?? string.Empty);
-                    }
-                }
+                // The paths are attached by whoever read the project, on a worker thread.
 
                 var allImagePaths = Project.Books
                     .SelectMany(b => b.Pages.Select(p => p.SourcePath).Concat(new[] { b.Cover?.SourcePath }))

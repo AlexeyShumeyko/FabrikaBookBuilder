@@ -48,12 +48,12 @@ namespace PhotoBook.Infrastructure
     internal class ThumbnailProvider : IThumbnailProvider
     {
         /// <summary>Larger side of a reduced copy. A card cell is about 190 px tall.</summary>
-        public const int MaxSize = 500;
+        public const int MaxSize = ThumbnailStore.MaxPixelSize;
 
         private readonly SemaphoreSlim _gate;
         private readonly int _maxConcurrency;
 
-        public ThumbnailProvider(int maxConcurrency = 4)
+        public ThumbnailProvider(int maxConcurrency = 8)
         {
             _maxConcurrency = Math.Clamp(maxConcurrency, 1, 32);
             _gate = new SemaphoreSlim(_maxConcurrency, _maxConcurrency);
@@ -157,7 +157,7 @@ namespace PhotoBook.Infrastructure
                         // would make the decoder scale it up, which is not a reduced copy.
                         DecoderOptions? options =
                             info.Width > MaxSize || info.Height > MaxSize
-                                ? new DecoderOptions { TargetSize = Fit(info.Width, info.Height, MaxSize) }
+                                ? new DecoderOptions { TargetSize = Fit(info.Width, info.Height, MaxSize), SkipMetadata = true }
                                 : null;
 
                         using var image = options is null
@@ -177,7 +177,7 @@ namespace PhotoBook.Infrastructure
                         {
                             Size = target,
                             Mode = ResizeMode.Max,
-                            Sampler = KnownResamplers.Lanczos3
+                            Sampler = KnownResamplers.Bicubic
                         }));
                         Write(image, thumbnailPath);
                         return thumbnailPath;

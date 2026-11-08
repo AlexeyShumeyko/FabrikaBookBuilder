@@ -468,7 +468,10 @@
                 space between cards is the background, so "there is one more book below" is
                 something you see rather than read.
             -->
-            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+            <Grid Grid.Column="2">
+
+                <ScrollViewer IsVisible="{Binding !HasStructure}" VerticalScrollBarVisibility="Auto"
+                              Padding="0,0,10,0">
                 <StackPanel>
 
                     <!--
@@ -546,6 +549,8 @@
                             </StackPanel>
                         </StackPanel>
                     </Border>
+                </StackPanel>
+                </ScrollViewer>
 
                     <!--
                         A card for each book, with the page showing between them.
@@ -562,8 +567,43 @@
                     -->
                     <Border IsVisible="{Binding HasStructure}">
 
-                    <ItemsControl ItemsSource="{Binding Books}">
-                        <ItemsControl.ItemTemplate>
+                    <!--
+                        Only the books near the viewport are built.
+
+                        A fifty-book order is twenty-six thousand elements when every card is
+                        laid out at once, and the screen took eight and a half seconds to
+                        appear; more than half of that was the layout of cards nobody could
+                        see yet. A book is a tall card in a column that is taller than the
+                        window, so the column builds the ones it can show and the ones just
+                        below them, and builds the rest as they are scrolled to.
+
+                        The list is dressed as the plain cards it draws: no selection colour,
+                        no hover, no border, no padding of its own, and a template that leaves
+                        out the parts of a list row that are not a card. Its scroll bar is the
+                        one this column already had.
+                    -->
+                    <ListBox ItemsSource="{Binding Books}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="0,0,10,0"
+                             SelectionMode="Single"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Template">
+                                    <ControlTemplate>
+                                        <ContentPresenter Content="{TemplateBinding Content}"
+                                                          ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                    </ControlTemplate>
+                                </Setter>
+                            </Style>
+                        </ListBox.Styles>
+                        <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Border Classes="card" Padding="20" Margin="0,0,0,16">
                                 <StackPanel>
@@ -824,12 +864,11 @@
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
 
                 </Border>
-            </StackPanel>
-            </ScrollViewer>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

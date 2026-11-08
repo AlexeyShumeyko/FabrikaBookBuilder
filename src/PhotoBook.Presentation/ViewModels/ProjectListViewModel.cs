@@ -21,6 +21,7 @@ namespace PhotoBook.Presentation.ViewModels
         private readonly IProjectRepository _projects;
         private readonly IShellNavigator _navigator;
         private readonly IFileService _files;
+        private readonly IThumbnailProvider _thumbnails;
         private readonly IProjectDialogs _dialogs;
         private bool _isLoading;
         private string? _errorMessage;
@@ -31,13 +32,15 @@ namespace PhotoBook.Presentation.ViewModels
             IProjectRepository projects,
             IProjectDialogs dialogs,
             IShellNavigator navigator,
-            IFileService files)
+            IFileService files,
+            IThumbnailProvider thumbnails)
         {
             _projectListService = projectListService;
             _projects = projects;
             _dialogs = dialogs;
             _navigator = navigator;
             _files = files;
+            _thumbnails = thumbnails;
             Projects = new ObservableCollection<ProjectInfo>();
 
             LoadProjectsCommand = new AsyncRelayCommand(LoadProjectsAsync);
