@@ -247,7 +247,17 @@ namespace PhotoBook.Presentation.ViewModels
                     var deleted = await _projectListService.DeleteProjectAsync(projectInfo);
                     if (deleted.IsSuccess)
                     {
+                        // The visible list is a separate collection, built by ApplyFilters().
+                        // Removing the card from Projects alone left it on screen - the
+                        // project was gone from disk and from the index, but the card stayed
+                        // until the list was rebuilt. A full ApplyFilters() would do it too,
+                        // but it replaces the collection and relayouts every card; one
+                        // removal is what the change actually is.
                         Projects.Remove(projectInfo);
+                        FilteredProjects.Remove(projectInfo);
+
+                        OnPropertyChanged(nameof(FilterSummary));
+                        OnPropertyChanged(nameof(HasNoMatches));
                     }
                     else
                     {
