@@ -1,0 +1,215 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PhotoBook.Shell.Views.ExportWindow"
+        Title="Экспорт"
+        Width="636"
+        SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="Transparent"
+        SystemDecorations="None"
+        FontFamily="Inter">
+
+    <!--
+        The same card as every screen in this program: white, sixteen round the corners, one
+        hairline, the subtle shadow - with the margin the shadow falls into.
+
+        The window is not decorated by the system, so the card is the whole of it. That is why
+        there is an outer margin: a shadow drawn outside the card needs somewhere inside the
+        window to be, and without it the two edges crop it into a grey line.
+    -->
+    <Border Classes="card" Margin="18" ClipToBounds="True">
+        <StackPanel>
+
+            <!-- ============================= header ============================= -->
+            <Border Background="{DynamicResource Slate50}"
+                    BorderBrush="{DynamicResource Slate200}"
+                    BorderThickness="0,0,0,1"
+                    Padding="20,16">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Border Width="40" Height="40" CornerRadius="12"
+                            Background="{DynamicResource Brand50}"
+                            VerticalAlignment="Center">
+                        <Path Width="19" Height="19" Stretch="Uniform"
+                              Stroke="{DynamicResource Brand600}" StrokeThickness="1.8"
+                              StrokeLineCap="Round" StrokeJoin="Round"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="13,0,0,0" Spacing="2"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="Параметры экспорта" Classes="t16Bold" />
+                        <TextBlock Text="Что и куда будет выгружено"
+                                   Classes="t12"
+                                   Foreground="{DynamicResource Slate500}" />
+                    </StackPanel>
+
+                    <Button Grid.Column="2" Classes="icon" Padding="6" Margin="4,0,0,0"
+                            AutomationProperties.Name="Закрыть"
+                            VerticalAlignment="Center"
+                            Click="OnCloseClick">
+                        <Path Width="12" Height="12" Stretch="Uniform"
+                              Stroke="{DynamicResource Slate500}" StrokeThickness="1.9"
+                              StrokeLineCap="Round"
+                              Data="M 6.5 6.5 L 17.5 17.5 M 17.5 6.5 L 6.5 17.5" />
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- ============================== body ============================== -->
+            <StackPanel Margin="20,18,20,0" Spacing="18">
+
+                <!-- what the run comes to, in the panel's own tiles -->
+                <Grid ColumnDefinitions="*,10,*">
+                    <Border Grid.Column="0" Background="{DynamicResource Slate50}"
+                            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                            CornerRadius="12" Padding="14,11">
+                        <StackPanel>
+                            <TextBlock Text="Книг" Classes="t10"
+                                       Foreground="{DynamicResource Slate500}" />
+                            <TextBlock x:Name="BooksValue" Text="0" Classes="t20Bold"
+                                       Margin="0,3,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Background="{DynamicResource Slate50}"
+                            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                            CornerRadius="12" Padding="14,11">
+                        <StackPanel>
+                            <TextBlock x:Name="FilesCaption" Text="Файлов" Classes="t10"
+                                       Foreground="{DynamicResource Slate500}" />
+                            <TextBlock x:Name="FilesValue" Text="0" Classes="t20Bold"
+                                       Margin="0,3,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- the naming rule, which is fixed and worth saying before it is used -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Имена файлов" Classes="t10"
+                               Foreground="{DynamicResource Slate500}" Margin="2,0,0,0" />
+
+                    <Border Background="{DynamicResource Slate50}"
+                            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                            CornerRadius="12" Padding="13,10">
+                        <StackPanel Orientation="Horizontal" Spacing="9">
+                            <Path Width="13" Height="13" Stretch="Uniform"
+                                  Stroke="{DynamicResource Emerald600}" StrokeThickness="2"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  VerticalAlignment="Center"
+                                  Data="M 5 12.4 L 9.8 17 L 19 7.4" />
+                            <TextBlock Text="001-00.jpg, 001-01.jpg, 001-02.jpg"
+                                       Classes="t12"
+                                       Foreground="{DynamicResource Slate700}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Формат фиксирован — сайт приёма загружает файлы по нему."
+                               Classes="t10"
+                               Foreground="{DynamicResource Slate400}"
+                               Margin="2,0,0,0" />
+                </StackPanel>
+
+                <!-- where it goes -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Папка назначения" Classes="t10"
+                               Foreground="{DynamicResource Slate500}" Margin="2,0,0,0" />
+
+                    <Grid ColumnDefinitions="*,8,Auto">
+                        <Border Grid.Column="0" Background="{DynamicResource Slate50}"
+                                BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                                CornerRadius="12" Padding="12,0" Height="40">
+                            <TextBlock x:Name="FolderText" Classes="t12"
+                                       FontFamily="Consolas" FontSize="11.5"
+                                       Foreground="{DynamicResource Slate600}"
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" />
+                        </Border>
+
+                        <Button Grid.Column="2" Classes="outline" Padding="14,9"
+                                AutomationProperties.Name="Обзор"
+                                Click="OnBrowseClick">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <Path Width="14" Height="14" Stretch="Uniform"
+                                      Stroke="{DynamicResource Slate400}" StrokeThickness="1.8"
+                                      StrokeJoin="Round"
+                                      VerticalAlignment="Center"
+                                      Data="M 3 7.2 A 1.4 1.4 0 0 1 4.4 5.8 H 9.2 L 11.4 8 H 19.6 A 1.4 1.4 0 0 1 21 9.4 V 17.6 A 1.4 1.4 0 0 1 19.6 19 H 4.4 A 1.4 1.4 0 0 1 3 17.6 Z" />
+                                <TextBlock Text="Обзор" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Text="Каждый экспорт получает свою папку — файлы прошлой выгрузки не перезаписываются."
+                               Classes="t10"
+                               Foreground="{DynamicResource Slate400}"
+                               TextWrapping="Wrap"
+                               Margin="2,0,0,0" />
+                </StackPanel>
+
+                <!--
+                    Only where it means something. A shared spread in the combined mode is one
+                    file for several books, so it cannot be put in one book's folder - the
+                    option is absent there rather than present and refused.
+                -->
+                <Border x:Name="SubfoldersBox" IsVisible="False"
+                        Background="{DynamicResource Slate50}"
+                        BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                        CornerRadius="12" Padding="14,12">
+                    <StackPanel Spacing="4">
+                        <CheckBox x:Name="SubfoldersCheck" MinHeight="0"
+                                  AutomationProperties.Name="Создавать отдельную папку для каждого альбома">
+                            <TextBlock Text="Создавать отдельную папку для каждого альбома"
+                                       Classes="t12Semi"
+                                       Foreground="{DynamicResource Slate700}"
+                                       Margin="6,0,0,0"
+                                       VerticalAlignment="Center" />
+                        </CheckBox>
+                        <TextBlock Text="По умолчанию выключено: все книги складываются в одну папку. Включайте, только если загрузка на сайт это допускает."
+                                   Classes="t10"
+                                   Foreground="{DynamicResource Slate400}"
+                                   TextWrapping="Wrap"
+                                   Margin="24,0,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- progress, shown only while it is running -->
+                <StackPanel x:Name="ProgressPanel" IsVisible="False" Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="Копирование файлов…" Classes="t12Semi"
+                                   VerticalAlignment="Center" />
+                        <TextBlock x:Name="ProgressText" Grid.Column="1" Classes="t12Semi"
+                                   Foreground="{DynamicResource Brand600}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                    <ProgressBar x:Name="Progress" Minimum="0" Maximum="100" Value="0"
+                                 Height="8" CornerRadius="4"
+                                 Background="{DynamicResource Slate200}"
+                                 Foreground="{DynamicResource Brand600}" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ============================= footer ============================= -->
+            <Border Height="1" Background="{DynamicResource Slate200}"
+                    Margin="20,18,20,0" />
+
+            <StackPanel Orientation="Horizontal" Spacing="8"
+                        HorizontalAlignment="Right"
+                        Margin="20,14,20,18">
+                <Button x:Name="CancelButton" Classes="outline" Padding="14,9"
+                        AutomationProperties.Name="Отмена"
+                        Click="OnCancelClick">
+                    <TextBlock Text="Отмена" FontSize="13" />
+                </Button>
+                <Button x:Name="ExportButton" Classes="primary" Padding="16,10"
+                        AutomationProperties.Name="Начать экспорт"
+                        Click="OnExportClick">
+                    <TextBlock Text="Начать экспорт" FontSize="13" />
+                </Button>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

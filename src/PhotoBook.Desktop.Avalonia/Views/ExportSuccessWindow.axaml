@@ -1,0 +1,88 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PhotoBook.Shell.Views.ExportSuccessWindow"
+        Title="Экспорт завершён"
+        Width="492"
+        SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="Transparent"
+        SystemDecorations="None"
+        FontFamily="Inter">
+
+    <!--
+        A card, like everything else in this program, with a margin for its shadow.
+
+        Two actions and no third: the folder is the answer to "where are my files", and the
+        project list is where the work continues. A third button that only closed the window
+        would be the same as the close mark on a window that does not have one.
+    -->
+    <Border Classes="card" Margin="18">
+        <StackPanel>
+
+            <StackPanel Margin="24,24,24,0">
+
+                <!-- the success mark: a filled circle, not a glyph on a plate -->
+                <Border Width="56" Height="56" CornerRadius="28"
+                        HorizontalAlignment="Center"
+                        Background="{DynamicResource Emerald100}">
+                    <Path Width="24" Height="24" Stretch="Uniform"
+                          Stroke="{DynamicResource Emerald600}" StrokeThickness="2.2"
+                          StrokeLineCap="Round" StrokeJoin="Round"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                          Data="M 5 12.4 L 9.8 17 L 19 7.4" />
+                </Border>
+
+                <TextBlock Text="Экспорт завершён!" Classes="t18Bold"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           Margin="0,16,0,0" />
+
+                <TextBlock x:Name="SummaryText" Classes="t12"
+                           Foreground="{DynamicResource Slate600}"
+                           HorizontalAlignment="Center" TextAlignment="Center"
+                           TextWrapping="Wrap" MaxWidth="360"
+                           Margin="0,7,0,0" />
+
+                <!-- the folder, in full: it is new every time, so nobody has it memorised -->
+                <Border Background="{DynamicResource Slate50}"
+                        BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                        CornerRadius="12" Padding="14,12" Margin="0,16,0,0">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Файлы сохранены в:" Classes="t10"
+                                   Foreground="{DynamicResource Slate400}" />
+                        <TextBlock x:Name="PathText" Classes="t11"
+                                   FontFamily="Consolas" FontSize="11.5"
+                                   Foreground="{DynamicResource Slate700}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <Border Height="1" Background="{DynamicResource Slate200}" Margin="0,20,0,0" />
+
+            <StackPanel Margin="24,16,24,20" Spacing="8">
+                <Button x:Name="OpenFolderButton" Classes="primary" Padding="16,10"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                        AutomationProperties.Name="Открыть папку"
+                        Click="OnOpenFolderClick">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                        <Path Width="14" Height="14" Stretch="Uniform"
+                              Stroke="White" StrokeThickness="1.8"
+                              StrokeJoin="Round"
+                              VerticalAlignment="Center"
+                              Data="M 3 7.2 A 1.4 1.4 0 0 1 4.4 5.8 H 9.2 L 11.4 8 H 19.6 A 1.4 1.4 0 0 1 21 9.4 V 17.6 A 1.4 1.4 0 0 1 19.6 19 H 4.4 A 1.4 1.4 0 0 1 3 17.6 Z" />
+                        <TextBlock Text="Открыть папку" Foreground="White" />
+                    </StackPanel>
+                </Button>
+
+                <Button Classes="outline" Padding="16,10"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                        AutomationProperties.Name="Вернуться к проектам"
+                        Click="OnReturnClick">
+                    <TextBlock Text="Вернуться к проектам" />
+                </Button>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

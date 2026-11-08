@@ -31,11 +31,13 @@ namespace PhotoBook.Shell.Platform
     {
         private readonly IExportService _export;
         private readonly IFileService _files;
+        private readonly IJournal _journal;
 
-        public AvaloniaEditorDialogs(IExportService exportService, IFileService fileService)
+        public AvaloniaEditorDialogs(IExportService exportService, IFileService fileService, IJournal journal)
         {
             _export = exportService;
             _files = fileService;
+            _journal = journal;
         }
 
         public async Task<string?> AskToExport(Project project)
@@ -46,12 +48,30 @@ namespace PhotoBook.Shell.Platform
 
         public async Task ShowExportSucceeded(string outputFolder)
         {
-            var window = new NotifyWindow(
-                "Открыть папку",
-                $"Готово. Файлы выгружены в папку:{Environment.NewLine}{outputFolder}",
-                destructive: false);
+            var window = new ExportSuccessWindow(outputFolder);
+            await window.ShowDialog(OwnerOf(() => window));
 
-            await window.ShowDialog<object>(OwnerOf(() => window));
+            if (!window.GoToFolder) return;
+
+            // The button used to say "Открыть папку" and only close the window, which is the
+            // one thing a button must not do. A folder that has gone away in the meantime is
+            // left alone: the window has already said where it was.
+            try
+            {
+                if (!System.IO.Directory.Exists(outputFolder)) return;
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = outputFolder,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                // Opening the folder is a convenience; failing it must not look like a
+                // failed export, which is what an exception out of here would have become.
+                _journal.Write(JournalLevel.Warning, "export", $"папка не открылась: {ex.Message}");
+            }
         }
 
         public async Task<List<string>?> PickFolders(List<string> existingFolders)

@@ -50,6 +50,14 @@ namespace PhotoBook.Shell.Navigation
             // just typed, which is why neither of the events above would ever have fired.
             _uniqueFolders.PropertyChanged += OnEditorPropertyChanged;
             _combined.PropertyChanged += OnEditorPropertyChanged;
+
+            // An export finishes the session, and that is the one thing an editor cannot do
+            // for itself: it has no way to say which screen comes next. The other shell
+            // connects the same two events to the same call, and this one was missing them -
+            // so after a finished export the editor stayed on screen with a project that the
+            // list already showed as ready to print.
+            _uniqueFolders.ProjectExported += (_, _) => EndSession();
+            _combined.ProjectExported += (_, _) => EndSession();
         }
 
         private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
