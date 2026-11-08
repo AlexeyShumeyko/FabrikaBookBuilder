@@ -39,10 +39,13 @@ namespace PhotoBook.Infrastructure
     /// </code>
     ///
     /// <para>
-    /// Four is the default: it halves the time of a single thread and stays under a
-    /// gigabyte on a machine that is also running a browser and an office suite. A machine
-    /// with eight or more threads is faster and fits, on paper, into eight gigabytes of
-    /// memory - and into none of them once the machine is not idle.
+    /// The number of workers follows the machine: one fewer than the logical processor
+    /// count, clamped to two through eight. Leaving a core free is what keeps the window
+    /// drawing while a cold project builds its copies - a fixed eight on a four-core machine
+    /// put every core on thumbnails and made a weaker PC feel frozen. The upper bound is
+    /// memory, not speed: past eight the measured gain is about 14% while the decoded
+    /// originals grow by more than 700 MB, and that is not a trade a print run should make
+    /// on a machine that is also running a browser and an office suite.
     /// </para>
     /// </summary>
     internal class ThumbnailProvider : IThumbnailProvider
@@ -50,12 +53,16 @@ namespace PhotoBook.Infrastructure
         /// <summary>Larger side of a reduced copy. A card cell is about 190 px tall.</summary>
         public const int MaxSize = ThumbnailStore.MaxPixelSize;
 
+        /// <summary>Workers used when the caller does not name a number.</summary>
+        public static int DefaultConcurrency { get; } =
+            Math.Clamp(Environment.ProcessorCount - 1, 2, 8);
+
         private readonly SemaphoreSlim _gate;
         private readonly int _maxConcurrency;
 
-        public ThumbnailProvider(int maxConcurrency = 8)
+        public ThumbnailProvider(int? maxConcurrency = null)
         {
-            _maxConcurrency = Math.Clamp(maxConcurrency, 1, 32);
+            _maxConcurrency = Math.Clamp(maxConcurrency ?? DefaultConcurrency, 1, 32);
             _gate = new SemaphoreSlim(_maxConcurrency, _maxConcurrency);
         }
 
