@@ -17,9 +17,27 @@ namespace PhotoBook.Presentation.ViewModels
     public partial class CombinedModeViewModel : ViewModelBase, IProjectEditor
     {
 
+        /// <summary>
+        /// Gives a slot the reduced copy of its photograph, and shows it as soon as it is
+        /// ready.
+        /// </summary>
+        /// <remarks>
+        /// This used to be an empty method, which is why dropping a photo into a filled slot
+        /// left the old one on screen: the page pointed at the new file but kept the old
+        /// file's ThumbnailPath, and the card draws the reduced copy when there is one, so
+        /// the old photo was exactly what it drew. The path is captured first so a slower
+        /// copy for a photograph that has already been replaced cannot land on the slot.
+        /// </remarks>
         private async Task LoadThumbnailForPage(Page page)
         {
-            if (string.IsNullOrEmpty(page.SourcePath)) return;
+            var sourcePath = page.SourcePath;
+            if (string.IsNullOrEmpty(sourcePath)) return;
+
+            var thumbnailPath = ThumbnailStore.GetPath(sourcePath);
+            var ready = await _thumbnails.GetOrCreateAsync(sourcePath) ?? thumbnailPath;
+
+            if (string.Equals(page.SourcePath, sourcePath, StringComparison.OrdinalIgnoreCase))
+                page.ThumbnailPath = ready;
         }
 
         private async Task ExportAsync()

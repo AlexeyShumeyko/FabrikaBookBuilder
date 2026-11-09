@@ -108,6 +108,9 @@ namespace PhotoBook.Presentation.ViewModels
                 _images.InvalidateFile(page.SourcePath);
             }
 
+            // Emptying the slot forgets the file's size and reduced copy with it - see
+            // Page.SourcePath. A size that outlived its photo kept the cards shaped for a
+            // format the run no longer contained.
             page.SourcePath = null;
             page.ThumbnailPath = null;
             page.FileName = null;
@@ -117,6 +120,10 @@ namespace PhotoBook.Presentation.ViewModels
             {
                 book.UpdatePageSlots();
             }
+
+            // The next majority takes over as soon as this photo is gone, rather than the
+            // cards staying on the removed format until something else happens to refresh.
+            UpdateRunFrameAspect();
 
             OnPropertyChanged(nameof(Books));
             UpdateExportCommands();
@@ -156,6 +163,12 @@ namespace PhotoBook.Presentation.ViewModels
                     await FillSlotDimensionsAsync(page);
 
                     await LoadThumbnailForPage(page);
+
+                    // Normally the measurement above has already stamped the run; this also
+                    // covers a file whose header could not be read, so the frame returns to
+                    // the majority of the remaining spreads instead of the book's own guess.
+                    UpdateRunFrameAspect();
+
                     OnPropertyChanged(nameof(Books));
 
                     if (!AvailableFiles.Contains(file))
@@ -208,6 +221,10 @@ namespace PhotoBook.Presentation.ViewModels
             }
 
             await Task.WhenAll(tasks);
+
+            // A shared spread may have replaced the format that held the majority.
+            UpdateRunFrameAspect();
+
             OnPropertyChanged(nameof(Books));
             UpdateExportCommands();
         }
@@ -245,6 +262,9 @@ namespace PhotoBook.Presentation.ViewModels
                     targetPage.FileName = null;
                 }
             }
+
+            // Removing a spread from every book can change which format is in the majority.
+            UpdateRunFrameAspect();
 
             UpdateExportCommands();
         }
