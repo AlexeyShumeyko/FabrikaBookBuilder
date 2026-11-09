@@ -1,0 +1,119 @@
+using System.Windows.Input;
+// System.Windows.Input is where ICommand lives in every engine, not only WPF -
+// Avalonia kept the name for exactly this reason. Only System.Windows itself is
+// the part that binds to one engine.
+using System;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using PhotoBook.Core;
+using PhotoBook.Application;
+
+namespace PhotoBook.Presentation.ViewModels
+{
+    /// <summary>State, commands, and how this screen reaches the shell.</summary>
+    public partial class ProjectListViewModel : ViewModelBase
+    {
+        private readonly IProjectListService _projectListService;
+        private readonly IProjectRepository _projects;
+        private readonly IShellNavigator _navigator;
+        private readonly IFileService _files;
+        private readonly IThumbnailProvider _thumbnails;
+        private readonly IProjectDialogs _dialogs;
+        private bool _isLoading;
+        private string? _errorMessage;
+        private ProjectInfo? _selectedProject;
+
+        public ProjectListViewModel(
+            IProjectListService projectListService,
+            IProjectRepository projects,
+            IProjectDialogs dialogs,
+            IShellNavigator navigator,
+            IFileService files,
+            IThumbnailProvider thumbnails)
+        {
+            _projectListService = projectListService;
+            _projects = projects;
+            _dialogs = dialogs;
+            _navigator = navigator;
+            _files = files;
+            _thumbnails = thumbnails;
+            Projects = new ObservableCollection<ProjectInfo>();
+
+            LoadProjectsCommand = new AsyncRelayCommand(LoadProjectsAsync);
+            CreateProjectCommand = new RelayCommand(CreateProject);
+            OpenProjectCommand = new RelayCommand<ProjectInfo>(OpenProject);
+            DeleteProjectCommand = new AsyncRelayCommand<ProjectInfo>(DeleteProjectAsync, CanDeleteProject);
+
+            // CollectionChanged -> ProjectsCount, so "N проектов" and the empty state
+            // re-evaluate. See the remark on ProjectsCount.
+            Projects.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ProjectsCount));
+            _ = LoadProjectsAsync();
+        }
+
+        public ObservableCollection<ProjectInfo> Projects { get; }
+
+        /// <summary>
+        /// Count for bindings that must react to items being added.
+        ///
+        /// WPF does not re-evaluate a binding just because an ObservableCollection grew:
+        /// it only listens for INotifyPropertyChanged on the binding source. Binding
+        /// straight to <c>Projects</c> therefore latched onto whatever the collection
+        /// contained at load time (empty), and the "no projects yet" panel stayed on top
+        /// of the freshly loaded cards. Subscribing to CollectionChanged and re-raising is
+        /// what makes such bindings update.
+        /// </summary>
+        public int ProjectsCount => Projects.Count;
+
+        public ProjectInfo? SelectedProject
+        {
+            get => _selectedProject;
+            set
+            {
+                SetProperty(ref _selectedProject, value);
+                ((AsyncRelayCommand<ProjectInfo>)DeleteProjectCommand).NotifyCanExecuteChanged();
+            }
+        }
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set => SetProperty(ref _isLoading, value);
+        }
+
+        public string? ErrorMessage
+        {
+            get => _errorMessage;
+            set => SetProperty(ref _errorMessage, value);
+        }
+
+        public string ModeTitle => "Все проекты";
+
+        public ICommand LoadProjectsCommand { get; }
+        public ICommand CreateProjectCommand { get; }
+        public ICommand OpenProjectCommand { get; }
+        public ICommand DeleteProjectCommand { get; }
+        public ICommand BackCommand { get; }
+
+        private AppMode CurrentMode
+        {
+            // Flipping the shell's mode is enough: the shell is the window's data
+            // context, and re-assigning that used to rebuild the persistent header on
+            // every visit. No dispatcher here on purpose - the navigator owns the thread
+            // its own state lives on, and a screen that wrapped the call in one was
+            // reaching across a boundary it does not own.
+            set => _navigator.CurrentMode = value;
+        }
+
+        /// <summary>
+        /// Opening a saved project is one of the two ways into an editor. The mode tab is
+        /// disabled otherwise, so this has to go through OpenProject rather than a plain
+        /// CurrentMode change - the setter would refuse it.
+        /// </summary>
+        private void OpenProjectMode(AppMode mode) => _navigator.OpenProject(mode);
+
+    }
+}

@@ -1,0 +1,576 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Header controls, transcribed from the design specification rather than copied from
+        the WPF theme, because the numbers are the point: a card that is "about right" is a
+        card that is wrong by a number nobody can see in review.
+
+          secondary button   padding 12/8   radius 12   white on a slate-200 border
+          primary button     padding 14/8   radius 12   brand-600, white text
+          tab                padding 14/6   radius 8    12px
+          tab container      padding 4      radius 12
+
+        These live in their own file rather than in the window's own styles so that every
+        screen reuses exactly the same header, which is what makes the two shells comparable
+        at all.
+    -->
+
+    <Style Selector="Button.secondary">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="Button.primary">
+        <Setter Property="Background" Value="{DynamicResource Brand600}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="14,8" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="Button.primary:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Brand700}" />
+    </Style>
+
+    <Style Selector="Button.primary:pressed">
+        <Setter Property="Background" Value="{DynamicResource Brand700}" />
+    </Style>
+    <!--
+        The one action on a screen. Deliberately not the loudest thing in the window: the
+        photographer is mostly looking, and the loudest control on a screen is the one they
+        are invited to press.
+
+        Thirty-eight pixels, not forty-two. It had been given a height of its own that
+        nothing else in the program uses, which made it read as a prop rather than as a
+        button - and a 14-pixel mark beside 13-pixel text is a mark that outweighs the word.
+        The mark is 12 now and the word is the same size, which is what a mark is for.
+    -->
+    <Style Selector="Button.createProject">
+        <Setter Property="Background" Value="{DynamicResource Brand600}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="20,0" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Cursor" Value="Hand" />
+
+        <!-- Light, not heavy: the fill LIFTS on hover and settles on press. A button that
+             darkens on hover is telling the person it is a door; this one is a lamp. -->
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.14" />
+            </Transitions>
+        </Setter>
+
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}" CornerRadius="11">
+                    <Border.Transitions>
+                        <Transitions>
+                            <BrushTransition Property="Background" Duration="0:0:0.14" />
+                        </Transitions>
+                    </Border.Transitions>
+                    <!--
+                         Stretch, not centre, and that is the whole of the slide.
+
+                         Centring the content put the words and the chevron in as one centred
+                         pair. A chip is drawn before its text arrives - the choice is bound to
+                         the view model, which is not populated on the first frame - so the chip
+                         first showed a lone chevron in the middle, and when the words arrived
+                         both of them moved. That is the jump: words appearing against the left
+                         edge and then sliding to the middle.
+
+                         Letting the content fill the control ends it, because the columns stop
+                         depending on the words: the chevron is Auto and sits against the
+                         right-hand edge from the first frame, and the words take what is left
+                         and centre themselves in it. Text arriving then only appears, and
+                         nothing already drawn moves.
+                    -->
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.createProject:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Brand500}" />
+    </Style>
+
+    <Style Selector="Button.createProject:pressed">
+        <Setter Property="Background" Value="{DynamicResource Brand700}" />
+    </Style>
+
+    <!--
+        A filter's box.
+
+        It was thirty-four pixels tall with twelve of padding, and it looked it: the words
+        sat in a strip with no room to breathe, and two controls of that size on a white
+        panel read as labels that had been underlined rather than as things you can press.
+        Thirty-eight pixels, fourteen of padding, an eleven-pixel corner and thirteen-point
+        type is the same shape with air in it.
+
+        The fill is the brand's own lightest, #EEF2FF, barely a shade off the white it sits
+        on, and the pointer deepens it rather than darkening it. Grey on grey - which is
+        what this wore before - is the one combination that looks like a control nobody
+        finished drawing.
+
+        The width is fixed, and that is the whole of the second half of this rule.
+        It used to be a floor, so each box was as wide as its own wording and the panel
+        breathed in and out as the filter changed: 112 pixels for "Черновик", 166 for
+        "В процессе сборки", 167 for "Комбинированный", measured on screen. Switching a
+        filter moved everything beside it.
+
+        One hundred and sixty-eight is the width of the two longest, so the widest filter
+        fits exactly as it does now and the rest sit inside it with room to spare, on the
+        left where a word belongs. A short label is left-aligned rather than centred,
+        because a centred word in a fixed box moves when the word changes length, which is
+        the same fault in a smaller hat.
+
+        The chevron is drawn in the control's own template rather than taken from the
+        platform's, and takes its colour from the text, so it stays quiet at rest and
+        darkens with the label on hover.
+    -->
+    <Style Selector="Button.filterChip">
+        <Setter Property="Background" Value="{DynamicResource Brand50}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="Height" Value="38" />
+        <Setter Property="Width" Value="180" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate800}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <!--
+             180 wide, which is the longest label the two filters can be given plus the
+             chrome around it. Measured: the labels are 108 pixels ("Уникальные папки"),
+             111 ("Комбинированный") and 78 ("В процессе сборки") at this size, and the
+             space left for the words inside 168 was 98 - so the longer two did not fit,
+             and a word that does not fit is not centred: it starts at the left and runs
+             out under the chevron, which is what made the control look left-aligned after
+             a choice was made in it.
+
+             The label also carries TextTrimming, so that at another screen's scale the
+             answer is an ellipsis rather than a word lying on top of its neighbour.
+
+             Filling the width, and written into the template below rather than set here.
+
+             It was a setter on HorizontalContentAlignment, and a property that arrives
+             from a style is not there for the first layout pass - so the words were drawn
+             against the left edge and moved to the middle a moment later, which reads as
+             a small slide every time a filter is chosen. It cannot happen if the control is
+             told where its content goes before it has any content to put there.
+
+             Stretch, not Centre. Centring hands the content over as one block - the words
+             and the chevron together - and a block is as wide as its widest line, so the
+             chevron stood 5 pixels further from the right-hand edge on "Любой статус" than
+             on "Все режимы" and moved again every time the value changed. Filling the
+             width gives the content the whole box instead, and the chevron, which is in a
+             column of its own that is never asked to grow, stays against the right-hand
+             edge where a chevron belongs. What centres the words is then a property of
+             the words themselves - see the label in FilterDropDown.axaml.
+        -->
+
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.14" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.14" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.14" />
+            </Transitions>
+        </Setter>
+
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <Border.Transitions>
+                        <Transitions>
+                            <BrushTransition Property="Background" Duration="0:0:0.14" />
+                            <BrushTransition Property="BorderBrush" Duration="0:0:0.14" />
+                        </Transitions>
+                    </Border.Transitions>
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.filterChip:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Brand100}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate900}" />
+    </Style>
+
+    <Style Selector="Button.filterChip:pressed">
+        <Setter Property="Background" Value="{DynamicResource Brand100}" />
+    </Style>
+
+    <!--
+        never a control on the screen that is there and does nothing.
+    -->
+    <Style Selector="Button.ghostClear">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Brand600}" />
+        <Setter Property="Cursor" Value="Hand" />
+
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.ghostClear:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Brand50}" />
+    </Style>
+
+    <!--
+        An icon button is an icon and nothing else: no plate, no frame, no fill. The other
+        shell's version is a transparent rounded rectangle with 8 of padding around a 14px
+        glyph, and this one had a white fill, a grey border and a fixed 32x32 box - which
+        turned three quiet icons in the header into three framed buttons, and was the first
+        thing anyone noticed was wrong.
+
+        The faint foreground is the same faint the other shell uses for its icon buttons.
+    -->
+
+    <Style Selector="Button.icon">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style Selector="Button.icon:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Slate100}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
+    </Style>
+
+    <Style Selector="Button.icon:pressed">
+        <Setter Property="Background" Value="{DynamicResource Slate200}" />
+    </Style>
+
+    <!--
+        Mode switching, rebuilt.
+
+        The version before this could not be read. The chosen screen was a white pill with
+        a hairline on a white bar, and the two screens that cannot be reached without a
+        project were drawn in almost the same grey as the ones that can. Two things were
+        wrong at the root rather than in the details.
+
+        The first is that the appearance was bound from the view model onto Background and
+        Foreground. A binding on Foreground overrides the rule that should have quieted a
+        disabled tab, so "cannot be pressed" and "can be pressed" came out the same colour,
+        and the one difference that was left - an Opacity - faded the whole control and made
+        the bar look broken instead of busy. Appearance now belongs to the styles, where
+        :checked and :disabled are separate facts about a control rather than two values
+        competing over one property.
+
+        The second is that nothing said which screen was live. The chosen one now wears the
+        brand: a solid Brand600 pill with white text, the loudest thing in the header, which
+        reads from across the room. The live-but-not-chosen ones are quiet ink. The two that
+        need a project are quieter still and carry a small padlock, so the reason is on the
+        tab rather than in a tooltip nobody opens.
+
+        Order matters here. :checked is written after :pointerover so hovering the chosen
+        tab cannot repaint it, and :checked:pointerover is the one place that pill is
+        allowed to change - deeper, not lighter, because a filled control pressed should
+        look pressed.
+
+        The template is written out because ToggleButton paints no background of its own
+        here, which is why every tab once carried a Border inside it to do the painting.
+    -->
+    <Style Selector="ToggleButton.tab">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
+        <Setter Property="Cursor" Value="Hand" />
+
+        <!--
+            The template is written out because ToggleButton paints no background of its own
+            here, which is why every tab used to carry a Border inside it to do the painting.
+            Painting it here instead means one less element per tab and - the reason it was
+            worth doing - the pointer states below have something real to change.
+        -->
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border x:Name="Pill"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="9">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="ToggleButton.tab:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate300}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate800}" />
+    </Style>
+
+    <Style Selector="ToggleButton.tab:pressed">
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate400}" />
+    </Style>
+
+    <!--
+        Difference one of this step, listed rather than fudged: the active tab carries a
+        subtle shadow in the WPF theme. ToggleButton has no BoxShadow property in this
+        engine, so the shadow would have to live on a Border around its content. That is the
+        way to get it, but it is a visible difference against the screenshot beside it
+        and therefore a decision rather than a detail.
+    -->
+
+    <!--
+        Difference two: a disabled tab in the WPF theme is greyed and loses the pointer.
+        Here a disabled ToggleButton simply stops reacting, so the greying is done
+        explicitly - otherwise a disabled tab would look exactly like an enabled one, which
+        is how a person learns to click something that cannot be clicked.
+    -->
+    <Style Selector="ToggleButton.tab:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
+
+    <Style Selector="ToggleButton.tab:disabled /template/ ContentPresenter">
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
+    <!--
+        Utility icons: a small family, not three floating things.
+
+        The step between them is two pixels rather than six. At six they each sat in their own
+        space and read as three separate controls a person happened to be able to reach; at
+        two they read as one group of three, which is what they are.
+    -->
+    <Style Selector="Button.utility">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="Padding" Value="9" />
+        <Setter Property="Width" Value="34" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
+        <Setter Property="Cursor" Value="Hand" />
+
+        <!--
+            The template is written out for the same reason as the tab's, and it is not
+            tidiness: the platform paints a disabled button's fill inside its own template,
+            so a rule that sets Background on the button is a rule that loses. Two grey
+            blocks in the bar cannot be argued out of existence from a style.
+        -->
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        CornerRadius="9">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.utility:pointerover">
+        <Setter Property="Background" Value="{DynamicResource Slate100}" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+    </Style>
+
+    <Style Selector="Button.utility:pressed">
+        <Setter Property="Background" Value="{DynamicResource Slate200}" />
+    </Style>
+
+    <!--
+        A disabled utility icon is still an icon.
+
+        The platform paints a filled background on a disabled button, which turned the two
+        history arrows into two grey blocks - heavier than everything else in the bar and
+        pulling the eye to the one pair of controls a person cannot use. Nothing there, and
+        the glyph faint: they are there when there is something to undo, and quiet when there
+        is not.
+    -->
+    <Style Selector="Button.utility:disabled">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Opacity" Value="0.35" />
+    </Style>
+
+    <!--
+        The account control.
+
+        A sign-in is not a utility icon and is not drawn as one. It has a label, because a
+        labelled control says what state the program is in - signed out - to somebody who has
+        never seen the program before, while a lone glyph says it only to somebody who already
+        knows. It is an outline rather than a filled brand button on purpose: working on a
+        photograph is what this program is for, and the account is not that.
+    -->
+    <Style Selector="Button.account">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate300}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+        <Setter Property="Cursor" Value="Hand" />
+
+        <!-- Written out for the same reason as the utility button's: the platform owns the
+             paint otherwise, and the outline this control is made of is the whole of it. -->
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="10">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.account:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brand500}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brand600}" />
+        <Setter Property="Background" Value="{DynamicResource Brand50}" />
+    </Style>
+
+    <Style Selector="Button.account:pressed">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brand600}" />
+        <Setter Property="Background" Value="{DynamicResource Brand100}" />
+    </Style>
+
+<!--
+        A number field for the run controls. The ordinary text box is sized for a form -
+        padding 12 by 8 and 12px - so two of them side by side made the run fields taller
+        than the buttons beside them and the panel looked uneven. Same box, smaller.
+    -->
+    <Style Selector="TextBox.numberField">
+        <Setter Property="Width" Value="64" />
+        <Setter Property="Padding" Value="8,4" />
+        <!--
+            Fifteen and semibold, not twelve and regular. These two boxes are the only place the
+            run is decided, and twelve-pixel digits sat in them like a footnote: at a glance the
+            panel read as a caption with two empty frames under it.
+        -->
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <!--
+            The number in the middle of the box. Left-aligned it sat against the frame with
+            a gap on the other side, and two boxes side by side each with their digit
+            hugging the left looked like the digits were falling out of them.
+        -->
+        <Setter Property="TextAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBox.searchField">
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <!--
+        A mode card on the start screen: the whole card is the choice, so the control has to
+        be one that can be pressed, focused and reached by automation. Padding 24, a 1px
+        slate frame, radius 16, the card shadow, and on hover the frame takes the product's
+        colour and the shadow deepens - which is what makes a screen-sized block read as a
+        card rather than as a form field.
+
+        The template is written out because the built-in one paints a grey wash over the
+        content on hover. The released program had no wash: its card was a Border, and a
+        Border has nothing to wash. Hover is the frame changing colour and the shadow
+        deepening, and nothing else - a screen-sized block that greys out reads as disabled.
+    -->
+    <Style Selector="Button.modeCard">
+        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Padding" Value="24" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <!--
+                    The shadow lives on the Border rather than on the Button: in this engine
+                    BoxShadow is a Border's property and there is no Button one, so a setter
+                    naming it on the Button does not compile.
+                -->
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}"
+                        BoxShadow="{DynamicResource ShadowCard}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.modeCard:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brand500}" />
+    </Style>
+
+    <Style Selector="Button.modeCard:pointerover /template/ Border">
+        <Setter Property="BoxShadow" Value="{DynamicResource ShadowHover}" />
+    </Style>
+
+</Styles>

@@ -1,0 +1,43 @@
+using Microsoft.Extensions.DependencyInjection;
+using PhotoBook.Application;
+
+namespace PhotoBook.Infrastructure
+{
+    /// <summary>
+    /// How this layer is put together.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The layer assembles itself rather than listing its implementations somewhere else,
+    /// because it is the only place that knows what implements its ports. The alternative -
+    /// the composition root naming concrete classes - is what this arrangement removes: the
+    /// implementations are internal, so a view or a dialog that tries to construct one does
+    /// not compile.
+    /// </para>
+    /// <para>
+    /// Everything registered here is a singleton because the state these objects carry is
+    /// either a cache (photo headers, thumbnails) or a resource that must not be opened twice
+    /// (the HTTP client behind the release feed).
+    /// </para>
+    /// </remarks>
+    public static class InfrastructureServices
+    {
+        public static IServiceCollection AddPhotoBookInfrastructure(this IServiceCollection services)
+        {
+            services.AddSingleton<IFileService, FileService>();
+            services.AddSingleton<IImageService, ImageService>();
+            services.AddSingleton<IThumbnailProvider, ThumbnailProvider>();
+            services.AddSingleton<IUpdateFeed, UpdateService>();
+            services.AddSingleton<ILoggingService, LoggingService>();
+
+            // The journal is in the container rather than reached for statically, so that anything
+            // with a reason to write something down can be given it. A converter with no journal
+            // writes nothing, which is how a photograph that cannot be read used to leave no trace.
+            services.AddSingleton<IJournal>(sp => new FileJournal(Diagnostics.Directory));
+            services.AddSingleton<IProjectRepository, ProjectRepository>();
+            services.AddSingleton<IProjectIndexStore, ProjectIndexStore>();
+
+            return services;
+        }
+    }
+}

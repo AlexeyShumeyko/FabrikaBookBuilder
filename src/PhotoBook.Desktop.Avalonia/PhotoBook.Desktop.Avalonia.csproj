@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The desktop shell: the window, the screens, the dialogs and the composition root.
+
+    It is the only executable in the product. The layers below it are engine-neutral by
+    build, so a rule that belongs in PhotoBook.Application or PhotoBook.Infrastructure
+    cannot quietly be implemented here.
+
+    The assembly keeps the name the product has shipped under since 1.1.1. The installer,
+    the shortcuts and the updater all address PhotoBookRenamer.exe, and a new UI engine is
+    not a reason to move the program on disk. The namespace is PhotoBook.Shell so that the
+    bare word Avalonia resolves to the framework rather than to a namespace segment of ours.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <AssemblyName>PhotoBookRenamer</AssemblyName>
+    <RootNamespace>PhotoBook.Shell</RootNamespace>
+    <Version>2.0.0</Version>
+    <Authors>PhotoBook Renamer</Authors>
+    <Description>Professional photo book assembly and renaming application</Description>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <!-- The header's view model needs change notification and commands. The same toolkit the
+         other two view models use, at the same version, rather than a hand-rolled base that
+         would behave slightly differently from every view model next to it. -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PhotoBook.Core\PhotoBook.Core.csproj" />
+    <ProjectReference Include="..\PhotoBook.Application\PhotoBook.Application.csproj" />
+    <ProjectReference Include="..\PhotoBook.Infrastructure\PhotoBook.Infrastructure.csproj" />
+    <!-- The company's own artwork, the yellow disc in the header. Named here rather than
+         left to the default glob: a resource that did not get picked up is a crash at
+         start-up, in the engine's own vocabulary, with nothing in the message that says
+         "image missing". -->
+    <AvaloniaResource Include="Assets\logo.png" />
+    <ProjectReference Include="..\PhotoBook.Presentation\PhotoBook.Presentation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The installer reads the icon from the publish folder, not from the assembly. -->
+    <None Update="icon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

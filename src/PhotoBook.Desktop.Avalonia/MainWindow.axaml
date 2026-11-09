@@ -1,0 +1,219 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PhotoBook.Shell.MainWindow"
+        Title="Fabrika BookBuilder Studio"
+        Width="1520" Height="800"
+        FontFamily="Inter"
+        Background="{DynamicResource AppBackground}"
+        PointerPressed="OnWindowPointerPressed"
+        WindowStartupLocation="CenterScreen">
+
+    <!--
+        The shell is a tinted page with white cards on it, and that is the decision this file
+        encodes. It used to be a white page with a full-width bar across the top and a
+        hairline under it - which is a different design, not a different way of drawing the
+        same one, and it is why every screen looked like it belonged to another program.
+
+        The header is a card like any other: inset thirty-two from the sides and twenty-four
+        from the top, sixteen round the corners, one hairline of border, the same shadow as
+        every other card. Nothing about it runs to the edge of the window, which is the whole
+        of the difference.
+    -->
+    <!--
+        Two layers. The page, and above it a sheet that dims it.
+
+        A dialog used to be a second window: a white rectangle with no border of its own,
+        floating on a page that is also white. There was nothing to say which one was on top,
+        and nothing about it belonging to this program - it read as another program's window
+        that happened to be in front. Dimming the page behind a panel that has its own surface,
+        its own border and its own shadow says all of that without a word.
+
+        The layer sits over the whole window, header included, so the page behind is plainly
+        the same page and not a different one.
+    -->
+    <Grid Background="{DynamicResource AppBackground}">
+
+    <DockPanel LastChildFill="True" Background="{DynamicResource AppBackground}">
+
+    <Border DockPanel.Dock="Top" Padding="32,10"
+            Background="{DynamicResource Surface}"
+            BorderBrush="{DynamicResource Slate200}" BorderThickness="0,0,0,1"
+            BoxShadow="{DynamicResource ShadowSubtle}">
+        <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+
+                <!-- left: the artwork, then the product name over the open project.
+                     The logo is the company's own picture - a yellow disc on transparency.
+                     It is not a glyph on a coloured plate: there is no plate, and there is no
+                     badge next to the name either. Both were invented here once and both are
+                     gone. -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+
+                    <Image Source="avares://PhotoBookRenamer/Assets/logo.png"
+                           Width="32" Height="32" Stretch="Uniform"
+                           VerticalAlignment="Center"
+                           AutomationProperties.Name="Фабрика Фотокниги" />
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Фабрика Фотокниги" Classes="t18Bold" />
+                        <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
+                            <TextBlock Text="Проект:" Classes="t12Medium"
+                                       Foreground="{DynamicResource Slate500}" />
+                            <TextBlock Classes="t12Semi" MaxWidth="240"
+                                       TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource Slate700}"
+                                       Text="{Binding ProjectTitle}" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- centre: the four screens, as one grouped control. The two editor tabs are
+                     greyed until a project of that mode is open, because a mode is reached
+                     through a project and not by choosing a tab.
+
+                     Which tab is the chosen one cannot be asked of :checked - the platform
+                     theme's rule for a checked toggle button wins over this file's - so it
+                     is bound from the view model instead. Chosen is a white pill standing
+                     above the track; the rest are transparent. -->
+                <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Background="{DynamicResource Slate200At70}" CornerRadius="11" Padding="3">
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <ToggleButton Classes="tab" AutomationProperties.Name="Мои проекты"
+                                      Background="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
+                                      Foreground="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
+                                      Command="{Binding GoToProjectsCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           Opacity="0.85"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+                                <TextBlock Text="Мои проекты" />
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton Classes="tab" AutomationProperties.Name="Выбор режима"
+                                      Background="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
+                                      Foreground="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
+                                      Command="{Binding GoToModeSelectCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <TextBlock Text="&#xE71C;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           Opacity="0.85"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+                                <TextBlock Text="Выбор режима" />
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton Classes="tab" AutomationProperties.Name="Уникальные папки"
+                                      IsEnabled="{Binding CanOpenUniqueFoldersTab}"
+                                      ToolTip.Tip="Открывается только внутри проекта"
+                                      Background="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
+                                      Foreground="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
+                                      Command="{Binding GoToUniqueFoldersCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           Opacity="0.85"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+                                <TextBlock Text="Уникальные папки" />
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton Classes="tab" AutomationProperties.Name="Комбинированный"
+                                      IsEnabled="{Binding CanOpenCombinedTab}"
+                                      ToolTip.Tip="Открывается только внутри проекта"
+                                      Background="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
+                                      Foreground="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
+                                      Command="{Binding GoToCombinedCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           Opacity="0.85"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" />
+                                <TextBlock Text="Комбинированный" />
+                            </StackPanel>
+                        </ToggleButton>
+                    </StackPanel>
+                </Border>
+
+                <!-- right: three zones, and the dividers are what say so.
+
+                       [ undo / redo ] | [ theme, help, contacts ] | [ sign in ]
+
+                     Undo and redo belong to the folders editor alone: it is the only screen
+                     whose panel does not already carry the controls a person changes most, so
+                     two sets of arrows there would be two sets to read.
+
+                     Two dividers rather than one. The bar reads left to right as navigation,
+                     then history, then utilities, then who you are; a single divider leaves
+                     the first two running together and the last two looking like one
+                     crowded end. -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+
+                    <StackPanel Orientation="Horizontal" Spacing="2"
+                                IsVisible="{Binding ShowUndoRedo}">
+                        <Button Classes="utility" AutomationProperties.Name="Отменить"
+                                ToolTip.Tip="Отменить (Ctrl+Z)"
+                                Command="{Binding UndoCommand}">
+                            <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
+                        </Button>
+                        <Button Classes="utility" AutomationProperties.Name="Вернуть"
+                                ToolTip.Tip="Вернуть (Ctrl+Y)"
+                                Command="{Binding RedoCommand}">
+                            <TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
+                        </Button>
+                    </StackPanel>
+
+                    <Border Width="1" Height="22" Background="{DynamicResource Slate200}"
+                            Margin="10,0" VerticalAlignment="Center" />
+
+                    <Button Classes="utility" ToolTip.Tip="Тема оформления — в разработке"
+                            AutomationProperties.Name="Тема оформления">
+                        <TextBlock Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
+                    </Button>
+                    <Button Classes="utility" Click="OnHelpClick" ToolTip.Tip="Помощь и журнал работы программы"
+                            AutomationProperties.Name="Помощь">
+                        <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
+                    </Button>
+                    <Button Classes="utility" ToolTip.Tip="Контакты — в разработке"
+                            AutomationProperties.Name="Контакты">
+                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
+                    </Button>
+
+                    <Border Width="1" Height="22" Background="{DynamicResource Slate200}"
+                            Margin="10,0" VerticalAlignment="Center" />
+
+                    <!--
+                        A placeholder, and it says so. A stub that looks finished and is not is
+                        how somebody files a report that a button does nothing; the other two
+                        stubs in this bar say the same thing in their tooltips and this one is
+                        no different. Signing in against an account on the site is later work -
+                        this is its seat.
+
+                        No glyph in front of the word. The person mark is already on screen a
+                        few pixels to the left as "contacts", and two identical marks in one
+                        bar is worse than one mark fewer: a person reaches for the wrong one
+                        and cannot tell why it did nothing.
+                    -->
+                    <Button Classes="account" ToolTip.Tip="Вход в аккаунт — в разработке"
+                            AutomationProperties.Name="Вход">
+                        <TextBlock Text="Войти" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ================================ body =================================
+             Whatever screen is current. The host is deliberately dumb: it holds an object
+             and puts it on the window, and which screen that is was decided before this
+             window existed. A ContentControl is enough for one screen, and the day it is
+             not, that is when it earns a navigation stack.
+        -->
+        <ContentControl x:Name="ScreenHost" />
+    </DockPanel>
+
+    <!-- ================================ sheet ================================
+         The dimming layer and nothing else. What is in it is put there by code and taken
+         out again when it has answered; the layer itself knows no more than that.
+    -->
+    <Border x:Name="SheetLayer" IsVisible="False" Background="#8C0F172A">
+        <Grid Margin="28">
+            <ContentControl x:Name="SheetHost"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            MaxWidth="1120" MaxHeight="760" />
+        </Grid>
+    </Border>
+    </Grid>
+</Window>

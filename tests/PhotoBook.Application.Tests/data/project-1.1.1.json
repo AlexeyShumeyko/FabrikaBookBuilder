@@ -1,0 +1,84 @@
+{
+  "mode": 2,
+  "outputFolder": null,
+  "books": [
+    {
+      "folderPath": "D:\\Typesetting\\Album-01",
+      "name": "\u0410\u043b\u044c\u0431\u043e\u043c 01",
+      "bookIndex": 1,
+      "cover": {
+        "sourcePath": "D:\\Typesetting\\Album-01\\000-cover.jpg",
+        "thumbnailPath": null,
+        "isCover": true,
+        "index": 0,
+        "displayIndex": 0,
+        "isLocked": false,
+        "fileName": "000-cover.jpg"
+      },
+      "pages": [
+        {
+          "sourcePath": "D:\\Typesetting\\Album-01\\001.jpg",
+          "thumbnailPath": null,
+          "isCover": false,
+          "index": 1,
+          "displayIndex": 1,
+          "isLocked": false,
+          "fileName": "001.jpg"
+        },
+        {
+          "sourcePath": "D:\\Typesetting\\Album-01\\002.jpg",
+          "thumbnailPath": null,
+          "isCover": false,
+          "index": 2,
+          "displayIndex": 2,
+          "isLocked": false,
+          "fileName": "002.jpg"
+        },
+        {
+          "sourcePath": "D:\\Typesetting\\Album-01\\003.jpg",
+          "thumbnailPath": null,
+          "isCover": false,
+          "index": 3,
+          "displayIndex": 3,
+          "isLocked": false,
+          "fileName": "003.jpg"
+        }
+      ]
+    },
+    {
+      "folderPath": "D:\\Typesetting\\Album-02",
+      "name": "\u0410\u043b\u044c\u0431\u043e\u043c 02",
+      "bookIndex": 2,
+      "cover": {
+        "sourcePath": "D:\\Typesetting\\Album-02\\000-cover.jpg",
+        "thumbnailPath": null,
+        "isCover": true,
+        "index": 0,
+        "displayIndex": 0,
+        "isLocked": false,
+        "fileName": "000-cover.jpg"
+      },
+      "pages": [
+        {
+          "sourcePath": "D:\\Typesetting\\Album-02\\001.jpg",
+          "thumbnailPath": null,
+          "isCover": false,
+          "index": 1,
+          "displayIndex": 1,
+          "isLocked": false,
+          "fileName": "001.jpg"
+        },
+        {
+          "sourcePath": null,
+          "thumbnailPath": null,
+          "isCover": false,
+          "index": 2,
+          "displayIndex": 2,
+          "isLocked": false,
+          "fileName": null
+        }
+      ]
+    }
+  ],
+  "availableFiles": []
+}

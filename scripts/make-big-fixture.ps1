@@ -1,9 +1,9 @@
 ﻿# Creates a throwaway COMBINED project shaped like a real mid-sized order: a hundred
 # photos in the pool, ten books of five spreads, every spread filled.
 #
-# This is the owner's own worry - "если я туда загружу сотню файлов, а ещё и распределю
+# This is our own worry - "если я туда загружу сотню файлов, а ещё и распределю
 # по книгам, прога вообще зависнет" - turned into a repeatable case. The photos are real
-# files on disk, copied from one of the owner's own pictures, so the decoders, the
+# files on disk, copied from one of our own pictures, so the decoders, the
 # thumbnail builder and the file list all do the work they would do in production.
 #
 # Usage: pwsh -File scripts\make-big-fixture.ps1 -Photos 100 -Books 10 -Spreads 5

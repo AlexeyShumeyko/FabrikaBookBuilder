@@ -1,0 +1,121 @@
+СОБСТВЕННИЧЕСКАЯ ЛИЦЕНЗИЯ НА ПРОГРАММНОЕ ОБЕСПЕЧЕНИЕ
+
+Copyright (c) 2024-2026 Алексей Шумейко. Все права защищены.
+
+Настоящая лицензия распространяется на программу Fabrika BookBuilder Studio, её
+исходный код, документацию, графические материалы и иные файлы репозитория
+(далее — «Программа»). Использование Программы означает согласие с настоящими
+условиями.
+
+1. ПРАВООБЛАДАТЕЛЬ
+
+1.1. Исключительное право на Программу принадлежит Алексею Шумейко
+(далее — «Правообладатель»).
+
+1.2. Программа создана по личной инициативе Правообладателя вне рамок трудовых
+обязанностей и не является служебным произведением. Ни настоящее использование
+Программы, ни её применение в деятельности какой-либо организации не переносят
+исключительное право и не дают оснований считать Правообладателем кого-либо, кроме
+лица, указанного в пункте 1.1.
+
+2. ПРАВО ИСПОЛЬЗОВАНИЯ ДЛЯ РАБОТОДАТЕЛЯ
+
+2.1. Правообладатель предоставляет организации, в которой состоит в трудовых
+отношениях на момент использования (далее — «Компания»), неисключительное,
+безвозмездное, бессрочное право использовать Программу в полном объёме, в том числе:
+запускать и применять её в производственной деятельности Компании, устанавливать на
+рабочие места и серверы Компании, изменять, дополнять и собирать из исходного кода,
+тиражировать и распространять внутри Компании.
+
+2.2. Право, предоставленное пунктом 2.1, не передаётся третьим лицам. Компания не
+вправе распространять Программу за свои пределы, передавать её контрагентам,
+публиковать исходный код, выдавать сублицензии, продавать Программу или её части, а
+также указывать себя правообладателем или регистрировать на своё имя права на
+Программу и её обозначения.
+
+2.3. Право по пункту 2.1 действует без отдельного соглашения. Компания вправе
+подтвердить его условия письмом Правообладателя.
+
+3. ОГРАНИЧЕНИЯ ДЛЯ ВСЕХ ОСТАЛЬНЫХ ЛИЦ
+
+3.1. Без предварительного письменного разрешения Правообладателя запрещается
+копирование, распространение, публикация, передача третьим лицам, сублицензирование,
+продажа, сдача в аренду, включение в собственные продукты и услуги, а также создание
+производных продуктов на основе Программы или любой её части.
+
+3.2. Запрещается использование Программы в коммерческих целях, в том числе в
+продуктах и услугах, предлагаемых третьим лицам, без письменного соглашения с
+Правообладателем.
+
+3.3. Разрешение запрашивается у Правообладателя письменно. Условия использования, в
+том числе вознаграждение, определяются отдельным письменным соглашением по каждому
+случаю.
+
+4. ОТСУТСТВИЕ ГАРАНТИЙ
+
+4.1. Программа предоставляется «как есть». Правообладатель не гарантирует
+пригодность Программы для конкретных целей, отсутствие ошибок и совместимость с
+оборудованием и программным обеспечением третьих лиц.
+
+4.2. Правообладатель не несёт ответственности за убытки, возникшие в связи с
+использованием или невозможностью использования Программы, включая утрату данных.
+
+4.3. Программа обрабатывает файлы пользователя, не изменяя и не удаляя исходные
+фотографии. Ответственность за сохранность исходных файлов и резервных копий лежит на
+пользователе.
+
+5. ПРЕКРАЩЕНИЕ
+
+5.1. Право, предоставленное разделом 2, прекращается при утрате трудовых отношений
+между Правообладателем и Компанией, если стороны не договорились об ином письменно.
+
+5.2. При нарушении условий разделов 2 и 3 право использования прекращается
+немедленно; положения раздела 4 сохраняют силу.
+
+6. ПРОЧЕЕ
+
+6.1. Настоящая лицензия не передаёт никаких прав на товарные знаки, логотипы и иные
+обозначения, кроме права использовать их вместе с Программой в пределах разрешённого
+использования.
+
+6.2. Если какое-либо положение лицензии будет признано недействительным, остальные
+положения сохраняют силу.
+
+6.3. Настоящая лицензия составлена на русском языке и имеет приоритет перед
+переводом, приведённым ниже.
+
+---
+
+PROPRIETARY SOFTWARE LICENSE (courtesy translation; the Russian text prevails)
+
+Copyright (c) 2024-2026 Alexey Shumeyko. All rights reserved.
+
+1. Ownership. The exclusive rights in the software, its source code, documentation and
+   other repository materials (the "Software") belong to Alexey Shumeyko (the "Owner").
+   The Software was created on the Owner's own initiative outside the scope of any
+   employment duties and is not a work made for hire. No use of the Software transfers
+   ownership or creates any claim of ownership other than the Owner's.
+
+2. Grant to the employer. The Owner grants the organisation that employs the Owner at the
+   time of use (the "Company") a non-exclusive, royalty-free, perpetual right to use the
+   Software in full, including running it in the Company's operations, installing it on
+   the Company's machines and servers, modifying and building it from source, and
+   reproducing and distributing it within the Company.
+
+3. Limits of the grant. The Company may not distribute the Software outside its own
+   organisation, provide it to contractors or competitors, publish the source code,
+   sublicense, sell the Software or any part of it, claim ownership of it, or register any
+   right or mark in it.
+
+4. No other rights. Copying, distribution, publication, transfer, sublicensing, sale,
+   inclusion in third-party products or services, and creation of derivative works are
+   prohibited without the Owner's prior written permission. Commercial use requires a
+   separate written agreement.
+
+5. No warranty. The Software is provided "as is", without warranties of fitness for a
+   particular purpose, freedom from errors, or compatibility. The Owner is not liable for
+   any damages arising from its use, including loss of data.
+
+6. Termination. The grant in section 2 ends when the employment relationship between the
+   Owner and the Company ends, unless agreed otherwise in writing. Any breach of sections
+   2 and 3 terminates the right of use immediately; section 5 survives.

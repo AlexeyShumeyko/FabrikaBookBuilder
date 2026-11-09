@@ -21,7 +21,7 @@ param(
 )
 
 # The harness console runs on code page 866, which turns every Cyrillic string this
-# script prints into "?" and floods the agent context with mojibake. Force UTF-8 on
+# script prints into "?" and floods the console with mojibake. Force UTF-8 on
 # both channels; a child powershell.exe resets these on its own, so it has to be set
 # inside each script rather than once in the caller.
 # This has to sit AFTER the param block: param must be the first statement in the body,
@@ -30,6 +30,9 @@ param(
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Stop'
+
+# One place that knows where the built program is.
+. "$PSScriptRoot\common.ps1"
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 
@@ -107,7 +110,7 @@ if ($index -gt 0) {
 }
 
 
-$exe = Join-Path $root 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+$exe = Get-AppExe
 $proc = Start-Process -FilePath $exe -PassThru
 $mainHwnd = [intptr]::Zero
 
@@ -133,18 +136,33 @@ try {
     }
     if ($null -eq $titleEl) { throw "fixture project '$wantedTitle' not found" }
 
-    $walker = [System.Windows.Automation.TreeWalker]::ControlViewWalker
-    $node = $walker.GetParent($titleEl); $open = $null
-    for ($i = 0; $i -lt 10 -and $null -ne $node -and $null -eq $open; $i++) {
-        foreach ($b in $node.FindAll([System.Windows.Automation.TreeScope]::Descendants,
-            (New-Object System.Windows.Automation.PropertyCondition(
-                [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-                [System.Windows.Automation.ControlType]::Button)))) {
-            if ($b.Current.Name -like '*Открыть проект*') { $open = $b; break }
-        }
-        $node = $walker.GetParent($node)
+    # The open button belonging to THIS card, which is the nearest one to the name rather
+    # than the first one found while walking up the tree.
+    #
+    # Walking up and taking the first open button works while there are three cards and
+    # breaks the moment the list is a grid: the ancestor reached is the one holding every
+    # card, so the first button in it belongs to whichever card is drawn first - a different
+    # project entirely. Nothing then says so, because opening a project succeeds: the wrong
+    # project simply opens, with its own screen and its own export button's name.
+    $at = $titleEl.Current.BoundingRectangle
+    $openButtons = @()
+    foreach ($b in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+        (New-Object System.Windows.Automation.PropertyCondition(
+            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+            [System.Windows.Automation.ControlType]::Button)))) {
+        if ($b.Current.Name -like '*Открыть проект*') { $openButtons += $b }
+    }
+    $open = $null
+    $best = [double]::MaxValue
+    foreach ($b in $openButtons) {
+        $r = $b.Current.BoundingRectangle
+        $dx = $r.X + $r.Width / 2 - $at.X
+        $dy = $r.Y + $r.Height / 2 - $at.Y
+        $d = [math]::Sqrt($dx * $dx + $dy * $dy)
+        if ($d -lt $best) { $best = $d; $open = $b }
     }
     if ($null -eq $open) { throw 'no Open button' }
+    Write-Host ("opening '{0}': its card's button is {1} px away" -f $titleEl.Current.Name, [int]$best)
     $open.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
     Start-Sleep -Seconds 8
 
@@ -201,7 +219,7 @@ try {
     Start-Sleep -Seconds 3
 
     # Every folder that was already occupied must come out of this run byte for byte: the
-    # owner's rule is that each export gets its own folder, so a second export of the same
+    # we's rule is that each export gets its own folder, so a second export of the same
     # project can never overwrite the first one's files.
     foreach ($name in $takenBefore.Keys) {
         $after = @(Get-ChildItem (Join-Path $desktop $name) -Recurse -File).Count

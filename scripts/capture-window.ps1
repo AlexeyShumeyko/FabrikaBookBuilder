@@ -9,13 +9,16 @@ param(
 )
 
 # The harness console runs on code page 866, which turns every Cyrillic string this
-# script prints into "?" and floods the agent context with mojibake. Force UTF-8 on
+# script prints into "?" and floods the console with mojibake. Force UTF-8 on
 # both channels; a child powershell.exe resets these on its own, so it has to be set
 # inside each script rather than once in the caller.
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Stop'
+
+# One place that knows where the built program is.
+. "$PSScriptRoot\common.ps1"
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 
@@ -33,7 +36,7 @@ public class Win {
 "@
 
 try {
-    $exe = Join-Path $root 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+    $exe = Get-AppExe
     if (-not (Test-Path $exe)) { Write-Host "FAIL: exe not found"; exit 1 }
 
     $proc = Start-Process -FilePath $exe -PassThru
@@ -57,6 +60,9 @@ try {
 
     $bmp = New-Object System.Drawing.Bitmap $w, $h
     $g = [System.Drawing.Graphics]::FromImage($bmp)
+    # The picture is taken from the screen, so what is in front is what lands in it.
+    Set-WindowInFront $proc.MainWindowHandle $proc.Id
+    Assert-WindowInFront $proc.MainWindowHandle
     $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w, $h)))
 
     $full = Join-Path $root $OutputPath

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The rules and the entities of the product: books, spreads, projects, and the naming of
+    the files an export produces.
+
+    This project targets plain net8.0 and references nothing. That is the point of it: the
+    domain cannot reach the file system, the network, the clock or a user interface, because
+    it has no way to. Everything platform-specific sits behind a port declared in
+    PhotoBook.Application, which is also what makes the Avalonia move a change of one
+    project rather than of the whole codebase.
+
+    Keep it that way: a using of System.Windows, System.IO, System.Net or an image library
+    in this project is a mistake, and the build will show it as one.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>PhotoBook.Core</RootNamespace>
+    <AssemblyName>PhotoBook.Core</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

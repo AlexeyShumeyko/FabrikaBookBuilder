@@ -17,6 +17,9 @@ param(
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Stop'
+
+# One place that knows where the built program is.
+. "$PSScriptRoot\common.ps1"
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 
@@ -37,6 +40,12 @@ public class Win4 {
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr h);
     [DllImport("user32.dll")] private static extern IntPtr GetWindow(IntPtr h, uint cmd);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowTextW(IntPtr h, System.Text.StringBuilder s, int max);
+    public static string Title(IntPtr h) {
+        var sb = new System.Text.StringBuilder(512);
+        GetWindowTextW(h, sb, sb.Capacity);
+        return sb.ToString();
+    }
     [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
 
     public static IntPtr[] Visible(int pid) {
@@ -53,6 +62,13 @@ public class Win4 {
 }
 "@
 
+# The window title this dialog carries. Anything else on screen is a different
+# The text on the button that confirms this dialog. A window is identified by
+# what it contains rather than by its caption: these windows draw their own
+# chrome and Win32 reports an empty title for them, so a caption check would
+# match nothing - or, worse, the wrong window.
+$confirmLabel = 'Удалить'
+
 function Find-ByName($rootEl, [string]$label, [string]$typeName) {
     $ct = [System.Windows.Automation.ControlType]::$typeName
     $cond = New-Object System.Windows.Automation.PropertyCondition(
@@ -67,7 +83,7 @@ if (Get-Process -Name PhotoBookRenamer -ErrorAction SilentlyContinue) { throw 'c
 
 $proc = $null
 try {
-    $exe = Join-Path $root 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+    $exe = Get-AppExe
     $proc = Start-Process -FilePath $exe -PassThru
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
@@ -95,15 +111,32 @@ try {
 
     $del.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
 
-    # The confirmation is its own top-level window.
+    # The confirmation is its own top-level window, and it is identified by the button
+    # that confirms it. These windows draw their own chrome, so Win32 reports an empty
+    # title for them, and "the first window that is not the main one" is not a check:
+    # during the golden run it photographed the update window and reported success.
     $dlg = [intptr]::Zero
     $mainHwnd = $hwnd
-    $deadline = (Get-Date).AddSeconds(20)
+    $deadline = (Get-Date).AddSeconds(30)
+    $offered = @()
     while ((Get-Date) -lt $deadline -and $dlg -eq [intptr]::Zero) {
-        foreach ($h in [Win4]::Visible($proc.Id)) { if ($h -ne $mainHwnd) { $dlg = $h; break } }
+        foreach ($h in [Win4]::Visible($proc.Id)) {
+            if ($h -eq $mainHwnd) { continue }
+            $candidate = [System.Windows.Automation.AutomationElement]::FromHandle($h)
+            if ($null -ne (Find-ByName $candidate $confirmLabel 'Button')) { $dlg = $h; break }
+            $names = @()
+            $buttons = $candidate.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+                (New-Object System.Windows.Automation.PropertyCondition(
+                    [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+                    [System.Windows.Automation.ControlType]::Button)))
+            foreach ($b in $buttons) { $names += $b.Current.Name }
+            $offered += ($names -join ', ')
+        }
         if ($dlg -eq [intptr]::Zero) { Start-Sleep -Milliseconds 500 }
     }
-    if ($dlg -eq [intptr]::Zero) { throw 'the confirmation dialog never appeared' }
+    if ($dlg -eq [intptr]::Zero) {
+        throw ("the confirmation dialog never appeared. Buttons found in the other windows: " + ($offered -join ' | '))
+    }
 
     [void][Win4]::SetForegroundWindow($dlg)
     Start-Sleep -Milliseconds 800
@@ -113,6 +146,9 @@ try {
     $w = $r.Right - $r.Left; $h = $r.Bottom - $r.Top
     $bmp = New-Object System.Drawing.Bitmap $w, $h
     $g = [System.Drawing.Graphics]::FromImage($bmp)
+    # The picture is taken from the screen, so what is in front is what lands in it.
+    Set-WindowInFront $dlg $proc.Id
+    Assert-WindowInFront $dlg
     $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w, $h)))
     $g.Dispose()
 

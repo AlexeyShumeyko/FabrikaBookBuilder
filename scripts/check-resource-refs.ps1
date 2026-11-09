@@ -1,18 +1,18 @@
-﻿# Fails if any XAML file references a {StaticResource Key} that no dictionary defines.
+﻿# Fails if any markup file references a resource key that no dictionary defines.
 #
-# A missing StaticResource is a RUNTIME failure: `dotnet build` stays green, and the app
-# throws "Cannot find resource named 'X'" while a view loads, i.e. it dies before the
-# window appears or as soon as that view is opened. This has happened repeatedly in
-# this project, so every reference is checked mechanically.
+# A missing resource is a RUNTIME failure: `dotnet build` stays green, and the app throws
+# while a view loads, i.e. it dies before the window appears or as soon as that view is
+# opened. This has happened repeatedly in this project, so every reference is checked
+# mechanically.
 #
-# Keys are resolved from Styles/*.xaml, which is what App.xaml merges application-wide.
-# Locally declared keys inside a view (e.g. inside its own <Window.Resources>) are also
-# collected, so a key that is locally scoped but used globally is reported correctly.
+# Application-wide keys are the ones declared in App.axaml and in the style dictionaries it
+# includes. Keys declared locally in a view are legal there and are collected separately,
+# so a key that is local to one view but used in another is still reported.
 #
 # Usage:  pwsh -File scripts\check-resource-refs.ps1
 
 # The harness console runs on code page 866, which turns every Cyrillic string this
-# script prints into "?" and floods the agent context with mojibake. Force UTF-8 on
+# script prints into "?" and floods the console with mojibake. Force UTF-8 on
 # both channels; a child powershell.exe resets these on its own, so it has to be set
 # inside each script rather than once in the caller.
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -26,28 +26,24 @@ function Get-DefinedKeys([string]$path) {
     return @([regex]::Matches($text, 'x:Key\s*=\s*"([^"]+)"') | ForEach-Object { $_.Groups[1].Value })
 }
 
-function Get-ImplicitKeys([string]$path) {
-    # A Style/Brush without x:Key is addressable by its TargetType name.
-    $text = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)
-    $keys = @()
-    foreach ($m in [regex]::Matches($text, '<(Style|SolidColorBrush|DropShadowEffect|FontFamily|Thickness|Brush)\b[^>]*>')) {
-        $tag = $m.Value
-        if ($tag -match 'x:Key\s*=') { continue }
-        if ($tag -match 'TargetType\s*=\s*"\{?x:Type\s+([A-Za-z0-9_.]+)\}?"') { $keys += $Matches[1] }
-        elseif ($tag -match 'TargetType\s*=\s*"([A-Za-z0-9_.]+)"') { $keys += $Matches[1] }
-    }
-    return $keys
-}
-
 # --- keys available application-wide ----------------------------------------
 $defined = New-Object System.Collections.Generic.HashSet[string]
-foreach ($f in Get-ChildItem (Join-Path $root 'Styles') -Filter '*.xaml' -File) {
+$shellDir = Join-Path $root 'src\PhotoBook.Desktop.Avalonia'
+if (-not (Test-Path $shellDir)) { throw "no shell project at $shellDir" }
+
+# App.axaml is the root dictionary; the style dictionaries it includes are part of it.
+$appMarkup = Join-Path $shellDir 'App.axaml'
+if (-not (Test-Path $appMarkup)) { throw "no application markup at $appMarkup" }
+foreach ($k in Get-DefinedKeys $appMarkup) { [void]$defined.Add($k) }
+
+$styleDir = Join-Path $shellDir 'Styles'
+if (-not (Test-Path $styleDir)) { throw "no style dictionary directory at $styleDir" }
+foreach ($f in Get-ChildItem $styleDir -Recurse -File -Include '*.xaml', '*.axaml') {
     foreach ($k in Get-DefinedKeys $f.FullName) { [void]$defined.Add($k) }
-    foreach ($k in Get-ImplicitKeys $f.FullName) { [void]$defined.Add($k) }
 }
 
-# --- every XAML in the project ----------------------------------------------
-$files = Get-ChildItem $root -Recurse -Include '*.xaml' -File |
+# --- every markup file in the project ---------------------------------------
+$files = Get-ChildItem $shellDir -Recurse -File -Include '*.xaml', '*.axaml' |
     Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' }
 
 $problems = 0
@@ -59,7 +55,9 @@ foreach ($file in $files) {
     $local = New-Object System.Collections.Generic.HashSet[string]
     foreach ($k in Get-DefinedKeys $file.FullName) { [void]$local.Add($k) }
 
-    $used = [regex]::Matches($text, '\{StaticResource\s+([A-Za-z0-9_.]+)\s*\}') |
+    # Avalonia resolves both forms; a key used only through DynamicResource is just as
+    # capable of stopping the program.
+    $used = [regex]::Matches($text, '\{(?:StaticResource|DynamicResource)\s+([A-Za-z0-9_.]+)\s*\}') |
         ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique
 
     $missing = @()
@@ -76,12 +74,12 @@ foreach ($file in $files) {
 }
 
 Write-Host ''
-Write-Host ("checked {0} xaml file(s) against {1} application-wide key(s)" -f $files.Count, $defined.Count)
+Write-Host ("checked {0} markup file(s) against {1} application-wide key(s)" -f $files.Count, $defined.Count)
 
 if ($problems -gt 0) {
-    Write-Host "FAIL: $problems file(s) reference undefined StaticResource keys."
+    Write-Host "FAIL: $problems file(s) reference undefined resource keys."
     Write-Host 'The app will throw at runtime where those views load.'
     exit 1
 }
 
-Write-Host 'PASS: every StaticResource reference resolves.'
+Write-Host 'PASS: every resource reference resolves.'

@@ -1,6 +1,6 @@
 ﻿# Proves that pressing "Export all books" SAVES the project first.
 #
-# The owner's bug: build a run, press export without ever pressing save, and the
+# The we's bug: build a run, press export without ever pressing save, and the
 # project list then shows the project as "ready to print" while the project FILE is
 # still the empty one - reopening it gives nothing back. The export updated the index
 # and ended the session, and nothing ever wrote the project.
@@ -33,6 +33,9 @@ param(
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Stop'
+
+# One place that knows where the built program is.
+. "$PSScriptRoot\common.ps1"
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 
@@ -108,7 +111,7 @@ try {
     if (-not (Test-Path -LiteralPath $projPath)) { throw "fixture file missing: $projPath" }
 
     # ---- 2. open it ----------------------------------------------------------
-    $exe = Join-Path $root 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+    $exe = Get-AppExe
     $proc = Start-Process -FilePath $exe -PassThru
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
@@ -176,7 +179,7 @@ try {
 }
 finally {
     if ($proc) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
-    # The fixture goes with the test. Leaving it behind put a "TR-test" card in the owner's
+    # The fixture goes with the test. Leaving it behind put a "TR-test" card in our
     # real project list, which is exactly the kind of litter this project must not leave.
     if ($fixtureId) {
         & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'make-combined-fixture.ps1') -RemoveId $fixtureId | Out-Null

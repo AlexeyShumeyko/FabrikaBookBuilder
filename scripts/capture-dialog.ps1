@@ -17,13 +17,16 @@ param(
 )
 
 # The harness console runs on code page 866, which turns every Cyrillic string this
-# script prints into "?" and floods the agent context with mojibake. Force UTF-8 on
+# script prints into "?" and floods the console with mojibake. Force UTF-8 on
 # both channels; a child powershell.exe resets these on its own, so it has to be set
 # inside each script rather than once in the caller.
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Stop'
+
+# One place that knows where the built program is.
+. "$PSScriptRoot\common.ps1"
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 
@@ -63,7 +66,7 @@ public class Win3 {
     }
 
     /// <summary>
-    /// The main window: the visible top-level one with no owner. Opening a project destroys
+    /// The main window: the visible top-level one with no we. Opening a project destroys
     /// and recreates the window, so the handle captured at launch is stale afterwards.
     /// </summary>
     public static IntPtr FindTopLevel(uint processId) {
@@ -102,7 +105,7 @@ function Get-MainWindow($proc) {
 }
 
 try {
-    $exe = Join-Path $root 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+    $exe = Get-AppExe
     $proc = Start-Process -FilePath $exe -PassThru
     Get-MainWindow $proc | Out-Null
 
@@ -132,7 +135,13 @@ try {
         $btn = $null
         if ($ProjectName) {
             $titleEl = $null
-            foreach ($t in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $textCond)) {
+            # Match on the name of any descendant, not on a control type: the project title
+            # is a TextBlock inside the card, and the element that reports it as its name
+            # depends on how the card template is built. $textCond used to be referenced
+            # here and never defined, so passing -ProjectName always threw and this path
+            # was never exercised until a capture actually needed it.
+            $anyCond = [System.Windows.Automation.Condition]::TrueCondition
+            foreach ($t in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $anyCond)) {
                 if ($t.Current.Name -like "*$ProjectName*") { $titleEl = $t; break }
             }
             if ($null -eq $titleEl) { throw "no project titled '$ProjectName'" }
@@ -232,6 +241,9 @@ try {
 
     $bmp = New-Object System.Drawing.Bitmap $w2, $h2
     $g = [System.Drawing.Graphics]::FromImage($bmp)
+    # The picture is taken from the screen, so what is in front is what lands in it.
+    Set-WindowInFront $dlgHwnd $proc.Id
+    Assert-WindowInFront $dlgHwnd
     $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w2, $h2)))
 
     $full = Join-Path $root $Out

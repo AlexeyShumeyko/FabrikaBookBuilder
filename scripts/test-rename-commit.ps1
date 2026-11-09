@@ -1,7 +1,7 @@
 ﻿# Asserts that renaming a project applies when the user clicks anywhere - not only when
 # the click happens to land on something that takes keyboard focus.
 #
-# The owner reported it in the Unique Folders mode: the new name stuck when they clicked
+# The we reported it in the Unique Folders mode: the new name stuck when they clicked
 # the books area and was silently dropped when they clicked the control panel. LostFocus
 # alone cannot explain "sometimes", because a click only raises it when it lands on a
 # focusable control; the panel background and its labels are not focusable, so the rename
@@ -24,6 +24,9 @@ param(
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Stop'
+
+# One place that knows where the built program is.
+. "$PSScriptRoot\common.ps1"
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 
@@ -86,7 +89,7 @@ if (Get-Process -Name PhotoBookRenamer -ErrorAction SilentlyContinue) { throw 'c
 
 $proc = $null
 try {
-    $exe = Join-Path $root 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+    $exe = Get-AppExe
     $proc = Start-Process -FilePath $exe -PassThru
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
@@ -100,8 +103,8 @@ try {
     [void][Win8]::SetForegroundWindow($proc.MainWindowHandle)
     Start-Sleep -Seconds 3
 
-    # A FIXTURE, never the owner's newest project. This test renames whatever it opens, and
-    # it did exactly that: the owner's "Новый проект 2026-09-27 15:23" came out of it called
+    # A FIXTURE, never our newest project. This test renames whatever it opens, and
+    # it did exactly that: our "Новый проект 2026-09-27 15:23" came out of it called
     # "Rename-check" and had to be renamed back by hand. A test that edits data must only
     # ever touch data it made.
     $indexPath = Join-Path $env:LOCALAPPDATA 'PhotoBookRenamer\Projects\projects.json'
@@ -111,7 +114,7 @@ try {
     for ($i = 0; $i -lt $all.Count; $i++) {
         if ($all[$i].mode -eq 2 -and $all[$i].name -like 'Testovyy*') { $at = $i; break }
     }
-    if ($at -lt 0) { throw 'no folders fixture - run make-test-fixture.ps1 first (this test must not touch the owner''s projects)' }
+    if ($at -lt 0) { throw 'no folders fixture - run make-test-fixture.ps1 first (this test must not touch we''s projects)' }
     $originalName = $all[$at].name
     Write-Host "opening fixture '$originalName' (card $at)"
 
@@ -152,6 +155,16 @@ try {
     }
     if ($null -eq $edit) { throw 'the visible rename text box did not appear' }
 
+    # The card order on screen and the order in the index are not the same list, and this
+    # test renames whatever it opens. It has already renamed two of our projects
+    # that way: it clicked card N while the index held a different project at N. So the
+    # name is checked HERE, before a single character is typed. Opening the wrong card is
+    # harmless. Editing it is not.
+    $boxName = $edit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value
+    if ($boxName -ne $originalName) {
+        throw ("the rename box reads '$boxName' but the index says '$originalName' - the cards and the index disagree, and this test will not rename a project it did not create")
+    }
+
     $vp = $edit.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
     $vp.SetValue($newName)
     Start-Sleep -Milliseconds 500
@@ -181,6 +194,9 @@ try {
     [void][Win8]::GetWindowRect($hwnd, [ref]$rr)
     $bmp = New-Object System.Drawing.Bitmap ($rr.Right - $rr.Left), ($rr.Bottom - $rr.Top)
     $gg = [System.Drawing.Graphics]::FromImage($bmp)
+    # The picture is taken from the screen, so what is in front is what lands in it.
+    Set-WindowInFront $hwnd $proc.Id
+    Assert-WindowInFront $hwnd
     $gg.CopyFromScreen($rr.Left, $rr.Top, 0, 0, $bmp.Size)
     $gg.Dispose()
     $bmp.Save((Join-Path $root 'doc\shots\rename-debug.png'), [System.Drawing.Imaging.ImageFormat]::Png)

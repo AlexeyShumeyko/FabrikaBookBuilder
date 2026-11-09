@@ -1,7 +1,7 @@
 ﻿# Verifies the app actually starts.
 #
-# A WPF app with a broken ResourceDictionary or a binding typo compiles fine and then
-# dies with an unhandled XamlParseException before the window ever appears. This script
+# A desktop app with a broken resource dictionary or a binding typo compiles fine and then
+# dies before the window ever appears. This script
 # launches the built exe, waits for a main window, and reports the .NET Runtime event
 # on failure so the real exception is visible instead of "process exited".
 #
@@ -13,20 +13,25 @@ param(
 )
 
 # The harness console runs on code page 866, which turns every Cyrillic string this
-# script prints into "?" and floods the agent context with mojibake. Force UTF-8 on
+# script prints into "?" and floods the console with mojibake. Force UTF-8 on
 # both channels; a child powershell.exe resets these on its own, so it has to be set
 # inside each script rather than once in the caller.
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Stop'
+
+# One place that knows where the built program is.
+. "$PSScriptRoot\common.ps1"
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 
 try {
-    $exe = Join-Path $root "bin\$Configuration\net8.0-windows\PhotoBookRenamer.exe"
-    if (-not (Test-Path $exe)) {
-        Write-Host "FAIL: exe not found at $exe"
+    # Get-AppExe throws when there is no build, so the explicit Test-Path below is the
+    # friendlier second half of the same check: it gets to print where it looked.
+    $exe = try { Get-AppExe -Configuration $Configuration } catch { $null }
+    if (-not $exe -or -not (Test-Path $exe)) {
+        Write-Host 'FAIL: no build to start. Build it first: dotnet build PhotoBookRenamer.sln -c Release'
         exit 1
     }
 

@@ -1,0 +1,199 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using PhotoBook.Core;
+using PhotoBook.Application;
+
+namespace PhotoBook.Infrastructure
+{
+    /// <summary>
+    /// Projects on disk, as JSON.
+    /// </summary>
+    /// <remarks>
+    /// The layout is camelCase, indented, and is what 1.1.1 wrote - the format is a promise
+    /// to the projects already saved on people's machines, so the options below are not
+    /// free to change. tests\PhotoBook.Application.Tests\ProjectCompatibilityTests.cs opens a
+    /// copy of that file and fails if it stops opening.
+    /// </remarks>
+    internal class ProjectRepository : IProjectRepository
+    {
+        private readonly IImageService _imageService;
+
+        /// <summary>
+        /// The index, so that saving a project also brings its list entry up to date.
+        /// </summary>
+        private readonly IProjectListService _list;
+
+        /// <summary>
+        /// What a slot draws. The reduced copies are attached here, while the project is still
+        /// off the interface thread, so that opening one costs the screen nothing.
+        /// </summary>
+        private readonly IThumbnailProvider _thumbnails;
+
+        public ProjectRepository(IImageService imageService, IProjectListService list, IThumbnailProvider thumbnails)
+        {
+            _imageService = imageService;
+            _list = list;
+            _thumbnails = thumbnails;
+        }
+
+        public async Task SaveAsync(Project project, string filePath)
+        {
+            try
+            {
+                var directory = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+
+                var json = JsonSerializer.Serialize(project, options);
+
+                await File.WriteAllTextAsync(filePath, json);
+
+                // The index entry is updated from here rather than by whoever happens to call
+                // this. There are a dozen save paths across the two editors and not all of them wait
+                // for the answer; the place that actually writes the file is the one that cannot be
+                // forgotten. A project's id is its file name, which is how the store lays them out.
+                await _list.RefreshFromProjectAsync(Path.GetFileNameWithoutExtension(filePath), project);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Ошибка сохранения проекта: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<Project?> LoadAsync(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath))
+                {
+                    return null;
+                }
+
+                var json = await File.ReadAllTextAsync(filePath);
+
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    return null;
+                }
+
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.Never
+                };
+
+                var projectData = JsonSerializer.Deserialize<ProjectData>(json, options);
+
+                Project? project = null;
+                if (projectData != null)
+                {
+                    project = new Project
+                    {
+                        Mode = projectData.Mode,
+                        OutputFolder = projectData.OutputFolder
+                    };
+
+                    if (projectData.Books != null && projectData.Books.Count > 0)
+                    {
+                        foreach (var bookData in projectData.Books)
+                        {
+                            var book = new Book
+                            {
+                                FolderPath = bookData.FolderPath,
+                                Name = bookData.Name,
+                                Cover = bookData.Cover,
+                                BookIndex = bookData.BookIndex
+                            };
+
+                            if (bookData.Pages != null && bookData.Pages.Count > 0)
+                            {
+                                foreach (var page in bookData.Pages)
+                                {
+                                    book.Pages.Add(page);
+                                }
+                            }
+
+                            book.UpdatePageSlots();
+
+                            project.Books.Add(book);
+                        }
+                    }
+
+                    if (projectData.AvailableFiles != null)
+                    {
+                        foreach (var file in projectData.AvailableFiles)
+                        {
+                            project.AvailableFiles.Add(file);
+                        }
+                    }
+                }
+
+                if (project != null)
+                {
+                    if (project.Books != null && project.Books.Count > 0)
+                    {
+                        foreach (var book in project.Books)
+                        {
+                            if (book.Pages == null)
+                            {
+                                // A book with no page list can neither be shown nor saved. Skipping it
+                                // keeps the rest of the run usable.
+                                continue;
+                            }
+
+                            book.UpdatePageSlots();
+                        }
+                    }
+
+                    // The reduced copies that already exist, attached before the project
+                    // reaches a screen and on this thread rather than the interface one.
+                    await Task.Run(() => PageThumbnails.Attach(project, _thumbnails));
+
+                    // Projects saved before the sizes existed get them on first open, and they
+                    // stay in the project file from then on.
+                    await ProjectImageSizes.FillMissingAsync(project, _imageService);
+                }
+
+                return project;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Ошибка загрузки проекта: {ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// The stored shape of a project. Separate from the model it is read into, so that a
+    /// property which is not part of the file simply is not listed here, and a property of
+    /// the model which is derived rather than stored stays out of the file.
+    /// </summary>
+    internal class ProjectData
+    {
+        public AppMode Mode { get; set; }
+        public string? OutputFolder { get; set; }
+        public List<BookData>? Books { get; set; }
+        public List<string>? AvailableFiles { get; set; }
+    }
+
+    internal class BookData
+    {
+        public string? FolderPath { get; set; }
+        public string? Name { get; set; }
+        public Page? Cover { get; set; }
+        public int BookIndex { get; set; }
+        public List<Page>? Pages { get; set; }
+    }
+}

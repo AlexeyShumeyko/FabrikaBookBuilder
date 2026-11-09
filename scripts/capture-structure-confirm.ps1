@@ -1,6 +1,6 @@
 ﻿# Screenshots the "shrink the structure" confirmation in the combined mode.
 #
-# The owner asked for it in the app's own design instead of the system MessageBox, and the
+# The we asked for it in the app's own design instead of the system MessageBox, and the
 # dialog is only reachable by making the structure smaller - so the check has to make the
 # structure smaller. It types into the real field instead of calling the ViewModel, because
 # the point of the check is that the field's change reaches the question at all.
@@ -18,6 +18,9 @@ param(
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Stop'
+
+# One place that knows where the built program is.
+. "$PSScriptRoot\common.ps1"
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 
@@ -39,6 +42,12 @@ public class Win5 {
     [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr h);
     [DllImport("user32.dll")] private static extern IntPtr GetWindow(IntPtr h, uint cmd);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowTextW(IntPtr h, System.Text.StringBuilder s, int max);
+    public static string Title(IntPtr h) {
+        var sb = new System.Text.StringBuilder(512);
+        GetWindowTextW(h, sb, sb.Capacity);
+        return sb.ToString();
+    }
 
     public static IntPtr[] Visible(int pid) {
         var f = new List<IntPtr>();
@@ -54,6 +63,13 @@ public class Win5 {
     }
 }
 "@
+
+# The window title this dialog carries. Anything else on screen is a different
+# The text on the button that confirms this dialog. A window is identified by
+# what it contains rather than by its caption: these windows draw their own
+# chrome and Win32 reports an empty title for them, so a caption check would
+# match nothing - or, worse, the wrong window.
+$confirmLabel = 'Уменьшить'
 
 function Find-ByName($rootEl, [string]$label, [string]$typeName) {
     $ct = [System.Windows.Automation.ControlType]::$typeName
@@ -75,7 +91,7 @@ if (Get-Process -Name PhotoBookRenamer -ErrorAction SilentlyContinue) { throw 'c
 
 $proc = $null
 try {
-    $exe = Join-Path $root 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+    $exe = Get-AppExe
     $proc = Start-Process -FilePath $exe -PassThru
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
@@ -152,6 +168,7 @@ try {
     }
 
     $dlg = [intptr]::Zero
+    $seen = 0
     $deadline = (Get-Date).AddSeconds(25)
     while ((Get-Date) -lt $deadline -and $dlg -eq [intptr]::Zero) {
         $proc.Refresh()
@@ -161,13 +178,18 @@ try {
         # the scan correct if the app ever relaunches itself.
         $ownerPid = 0
         [void][Win5]::GetWindowThreadProcessId($hwnd, [ref]$ownerPid)
-        foreach ($h in [Win5]::Visible($ownerPid)) { if ($h -ne $hwnd) { $dlg = $h; break } }
+        foreach ($h in [Win5]::Visible($ownerPid)) {
+            if ($h -eq $hwnd) { continue }
+            $seen++
+            $candidate = [System.Windows.Automation.AutomationElement]::FromHandle($h)
+            if ($null -ne (Find-ByName $candidate $confirmLabel 'Button')) { $dlg = $h; break }
+        }
         if ($dlg -eq [intptr]::Zero) { Start-Sleep -Milliseconds 500 }
     }
     if ($dlg -eq [intptr]::Zero) {
         Write-Host "launched pid $($proc.Id), main hwnd $hwnd, exited=$($proc.HasExited)"
         Write-Host "visible top-level windows: $([Win5]::Visible($proc.Id).Count)"
-        throw 'the confirmation never appeared'
+        throw ('the confirmation never appeared; other top-level windows of the app: ' + $seen)
     }
 
     [void][Win5]::SetForegroundWindow($dlg)
@@ -178,6 +200,9 @@ try {
     $w = $r.Right - $r.Left; $h = $r.Bottom - $r.Top
     $bmp = New-Object System.Drawing.Bitmap $w, $h
     $g = [System.Drawing.Graphics]::FromImage($bmp)
+    # The picture is taken from the screen, so what is in front is what lands in it.
+    Set-WindowInFront $dlg $proc.Id
+    Assert-WindowInFront $dlg
     $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w, $h)))
     $g.Dispose()
 

@@ -1,0 +1,874 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:PhotoBook.Shell.Views"
+             x:Class="PhotoBook.Shell.Views.CombinedModeView"
+             FontFamily="Inter">
+
+    <!--
+        The combined screen, transcribed from doc\DESIGN_SPEC.md section 6 and checked
+        number by number against the other shell's markup. It is the largest screen in the
+        product: a control panel, a file list and a column of books, all at once.
+
+            shell        max 1600, margin 32/24
+            panel        card, padding 20; badge 48 with a 20 glyph; two star columns
+                         either side of the run fields, so the run stays in the middle
+                         whatever the window does
+            run fields   two number boxes, 64 wide, 12px, labels above in 10px slate
+            file column  320 (280-360), card, padding 16
+            drop zone    14 corner, slate-50, dashed line of its own shape at 13 inside
+            book cards   card, padding 20, 16 below; the number IS the name, so a run of
+                         forty books reads as forty named things and not as a table
+            slot         radius 12, margin 0/0/16/16, cover framed at 2px in the product
+                         colour, everything else a hairline
+            slot frame   150 tall - not the 190 the folders screen uses, because this one
+                         shares the window with a 320px file list - and as wide as the
+                         book's own format, both sides scaling together when one more card
+                         per row is within reach
+
+        Four departures, each written down rather than quietly copied:
+
+        1. The photo fits its frame rather than being cropped to it, as on the folders
+           screen. A crop throws away the edges a photographer chose.
+        2. The label and the "to all books" action replace one another, driven from the code
+           behind rather than by a trigger. There is no way in this engine to hide one child
+           because its parent is hovered.
+        3. The zoom on hover is done by setting the transform in the same place, for the
+           same reason.
+        4. The photo's own frame is 150 tall and the design height for this mode is a
+           parameter of the size converter, so the two can never disagree.
+    -->
+
+    <UserControl.Styles>
+        <!--
+            The upload zone answers the pointer.
+
+            It used to be a grey box with a dashed line in it, and nothing happened when
+            the pointer went over it - so the one place on the screen that takes files
+            looked the same as the one place that does not. The line takes the product's
+            colour, the box takes a tint of it, and the mark goes a shade darker, all of
+            it over a moment rather than at once: a zone that brightens when the pointer
+            arrives says "here", and a zone that does not say nothing at all.
+
+            The colours live here and not on the elements. A value set on the element
+            itself beats a style, so a colour written down in the markup could never be
+            changed by the style that answers the pointer - which is why the first version
+            of this did nothing at all.
+        -->
+        <Style Selector="Border#DropZone">
+            <Setter Property="Background" Value="{DynamicResource Slate50}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.16" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border#DropZone:pointerover">
+            <Setter Property="Background" Value="{DynamicResource Brand50}" />
+        </Style>
+
+        <Style Selector="Rectangle#DropZoneFrame">
+            <Setter Property="Stroke" Value="{DynamicResource Slate300}" />
+        </Style>
+
+        <Style Selector="Border#DropZone:pointerover Rectangle#DropZoneFrame">
+            <Setter Property="Stroke" Value="{DynamicResource Brand400}" />
+        </Style>
+
+        <Style Selector="Path#DropZoneMark">
+            <Setter Property="Stroke" Value="{DynamicResource Brand500}" />
+        </Style>
+
+        <Style Selector="Border#DropZone:pointerover Path#DropZoneMark">
+            <Setter Property="Stroke" Value="{DynamicResource Brand600}" />
+        </Style>
+
+        <!--
+            A row answers the pointer with a light wash, as the folders screen's rows do.
+
+            It is a hover and not a selection: nothing in this list is selected, and a row that
+            stayed tinted after a click would claim it was. The wash sits on the row's own
+            rounded border rather than on the list's square cell, so it follows the corner.
+        -->
+        <Style Selector="Border.fileRow">
+            <Setter Property="Cursor" Value="Hand" />
+
+            <!--
+                Transparent, and written down: a border with no background is not hit-tested,
+                so the pointer only counted while it was over the picture or a word. Crossing
+                a row quickly went through the gaps between them and the wash never came up,
+                which is what made the highlight feel slow and unreliable. The background is
+                null right up to the moment the style is applied, so the colour is set here.
+            -->
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <!-- Just over a frame's worth: a wash that fades in says the row is live,
+                         and anything slower than a tenth of a second is read as lag. -->
+                    <BrushTransition Property="Background" Duration="0:0:0.07" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.fileRow:pointerover">
+            <Setter Property="Background" Value="{DynamicResource Slate100}" />
+        </Style>
+
+        <!--
+            An empty run field is the focused one, and the theme paints a focused box's own
+            frame in its colour - a dark ring inside the red one, which reads as a black box
+            with a red halo. While the field holds no number, the ring around it is the frame.
+        -->
+        <Style Selector="TextBox.numberField.invalid:focus /template/ Border">
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid MaxWidth="1600" Margin="32,24" HorizontalAlignment="Stretch"
+          RowDefinitions="Auto,Auto,*">
+
+        <!-- ================================ error ================================ -->
+        <Border Grid.Row="0" Background="{DynamicResource Red50}"
+                BorderBrush="{DynamicResource Red200}" BorderThickness="1"
+                CornerRadius="12" Padding="16" Margin="0,0,0,16"
+                VerticalAlignment="Top"
+                IsVisible="{Binding ErrorMessage, Converter={StaticResource NotEmpty}}">
+            <TextBlock Text="{Binding ErrorMessage}" Classes="t12" TextWrapping="Wrap"
+                       Foreground="{DynamicResource Red700}" />
+        </Border>
+
+        <!-- ============================ control panel ============================ -->
+        <Border Grid.Row="1" Classes="card" Padding="20" Margin="0,0,0,24">
+            <!--
+                58, not 52. The content of this panel is a label line over the row of boxes and
+                the structure button, and that is 58 with every control at the size the other
+                two screens give it. Holding it to 52 made the structure button 32 pixels tall
+                beside a 38-pixel export button in the same row - two violet buttons of two
+                different sizes read as one of them being less of a button. The height the
+                three panels share is therefore 58, and the other two take the same value;
+                nothing inside those panels changes shape.
+            -->
+            <Grid MinHeight="58">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="300" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" MinWidth="300" />
+                </Grid.ColumnDefinitions>
+
+                <!-- left: the badge, the name, one line of state -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="14"
+                            VerticalAlignment="Center">
+                    <Border Width="48" Height="48" CornerRadius="12" VerticalAlignment="Center"
+                            Background="{DynamicResource Indigo50}"
+                            BorderBrush="{DynamicResource Indigo100}" BorderThickness="1"
+                            BoxShadow="0 1 4 0 #0D0F172A">
+                        <Path Width="20" Height="20" Stretch="Uniform"
+                              Stroke="{DynamicResource Indigo600}" StrokeThickness="1.7"
+                              StrokeLineCap="Round"
+                              Data="M 5 5.5 V 19 M 9.5 4 V 19 M 14 6.5 V 19 M 18 8.5 V 19 M 3.4 19 H 20" />
+                    </Border>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="Проект:" Classes="t14Bold" VerticalAlignment="Center" />
+                            <TextBlock Name="ProjectNameTextBlock" Classes="t14Bold"
+                                       Text="{Binding DisplayProjectName}" Margin="6,0,0,0"
+                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                       MaxWidth="420" Cursor="Hand"
+                                       PointerPressed="OnProjectNameClick" />
+                            <Button Classes="icon" Padding="4,4" Margin="6,0,0,0"
+                                    AutomationProperties.Name="Переименовать проект"
+                                    ToolTip.Tip="Переименовать проект"
+                                    Click="OnProjectNamePencilClick">
+                                <Path Width="13" Height="13" Stretch="Uniform"
+                                      Stroke="{DynamicResource Slate500}" StrokeThickness="1.7"
+                                      StrokeLineCap="Round"
+                                      Data="M 4 20 L 4 15.5 L 15.5 4 L 20 8.5 L 8.5 20 Z M 13.5 6 L 18 10.5" />
+                            </Button>
+
+                            <!-- 240 and not 360: this panel also carries the run fields,
+                                 and the wider box ran out of room and was cut in half
+                                 mid-word. -->
+                            <TextBox Name="ProjectNameTextBox" Width="240" FontSize="13"
+                                     Margin="6,0,0,0" VerticalAlignment="Center"
+                                     IsVisible="False"
+                                     KeyDown="OnProjectNameKeyDown"
+                                     LostFocus="OnProjectNameLostFocus" />
+                        </StackPanel>
+
+                        <!-- Red while the run still has books to finish, green when it is
+                             done. Muted on purpose: this is a state, not an alarm. -->
+                        <TextBlock Classes="t12" Margin="0,2,0,0"
+                                   Text="{Binding StructureProgress}"
+                                   Foreground="{Binding StructureIsComplete, Converter={StaticResource PageState}, ConverterParameter=structurecomplete}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- centre: the run. Labels on one line, the fields and the button on the next.
+
+                     It used to be a row of stacks - label over field, label over field,
+                     and a button aligned to the bottom - so the button sat against the
+                     bottom of the boxes while their labels were above them, and the
+                     three things a person reads together were on three different
+                     levels. Two rows and one grid: the labels on one line, the boxes and
+                     the button on the next, all sharing it.
+
+                     Nine pixels up, and it is the label line that costs them. The block is
+                     a label over a box and it is centred as a whole, so its lower line sits
+                     half a label below the centre of the panel - which is where the buttons
+                     beside it sit. Raising the block by half of that line puts the boxes and
+                     the structure button on the buttons' own level, and leaves the two labels
+                     on the line above them. -->
+                <Grid Grid.Column="1" Margin="24,-9,24,0" VerticalAlignment="Center"
+                      RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,Auto,Auto">
+                    <!-- Centred over its own box, not pushed against the left of the column:
+                         "Книг" hanging at the edge read as a label for the panel rather than
+                         for the number under it. Each one spans exactly the width of the field
+                         below, which is why the right margins match them.
+
+                         The frame goes red while the box does not hold a number: the field
+                         is bound to the typed text, so an emptied box is not a failed
+                         conversion any more - and there is nothing technical printed under
+                         it to make the panel taller. -->
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Книг" Classes="t10"
+                               Margin="0,0,10,5"
+                               HorizontalAlignment="Stretch" TextAlignment="Center"
+                               Foreground="{DynamicResource Slate500}" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Разворотов" Classes="t10"
+                               Margin="0,0,16,5"
+                               HorizontalAlignment="Stretch" TextAlignment="Center"
+                               Foreground="{DynamicResource Slate500}" />
+
+                    <!-- The red frame is a ring drawn around the box, not the box's own border:
+                         while a field is focused the theme repaints that border in its own
+                         colour, and an empty field is always the focused one. The ring takes
+                         no room when the number is there - it is transparent, not absent. -->
+                    <Border Grid.Row="1" Grid.Column="0" Margin="0,0,10,0"
+                            VerticalAlignment="Center"
+                            CornerRadius="10" BorderThickness="2"
+                            BorderBrush="{Binding NumberOfBooksIsValid, Converter={StaticResource RunFieldFrame}}">
+                        <TextBox Classes="numberField" Classes.invalid="{Binding !NumberOfBooksIsValid}"
+                                 Margin="0"
+                                 Text="{Binding NumberOfBooksText}"
+                                 AutomationProperties.Name="Количество книг" />
+                    </Border>
+                    <Border Grid.Row="1" Grid.Column="1" Margin="0,0,16,0"
+                            VerticalAlignment="Center"
+                            CornerRadius="10" BorderThickness="2"
+                            BorderBrush="{Binding SpreadsPerBookIsValid, Converter={StaticResource RunFieldFrame}}">
+                        <TextBox Classes="numberField" Classes.invalid="{Binding !SpreadsPerBookIsValid}"
+                                 Margin="0"
+                                 Text="{Binding SpreadsPerBookText}"
+                                 AutomationProperties.Name="Разворотов в книге" />
+                    </Border>
+
+                    <!-- One button, two labels. A second button appearing with the first
+                         book is exactly what used to reshape this panel. -->
+                    <!-- Violet, like the export button: building the run is the one thing this
+                         panel is for, and a white hairline made it look like a secondary
+                         action beside one that is not. The plus that sat in front of the
+                         label is gone - a mark from an icon font in a row of drawn ones, and
+                         the words already say what it does. -->
+                    <Button Grid.Row="1" Grid.Column="2" Classes="primary"
+                            Padding="16,10" VerticalAlignment="Center"
+                            AutomationProperties.Name="Добавить структуру"
+                            Command="{Binding ConfirmStructureCommand}">
+                        <TextBlock Text="{Binding StructureButtonText}" Foreground="White" />
+                    </Button>
+                </Grid>
+
+                <!-- right: what you do with the project -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                            VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <!-- The same button the folders screen has: white, a hairline, a small
+                         shadow. A flat grey slab on a white card read as a disabled thing
+                         next to the violet one, and the two were not the same kind of
+                         button at all. -->
+                    <Button Classes="outline" Padding="12,10"
+                            AutomationProperties.Name="Сохранить проект"
+                            ToolTip.Tip="Сохранить проект и вернуться к списку проектов"
+                            Command="{Binding SaveProjectCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <Path Width="15" Height="15" Stretch="Uniform"
+                                  Stroke="{DynamicResource Slate400}" StrokeThickness="1.8"
+                                  StrokeLineCap="Round"
+                                  Data="M 12 3.2 V 14.4 M 8.2 10.8 L 12 14.6 L 15.8 10.8 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
+                            <TextBlock Text="Сохранить проект" />
+                        </StackPanel>
+                    </Button>
+
+                    <Border Width="1" Height="20" Background="{DynamicResource Slate200}"
+                            VerticalAlignment="Center" />
+
+                    <Button Classes="primary" Padding="16,10"
+                            AutomationProperties.Name="Экспортировать все книги"
+                            ToolTip.Tip="Выгрузка всех книг проекта в одну папку"
+                            Command="{Binding ExportCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <Path Width="15" Height="15" Stretch="Uniform"
+                                  Stroke="White" StrokeThickness="1.8" StrokeLineCap="Round"
+                                  Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
+                            <TextBlock Text="Экспортировать все книги" Foreground="White" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ========================= two areas, equal height ==================== -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320" MinWidth="280" MaxWidth="360" />
+                <ColumnDefinition Width="24" />
+                <ColumnDefinition Width="*" MinWidth="420" />
+            </Grid.ColumnDefinitions>
+
+            <!-- ========================== the file list =========================== -->
+            <Border Grid.Column="0" Classes="card" Padding="16">
+                <Grid RowDefinitions="Auto,Auto,*">
+
+                    <!-- title and how many are loaded -->
+                    <StackPanel Grid.Row="0">
+                        <TextBlock Text="Загруженные фото" Classes="t14Bold" />
+                        <TextBlock Classes="t12" Margin="0,2,0,0"
+                                   Foreground="{DynamicResource Slate500}"
+                                   Text="{Binding AvailableFilesCount, StringFormat='Загружено: {0}'}" />
+                    </StackPanel>
+
+                    <!--
+                        ONE way in, not two: the zone is clickable and accepts a drop, so a
+                        separate button was the same action twice.
+
+                        ONE outline, and it is the zone's own shape: the dashed line sits on
+                        the rounded corner - 13 inside a 14 - instead of floating in the
+                        middle of a square grey box.
+                    -->
+                    <Border x:Name="DropZone" Grid.Row="1" Margin="0,14,0,0" Cursor="Hand"
+                            CornerRadius="14"
+                            PointerPressed="OnUploadAreaClick"
+                            AutomationProperties.Name="Загрузить фото">
+                        <Grid Margin="2">
+                            <Rectangle x:Name="DropZoneFrame" RadiusX="13" RadiusY="13" StrokeThickness="1.5"
+                                       StrokeDashArray="5,4"
+                                       IsHitTestVisible="False" />
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                        Margin="18,15">
+                                <!-- The cloud, and only the cloud.
+
+                                     An arrow was tried inside it and came out as a second shape
+                                     laid over the first: the two did not share a stroke weight
+                                     or a baseline, so the mark read as a smudge rather than
+                                     as a picture. Files going into a zone are already said by
+                                     the dashed frame and by the sentence under it. -->
+                                <Path x:Name="DropZoneMark" Width="30" Height="30" Stretch="Uniform"
+                                      StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                                      Data="M 7 17.5 A 4.5 4.5 0 0 1 5.2 8.8 A 6 6 0 0 1 17 8.6 A 4.5 4.5 0 0 1 17.5 17.5 Z" />
+                                <TextBlock Text="Перетащите снимки сюда" Classes="t12Semi"
+                                           Foreground="{DynamicResource Slate700}"
+                                           HorizontalAlignment="Center" Margin="0,9,0,0" />
+                                <TextBlock Text="или нажмите, чтобы выбрать · JPEG"
+                                           Classes="t10" Foreground="{DynamicResource Slate400}"
+                                           HorizontalAlignment="Center" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- search, then the rows -->
+                    <Grid Grid.Row="2" Margin="0,14,0,0" MinHeight="0"
+                          RowDefinitions="Auto,*">
+                        <TextBox Grid.Row="0" Classes="searchField" Margin="0,0,0,8"
+                                 Text="{Binding PhotoSearch}"
+                                 AutomationProperties.Name="Поиск по имени файла"
+                                 Watermark="Поиск по имени файла" />
+
+                        <!--
+                            A virtualizing list, and no scroller around it. That second part
+                            is the whole performance story: a scroller whose content is
+                            itself a scrolling list hands the inner one an infinite viewport,
+                            the inner list then builds every row, and the first paint of a
+                            hundred photographs took 1.9 seconds.
+                        -->
+                        <ListBox Grid.Row="1" ItemsSource="{Binding FilteredPhotoFiles}"
+                                 Background="Transparent" BorderThickness="0" Padding="0"
+                                 Margin="0" MinWidth="0" Focusable="False"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Classes="fileRow" Margin="0,0,0,2"
+                                            CornerRadius="10" Padding="8"
+                                            PointerPressed="OnFileItemClick"
+                                            ToolTip.Tip="{Binding Path}">
+
+                                        <!-- The state is read off the badge, so the row needs no
+                                             tint of its own - but the pointer still has to
+                                             find the row it is on, and 320 pixels of white
+                                             give it nothing to hold on to. -->
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <!-- 44: the size every list in the program gives a
+                                                 tile, and the size this one had before it was
+                                                 changed for the wrong reason.
+
+                                                 The number in the parameter is the width to
+                                                 decode at, in device pixels - so 44 is decoded
+                                                 at the tile's own pixels and drawn into them
+                                                 one for one. Asking for twice the tile made the
+                                                 picture be resampled twice, once by the decoder
+                                                 and once by the renderer, and two soft steps
+                                                 cost more than the extra pixels bought. It is
+                                                 also a quarter of the memory per preview. -->
+                                            <Border Grid.Column="0" Width="44" Height="44"
+                                                    CornerRadius="8" ClipToBounds="True"
+                                                    Background="{DynamicResource Slate100}">
+                                                <Image Stretch="UniformToFill"
+                                                       RenderOptions.BitmapInterpolationMode="HighQuality"
+                                                       Source="{Binding Path, Converter={StaticResource FilePathToBitmap}, ConverterParameter=44}" />
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1" Margin="8,0,8,0"
+                                                        VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" Classes="t12Medium"
+                                                           Foreground="{DynamicResource Slate700}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           ToolTip.Tip="{Binding Name}" />
+                                                <TextBlock Text="{Binding DimensionsText}"
+                                                           Classes="t11"
+                                                           Foreground="{DynamicResource Slate400}" />
+                                            </StackPanel>
+
+                                            <!-- free / used / run-wide: one solid colour per
+                                                 state, white text on it, no frame -->
+                                            <Border Grid.Column="2" CornerRadius="6"
+                                                    Padding="8,3" VerticalAlignment="Center"
+                                                    Background="{Binding Usage, Converter={StaticResource PhotoUsageBrush}}">
+                                                <TextBlock Text="{Binding UsageText}" FontSize="10"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="White" />
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- ============================= the books ============================= -->
+            <!--
+                No card around the whole column. A white field holding every book, with
+                another white field inside it per book, reads as one single object with
+                rows in it - a table, not a stack of books. Each book is a card and the
+                space between cards is the background, so "there is one more book below" is
+                something you see rather than read.
+            -->
+            <Grid Grid.Column="2">
+
+                <ScrollViewer IsVisible="{Binding !HasStructure}" VerticalScrollBarVisibility="Auto"
+                              Padding="0,0,10,0">
+                <StackPanel>
+
+                    <!--
+                        Empty state: no structure yet. An empty project used to show three
+                        lines of text and a shrug, which left a first-time user with no idea
+                        what to press first - the structure controls are up in the control
+                        panel, far from this card. It is the three steps of the mode, in
+                        order, with the step that comes next marked as such.
+                    -->
+                    <Border Classes="card" Padding="28" MaxWidth="600" Margin="0,40,0,0"
+                            HorizontalAlignment="Center"
+                            IsVisible="{Binding !HasStructure}">
+                        <StackPanel>
+                            <Border Width="56" Height="56" CornerRadius="16"
+                                    HorizontalAlignment="Center"
+                                    Background="{DynamicResource Brand50}">
+                                <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="24" Foreground="{DynamicResource Brand600}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="Соберите первые книги" FontSize="18" FontWeight="Bold"
+                                       HorizontalAlignment="Center" Margin="0,18,0,0"
+                                       TextAlignment="Center" />
+                            <TextBlock Classes="t12" TextAlignment="Center" TextWrapping="Wrap"
+                                       MaxWidth="460" HorizontalAlignment="Center" Margin="0,8,0,0"
+                                       Foreground="{DynamicResource Slate500}"
+                                       Text="Книги собираются вручную: структуру задаёте вы, фотографии раскладываете по ячейкам. Три шага:" />
+
+                            <StackPanel Margin="0,20,0,0">
+                                <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,14">
+                                    <Border Grid.Column="0" Width="24" Height="24" CornerRadius="8"
+                                            Background="{DynamicResource Brand600}"
+                                            VerticalAlignment="Top">
+                                        <TextBlock Text="1" FontSize="12" FontWeight="Bold"
+                                                   Foreground="White"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                        <TextBlock Text="Задайте структуру" Classes="t12Semi" />
+                                        <TextBlock Classes="t12" TextWrapping="Wrap" Margin="0,2,0,0"
+                                                   Foreground="{DynamicResource Slate500}"
+                                                   Text="В панели управления укажите число книг и число разворотов — одинаковое для всех книг — и нажмите «Добавить структуру». Потом её можно дорастить или уменьшить." />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,14">
+                                    <Border Grid.Column="0" Width="24" Height="24" CornerRadius="8"
+                                            Background="{DynamicResource Slate200}"
+                                            VerticalAlignment="Top">
+                                        <TextBlock Text="2" FontSize="12" FontWeight="Bold"
+                                                   Foreground="{DynamicResource Slate600}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                        <TextBlock Text="Загрузите фотографии" Classes="t12Semi" />
+                                        <TextBlock Classes="t12" TextWrapping="Wrap" Margin="0,2,0,0"
+                                                   Foreground="{DynamicResource Slate500}"
+                                                   Text="Кнопкой «Загрузить фото», перетаскиванием в зону загрузки — или сразу в нужную ячейку. Файлы, оставшиеся в списке слева, ставятся в слоты перетаскиванием." />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0" Width="24" Height="24" CornerRadius="8"
+                                            Background="{DynamicResource Slate200}"
+                                            VerticalAlignment="Top">
+                                        <TextBlock Text="3" FontSize="12" FontWeight="Bold"
+                                                   Foreground="{DynamicResource Slate600}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                        <TextBlock Text="Расставьте фотографии" Classes="t12Semi" />
+                                        <TextBlock Classes="t12" TextWrapping="Wrap" Margin="0,2,0,0"
+                                                   Foreground="{DynamicResource Slate500}"
+                                                   Text="Перетащите фото в нужную ячейку. Если разворот или обложка повторяется во всех книгах, добавьте его сразу во все книги одним действием — так большие заказы собираются быстрее." />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                </ScrollViewer>
+
+                    <!--
+                        A card for each book, with the page showing between them.
+
+                        It was one card for the whole run with a line drawn between the
+                        books, on the reasoning that a column of separate cards reads as a
+                        column of separate things. Checked against the released program at
+                        full size: each book is its own card, the gap between them is the
+                        page, and the gap is what says there is another book below before
+                        anyone scrolls to find out.
+
+                        A line drawn between two parts of one white field says there is a
+                        boundary. It does not say what is on the other side of it.
+                    -->
+                    <Border IsVisible="{Binding HasStructure}">
+
+                    <!--
+                        Only the books near the viewport are built.
+
+                        A fifty-book order is twenty-six thousand elements when every card is
+                        laid out at once, and the screen took eight and a half seconds to
+                        appear; more than half of that was the layout of cards nobody could
+                        see yet. A book is a tall card in a column that is taller than the
+                        window, so the column builds the ones it can show and the ones just
+                        below them, and builds the rest as they are scrolled to.
+
+                        The list is dressed as the plain cards it draws: no selection colour,
+                        no hover, no border, no padding of its own, and a template that leaves
+                        out the parts of a list row that are not a card. Its scroll bar is the
+                        one this column already had.
+                    -->
+                    <ListBox ItemsSource="{Binding Books}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="0,0,10,0"
+                             SelectionMode="Single"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Template">
+                                    <ControlTemplate>
+                                        <ContentPresenter Content="{TemplateBinding Content}"
+                                                          ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                    </ControlTemplate>
+                                </Setter>
+                            </Style>
+                        </ListBox.Styles>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Classes="card" Padding="20" Margin="0,0,0,16">
+                                <StackPanel>
+
+                                        <!-- book header: the number IS the name -->
+                                        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal"
+                                                        Spacing="10" VerticalAlignment="Center">
+                                                <Border Background="{DynamicResource Brand600}"
+                                                        CornerRadius="8" Padding="10,4"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock FontSize="12" FontWeight="Bold"
+                                                               Foreground="White"
+                                                               Text="{Binding BookIndex, StringFormat='Книга {0:D2}'}" />
+                                                </Border>
+                                                <!-- Green once the book is full. Bound to IsFilled,
+                                                     not to the book: bound to the book the colour
+                                                     was decided when the card was built, so
+                                                     "Готово 8 из 8" stayed red. -->
+                                                <TextBlock Text="{Binding ProgressText}"
+                                                           Classes="t12" VerticalAlignment="Center"
+                                                           FontWeight="{Binding IsFilled, Converter={StaticResource PageState}, ConverterParameter=filledsemi}"
+                                                           Foreground="{Binding IsFilled, Converter={StaticResource PageState}, ConverterParameter=filledbrush}" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                        Spacing="4" VerticalAlignment="Center">
+                                                <Button Classes="icon"
+                                                        AutomationProperties.Name="Дублировать книгу"
+                                                        ToolTip.Tip="Дублировать книгу"
+                                                        Click="OnDuplicateBookClick">
+                                                    <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="13" />
+                                                </Button>
+                                                <Button Classes="icon"
+                                                        AutomationProperties.Name="Удалить книгу"
+                                                        ToolTip.Tip="Удалить книгу"
+                                                        Click="OnDeleteBookClick">
+                                                    <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="13" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- slots: measured width, so a wrapping panel -->
+                                        <ItemsControl ItemsSource="{Binding AllSlotsPages}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Name="SlotCard" Classes="slotCard"
+                                                            Margin="0,0,16,16"
+                                                            PointerPressed="OnSlotPressed"
+                                                            PointerEntered="OnSlotPointerEntered"
+                                                            PointerExited="OnSlotPointerExited"
+                                                            BorderBrush="{Binding Converter={StaticResource PageCaption}, ConverterParameter=border}"
+                                                            BorderThickness="{Binding Converter={StaticResource PageCaption}, ConverterParameter=borderthickness}">
+                                                        <!--
+                                                            The card draws its frame and clips
+                                                            nothing; the frame host below rounds
+                                                            its own top corners.
+
+                                                            One border did both, and the
+                                                            photograph's square corner lay over
+                                                            the inside half of the stroke, so the
+                                                            line was cut off exactly where it
+                                                            turned - and the cover, whose stroke
+                                                            is two pixels of colour rather than a
+                                                            hairline, showed it worst. Only the
+                                                            top two corners are round: the
+                                                            caption sits under the photograph on
+                                                            white, and rounding the bottom two
+                                                            would show that white through it.
+                                                        -->
+                                                        <Grid>
+
+                                                            <!--
+                                                                Pinned to the frame's own width. Without it the
+                                                                card is only as wide as its widest child,
+                                                                and revealing "to all books" pushed the card
+                                                                wider and the row reflowed. The frame is the
+                                                                sizing authority; nothing may outvote it.
+
+                                                                The width is the slots' own row, not the
+                                                                scroller with a reserve taken off it: a hand-picked
+                                                                reserve was out by ten pixels, and ten pixels is
+                                                                a whole card.
+                                                            -->
+                                                            <Grid.Width>
+                                                                <MultiBinding Converter="{StaticResource AdaptiveCardSize}"
+                                                                              ConverterParameter="width,150">
+                                                                    <Binding Path="Bounds.Width"
+                                                                             RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                                                    <Binding Path="FrameAspect" />
+                                                                </MultiBinding>
+                                                            </Grid.Width>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto" />
+                                                                <RowDefinition Height="Auto" />
+                                                            </Grid.RowDefinitions>
+
+                                                            <Border Grid.Row="0" CornerRadius="12,12,0,0" ClipToBounds="True"
+                                                                    Background="{DynamicResource Slate100}">
+                                                                <Grid>
+                                                                <Grid.Width>
+                                                                    <MultiBinding Converter="{StaticResource AdaptiveCardSize}"
+                                                                                  ConverterParameter="width,150">
+                                                                        <Binding Path="Bounds.Width"
+                                                                               RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                                                        <Binding Path="FrameAspect" />
+                                                                    </MultiBinding>
+                                                                </Grid.Width>
+                                                                <Grid.Height>
+                                                                    <MultiBinding Converter="{StaticResource AdaptiveCardSize}"
+                                                                                  ConverterParameter="height,150">
+                                                                        <Binding Path="Bounds.Width"
+                                                                                 RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                                                                        <Binding Path="FrameAspect" />
+                                                                    </MultiBinding>
+                                                                </Grid.Height>
+
+                                                                <Image x:Name="SlotPhoto" Stretch="UniformToFill"
+                                                                       IsHitTestVisible="False"
+                                                                       IsVisible="{Binding IsEmpty, Converter={StaticResource PageState}, ConverterParameter=hasphoto}">
+                                                                    <Image.Source>
+                                                                        <MultiBinding Converter="{StaticResource PageToBitmap}" ConverterParameter="360">
+                                                                            <Binding />
+                                                                            <Binding Path="SourcePath" />
+                                                                            <Binding Path="ThumbnailPath" />
+                                                                        </MultiBinding>
+                                                                    </Image.Source>
+                                                                </Image>
+
+                                                                <!-- empty: dashed frame, a plus in a circle and
+                                                                     what this slot is waiting for -->
+                                                                <Grid IsVisible="{Binding IsEmpty, Converter={StaticResource PageState}, ConverterParameter=empty}">
+                                                                    <!--
+                                                                        Dashed, not drawn. A solid frame around an empty slot reads as a
+                                                                        finished thing with a hole in it; a broken one reads as "put
+                                                                        something here", which is the whole message of the frame.
+                                                                        The shape is its own so the dashes follow the rounded corner.
+                                                                    -->
+                                                                    <Rectangle RadiusX="7" RadiusY="7"
+                                                                       StrokeThickness="1.5"
+                                                                       StrokeDashArray="5,4"
+                                                                       Stroke="{DynamicResource Slate300}"
+                                                                       Margin="4" IsHitTestVisible="False" />
+                                                                    <StackPanel VerticalAlignment="Center"
+                                                                                HorizontalAlignment="Center">
+                                                                        <!-- The plus sits in a disc, as on the other side of the port: a
+                                                                             bare glyph floating over the dashes read as a stray mark. -->
+                                                                        <Border Width="28" Height="28" CornerRadius="14"
+                                                                                Background="{DynamicResource Slate100}"
+                                                                                HorizontalAlignment="Center">
+                                                                            <TextBlock Text="&#xE710;"
+                                                                                       FontFamily="Segoe MDL2 Assets"
+                                                                                       FontSize="12"
+                                                                                       Foreground="{DynamicResource Slate400}"
+                                                                                       HorizontalAlignment="Center"
+                                                                                       VerticalAlignment="Center" />
+                                                                        </Border>
+                                                                        <TextBlock Foreground="{DynamicResource Slate600}"
+                                                                                   TextAlignment="Center"
+                                                                                   Margin="0,9,0,0"
+                                                                                   FontSize="11" FontWeight="Bold"
+                                                                                   Text="{Binding IsCover, Converter={StaticResource PageState}, ConverterParameter=slotempty}" />
+                                                                        <TextBlock Text="Перетащите сюда фото"
+                                                                                   Classes="t10"
+                                                                                   Foreground="{DynamicResource Slate400}"
+                                                                                   HorizontalAlignment="Center"
+                                                                                   Margin="0,2,0,0" />
+                                                                    </StackPanel>
+                                                                </Grid>
+
+                                                                <!--
+                                                                    A photograph is in this slot but nothing could be
+                                                                    read from disk. Shown instead of an empty grey
+                                                                    frame, because an empty frame is
+                                                                    indistinguishable from an empty slot - and that
+                                                                    is how "the photographs fell off" went unnoticed
+                                                                    for a day. The path is in the tooltip.
+                                                                -->
+                                                                <StackPanel VerticalAlignment="Center"
+                                                                            HorizontalAlignment="Center" Margin="8"
+                                                                            IsVisible="{Binding HasImage, Converter={StaticResource PageState}, ConverterParameter=imageerror}"
+                                                                            ToolTip.Tip="{Binding SourcePath}">
+                                                                    <TextBlock Text="&#xE783;" FontFamily="Segoe MDL2 Assets"
+                                                                               FontSize="18"
+                                                                               Foreground="{DynamicResource Red500}"
+                                                                               HorizontalAlignment="Center" />
+                                                                    <TextBlock Text="Файл не читается"
+                                                                               Classes="t10" FontWeight="Bold"
+                                                                               Foreground="{DynamicResource Red600}"
+                                                                               HorizontalAlignment="Center"
+                                                                               Margin="0,6,0,0" />
+                                                                </StackPanel>
+                                                            </Grid>
+                                                                </Border>
+
+                                                            <!--
+                                                                Footer: what this slot is on the left, what you
+                                                                can do with it on the right. The label and the
+                                                                "to all books" word share ONE cell and replace
+                                                                each other; side by side they needed about 150px
+                                                                of footer, which is why the card could not shrink.
+                                                            -->
+                                                            <Border Grid.Row="1" BorderThickness="0,1,0,0"
+                                                                    BorderBrush="{DynamicResource Slate100}"
+                                                                    Padding="10,7,8,8">
+                                                                <Grid ColumnDefinitions="*,Auto">
+                                                                    <Grid Grid.Column="0" Margin="0,0,6,0">
+                                                                        <TextBlock Name="SlotLabelText"
+                                                                                   Classes="t11"
+                                                                                   VerticalAlignment="Center"
+                                                                                   TextTrimming="CharacterEllipsis"
+                                                                                   ToolTip.Tip="{Binding SourcePath}"
+                                                                                   Text="{Binding SlotLabel}"
+                                                                                   FontWeight="{Binding IsSlotLabelAccent, Converter={StaticResource PageState}, ConverterParameter=slotweight}"
+                                                                                   Foreground="{Binding IsSlotLabelAccent, Converter={StaticResource PageState}, ConverterParameter=slotbrush}" />
+
+                                                                        <!-- A word, not an icon: putting a photograph
+                                                                             into the whole run is the one action a
+                                                                             photographer has to be sure about, so it
+                                                                             says what it does. -->
+                                                                        <TextBlock Name="ApplyToAllText" Text="Во все книги"
+                                                                                   FontSize="11" FontWeight="Bold"
+                                                                                   Foreground="{DynamicResource Brand600}"
+                                                                                   VerticalAlignment="Center"
+                                                                                   Cursor="Hand"
+                                                                                   TextTrimming="CharacterEllipsis"
+                                                                                   IsVisible="False"
+                                                                                   ToolTip.Tip="Поставить это фото в ту же позицию всех книг"
+                                                                                   PointerPressed="OnApplyToAllClick" />
+                                                                    </Grid>
+
+                                                                    <!-- clear the slot: always visible -->
+                                                                    <Button Grid.Column="1" Classes="icon"
+                                                                            Padding="0" Width="22" Height="22"
+                                                                            AutomationProperties.Name="Очистить слот"
+                                                                            ToolTip.Tip="Убрать фото из слота"
+                                                                            Click="OnClearSlotClick"
+                                                                            IsVisible="{Binding IsEmpty, Converter={StaticResource PageState}, ConverterParameter=hasphoto}">
+                                                                        <TextBlock Text="&#xE74D;"
+                                                                                   FontFamily="Segoe MDL2 Assets"
+                                                                                   FontSize="12"
+                                                                                   Foreground="{DynamicResource Red500}" />
+                                                                    </Button>
+                                                                </Grid>
+                                                            </Border>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

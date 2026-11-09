@@ -1,8 +1,8 @@
-﻿# Builds icon.ico from Resources/logo.png, with real transparency.
+﻿# Builds icon.ico from the logo in the shell project, with real transparency.
 #
 # The icon used to be a single 256x256 image stored as an uncompressed bitmap with the
 # alpha channel flattened to white: the desktop shortcut showed a white square around the
-# mark, and the taskbar icon looked pasted on. The owner reported exactly that.
+# mark, and the taskbar icon looked pasted on. The we reported exactly that.
 #
 # What this produces, and why each part is here:
 #   - nine sizes, because Windows picks the one it needs and scales badly if one is
@@ -14,14 +14,14 @@
 #   - the mark scaled to 88% of the canvas on transparent background, so a full-bleed
 #     circle does not touch the edges and turn into a blob at 16px.
 #
-# Usage:  pwsh -File scripts\make-icon.ps1 [-Source Resources\logo.png] [-Out icon.ico]
+# Usage:  pwsh -File scripts\make-icon.ps1 [-Source <shell>\Assets\logo.png] [-Out <shell>\icon.ico]
 #
 # Run it whenever the logo changes, then rebuild: the .ico feeds both the executable
 # (ApplicationIcon) and the installer (SetupIconFile=publish\icon.ico).
 
 param(
-    [string]$Source = 'Resources\logo.png',
-    [string]$Out = 'icon.ico',
+    [string]$Source = 'src\PhotoBook.Desktop.Avalonia\Assets\logo.png',
+    [string]$Out = 'src\PhotoBook.Desktop.Avalonia\icon.ico',
     [int[]]$Sizes = @(16, 20, 24, 32, 40, 48, 64, 128, 256),
     [double]$Inset = 0.06
 )

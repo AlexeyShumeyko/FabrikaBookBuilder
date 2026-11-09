@@ -1,0 +1,231 @@
+using System;
+using Avalonia.Controls;
+using PhotoBook.Application;
+using PhotoBook.Core;
+using PhotoBook.Presentation.ViewModels;
+
+namespace PhotoBook.Shell.Navigation
+{
+    /// <summary>
+    /// Where this shell is, and how it gets somewhere else.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The project list needs four things from the shell around it: the current mode, how to
+    /// open a project, how to end a session, and where an opened project should be handed.
+    /// Everything else it decides for itself.
+    /// </para>
+    /// <para>
+    /// <b>The navigator drives the window.</b> It is the one that knows which screen a mode
+    /// means, and it is the one that makes sure an editor has its project before its screen
+    /// exists to show it. The window holds whatever it is given - the same shape as the WPF
+    /// shell's navigator, which is the point: one behaviour, written twice.
+    /// </para>
+    /// </remarks>
+    public class AvaloniaNavigator : IShellNavigator
+    {
+        private readonly IScreenViewFactory _screens;
+        private readonly UniqueFoldersViewModel _uniqueFolders;
+        private readonly CombinedModeViewModel _combined;
+
+        private ContentControl? _host;
+        private AppMode _currentMode = AppMode.ProjectList;
+        private AppMode? _sessionMode;
+        private (Project Project, ProjectInfo Record)? _pending;
+
+        public AvaloniaNavigator(
+            IScreenViewFactory screens,
+            UniqueFoldersViewModel uniqueFolders,
+            CombinedModeViewModel combined,
+            Func<ProjectListViewModel> projectListProvider)
+        {
+            _screens = screens;
+            _uniqueFolders = uniqueFolders;
+            _combined = combined;
+            ProjectListProvider = projectListProvider;
+
+            // The header reads the name off the editor rather than keeping a copy, so that a
+            // copy cannot fall behind. A copy needs telling, though, and a rename is neither
+            // a new project nor a new screen - it is the same project under a name someone
+            // just typed, which is why neither of the events above would ever have fired.
+            _uniqueFolders.PropertyChanged += OnEditorPropertyChanged;
+            _combined.PropertyChanged += OnEditorPropertyChanged;
+
+            // An export finishes the session, and that is the one thing an editor cannot do
+            // for itself: it has no way to say which screen comes next. The other shell
+            // connects the same two events to the same call, and this one was missing them -
+            // so after a finished export the editor stayed on screen with a project that the
+            // list already showed as ready to print.
+            _uniqueFolders.ProjectExported += (_, _) => EndSession();
+            _combined.ProjectExported += (_, _) => EndSession();
+        }
+
+        private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is nameof(UniqueFoldersViewModel.ProjectName)) ProjectNameChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>Builds the next projects list, once per visit.</summary>
+        public Func<ProjectListViewModel> ProjectListProvider { get; }
+
+        /// <summary>Raised whenever the mode changes, so a shell can react.</summary>
+        public event EventHandler<AppMode>? ModeChanged;
+
+        /// <summary>
+        /// Raised when a project arrives or a session ends.
+        /// </summary>
+        /// <remarks>
+        /// Separate from <see cref="ModeChanged"/> because the two do not move together: a
+        /// project can arrive without the screen changing, and the session can end while the
+        /// screen stays put. The header needs to hear about both, and folding them into one
+        /// event would either miss one or fire on every tab click for nothing.
+        /// </remarks>
+        public event EventHandler? ProjectChanged;
+
+        /// <summary>
+        /// Raised when the open project is renamed, so the header can read the new name.
+        /// </summary>
+        /// <remarks>
+        /// A rename arrives as nothing but a property notification on an editor: no mode
+        /// moved and no project arrived. Without this the top bar would keep showing the old
+        /// name beside a panel showing the new one, and the two are on screen at once.
+        /// </remarks>
+        public event EventHandler? ProjectNameChanged;
+
+        /// <summary>
+        /// Which mode the current session belongs to, or null when no project is open.
+        /// </summary>
+        /// <remarks>
+        /// This is what keeps an editor tab enabled while its project is open and disables it
+        /// again after going back to the list. Reading it off the editor instead would keep
+        /// the tab alive forever: an editor never forgets its project, only the session ends.
+        /// </remarks>
+        public AppMode? SessionMode => _sessionMode;
+
+        public AppMode CurrentMode
+        {
+            get => _currentMode;
+            set
+            {
+                bool changed = _currentMode != value;
+                _currentMode = value;
+                if (changed || _host?.Content is null) Show();
+                ModeChanged?.Invoke(this, value);
+            }
+        }
+
+        /// <summary>
+        /// Gives the navigator the place it puts screens. The window does not exist when the
+        /// container is built, so this comes afterwards - and it is the only thing the
+        /// navigator needs from the window.
+        /// </summary>
+        public void Attach(ContentControl host)
+        {
+            _host = host;
+            Show();
+        }
+
+        /// <summary>Puts the current mode's screen on the window.</summary>
+        public void Show()
+        {
+            if (_host is null) return;
+
+            // The projects list is built per visit - it exists to show the projects as they
+            // are at the moment it is opened - so it is created here rather than kept. The
+            // editors are singletons and come back exactly as they were left.
+            var viewModel = _currentMode switch
+            {
+                AppMode.UniqueFolders => (object)_uniqueFolders,
+                AppMode.Combined => _combined,
+                _ => ProjectListProvider()
+            };
+
+            // The project is delivered BEFORE the screen is built. The editor therefore has
+            // its books when the view is first bound, and the list is laid out once against a
+            // finished collection instead of being built empty and then filled item by item
+            // while the window is already on screen. That fill was measured at 3.3 s of
+            // layout on a fifty-book run - the freeze the person feels after the project
+            // looks open.
+            DeliverPending();
+
+            _host.Content = _screens.CreateScreen(_currentMode, viewModel);
+
+            // The mode-select screen has no view model: it asks a question and raises the
+            // answer. Who acts on the answer is this class's business, not the screen's, so
+            // the subscription is made here and nowhere else.
+            if (_host.Content is Views.StartScreenView startScreen)
+                startScreen.Chosen += CreateProject;
+        }
+
+        public void OpenProject(AppMode mode)
+        {
+            _sessionMode = mode;
+            CurrentMode = mode;
+        }
+
+        /// <summary>
+        /// Starts a project that does not exist yet: the editor is emptied, then the mode
+        /// opens.
+        /// </summary>
+        /// <remarks>
+        /// The reset is not optional. The editors are singletons, so without it "Создать
+        /// проект" carries the previous session's books and project record into the new
+        /// project - and the first save then overwrites the project that was open before.
+        /// </remarks>
+        public void CreateProject(AppMode mode)
+        {
+            if (mode is not (AppMode.UniqueFolders or AppMode.Combined)) return;
+
+            EditorFor(mode)?.ResetProjectCommand.Execute(null);
+
+            _sessionMode = mode;
+            CurrentMode = mode;
+        }
+
+        public void EndSession()
+        {
+            _sessionMode = null;
+            CurrentMode = AppMode.ProjectList;
+            ProjectChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public IProjectEditor? EditorFor(AppMode mode) => mode switch
+        {
+            AppMode.UniqueFolders => _uniqueFolders,
+            AppMode.Combined => _combined,
+            _ => null
+        };
+
+        /// <summary>
+        /// Hands an opened project to the editor that owns its mode.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The hand-over is held rather than performed when the caller asks. The screen for a
+        /// mode is created after the mode changes, and an editor asked for a project before
+        /// its screen exists has nowhere to show it - which in the WPF shell needed two
+        /// dispatches at Loaded priority, and is the reason that wait is written once, here,
+        /// rather than at every call site.
+        /// </para>
+        /// <para>
+        /// Delivery happens before the screen is built, which in this engine is synchronous:
+        /// the editor holds the project before the content is created, so the first layout
+        /// sees a finished collection. No waiting, and no project arriving at an editor that
+        /// cannot see it yet.
+        /// </para>
+        /// </remarks>
+        public void HandProjectToEditor(Project project, ProjectInfo record)
+            => _pending = (project, record);
+
+        private void DeliverPending()
+        {
+            if (_pending is not { } pending) return;
+            _pending = null;
+
+            _sessionMode = pending.Record.Mode;
+            EditorFor(pending.Record.Mode)?.SetProject(pending.Project, pending.Record);
+
+            ProjectChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+}

@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Tests for the use cases and the rules they rely on.
+
+    The project is named after the layer it tests, and since the split into
+    PhotoBook.Core / Application / Infrastructure it references those projects directly
+    rather than the shell. It is net8.0 with no UseWPF for the same reason: if a test ever
+    needs a window, the build says so, and the windowed test is written deliberately instead
+    of arriving by accident because a reference reached the executable.
+
+    Not every adapter can be avoided - the thumbnail pass, the project file, the file layer
+    and image headers are all tested against the real implementations, because a stand-in
+    for the disk would only test the stand-in.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>PhotoBook.Application.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PhotoBook.Application\PhotoBook.Application.csproj" />
+    <ProjectReference Include="..\..\src\PhotoBook.Core\PhotoBook.Core.csproj" />
+    <ProjectReference Include="..\..\src\PhotoBook.Infrastructure\PhotoBook.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\PhotoBook.Presentation\PhotoBook.Presentation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <!-- System.IO is not in the implicit set for a class library, and the export tests
+         are entirely about files on disk. -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- A project file as version 1.1.1 wrote it. Copied next to the test binary so the
+         test reads the same bytes on any machine. -->
+    <None Include="data\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,609 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:PhotoBook.Shell.Views"
+             xmlns:controls="using:PhotoBook.Shell.Controls"
+             x:Class="PhotoBook.Shell.Views.ProjectListView"
+             FontFamily="Inter">
+
+    <!--
+        Two steps up on this screen, and only this screen.
+
+        A project name is the one thing on this screen a person scans for from across the
+        room, and sixteen pixels of Inter is not enough weight to be found. It goes to
+        seventeen and stays bold. The body - the panel's subtitle, the counts under the rule,
+        the call to action - goes from twelve to thirteen.
+
+        Written here rather than in Typography.axaml: a twelve-pixel body is right in a
+        dialog where the words are two lines long, and a scale that moves for one screen
+        stops being a scale. These rules sit closer to their controls than the shared ones do,
+        so they win on this screen only.
+
+        The badge stays where it is. It is a label rather than a sentence, and at thirteen it
+        would be the loudest thing on a card that has a name, a row of photographs and a
+        button on it.
+    -->
+    <UserControl.Styles>
+        <Style Selector="TextBlock.t12">
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="TextBlock.t16Bold">
+            <Setter Property="FontSize" Value="17" />
+        </Style>
+    </UserControl.Styles>
+
+    <!--
+        Transcribed from doc\DESIGN_SPEC.md section 3, number by number, the same way the
+        header was. Nothing here is a value looked at by eye:
+
+            header card  padding 24, radius 16, white, slate-200/80 border, shadow-subtle
+            title        20 bold            subtitle 12, slate-500, 2 above
+            create       16/10, radius 12, brand-600, 12 semibold
+            grid         at most 3 columns, gap 24
+            card         padding 20, radius 16, same border and shadow
+            status pill  padding 11/5, radius 10, border 1, 12 semibold, dot 6
+            time         11, slate-400
+            name         16 bold
+            mode chip    8 left, radius 8, padding 9/4, border 1
+            stats        16 above / 12 below a slate-100 rule, two columns 8 apart
+            footer       20 above / 12 below a slate-100 rule, 8 apart
+            open         8/12, radius 12, slate-100, 12 semibold
+            delete       8, radius 12, glyph 14, slate-400 turning red-500 on red-50
+
+        The pill radius is 10 rather than the 6 the mockup asked for: at 22 pixels tall a
+        radius of 6 still reads as a rectangle patch, and more rounding was asked for. One
+        number if that changes.
+
+        Every command on a card is bound to the screen's data context rather than to the item,
+        with the item as the parameter. Binding a command that lives on the item would mean
+        every card was its own little view model, and the list is one.
+    -->
+    <Grid MaxWidth="1600" Margin="32,24" HorizontalAlignment="Stretch">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--
+            ============================ control panel ==========================
+
+            One row, three things: what this screen is, what you want to see, and the one
+            action you can take.
+
+            The filters were a separate bar and the panel looked empty without them, which
+            is the wrong way round: the filters are how you choose what to see ON this
+            screen, so they belong to this screen's panel, and a panel that only carries a
+            heading is a heading pretending to be a panel.
+
+            It is a single row on purpose. Nothing in it is taller than the heading was, so
+            the panel gives back no vertical space - which matters more than usual here,
+            because the thing below it is a grid of cards and every pixel of height is a
+            row of photographs the photographer can see.
+        -->
+        <Border Grid.Row="0" Classes="card" Padding="20"
+                IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}}">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto" MinHeight="58">
+
+                <!-- The heading. -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <TextBlock Text="Проекты фотокниг" Classes="t20Bold" />
+                    <TextBlock Classes="t12" Margin="0,2,0,0"
+                               Foreground="{DynamicResource Slate500}"
+                               Text="Управляйте подготовленными макетами и запускайте их в автоматический экспорт" />
+                </StackPanel>
+
+                <!--
+                    The two questions: which editor, and how far along. Two, because those
+                    are the two anybody asks with twenty projects in the folder. The words
+                    are the card badges' own words - see ProjectStatusText - so a card can
+                    never come back saying something different from the filter that chose it.
+
+                    These are borderless on purpose. Inside a white panel a boxed control
+                    reads as a foreign object dropped in; borderless reads as belonging, and
+                    it takes its shape from the pointer on hover instead of from a frame.
+                -->
+                <!--
+                    The filters, the count, and the way out of a filter.
+
+                    Read from the right, because that is the order a person arrives in:
+
+                        Создать проект   - the one thing on this screen
+                        the count        - what the filters left of it
+                        фильтр статуса
+                        фильтр режима
+                        Сбросить         - appears only while something is filtered out
+
+                    Сбросить used to sit in the middle of this group, so when it arrived it
+                    appeared between the filters and the count and shoved both filters
+                    sideways to make room for itself. That is what arriving out of nowhere
+                    looks like from the other side of the screen. It is at the far end now,
+                    past the filters, and its place is reserved whether the button is in it
+                    or not - so it fills a gap that was always there instead of opening one.
+
+                    Ten pixels between everything, and a fixed width on every part: the group
+                    sits in an auto-sized column, and an auto-sized column is as wide as its
+                    contents the minute they are asked, which is how the count alone was
+                    moving two controls by several pixels every time it answered differently.
+
+                    The count does not move the group. It sits in its own column, and a
+                    column is either the width you asked for or it is what is left, so the
+                    group beside it stands still whatever the count happens to say.
+                -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10"
+                            VerticalAlignment="Center">
+
+                    <Border Width="84" HorizontalAlignment="Center">
+                        <Button Classes="ghostClear" IsVisible="{Binding IsNarrowed}"
+                                AutomationProperties.Name="Сбросить фильтры"
+                                ToolTip.Tip="Показать все проекты"
+                                HorizontalAlignment="Center"
+                                Command="{Binding ClearFiltersCommand}">
+                            <TextBlock Text="Сбросить" />
+                        </Button>
+                    </Border>
+
+                    <controls:FilterDropDown AutomationName="Фильтр по режиму"
+                                              ToolTip.Tip="Каким редактором собран проект"
+                                              Items="{Binding ModeChoices}"
+                                              SelectedItem="{Binding SelectedMode, Mode=TwoWay}" />
+
+                    <controls:FilterDropDown AutomationName="Фильтр по статусу"
+                                              ToolTip.Tip="Как готово собрание"
+                                              Items="{Binding StatusChoices}"
+                                              SelectedItem="{Binding SelectedStatus, Mode=TwoWay}" />
+
+                </StackPanel>
+
+                <!--
+                     The count, and the air around it.
+
+                     The question is how far the count stands from the filter on one side and
+                     from the button on the other. They were not the same distance, and the
+                     count moving when the answer changes is what made it visible.
+
+                     Centring the words with TextAlignment does not work here at all:
+                     measured, every frame read the same, at the left, settled as well as
+                     immediate. The words are centred as an element instead - a Border of a
+                     fixed 78, the width of the longer of the two answers, with the TextBlock
+                     centred inside it.
+
+                     What made the count move was not the centring. It was the same thing
+                     that made the filter's words jump: the answer changed while the list
+                     was still being taken down, and for the two hundred milliseconds that
+                     takes the words were drawn in the box the previous answer had been
+                     measured into. The order is fixed in FilterDropDown - the list goes
+                     first, and the value lands once it has gone.
+
+                     Forty pixels on the left and twenty on the right, and not the other way
+                     round, because the button carries twenty of its own on that side: the
+                     count is a fixed distance from the filter and lands in the middle of
+                     the gap, so the two come out equal whatever the answer says. 56 and 56
+                     with "Всего: 39", 61 and 61 with "8 из 39".
+                 -->
+                <Border Grid.Column="2" Width="78" HorizontalAlignment="Center"
+                        VerticalAlignment="Center" Margin="40,0,20,0">
+                    <TextBlock Classes="t12"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource Slate400}"
+                               Text="{Binding FilterSummary}" />
+                </Border>
+
+                <!--
+                    The one action on the screen.
+
+                    It is deliberately the same weight as the export button on the other
+                    screens rather than the loudest thing in the window: the photographer is
+                    mostly looking, and the loudest control on a screen is the one they get
+                    invited to press. Thirty-eight pixels, a hair of breathing room either
+                    side of the mark, and states for the pointer - a filled button that gives
+                    nothing back when pressed does not feel pressed, which is most of why it
+                    used to look unfinished.
+                -->
+                <Button Grid.Column="3" Classes="createProject" Margin="20,0,0,0"
+                        AutomationProperties.Name="Создать проект"
+                        Command="{Binding CreateProjectCommand}">
+                    <!--
+                        Text, and only text.
+
+                        The mark beside it was a thin plus in a dark shade on a dark fill -
+                        it was barely there, and what it added was a second thing to look at
+                        in the one control a person should not have to look at twice. The
+                        word alone is unambiguous in any language this program is used in,
+                        and it sits centred because there is nothing else in the control to
+                        align it with.
+                    -->
+                    <TextBlock Text="Создать проект" Foreground="White"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- The empty screen gets the panel's heading on its own; there is nothing to filter.
+
+             Same 52 pixels of content as the panel above it, and that is the whole point.
+             Without it this panel was five pixels shorter, and the two are swapped for one
+             another every time the list is opened: ProjectsCount is briefly nothing while
+             the projects are read, so the short one appeared for a moment and the panel
+             visibly shrank and then grew back. A panel that changes height when you come
+             back to it looks like the program is still loading; it was, but it should not
+             be something you can watch. -->
+        <Border Grid.Row="0" Classes="card" Padding="20"
+                IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}, ConverterParameter=empty}">
+            <StackPanel MinHeight="58">
+                <TextBlock Text="Проекты фотокниг" Classes="t20Bold" VerticalAlignment="Center" />
+                <TextBlock Classes="t12" Margin="0,2,0,0" VerticalAlignment="Center"
+                           Foreground="{DynamicResource Slate500}"
+                           Text="Управляйте макетами" />
+            </StackPanel>
+        </Border>
+
+        <!-- ================================ body ============================== -->
+        <Panel Grid.Row="2" Margin="0,24,0,0">
+
+            <!-- No loading plate, and there is nothing to load.
+                 The list used to open and parse every project file to draw the cards, so a
+                 plate over the grid was honest about what was happening - except that it was
+                 painted UNDER the cards, so it never covered anything and only showed
+                 through the gaps as a tint that vanished when loading ended. The cost it was
+                 warning about is gone: the list reads the index, and a plate that flashes
+                 for three milliseconds is worse than no plate at all. -->
+
+            <!-- error banner -->
+            <Border IsVisible="{Binding ErrorMessage, Converter={StaticResource NotEmpty}}"
+                    Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1"
+                    CornerRadius="12" Padding="16,12" VerticalAlignment="Top">
+                <TextBlock Text="{Binding ErrorMessage}" Classes="t12"
+                           Foreground="#DC2626" TextWrapping="Wrap" />
+            </Border>
+
+            <!-- empty state: gone the moment there is one project -->
+
+            <!--
+                A filter that matched nothing, which is a different thing from having no
+                projects at all. The empty state below says "create your first project",
+                which is nonsense to somebody with thirty of them - so the two are kept
+                apart, and this one offers the way back instead.
+            -->
+            <Border IsVisible="{Binding HasNoMatches}" MaxWidth="520"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Classes="card" Padding="24">
+                <StackPanel Spacing="14" HorizontalAlignment="Center">
+                    <TextBlock Text="Ничего не найдено" Classes="t16Bold" />
+                    <TextBlock Classes="t12" TextAlignment="Center"
+                               Foreground="{DynamicResource Slate500}"
+                               Text="Ни один проект не подходит под выбранные условия" />
+                    <Button Classes="createProject" AutomationProperties.Name="Сбросить фильтры пусто"
+                            Command="{Binding ClearFiltersCommand}">
+                        <TextBlock Text="Сбросить фильтры" Foreground="White" />
+                    </Button>
+                </StackPanel>
+            </Border>
+            <Border Classes="card" Padding="24" MaxWidth="520"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}, ConverterParameter=empty}">
+                <StackPanel Spacing="16" HorizontalAlignment="Center">
+                    <Border Width="56" Height="56" CornerRadius="16"
+                            Background="{DynamicResource Brand50}"
+                            HorizontalAlignment="Center">
+                        <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="24"
+                                   Foreground="{DynamicResource Brand600}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="Проектов пока нет" Classes="t18Bold"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Classes="t12" TextWrapping="Wrap" TextAlignment="Center"
+                               Foreground="{DynamicResource Slate500}"
+                               Text="Создайте первый проект, выберите режим вёрстки и загрузите фотографии." />
+                    <Button Classes="primary" Padding="16,10"
+                            HorizontalAlignment="Center"
+                            AutomationProperties.Name="Создать первый проект"
+                            Command="{Binding CreateProjectCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                       Foreground="White" />
+                            <TextBlock Text="Создать проект" Foreground="White" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- the cards -->
+            <!--
+                 A scroll viewer, not a decoration. With twenty projects the grid is taller
+                 than the window, and a screen that silently cuts its own list is a screen
+                 that looks like it has six projects.
+            -->
+            <!--
+                 The negative right margin is the scrollbar's place. It used to
+                 take ten pixels out of the list, which is why the block of cards
+                 stopped short of the control panel above it even though both measured
+                 the same. Pushed out past the edge, it sits in the margin the window
+                 already has, and the cards line up with the panel.
+             -->
+            <!--
+                 The scrollbar's place.
+
+                 It used to take ten pixels out of the list, which is why the block of
+                 cards stopped short of the control panel above it even though both
+                 measured the same. It is pushed out past the edge and given room of
+                 its own: the margin is the scrollbar's width plus a gap, and the
+                 padding hands the gap back, so the cards finish exactly at the
+                 panel's edge and the scrollbar hangs in the window's own margin
+                 instead of pressed against the last card.
+             -->
+            <ScrollViewer Classes="contentScroll"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Margin="0,0,-20,0">
+                <Border Padding="0,0,20,0">
+                <ItemsControl ItemsSource="{Binding FilteredProjects}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                    <!-- Three columns, every card in a row as tall as the tallest card beside it.
+                     The platform's uniform grid makes every cell in the list one height and
+                     clips the long ones; a wrapping panel makes each card its own height and
+                     an empty project comes out visibly shorter than its neighbours. Neither
+                     is what the other shell does - it puts three columns in a grid and lets
+                     each row be as tall as that row needs. That is the whole of what this
+                     panel is. -->
+                        <local:ThreeColumnPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Classes="card" Padding="20" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                            <!--
+                                The content sits at the top and the button comes straight after
+                                it. Pinning the button to the bottom of the card was tried and
+                                undone against the released program: a card with no photographs in
+                                it has its button high up there, and that is what people know.
+                                Every card in a row is as tall as the row needs, so the slack is
+                                at the bottom of the card - and it is the card's own slack, not a
+                                hole left to be filled.
+                            -->
+                            <StackPanel>
+
+                                <!-- status pill + when it changed -->
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0" CornerRadius="10" Padding="11,5"
+                                            BorderThickness="1"
+                                            Background="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=bg}"
+                                            BorderBrush="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=border}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                                                     Fill="{Binding Status, Converter={StaticResource StatusToLabel}, ConverterParameter=dot}" />
+                                            <TextBlock Classes="t12Semi" VerticalAlignment="Center"
+                                                       Foreground="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=text}"
+                                                       Text="{Binding Status, Converter={StaticResource StatusToLabel}}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <TextBlock Grid.Column="1" Classes="t11"
+                                               Foreground="{DynamicResource Slate400}"
+                                               HorizontalAlignment="Right"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"
+                                               Text="{Binding LastModified, Converter={StaticResource LastModifiedText}, ConverterParameter=prefix}" />
+                                </Grid>
+
+                                <!-- name + which mode it belongs to -->
+                                  <!--
+                                      The name and the badge, and who gives way.
+
+                                      The name is told how much room it may have, from the width of
+                                      this row minus the badge's share, and it takes what that is.
+                                      A name that was only given a column went on asking for its whole
+                                      length, and on a narrow card it pushed the row wider than the
+                                      card - which is why the badge ended up against the corner with the
+                                      card's own padding eaten, and why it happened on one monitor and
+                                      not on the other.
+
+                                      The badge is a number now, not an autosize, so its left edge is the
+                                      same distance from the corner whatever its label says - and a
+                                      ceiling did not do that, because a ceiling still lets a short
+                                      label be short.
+
+                                      The row is one column with the badge set against its right edge,
+                                      rather than two, because two columns is two things each asking
+                                      how wide they want to be and this is one thing that is told.
+                                  -->
+                                  <!--
+                                      The name and the badge, and who gives way.
+
+                                      The badge is pinned to the right of the card's own padding and
+                                      the name is given whatever is left, so the two do not argue.
+                                      What that costs is written down here, because it was measured
+                                      repeatedly and it is not obvious.
+
+                                      A star column is not a cap. Avalonia gives one at least what its
+                                      contents ask for, and a TextBlock asked to shorten its words
+                                      reports the shortened words PLUS the three dots - so on a card whose
+                                      name does not fit, the row asks for seven pixels more than the card
+                                      has and the badge goes out with it. Measured at a window of 1000:
+                                      twenty pixels from the corner where the name fits, thirteen where
+                                      it does not. Without trimming at all it is four, because then the
+                                      name asks for its whole self.
+
+                                      Telling the name the width of its own column was tried and is in
+                                      this file's history: it holds the gap at twenty, but a binding to a
+                                      width reads the width the previous layout pass ended at, so moving
+                                      the window to a screen at another scale arrives with the cap in the
+                                      old scale, the row grows, and the badge jumps to the corner until
+                                      another pass runs - which is what un-maximising and re-maximising
+                                      does. Between the two, the version that never jumps was chosen.
+
+                                      The only way to have both - the gap always at twenty, and no jump - is
+                                      for the badge not to share a row with the name. That is a change to
+                                      the card's shape and it belongs to whoever owns the design.
+                                  -->
+                                  <Grid ColumnDefinitions="*,Auto" Margin="0,12,0,0" HorizontalAlignment="Stretch">
+                                      <TextBlock Grid.Column="0" Classes="t16Bold"
+                                                 HorizontalAlignment="Stretch"
+                                                 TextTrimming="CharacterEllipsis"
+                                                 VerticalAlignment="Center"
+                                                 Text="{Binding Name}" />
+
+                                      <!--
+                                          Sized by its own words rather than by a number. It was
+                                          160 wide whatever it carried, which is wider than any of
+                                          the labels: measured, 145 for "Комбинированный" and 122
+                                          for "В процессе сборки". Pinned right, so the gap from
+                                          the card's edge is the card's own padding whatever the
+                                          badge says.
+                                      -->
+                                      <Border Grid.Column="1" HorizontalAlignment="Right"
+                                              Margin="12,0,0,0"
+                                              CornerRadius="8"
+                                              Padding="9,4" BorderThickness="1"
+                                              VerticalAlignment="Center"
+                                              IsVisible="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=visibility}"
+                                              Background="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tintbg}"
+                                              BorderBrush="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tintborder}">
+                                          <StackPanel Orientation="Horizontal" Spacing="5">
+                                              <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                                         VerticalAlignment="Center"
+                                                         Foreground="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tinticon}"
+                                                         Text="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=icon}" />
+
+                                              <!-- The label shortens too, once the badge is told it may not
+                                                   be wider than it is: a badge whose words are cut off says
+                                                   less than a shorter name beside it. -->
+                                              <TextBlock Classes="t11Semi" VerticalAlignment="Center"
+                                                         TextTrimming="CharacterEllipsis"
+                                                         Foreground="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tinttext}"
+                                                         Text="{Binding Mode, Converter={StaticResource AppModeToLabel}}" />
+                                           </StackPanel>
+                                       </Border>
+                                   </Grid>
+
+                                  <!--
+                                      Three 48px previews and the remainder.
+
+                                      This row is a FIXED height and is always there.
+                                      That is the whole of the fix for cards changing
+                                      size: before, the row disappeared with the
+                                      photographs, so a card with none in it was shorter -
+                                      and since every card in a row is arranged to the
+                                      height of the tallest among them, the same card was
+                                      one size on its own and another size beside one
+                                      that had photographs. The grid changed shape
+                                      depending on what happened to be in the projects.
+
+                                      The space is reserved, and an empty project shows
+                                      that space and nothing else - no frames, no
+                                      placeholders. A photograph that has not been put
+                                      in yet is not a thing to draw a box around.
+                                  -->
+                                  <StackPanel Orientation="Horizontal" Margin="0,16,0,0"
+                                              Spacing="8" Height="48">
+                                      <ItemsControl ItemsSource="{Binding PreviewPhotos}">
+                                          <ItemsControl.ItemsPanel>
+                                              <ItemsPanelTemplate>
+                                                  <StackPanel Orientation="Horizontal" />
+                                              </ItemsPanelTemplate>
+                                          </ItemsControl.ItemsPanel>
+                                          <ItemsControl.ItemTemplate>
+                                              <DataTemplate>
+                                                  <Border Width="48" Height="48" CornerRadius="8"
+                                                          ClipToBounds="True"
+                                                          BorderThickness="1"
+                                                          Background="{DynamicResource Slate100}"
+                                                          BorderBrush="{DynamicResource Slate200}">
+                                                      <!-- 96 for a 48-pixel tile: two times the drawn size, so a card that lands on a
+                                                                 high-density screen is not scaling a 48-pixel bitmap back up. -->
+                                                      <Image Stretch="UniformToFill"
+                                                             Source="{Binding Converter={StaticResource FilePathToBitmap}, ConverterParameter=96}" />
+                                                  </Border>
+                                              </DataTemplate>
+                                          </ItemsControl.ItemTemplate>
+                                      </ItemsControl>
+
+                                      <Border Width="48" Height="48" CornerRadius="8"
+                                              Background="{DynamicResource Slate100}"
+                                              IsVisible="{Binding RemainingPhotoCount, Converter={StaticResource NotEmpty}}">
+                                          <StackPanel Orientation="Horizontal" Spacing="0"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center">
+                                              <TextBlock Text="+" Classes="t11Semi"
+                                                         Foreground="{DynamicResource Slate500}" />
+                                              <TextBlock Text="{Binding RemainingPhotoCount}"
+                                                         Classes="t11Semi"
+                                                         Foreground="{DynamicResource Slate500}" />
+                                          </StackPanel>
+                                      </Border>
+                                  </StackPanel>
+
+                                <!-- Two numbers side by side, each behind its own glyph, the figure in bold and
+                                     the unit after it. They sit on one row on purpose: stacked,
+                                     the card grows by a line and the two numbers stop being
+                                     comparable at a glance, which is all they are there for. -->
+                                <Border Height="1" Background="{DynamicResource Slate100}"
+                                        Margin="0,16,0,0" />
+                                <Grid ColumnDefinitions="*,*" Margin="0,12,0,0">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal"
+                                                Spacing="6" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE82D;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="12" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource Slate400}" />
+                                        <TextBlock Classes="t12" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource Slate600}">
+                                            <Run Text="Книг: " />
+                                            <Run Text="{Binding BookCount, Mode=OneWay}"
+                                                 FontWeight="Bold"
+                                                 Foreground="{DynamicResource Slate800}" />
+                                            <Run Text=" шт." FontWeight="SemiBold" />
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                Spacing="6" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE8B9;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="12" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource Slate400}" />
+                                        <TextBlock Classes="t12" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource Slate600}">
+                                            <Run Text="Разворотов: " />
+                                            <Run Text="{Binding PageCount, Mode=OneWay}"
+                                                 FontWeight="Bold"
+                                                 Foreground="{DynamicResource Slate800}" />
+                                            <Run Text=" стр." FontWeight="SemiBold" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- footer: the card's own width of "open", and the one
+                                     destructive thing on it -->
+
+                                <Border Height="1" Background="{DynamicResource Slate100}"
+                                        Margin="0,16,0,0" />
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,12,0,0">
+                                    <Button Grid.Column="0" Classes="secondary" Padding="12,8"
+                                            HorizontalAlignment="Stretch"
+                                            AutomationProperties.Name="Открыть проект"
+                                            Command="{Binding DataContext.OpenProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <TextBlock Text="Открыть проект" Classes="t12Semi" />
+                                    </Button>
+
+                                    <Button Grid.Column="1" Classes="icon" Margin="8,0,0,0"
+                                            AutomationProperties.Name="Удалить проект"
+                                            Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="14"
+                                                   Foreground="{DynamicResource Slate400}" />
+                                    </Button>
+                                </Grid>
+                                </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+                </Border>
+            </ScrollViewer>
+        </Panel>
+    </Grid>
+</UserControl>

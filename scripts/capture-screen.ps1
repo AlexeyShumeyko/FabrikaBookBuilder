@@ -33,13 +33,16 @@ param(
 )
 
 # The harness console runs on code page 866, which turns every Cyrillic string this
-# script prints into "?" and floods the agent context with mojibake. Force UTF-8 on
+# script prints into "?" and floods the console with mojibake. Force UTF-8 on
 # both channels; a child powershell.exe resets these on its own, so it has to be set
 # inside each script rather than once in the caller.
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = 'Stop'
+
+# One place that knows where the built program is.
+. "$PSScriptRoot\common.ps1"
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 
@@ -128,7 +131,7 @@ function Invoke-Element($el) {
 }
 
 try {
-    $exe = Join-Path $root 'bin\Release\net8.0-windows\PhotoBookRenamer.exe'
+    $exe = Get-AppExe
     $proc = Start-Process -FilePath $exe -PassThru
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
@@ -269,7 +272,7 @@ try {
     if ($WithDialog) {
         # Open the OS file picker and photograph the WHOLE screen, dialog included. The
         # picker is a modal, so it is the one moment where a veil drawn over our own
-        # window becomes visible - which is how the owner saw a grey background appear.
+        # window becomes visible - which is how we saw a grey background appear.
         $pick = Get-ByName $el 'Загрузить фото' 'Button'
         if ($null -eq $pick) { Write-Host 'FAIL: no load button to open the picker with' }
         else { Invoke-Element $pick; Start-Sleep -Seconds 4 }
@@ -289,6 +292,9 @@ try {
 
     $bmp = New-Object System.Drawing.Bitmap $w, $h
     $g = [System.Drawing.Graphics]::FromImage($bmp)
+    # The picture is taken from the screen, so what is in front is what lands in it.
+    Set-WindowInFront $hwnd $proc.Id
+    Assert-WindowInFront $hwnd
     $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w, $h)))
 
     $full = Join-Path $root $Out
@@ -307,6 +313,9 @@ try {
 
         $hbmp = New-Object System.Drawing.Bitmap $w, $h
         $hg = [System.Drawing.Graphics]::FromImage($hbmp)
+        # The picture is taken from the screen, so what is in front is what lands in it.
+        Set-WindowInFront $hwnd $proc.Id
+        Assert-WindowInFront $hwnd
         $hg.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w, $h)))
         $hoverFull = if ($HoverOut) { Join-Path $root $HoverOut } else { $full.Replace('.png', '-hover.png') }
         $hdir = Split-Path -Parent $hoverFull

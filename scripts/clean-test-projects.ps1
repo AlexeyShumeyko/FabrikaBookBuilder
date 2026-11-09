@@ -2,7 +2,7 @@
 #
 # The fixture scripts (make-test-fixture.ps1, make-combined-fixture.ps1) ADD a project every
 # time they run, so a session that made twenty captures leaves twenty "TR-test" cards in the
-# owner's project list. This is the cleanup that has to run afterwards, and it is a script
+# we's project list. This is the cleanup that has to run afterwards, and it is a script
 # rather than a habit because the index must be edited as RAW TEXT.
 #
 # Why raw text: projects.json stores every non-ASCII character as \uXXXX, so
@@ -13,7 +13,7 @@
 # Usage: pwsh -File scripts\clean-test-projects.ps1 [-WhatIf] [-Names TR-test,'* (test)']
 
 param(
-    [string[]]$Names = @('TR-test', 'Testovyy*', 'Kombinirovannyy*'),
+    [string[]]$Names = @('TR-test', 'Testovyy*', 'Kombinirovannyy*', 'Big order*', 'Rename-check'),
     [switch]$WhatIf
 )
 

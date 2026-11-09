@@ -1,0 +1,83 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using PhotoBook.Application;
+
+namespace PhotoBook.Presentation
+{
+    /// <summary>
+    /// Runs work in the background without letting it take the program down with it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The app is full of fire-and-forget calls - "load the thumbnails", "measure the
+    /// photos", "save the index" - and every one of them was written as
+    /// <c>_ = SomethingAsync();</c>. That is a trap in .NET: the returned task is never
+    /// awaited and nobody observes its exception, and the default escalation in .NET Core
+    /// is to <b>terminate the process</b>. So a single unreadable JPEG, a full disk, or a
+    /// file that disappeared between the scan and the copy killed the whole program with
+    /// "unhandled exception" and no dialog. That is not a hypothetical: a
+    /// <c>NullReferenceException</c> in the open path did exactly that during this work.
+    /// </para>
+    /// <para>
+    /// So every fire-and-forget call in the view models goes through here. The exception is
+    /// caught, written to the log, and the program carries on - which is the behaviour a
+    /// photographer needs: a broken file must not lose the work.
+    /// </para>
+    /// <para>
+    /// This used to live in the WPF shell, next to the windows, and used nothing from it.
+    /// Nothing about "do this off the UI thread and tell the log if it fails" is about a UI
+    /// engine, and the Avalonia shell would have needed its own copy of the same class.
+    /// </para>
+    /// </remarks>
+    public static class Background
+    {
+        /// <summary>
+        /// Runs <paramref name="work"/> in the background; a failure is logged, never fatal.
+        /// </summary>
+        public static void Run(Func<Task> work, string what)
+        {
+            if (work == null) return;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await work().ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    Report(what, ex);
+                }
+            });
+        }
+
+        /// <summary>
+        /// Starts <paramref name="work"/> and returns its task so the caller can await it
+        /// when it wants to; a failure is logged rather than crashing either way.
+        /// </summary>
+        public static async Task SafeAsync(Func<Task> work, string what)
+        {
+            if (work == null) return;
+
+            try
+            {
+                await work().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Report(what, ex);
+            }
+        }
+
+        private static void Report(string what, Exception ex)
+        {
+            // The class, not a namespace. A bare "Application.Journal" used to resolve by walking out
+            // of this namespace until it hit PhotoBookRenamer.Application - a namespace that
+            // happened to sit next to the class. It stopped resolving the moment the layer
+            // was renamed to say what it is, which is the point of the rename.
+            Journal.Write(
+                JournalLevel.Error, "background", $"'{what}' failed", ex);
+        }
+    }
+}

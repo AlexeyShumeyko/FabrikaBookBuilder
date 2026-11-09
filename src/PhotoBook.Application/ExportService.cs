@@ -1,0 +1,155 @@
+using System;
+using System.Collections.Generic;
+
+using System.Linq;
+using System.Threading.Tasks;
+using PhotoBook.Core;
+
+namespace PhotoBook.Application
+{
+    internal class ExportService : IExportService
+    {
+        private readonly IFileService _fileService;
+
+        public ExportService(IFileService fileService)
+        {
+            _fileService = fileService;
+        }
+
+        public string GenerateFileName(int bookIndex, int fileIndex)
+        {
+            return $"{bookIndex:D3}-{fileIndex:D2}.jpg";
+        }
+
+        public async Task<Result> ExportProjectAsync(Project project, string outputFolder)
+            => await ExportProjectAsync(project, outputFolder, new ExportOptions());
+
+        public async Task<Result> ExportProjectAsync(Project project, string outputFolder, ExportOptions options)
+        {
+            if (project == null || string.IsNullOrWhiteSpace(outputFolder))
+                return Result.Fail("Не выбран проект или папка для выгрузки.");
+
+            options ??= new ExportOptions();
+
+            try
+            {
+                if (!_fileService.DirectoryExists(outputFolder))
+                {
+                    _fileService.EnsureDirectory(outputFolder);
+                }
+
+                // Build the full work list first so progress can be reported by file count
+                // instead of jumping in uneven steps while the copies run in parallel.
+                var work = new List<(string Source, string Destination)>();
+                var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                // The combined run writes the smallest set the client's site accepts: one
+                // 000-FF file per position every book shares, and one KKK-FF file per book
+                // that overrides it. The folders mode is untouched and keeps writing a file
+                // per slot, because there every book is a different set of photographs.
+                if (project.Mode == AppMode.Combined)
+                {
+                    var plan = CombinedExportPlanner.Build(project, GenerateFileName);
+                    foreach (var entry in plan.Entries)
+                    {
+                        work.Add((entry.SourcePath,
+                                  System.IO.Path.Combine(outputFolder, UniqueName(entry.FileName, usedNames))));
+                    }
+                }
+                else
+                {
+                    foreach (var book in project.Books)
+                    {
+                        var bookIndex = book.BookIndex;
+                        var bookFolder = outputFolder;
+
+                        if (options.PerBookSubfolders)
+                        {
+                            bookFolder = System.IO.Path.Combine(outputFolder, SanitizeFolderName($"{bookIndex:D3} {book.Name}"));
+
+                            // The per-book folder must exist BEFORE its first file is copied
+                            // into it. It is created here rather than left to CopyFileAsync
+                            // because the whole work list is built up front, and a book whose
+                            // folder is missing fails inside Task.WhenAll - which surfaces as
+                            // "could not copy" with no hint about which folder, or as a raw
+                            // exception with nothing in the UI to point at.
+                            if (!_fileService.DirectoryExists(bookFolder))
+                            {
+                                _fileService.EnsureDirectory(bookFolder);
+                            }
+                        }
+
+                        if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
+                        {
+                            work.Add((book.Cover.SourcePath,
+                                      System.IO.Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, 0), usedNames))));
+                        }
+
+                        // Ordered by index: the order on disk has to be the order in the book, and
+                        // the list is not kept in it.
+                        var pageIndex = 1;
+                        foreach (var page in book.Pages.Where(p => !p.IsEmpty).OrderBy(p => p.Index))
+                        {
+                            work.Add((page.SourcePath!,
+                                      System.IO.Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, pageIndex), usedNames))));
+                            pageIndex++;
+                        }
+                    }
+                }
+
+                if (work.Count == 0)
+                    return Result.Ok();
+
+                var completed = 0;
+                var gate = new object();
+
+                await Task.WhenAll(work.Select(async item =>
+                {
+                    await _fileService.CopyFileAsync(item.Source, item.Destination);
+                    lock (gate)
+                    {
+                        completed++;
+                        options.Progress?.Report((double)completed / work.Count);
+                    }
+                }));
+
+                return Result.Ok();
+            }
+            catch (Exception ex)
+            {
+                // The reason used to be thrown away here: the photographer was told to check
+                // that the folder is writable, whatever had actually gone wrong, and the
+                // journal had nothing either.
+                return Result.Fail($"Не удалось скопировать файлы: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Guards against two books resolving to the same file name, which would silently
+        /// overwrite one of them once per-book subfolders are switched on.
+        /// </summary>
+        private static string UniqueName(string fileName, HashSet<string> used)
+        {
+            if (used.Add(fileName)) return fileName;
+
+            var dir = System.IO.Path.GetDirectoryName(fileName) ?? string.Empty;
+            var stem = System.IO.Path.GetFileNameWithoutExtension(fileName);
+            var ext = System.IO.Path.GetExtension(fileName);
+
+            for (int i = 2; i < 10_000; i++)
+            {
+                var candidate = System.IO.Path.Combine(dir, $"{stem}-{i}{ext}");
+                if (used.Add(candidate)) return candidate;
+            }
+            return fileName;
+        }
+
+        private static string SanitizeFolderName(string name)
+        {
+            var invalid = System.IO.Path.GetInvalidFileNameChars();
+            var cleaned = new string(name.Select(c => invalid.Contains(c) ? '_' : c).ToArray()).Trim();
+            return string.IsNullOrWhiteSpace(cleaned) ? "Book" : cleaned;
+        }
+    }
+}
+
