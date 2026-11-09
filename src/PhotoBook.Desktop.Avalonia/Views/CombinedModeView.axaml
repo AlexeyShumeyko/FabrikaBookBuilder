@@ -700,7 +700,7 @@
                                                                               ConverterParameter="width,150">
                                                                     <Binding Path="Bounds.Width"
                                                                              RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
-                                                                    <Binding />
+                                                                    <Binding Path="FrameAspect" />
                                                                 </MultiBinding>
                                                             </Grid.Width>
                                                             <Grid.RowDefinitions>
@@ -716,7 +716,7 @@
                                                                                   ConverterParameter="width,150">
                                                                         <Binding Path="Bounds.Width"
                                                                                RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
-                                                                        <Binding />
+                                                                        <Binding Path="FrameAspect" />
                                                                     </MultiBinding>
                                                                 </Grid.Width>
                                                                 <Grid.Height>
@@ -724,7 +724,7 @@
                                                                                   ConverterParameter="height,150">
                                                                         <Binding Path="Bounds.Width"
                                                                                  RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
-                                                                        <Binding />
+                                                                        <Binding Path="FrameAspect" />
                                                                     </MultiBinding>
                                                                 </Grid.Height>
 

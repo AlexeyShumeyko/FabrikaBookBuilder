@@ -635,7 +635,7 @@
                                                                 <Grid.Width>
                                                                     <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="width,150">
                                                                         <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
-                                                                        <Binding />
+                                                                        <Binding Path="FrameAspect" />
                                                                     </MultiBinding>
                                                                 </Grid.Width>
                                                                 <Grid.RowDefinitions>
@@ -652,13 +652,13 @@
                                                                     <Grid.Width>
                                                                         <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="width,150">
                                                                             <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
-                                                                            <Binding />
+                                                                            <Binding Path="FrameAspect" />
                                                                         </MultiBinding>
                                                                     </Grid.Width>
                                                                     <Grid.Height>
                                                                         <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="height,150">
                                                                             <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
-                                                                            <Binding />
+                                                                            <Binding Path="FrameAspect" />
                                                                         </MultiBinding>
                                                                     </Grid.Height>
 

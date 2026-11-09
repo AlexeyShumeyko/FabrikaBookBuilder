@@ -81,65 +81,45 @@ namespace PhotoBook.Presentation.ViewModels
         private double? _runFrameAspect;
 
         /// <summary>
-        /// The spread that decided the shape, by path. While that photo is still in the
-        /// run the shape does not move again - a second spread of the same format must
-        /// not nudge the cards, and one odd photo pasted into a spread slot must not
-        /// average with the rest. A median did both wrong: with an even number of spreads
-        /// it returns the midpoint of the middle pair, so a stray 1.9 next to 0.68 gave
-        /// 1.29 and the cards swung there and back as more photos arrived.
+        /// Decides the frame shape for every book of the run from the SPREADS in it, and
+        /// stamps that one shape onto every card. The cover never counts: it is the one
+        /// photograph whose format a run cannot rely on - often a scan or a mock-up - and
+        /// letting it reshape the project was the "обложка меняет размер" complaint.
+        /// </summary>
+        /// <remarks>
+        /// The decision is a majority of the measured spreads (see
+        /// <see cref="RunFrameAspectPolicy"/>), counted once per FILE rather than once per
+        /// slot. A shared spread is copied into every book, and counting copies would let a
+        /// run of one book outvote a run of ten; the photographs are what the format is
+        /// about, not how many books happen to show them.
         ///
-        /// Anchoring on a path also makes the shape recoverable without a reset button:
-        /// clear that photo, or empty the run and build it again, and the next spread
-        /// becomes the anchor. What it must not be is permanent.
-        /// </summary>
-        private string? _runFrameAspectSource;
-
-        /// <summary>
-        /// Decides the frame shape for every book of the run: the first SPREAD in reading
-        /// order, the cover never counting. The cover only holds the fort while there is
-        /// no spread yet, because a client may well load the cover first.
-        /// </summary>
+        /// This runs after every change of dimensions as well as after structure changes,
+        /// so the first measured spread re-shapes the run immediately and emptying or
+        /// replacing a photo lets the remaining majority take over.
+        /// </remarks>
         private void UpdateRunFrameAspect()
         {
-            List<string> spreads = new();
-            double? firstSpreadAspect = null;
+            var aspects = new List<double>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var book in Books)
             {
                 foreach (var page in book.Pages)
                 {
                     if (page == null || page.IsCover || page.IsEmpty || !page.HasDimensions) continue;
+                    if (!seen.Add(page.SourcePath!)) continue;
 
-                    spreads.Add(page.SourcePath!);
-                    firstSpreadAspect ??= page.AspectRatio;
+                    aspects.Add(page.AspectRatio);
                 }
             }
 
-            if (spreads.Count > 0)
-            {
-                // Keep the anchor while it is still there, so loading photo after photo
-                // leaves the cards alone.
-                if (_runFrameAspectSource != null && spreads.Contains(_runFrameAspectSource))
-                {
-                    StampRunAspect(_runFrameAspect ?? firstSpreadAspect!.Value);
-                    return;
-                }
+            _runFrameAspect = aspects.Count > 0
+                ? RunFrameAspectPolicy.Decide(aspects, _runFrameAspect)
+                : null;
 
-                // Anchor lost - cleared, or the run was rebuilt from scratch. Re-anchor.
-                _runFrameAspect = firstSpreadAspect;
-                _runFrameAspectSource = spreads[0];
-                StampRunAspect(_runFrameAspect!.Value);
-                return;
-            }
-
-            // No spreads at all. The shape resets to the default, and the COVER IS IGNORED
-            // - our rule, and the second half of it: a cover is the one photo whose
-            // format a run cannot rely on, it is often a scan or a mock-up, and letting it
-            // reshape every card in the project was the "обложка меняет размер" complaint.
-            // Until a spread arrives the cards stay on the default 16:10.
-            _runFrameAspect = null;
-            _runFrameAspectSource = null;
-            StampRunAspect(1.6);
+            // No spreads at all falls back to the default 16:10; with spreads, to the
+            // majority format. The cover is absent from the decision in both cases.
+            StampRunAspect(_runFrameAspect ?? RunFrameAspectPolicy.DefaultAspect);
         }
     }
 }
