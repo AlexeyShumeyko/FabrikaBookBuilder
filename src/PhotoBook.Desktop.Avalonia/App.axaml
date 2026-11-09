@@ -29,7 +29,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceInclude Source="avares://PhotoBook.Desktop.Avalonia/Styles/Tokens.axaml" />
+                <ResourceInclude Source="avares://PhotoBookRenamer/Styles/Tokens.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!--
@@ -130,9 +130,9 @@
         <Setter Property="Background" Value="{DynamicResource Slate50}" />
         <Setter Property="Foreground" Value="{DynamicResource Brand700}" />
     </Style>
-        <StyleInclude Source="avares://PhotoBook.Desktop.Avalonia/Styles/Typography.axaml" />
-        <StyleInclude Source="avares://PhotoBook.Desktop.Avalonia/Styles/Header.axaml" />
-        <StyleInclude Source="avares://PhotoBook.Desktop.Avalonia/Styles/Cards.axaml" />
-        <StyleInclude Source="avares://PhotoBook.Desktop.Avalonia/Styles/ScrollBars.axaml" />
+        <StyleInclude Source="avares://PhotoBookRenamer/Styles/Typography.axaml" />
+        <StyleInclude Source="avares://PhotoBookRenamer/Styles/Header.axaml" />
+        <StyleInclude Source="avares://PhotoBookRenamer/Styles/Cards.axaml" />
+        <StyleInclude Source="avares://PhotoBookRenamer/Styles/ScrollBars.axaml" />
     </Application.Styles>
 </Application>

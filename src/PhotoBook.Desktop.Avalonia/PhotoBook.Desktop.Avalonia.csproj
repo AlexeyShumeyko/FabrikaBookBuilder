@@ -1,38 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    The Avalonia shell. Created by wave 3 step 3.0 as a probe: it exists to answer four
-    questions before any screen is written, not to be the product yet.
+    The desktop shell: the window, the screens, the dialogs and the composition root.
 
-      1. Does the window come up, and how fast.
-      2. Does the Inter typeface load and render as it does in the WPF shell.
-      3. Can a full-size photograph be decoded down to a small tile as fast as the WPF shell
-         does it. This is the one that can stop the migration: the whole design rests on never
-         touching the originals.
-      4. What does it cost in memory.
+    It is the only executable in the product. The layers below it are engine-neutral by
+    build, so a rule that belongs in PhotoBook.Application or PhotoBook.Infrastructure
+    cannot quietly be implemented here.
 
-    Target framework matches the three layers below it, on purpose. net10.0 is available on
-    this machine and the template asked for it, but the WPF shell ships as net8.0-windows,
-    the scripts look for that path, and two frameworks in one product buys nothing.
+    The assembly keeps the name the product has shipped under since 1.1.1. The installer,
+    the shortcuts and the updater all address PhotoBookRenamer.exe, and a new UI engine is
+    not a reason to move the program on disk. The namespace is PhotoBook.Shell so that the
+    bare word Avalonia resolves to the framework rather than to a namespace segment of ours.
   -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AssemblyName>PhotoBook.Desktop.Avalonia</AssemblyName>
-    <!--
-      The namespace is PhotoBook.Shell and deliberately does not end in "Avalonia": inside one,
-      the bare word Avalonia resolves to that segment rather than to the framework's root, and
-      every framework type in the shell would need global::. The probe hit this on its first
-      build.
-
-      The assembly name, though, is the product's name. It was PhotoBookProbe while the shell
-      was a probe, which is the only reason the compiled binary and the avares:// paths said
-      "probe" for something that is now the application.
-    -->
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <AssemblyName>PhotoBookRenamer</AssemblyName>
     <RootNamespace>PhotoBook.Shell</RootNamespace>
-    <!-- The probe is not the product and is not measured by the shipped build. -->
+    <Version>1.1.1</Version>
+    <Authors>PhotoBook Renamer</Authors>
+    <Description>Professional photo book assembly and renaming application</Description>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -58,6 +48,13 @@
          "image missing". -->
     <AvaloniaResource Include="Assets\logo.png" />
     <ProjectReference Include="..\PhotoBook.Presentation\PhotoBook.Presentation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The installer reads the icon from the publish folder, not from the assembly. -->
+    <None Update="icon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

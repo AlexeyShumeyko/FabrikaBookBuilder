@@ -96,11 +96,11 @@ Check '1.3' 'в Application нет using System.IO' ($ioUsings.Count -eq 0) `
 $ui = @(Get-ChildItem src\PhotoBook.Infrastructure, src\PhotoBook.Application -Recurse -Filter *.cs |
     Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' } |
     Select-String -Pattern 'System\.Windows|WindowsBase|System\.Drawing\.Common')
-Check '1.4' 'Application и Infrastructure без WPF' ($ui.Count -eq 0) `
+Check '1.4' 'Application и Infrastructure не зависят от UI-фреймворка' ($ui.Count -eq 0) `
     ("`n          ссылок: $($ui.Count)" + $(if ($ui.Count) { "`n          " + (($ui | ForEach-Object { "$($_.Filename):$($_.LineNumber)" }) -join ', ') } else { '' }))
 
 # --- 1.5 -----------------------------------------------------------------
-$shellProj = 'src\PhotoBook.Desktop.Wpf\PhotoBook.Desktop.Wpf.csproj'
+$shellProj = 'src\PhotoBook.Desktop.Avalonia\PhotoBook.Desktop.Avalonia.csproj'
 $shellOk = Test-Path $shellProj
 $asm = if ($shellOk) { if ((Get-Content $shellProj -Raw) -match '<AssemblyName>([^<]+)<') { $Matches[1] } else { '?' } } else { '?' }
 Check '1.5' 'оболочка отдельным проектом' $shellOk ''
@@ -153,7 +153,7 @@ Check '2.1' 'ошибки не пишутся в консоль (у ярлыка
 # the first version of this check named MultiFolderBrowserDialog as dead, and it is alive -
 # UniqueFoldersViewModel.Folders.cs opens it on the main path. So the check asks the real
 # question instead: is there a dialog class that nothing in the solution refers to?
-$allSource = @(Get-ChildItem src -Recurse -File -Include *.cs,*.xaml |
+$allSource = @(Get-ChildItem src -Recurse -File -Include *.cs,*.xaml,*.axaml |
     Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })
 $dialogClasses = @()
 foreach ($f in (Get-ChildItem src -Recurse -Filter *.cs -File |
@@ -173,10 +173,11 @@ Check '2.2' 'нет диалога, на который никто не ссыл
     ("`n          диалогов всего: $($dialogClasses.Count), без ссылок: " + ($unused -join ', '))
 
 # --- 2.4 -----------------------------------------------------------------
-$big = @(Get-ChildItem src\PhotoBook.Desktop.Wpf\Presentation\ViewModels -Filter *.cs -File |
-    Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' -and ([System.IO.File]::ReadAllLines($_.FullName).Count -gt 500) })
-$largest = Get-ChildItem src\PhotoBook.Desktop.Wpf\Presentation\ViewModels -Filter *.cs -File |
-    Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' } |
+$vmDirs = @('src\PhotoBook.Presentation\ViewModels', 'src\PhotoBook.Desktop.Avalonia\ViewModels')
+$vmFiles = @(Get-ChildItem $vmDirs -Filter *.cs -File |
+    Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })
+$big = @($vmFiles | Where-Object { [System.IO.File]::ReadAllLines($_.FullName).Count -gt 500 })
+$largest = $vmFiles |
     Sort-Object { [System.IO.File]::ReadAllLines($_.FullName).Count } -Descending |
     Select-Object -First 1
 $largestLines = [System.IO.File]::ReadAllLines($largest.FullName).Count
@@ -184,7 +185,7 @@ Check '2.4' 'нет файла модели представления круп�
     ("`n          крупнейший: $($largest.Name) = $largestLines строк")
 
 # --- 2.6 -----------------------------------------------------------------
-$convDir = 'src\PhotoBook.Desktop.Wpf\Presentation\Converters'
+$convDir = 'src\PhotoBook.Desktop.Avalonia\Converters'
 $multi = @()
 foreach ($f in (Get-ChildItem $convDir -Filter *.cs -File)) {
     $text = Get-Content $f.FullName -Raw
@@ -212,29 +213,34 @@ Check '2.8' 'нет метода, возвращающего Task<bool> вмес
     ("`n          найдено: $($bare.Count)" + $(if ($bare.Count) { "`n          " + (($bare | ForEach-Object { "$($_.Filename):$($_.LineNumber)" }) -join ', ') } else { '' }))
 
 # --- 2.9 (скрипты проверки) ------------------------------------------------
-$hardcoded = @(Select-String -Path scripts\*.ps1 -Pattern 'src\\PhotoBook\.Desktop\.Wpf\\bin' |
+$hardcoded = @(Select-String -Path scripts\*.ps1 -Pattern 'src\\PhotoBook\.Desktop\.Avalonia\\bin' |
     Where-Object { $_.Line -notmatch 'Get-AppExe' -and $_.Filename -ne 'common.ps1' })
-Check '2.9' 'скрипты не зашивают путь к сборке' ($hardcoded.Count -le 1) `
-    ("`n          осталось: $($hardcoded.Count) (один запасной в verify-startup допустим)")
+Check '2.9' 'скрипты не зашивают путь к сборке' ($hardcoded.Count -eq 0) `
+    ("`n          осталось: $($hardcoded.Count)")
 
 # --- проверки ресурсов, которые молчали -----------------------------------
 # A view may declare styles of its own, and it does: nineteen of them across the folders
 # dialog and the combined mode. Collect the application-wide keys and the file-local ones
 # separately, exactly as scripts\check-resource-refs.ps1 does, or every local style reads as
 # a missing one.
-$styleDir = Join-Path $root 'src\PhotoBook.Desktop.Wpf\Styles'
+# The root dictionary counts: the converters and brushes the views ask for by key are
+# declared in App.axaml, not in Styles, and a check that only read Styles reported every
+# converter as missing. scripts\check-resource-refs.ps1 reads both and passes.
+$shellDir = Join-Path $root 'src\PhotoBook.Desktop.Avalonia'
 $global = New-Object System.Collections.Generic.HashSet[string]
-foreach ($f in (Get-ChildItem $styleDir -Filter *.xaml -File)) {
+$dictionaries = @(Get-Item (Join-Path $shellDir 'App.axaml')) +
+    @(Get-ChildItem (Join-Path $shellDir 'Styles') -Recurse -File -Include *.xaml, *.axaml)
+foreach ($f in $dictionaries) {
     foreach ($m in [regex]::Matches([System.IO.File]::ReadAllText($f.FullName), 'x:Key\s*=\s*"([^"]+)"')) {
         [void]$global.Add($m.Groups[1].Value)
     }
 }
 $unresolved = @()
-foreach ($f in (Get-ChildItem src -Recurse -Filter *.xaml -File | Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+foreach ($f in (Get-ChildItem src -Recurse -File -Include *.xaml, *.axaml | Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
     $text = [System.IO.File]::ReadAllText($f.FullName)
     $local = New-Object System.Collections.Generic.HashSet[string]
     foreach ($m in [regex]::Matches($text, 'x:Key\s*=\s*"([^"]+)"')) { [void]$local.Add($m.Groups[1].Value) }
-    foreach ($m in [regex]::Matches($text, '\{StaticResource\s+([A-Za-z0-9_.]+)\s*\}')) {
+    foreach ($m in [regex]::Matches($text, '\{(?:StaticResource|DynamicResource)\s+([A-Za-z0-9_.]+)\s*\}')) {
         $k = $m.Groups[1].Value
         if ($global.Contains($k) -or $local.Contains($k)) { continue }
         $unresolved += "$($f.Name) -> $k"

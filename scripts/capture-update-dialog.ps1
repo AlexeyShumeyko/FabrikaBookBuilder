@@ -65,7 +65,7 @@ public class UpdWin {
 # a mismatch here is a real finding, not something to paper over.
 $dialogTitle = -join ([char]0x0414, [char]0x043E, [char]0x0441, [char]0x0442, [char]0x0443, [char]0x043F, [char]0x043D, [char]0x043E, ' ', [char]0x043E, [char]0x0431, [char]0x043D, [char]0x043E, [char]0x0432, [char]0x043B, [char]0x0435, [char]0x043D, [char]0x0438, [char]0x0435)
 
-$csproj = Join-Path $root 'src\PhotoBook.Desktop.Wpf\PhotoBook.Desktop.Wpf.csproj'
+$csproj = Join-Path $root 'src\PhotoBook.Desktop.Avalonia\PhotoBook.Desktop.Avalonia.csproj'
 $realVersion = (Select-Xml -Path $csproj -XPath '//Version').Node.InnerText
 Write-Host "project version: $realVersion   pretending to be: $PretendVersion"
 

@@ -48,7 +48,7 @@
                      gone. -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
 
-                    <Image Source="avares://PhotoBook.Desktop.Avalonia/Assets/logo.png"
+                    <Image Source="avares://PhotoBookRenamer/Assets/logo.png"
                            Width="32" Height="32" Stretch="Uniform"
                            VerticalAlignment="Center"
                            AutomationProperties.Name="Фабрика Фотокниги" />

@@ -1,10 +1,10 @@
 ﻿# One place that knows where the built program is.
 #
-# Twenty-two verification scripts used to spell the path out themselves, in three slightly
-# different spellings, and every one of them named the WPF project and the Release
-# configuration and the output framework version in full. When the shell moves to another UI
-# framework that is twenty-two edits, and the kind that get missed: a script that keeps
-# pointing at the old build still runs, it just quietly verifies a program nobody ships.
+# The verification scripts used to spell the path out themselves, in several slightly
+# different spellings, each one naming a project folder, the configuration and the output
+# framework in full. A path written in twenty places is twenty edits when the output moves,
+# and the kind that get missed: a script that keeps pointing at an old build still runs, it
+# just quietly verifies a program nobody ships.
 #
 # Dot-source this and call Get-AppExe. The function fails loudly instead of returning a
 # path that is not there, because a capture of a stale binary is worse than no capture.
@@ -34,26 +34,13 @@ function Get-AppExe {
     [CmdletBinding()]
     param(
         [ValidateSet('Release', 'Debug')]
-        [string]$Configuration = 'Release',
-
-        # Which shell. The one that ships is the default; the one being compared against is
-        # asked for by name, because both are built from this repository and comparing the
-        # two means being able to point at either.
-        [ValidateSet('Avalonia', 'Wpf')]
-        [string]$Shell = 'Avalonia'
+        [string]$Configuration = 'Release'
     )
 
-    # The shell project moves during the Avalonia migration. Everything downstream asks this
-    # function, so that move is one edit rather than twenty-two.
-    #
-    # No script names a path to a built program. A path written into a script is a path that
-    # goes stale the moment a folder is renamed, and the audit fails the build for it.
-    if ($Shell -eq 'Wpf') {
-        $relative = 'src\PhotoBook.Desktop.Wpf\bin\{0}\net8.0-windows\PhotoBookRenamer.exe' -f $Configuration
-    }
-    else {
-        $relative = 'src\PhotoBook.Desktop.Avalonia\bin\{0}\net8.0\PhotoBook.Desktop.Avalonia.exe' -f $Configuration
-    }
+    # There is one shell. Everything downstream asks this function rather than spelling the
+    # path itself: a path written into twenty scripts is twenty edits the next time the
+    # output moves, and the ones that get missed fail as "the build is missing".
+    $relative = 'src\PhotoBook.Desktop.Avalonia\bin\{0}\net8.0\PhotoBookRenamer.exe' -f $Configuration
 
     $candidate = Join-Path $script:RepoRoot $relative
 

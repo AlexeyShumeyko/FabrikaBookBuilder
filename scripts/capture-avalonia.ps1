@@ -28,7 +28,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 # array quietly becomes a list of paths.
 $root = @(Get-RepoRoot)[-1]
 if (-not $Exe) {
-    $Exe = Join-Path $root 'src\PhotoBook.Desktop.Avalonia\bin\Release\net8.0\PhotoBook.Desktop.Avalonia.exe'
+$Exe = Get-AppExe -Configuration Release
 }
 
 if (-not (Test-Path $Exe)) {

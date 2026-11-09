@@ -32,7 +32,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 . "$PSScriptRoot\common.ps1"
 
 $root = Get-RepoRoot
-$exe = Join-Path $root 'src\PhotoBook.Desktop.Avalonia\bin\Release\net8.0\PhotoBook.Desktop.Avalonia.exe'
+$exe = Get-AppExe -Configuration Release
 
 if (-not (Test-Path $exe)) {
     throw "the shell is not built: $exe"

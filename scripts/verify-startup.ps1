@@ -1,7 +1,7 @@
 ﻿# Verifies the app actually starts.
 #
-# A WPF app with a broken ResourceDictionary or a binding typo compiles fine and then
-# dies with an unhandled XamlParseException before the window ever appears. This script
+# A desktop app with a broken resource dictionary or a binding typo compiles fine and then
+# dies before the window ever appears. This script
 # launches the built exe, waits for a main window, and reports the .NET Runtime event
 # on failure so the real exception is visible instead of "process exited".
 #
@@ -31,8 +31,7 @@ try {
     # friendlier second half of the same check: it gets to print where it looked.
     $exe = try { Get-AppExe -Configuration $Configuration } catch { $null }
     if (-not $exe -or -not (Test-Path $exe)) {
-        $exe = Join-Path $root "src\PhotoBook.Desktop.Wpf\bin\$Configuration\net8.0-windows\PhotoBookRenamer.exe"
-        Write-Host "FAIL: exe not found at $exe"
+        Write-Host 'FAIL: no build to start. Build it first: dotnet build PhotoBookRenamer.sln -c Release'
         exit 1
     }
 

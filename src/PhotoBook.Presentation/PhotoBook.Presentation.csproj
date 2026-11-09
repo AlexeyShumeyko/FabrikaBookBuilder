@@ -1,11 +1,10 @@
 <!--
   View models, and the two helpers that belong with them rather than with a window.
 
-  net8.0 and no WPF, deliberately and mechanically: there is no ProjectReference to
-  PhotoBook.Desktop.Wpf here and there cannot be one, because that project is WPF by
-  definition. So this is not a rule the code has to remember - it is a rule the build
-  enforces. Any `using System.Windows;` left behind is a compile error rather than a
-  comment nobody reads, and the compiler prints the whole remaining list at once.
+  net8.0 and no user-interface framework, deliberately and mechanically: no window, no
+  dialog and no dispatcher is reachable from here. So this is not a rule the code has to
+  remember - it is a rule the build enforces. A `using System.Windows;` or an Avalonia
+  reference is a compile error rather than a comment nobody reads.
 
   That is the only reason this project exists. The migration architecture says a view model
   must not build its own views, show its own dialogs or touch a UI thread, and all three
@@ -21,8 +20,7 @@
                   and call counts are engine-neutral; walking a visual tree is not, so the
                   shell installs that ability at startup and this class only calls it.
 
-  One package: CommunityToolkit.Mvvm, for SetProperty and RelayCommand. The same one the
-  WPF shell already used, so no view model has to be rewritten to move here.
+  One package: CommunityToolkit.Mvvm, for SetProperty and RelayCommand.
 -->
 <Project Sdk="Microsoft.NET.Sdk">
 
