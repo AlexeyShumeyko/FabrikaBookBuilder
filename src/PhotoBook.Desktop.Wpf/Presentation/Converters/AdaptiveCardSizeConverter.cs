@@ -90,8 +90,18 @@ namespace PhotoBookRenamer.Presentation.Converters
         public object Convert(object?[]? values, Type targetType, object? parameter, CultureInfo culture)
         {
             double available = values != null && values.Length > 0 ? ToDouble(values[0]) : 0d;
-            double aspect = values != null && values.Length > 1 && values[1] is Page page && page.FrameAspect > 0d
-                ? page.FrameAspect
+
+            // The combined mode binds FrameAspect directly. A binding to the Page object
+            // alone is evaluated once, when the card is built, so a frame that changed after
+            // the first photo was measured never reached the card. The unique mode still
+            // passes the Page, and both shapes are accepted here.
+            double aspect = values is { Length: > 1 }
+                ? values[1] switch
+                {
+                    Page page when page.FrameAspect > 0d => page.FrameAspect,
+                    double frameAspect when frameAspect > 0d => frameAspect,
+                    _ => FallbackAspect
+                }
                 : FallbackAspect;
 
             bool wantHeight = false;

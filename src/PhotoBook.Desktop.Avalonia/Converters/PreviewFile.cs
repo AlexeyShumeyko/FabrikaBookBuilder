@@ -26,16 +26,22 @@ namespace PhotoBook.Shell.Converters
     /// are made again; until then every list in the program draws them.
     /// </para>
     /// <para>
-    /// Falling back to the original is not a second-class path: it is what happens to a
-    /// project nobody has opened since the cache was cleared, and it is correct, just
-    /// slower. It is also why this is a resolver and not a rule - a caller that genuinely
-    /// wants the whole picture can say so.
+    /// There is deliberately <b>no</b> fallback to the original. There used to be, and it was
+    /// measured at 1.1 s of the 1.9 s the projects screen took to appear: eighteen cards were
+    /// decoding a five-to-twenty-four-megapixel print file to fill a forty-eight-pixel tile,
+    /// because no reduced copy had been built for them yet. A tile with nothing in it is
+    /// better than a tile that costs the screen a second, and the missing copies are built
+    /// in the background by the screen that asks for them.
+    /// </para>
+    /// <para>
+    /// A caller that genuinely wants the whole picture asks for it by name - the converter
+    /// takes <c>original</c> as its parameter.
     /// </para>
     /// </remarks>
     internal static class PreviewFile
     {
         /// <summary>
-        /// The thumbnail for this original if there is one, otherwise the original itself.
+        /// The reduced copy for this original, or null when there is none yet.
         /// </summary>
         public static string? PreferThumbnail(string? sourcePath)
         {
@@ -44,7 +50,7 @@ namespace PhotoBook.Shell.Converters
             try
             {
                 var thumbnail = ThumbnailStore.GetPath(sourcePath);
-                return File.Exists(thumbnail) ? thumbnail : sourcePath;
+                return File.Exists(thumbnail) ? thumbnail : null;
             }
             catch
             {

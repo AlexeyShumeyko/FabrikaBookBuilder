@@ -65,10 +65,18 @@ namespace PhotoBook.Shell.Converters
             CultureInfo culture)
         {
             double available = values is { Count: > 0 } ? ToDouble(values[0]) : 0d;
+
+            // The combined mode binds FrameAspect directly: a binding to the Page object
+            // alone is evaluated once, so a frame that changed after the first photo was
+            // measured never reached the card. The unique mode still passes the Page, and
+            // both shapes are accepted here.
             double aspect = values is { Count: > 1 }
-                            && values[1] is Page page
-                            && page.FrameAspect > 0d
-                ? page.FrameAspect
+                ? values[1] switch
+                {
+                    Page page when page.FrameAspect > 0d => page.FrameAspect,
+                    double frameAspect when frameAspect > 0d => frameAspect,
+                    _ => FallbackAspect
+                }
                 : FallbackAspect;
 
             bool wantHeight = false;

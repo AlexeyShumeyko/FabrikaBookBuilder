@@ -38,6 +38,19 @@ namespace PhotoBook.Application
         /// </summary>
         private readonly SemaphoreSlim _indexGate = new(1, 1);
 
+        /// <summary>
+        /// The last index text that was turned into objects, and what it turned into.
+        /// </summary>
+        /// <remarks>
+        /// The file is still read on every visit - it is 33 KB and a read is a fraction of a
+        /// millisecond - but parsing it into forty-three objects cost 32-47 ms every time the
+        /// screen opened, and the screen is otherwise ready sooner than that. Comparing the
+        /// text rather than a timestamp also catches a write from anywhere, including a script
+        /// run with the program closed. Every write below clears it.
+        /// </remarks>
+        private string? _cachedJson;
+        private List<ProjectInfo>? _cachedProjects;
+
         /// <param name="logging">
         /// The index is the one file six call sites write without looking at the answer, so a failed
         /// write has to be recorded here or it is recorded nowhere.
@@ -155,12 +168,58 @@ namespace PhotoBook.Application
                 return new List<ProjectInfo>();
             }
 
+            if (_cachedProjects is not null && string.Equals(_cachedJson, json, StringComparison.Ordinal))
+            {
+                return Clone(_cachedProjects);
+            }
+
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
-            return JsonSerializer.Deserialize<List<ProjectInfo>>(json, options) ?? new List<ProjectInfo>();
+
+            var parsed = JsonSerializer.Deserialize<List<ProjectInfo>>(json, options) ?? new List<ProjectInfo>();
+            _cachedJson = json;
+            _cachedProjects = parsed;
+
+            return Clone(parsed);
+        }
+
+        /// <summary>
+        /// A copy of the remembered list.
+        /// </summary>
+        /// <remarks>
+        /// Callers edit what they are handed - a repair, a card that keeps its own record -
+        /// so returning the remembered objects would let one caller's change reach the next
+        /// caller's answer.
+        /// </remarks>
+        private static List<ProjectInfo> Clone(List<ProjectInfo> projects)
+        {
+            var copy = new List<ProjectInfo>(projects.Count);
+
+            foreach (var project in projects)
+            {
+                var entry = new ProjectInfo
+                {
+                    Id = project.Id,
+                    Name = project.Name,
+                    FilePath = project.FilePath,
+                    Mode = project.Mode,
+                    BookCount = project.BookCount,
+                    PageCount = project.PageCount,
+                    Status = project.Status,
+                    CreatedDate = project.CreatedDate,
+                    LastModified = project.LastModified
+                };
+
+                foreach (var photo in project.PreviewPhotos) entry.PreviewPhotos.Add(photo);
+                entry.TotalPhotoCount = project.TotalPhotoCount;
+
+                copy.Add(entry);
+            }
+
+            return copy;
         }
 
         /// <summary>
@@ -388,6 +447,10 @@ namespace PhotoBook.Application
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
             var json = JsonSerializer.Serialize(projects, options);
+
+            // The remembered parse is one write behind from this moment on.
+            _cachedJson = null;
+            _cachedProjects = null;
 
             await _index.WriteAsync(json);
         }

@@ -140,6 +140,14 @@ namespace PhotoBook.Shell.Navigation
                 _ => ProjectListProvider()
             };
 
+            // The project is delivered BEFORE the screen is built. The editor therefore has
+            // its books when the view is first bound, and the list is laid out once against a
+            // finished collection instead of being built empty and then filled item by item
+            // while the window is already on screen. That fill was measured at 3.3 s of
+            // layout on a fifty-book run - the freeze the person feels after the project
+            // looks open.
+            DeliverPending();
+
             _host.Content = _screens.CreateScreen(_currentMode, viewModel);
 
             // The mode-select screen has no view model: it asks a question and raises the
@@ -147,8 +155,6 @@ namespace PhotoBook.Shell.Navigation
             // the subscription is made here and nowhere else.
             if (_host.Content is Views.StartScreenView startScreen)
                 startScreen.Chosen += CreateProject;
-
-            DeliverPending();
         }
 
         public void OpenProject(AppMode mode)
@@ -202,9 +208,10 @@ namespace PhotoBook.Shell.Navigation
         /// rather than at every call site.
         /// </para>
         /// <para>
-        /// Delivery happens immediately after the screen is set, which in this engine is
-        /// synchronous: the content is in place before the layout pass that binds it. No
-        /// waiting, and no chance of a project arriving at an editor that cannot see it yet.
+        /// Delivery happens before the screen is built, which in this engine is synchronous:
+        /// the editor holds the project before the content is created, so the first layout
+        /// sees a finished collection. No waiting, and no project arriving at an editor that
+        /// cannot see it yet.
         /// </para>
         /// </remarks>
         public void HandProjectToEditor(Project project, ProjectInfo record)

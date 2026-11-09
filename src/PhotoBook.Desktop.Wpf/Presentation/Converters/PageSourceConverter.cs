@@ -13,7 +13,7 @@ using PhotoBook.Application;
 
 namespace PhotoBookRenamer.Presentation.Converters
 {
-    public class PageSourceConverter : IValueConverter
+    public class PageSourceConverter : IValueConverter, IMultiValueConverter
     {
         // One decoded copy shared by every element that shows the same photograph:
         // a hundred slots must not decode a hundred copies.
@@ -207,6 +207,21 @@ namespace PhotoBookRenamer.Presentation.Converters
             Journal.Write(
                 JournalLevel.Warning, "image", $"{path}  ->  {reason}");
         }
+
+        /// <summary>
+        /// The card binds a page AND its source and thumbnail paths, so that giving the
+        /// slot another photograph re-evaluates the picture. A binding to the page object
+        /// alone is evaluated once, when the card is built, and a filled slot kept showing
+        /// the photograph it was born with.
+        /// </summary>
+        object IMultiValueConverter.Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values == null || values.Length == 0 || values[0] is not Page page) return null;
+            return Convert(page, targetType, parameter, culture)!;
+        }
+
+        object[] IMultiValueConverter.ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+            => Array.Empty<object>();
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {

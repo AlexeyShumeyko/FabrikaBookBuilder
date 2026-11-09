@@ -96,25 +96,12 @@ namespace PhotoBook.Presentation.ViewModels
                         Books.Add(book);
                     }
 
-                    foreach (var book in Books)
-                    {
-                        // One helper owns the thumbnail's path now. It used to be rebuilt
-                        // inline here, once per mode, which is three copies of one formula.
-                        //
-                        // Only the previews that are on disk. Attaching the path a preview
-                        // WILL have - so that a slot with no picture yet asks for a file
-                        // instead of reading the original - was tried and does not work: the
-                        // binding is not re-evaluated when the file appears, and the screen
-                        // opens, builds every preview, and goes on showing empty frames.
-                        if (book.Cover != null)
-                            book.Cover.ThumbnailPath = _thumbnails.GetExistingPath(book.Cover.SourcePath ?? string.Empty);
+                    PerfPhase.Mark("books populated");
 
-                        foreach (var page in book.Pages)
-                        {
-                            if (page != null)
-                                page.ThumbnailPath = _thumbnails.GetExistingPath(page.SourcePath ?? string.Empty);
-                        }
-                    }
+                    // The paths are already on the pages: the repository attaches them while
+                    // the project is being read, off this thread. Doing it here put a thousand
+                    // property notifications on the interface thread on the way in, measured
+                    // at 2.6 s for a fifty-book run, and the screen waited for all of it.
 
                     // A photo with no thumbnail yet has to decode its original - and these
                     // originals are 18 MB print files. Doing that inside the layout pass
@@ -214,6 +201,8 @@ namespace PhotoBook.Presentation.ViewModels
         /// </summary>
         private async Task PrewarmAndWarmThumbnailsAsync(List<string> imagePaths, CancellationToken preparation)
         {
+            PerfPhase.Mark("thumbnail warming started");
+
             try
             {
                 await _thumbnails.EnsureAsync(imagePaths, cancellationToken: preparation);
@@ -222,6 +211,8 @@ namespace PhotoBook.Presentation.ViewModels
             {
                 _loggingService.LogError("Не удалось построить миниатюры при открытии проекта", ex);
             }
+
+            PerfPhase.Mark("thumbnails built");
 
             try
             {
@@ -232,37 +223,42 @@ namespace PhotoBook.Presentation.ViewModels
                 _loggingService.LogError("Не удалось подготовить фото при открытии проекта", ex);
             }
 
+            PerfPhase.Mark("decoded images prepared");
+
             try
             {
                 Ui.Invoke(() =>
                 {
                     foreach (var book in Books)
                     {
-                        // Told to look again whenever a reduced copy now exists, whether or
-                        // not the path string differs: the path is attached before the
-                        // previews are built, so on a cold start the two strings are already
-                        // equal and nothing would be told to redraw.
-                        if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
+                        // Only pages without a copy are looked up, and only an assignment is
+                        // announced - the setter raises ThumbnailPath, which is bound in the
+                        // slot card. The path attached when the project was read is an
+                        // existing copy, so a page that already has one is already drawn.
+                        // Announcing all thousand pages re-evaluated every visible binding
+                        // for a value that had not moved.
+                        if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath)
+                            && string.IsNullOrEmpty(book.Cover.ThumbnailPath))
                         {
                             var thumb = _thumbnails.GetExistingPath(book.Cover.SourcePath!);
                             if (thumb != null)
                             {
                                 book.Cover.ThumbnailPath = thumb;
-                                book.Cover.RaiseThumbnailChanged();
                             }
                         }
 
-                        foreach (var page in book.Pages.Where(p => p != null && !string.IsNullOrEmpty(p.SourcePath)))
+                        foreach (var page in book.Pages.Where(p => p != null && !string.IsNullOrEmpty(p.SourcePath)
+                                                                    && string.IsNullOrEmpty(p.ThumbnailPath)))
                         {
                             var thumb = _thumbnails.GetExistingPath(page.SourcePath!);
                             if (thumb != null)
                             {
                                 page.ThumbnailPath = thumb;
-                                page.RaiseThumbnailChanged();
                             }
                         }
                     }
                 });
+                PerfPhase.Mark("thumbnail paths applied");
             }
             catch (Exception ex)
             {

@@ -27,10 +27,17 @@ namespace PhotoBook.Infrastructure
         /// </summary>
         private readonly IProjectListService _list;
 
-        public ProjectRepository(IImageService imageService, IProjectListService list)
+        /// <summary>
+        /// What a slot draws. The reduced copies are attached here, while the project is still
+        /// off the interface thread, so that opening one costs the screen nothing.
+        /// </summary>
+        private readonly IThumbnailProvider _thumbnails;
+
+        public ProjectRepository(IImageService imageService, IProjectListService list, IThumbnailProvider thumbnails)
         {
             _imageService = imageService;
             _list = list;
+            _thumbnails = thumbnails;
         }
 
         public async Task SaveAsync(Project project, string filePath)
@@ -149,6 +156,10 @@ namespace PhotoBook.Infrastructure
                             book.UpdatePageSlots();
                         }
                     }
+
+                    // The reduced copies that already exist, attached before the project
+                    // reaches a screen and on this thread rather than the interface one.
+                    await Task.Run(() => PageThumbnails.Attach(project, _thumbnails));
 
                     // Projects saved before the sizes existed get them on first open, and they
                     // stay in the project file from then on.

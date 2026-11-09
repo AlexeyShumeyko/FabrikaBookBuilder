@@ -136,19 +136,7 @@ namespace PhotoBook.Presentation.ViewModels
             // layout rather than during it.
             if (Project != null && Project.Books != null && Project.Books.Count > 0)
             {
-                foreach (var book in Project.Books)
-                {
-                    if (book.Cover != null)
-                    {
-                        book.Cover.ThumbnailPath = _thumbnails.GetExistingPath(book.Cover.SourcePath ?? string.Empty);
-                    }
-
-                    foreach (var page in book.Pages)
-                    {
-                        if (page != null)
-                            page.ThumbnailPath = _thumbnails.GetExistingPath(page.SourcePath ?? string.Empty);
-                    }
-                }
+                // The paths are attached by whoever read the project, on a worker thread.
 
                 var allImagePaths = Project.Books
                     .SelectMany(b => b.Pages.Select(p => p.SourcePath).Concat(new[] { b.Cover?.SourcePath }))
@@ -168,30 +156,30 @@ namespace PhotoBook.Presentation.ViewModels
 
                     Ui.Invoke(() =>
                     {
-                        // Told to look again whenever a reduced copy now exists, whether or
-                        // not the path string differs. The path is attached before the
-                        // previews are built, so comparing the two strings finds no change on
-                        // a cold start and nothing is told to redraw - the project opens,
-                        // builds every preview, and goes on showing empty frames.
+                        // Only pages without a copy are looked up, and the setter is the
+                        // announcement: ThumbnailPath is bound in the slot card. The path
+                        // attached when the project was read is an existing copy, so a page
+                        // that already has one is already drawn. Telling every preview to
+                        // redraw re-evaluated the whole visible book for nothing.
                         foreach (var book in Project.Books)
                         {
-                            if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
+                            if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath)
+                                && string.IsNullOrEmpty(book.Cover.ThumbnailPath))
                             {
                                 var thumb = _thumbnails.GetExistingPath(book.Cover.SourcePath!);
                                 if (thumb != null)
                                 {
                                     book.Cover.ThumbnailPath = thumb;
-                                    book.Cover.RaiseThumbnailChanged();
                                 }
                             }
 
-                            foreach (var page in book.Pages.Where(p => !string.IsNullOrEmpty(p.SourcePath)))
+                            foreach (var page in book.Pages.Where(p => !string.IsNullOrEmpty(p.SourcePath)
+                                                                        && string.IsNullOrEmpty(p.ThumbnailPath)))
                             {
                                 var thumb = _thumbnails.GetExistingPath(page.SourcePath!);
                                 if (thumb != null)
                                 {
                                     page.ThumbnailPath = thumb;
-                                    page.RaiseThumbnailChanged();
                                 }
                             }
                         }

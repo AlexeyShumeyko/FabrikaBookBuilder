@@ -18,6 +18,7 @@ using PhotoBook.Presentation.ViewModels;
 using PhotoBook.Shell.Converters;
 using PhotoBook.Shell.Navigation;
 using PhotoBook.Shell.Platform;
+using PhotoBook.Shell.Presentation;
 using PhotoBook.Shell.Services;
 using PhotoBook.Shell.Views;
 using PhotoBook.Shell.ViewModels;
@@ -145,6 +146,11 @@ public partial class App : Avalonia.Application
             navigator.Attach(window.ScreenHost);
 
             desktop.MainWindow = window;
+
+            // Only useful while FBR_PERF_TRACE=1; harmless otherwise. Installed here rather
+            // than in the navigator because the walk needs the window the shell has just
+            // chosen, and that is this line.
+            PerfPhase.InstallElementCounter(AvaloniaElementCounter.Count);
 
             // Disposal hangs off the lifetime's own shutdown event. There is no OnExit to
             // override here: the classic desktop lifetime has no such callback with an event

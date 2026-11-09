@@ -22,11 +22,13 @@ namespace PhotoBook.Application
     {
         private readonly IFileService _fileService;
         private readonly IImageService _imageService;
+        private readonly IThumbnailProvider _thumbnails;
 
-        public ProjectBuilder(IFileService fileService, IImageService imageService)
+        public ProjectBuilder(IFileService fileService, IImageService imageService, IThumbnailProvider thumbnails)
         {
             _fileService = fileService;
             _imageService = imageService;
+            _thumbnails = thumbnails;
         }
 
         public async Task<Project> CreateProjectFromFoldersAsync(List<string> folderPaths)
@@ -78,6 +80,10 @@ namespace PhotoBook.Application
             {
                 project.Books[i].BookIndex = i + 1;
             }
+
+            // The reduced copies that already exist, attached off the interface thread so
+            // that the screen opens with its photographs rather than filling in afterwards.
+            await Task.Run(() => PageThumbnails.Attach(project, _thumbnails));
 
             // The card layout is built from the real sizes of the photographs, so they are
             // read here rather than on the first draw.

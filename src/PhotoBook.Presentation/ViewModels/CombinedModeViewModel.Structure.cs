@@ -393,14 +393,37 @@ namespace PhotoBook.Presentation.ViewModels
             page.ImageWidth = width;
             page.ImageHeight = height;
 
-            // The frame follows the size; the slots themselves are unchanged, so they are not
-            // rebuilt - see Book.RefreshSlots.
-            var book = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
-            book?.RefreshSlots();
+            // An all-books drop puts one file into the same slot of every book, and each of
+            // those slots has forgotten its size when its source changed. The header has
+            // been read once already, so the answer is copied rather than read again - and
+            // it only goes to slots that really show this file, never to a neighbour.
+            foreach (var book in Books)
+            {
+                if (book.Cover != null) CopyDimensions(page, book.Cover);
+                foreach (var candidate in book.Pages)
+                    CopyDimensions(page, candidate);
+            }
+
+            // The frame follows the size. Every book is stamped from the run's majority, so
+            // the first measured spread re-shapes the whole project at once.
+            UpdateRunFrameAspect();
 
             OnPropertyChanged(nameof(Books));
         }
 
+        /// <summary>
+        /// Puts a dropped photograph into one slot, or into the same slot of several books.
+        /// </summary>
+        /// <remarks>
+        /// The slot is not rebuilt: it already exists, and clearing the collections the cards
+        /// are bound to is what used to leave stale frames behind. What changes is the file
+        /// the slot points at, its reduced copy and its measured size. Assigning
+        /// <see cref="PhotoBook.Core.Page.SourcePath"/> forgets the previous file's size and
+        /// thumbnail, so a filled slot takes a replacement exactly like an empty one does.
+        ///
+        /// The header is read for the first target only; <see cref="ApplySlotDimensions"/>
+        /// copies that answer to every slot showing the same file.
+        /// </remarks>
         public void DropFileOnSlot(PhotoBook.Core.Page page, string filePath, DropAction action, List<Book>? selectedBooks = null)
         {
             if (page == null || string.IsNullOrEmpty(filePath))
@@ -408,82 +431,54 @@ namespace PhotoBook.Presentation.ViewModels
                 return;
             }
 
+            _images.InvalidateFile(filePath);
+
+            var targets = new List<PhotoBook.Core.Page>();
             if (action == DropAction.ThisBookOnly)
             {
-                var targetBook = Books.FirstOrDefault(b => b.Cover == page || b.Pages.Contains(page));
-
-                if (!string.IsNullOrEmpty(page.SourcePath) && page.SourcePath != filePath)
+                targets.Add(page);
+            }
+            else
+            {
+                IEnumerable<Book>? books = action == DropAction.AllBooks ? Books : selectedBooks;
+                if (books != null)
                 {
-                    _images.InvalidateFile(page.SourcePath);
+                    foreach (var book in books)
+                    {
+                        var targetPage = page.IsCover
+                            ? book.Cover
+                            : book.Pages.FirstOrDefault(p => p.Index == page.Index);
+
+                        if (targetPage != null) targets.Add(targetPage);
+                    }
+                }
+            }
+
+            if (targets.Count == 0) return;
+
+            foreach (var targetPage in targets)
+            {
+                if (!string.IsNullOrEmpty(targetPage.SourcePath)
+                    && !string.Equals(targetPage.SourcePath, filePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    _images.InvalidateFile(targetPage.SourcePath);
                 }
 
-                _images.InvalidateFile(filePath);
-                page.SourcePath = filePath;
+                targetPage.SourcePath = filePath;
+                if (action == DropAction.AllBooks) targetPage.IsLocked = true;
 
-                // The photograph is in a slot that already existed: nothing about the book's
-                // shape changed, and rebuilding the slot lists to say so is what made the
-                // cards churn. What does change is the export naming and the frame ratio.
+                var targetBook = Books.FirstOrDefault(b => b.Cover == targetPage || b.Pages.Contains(targetPage));
                 targetBook?.RefreshSlots();
 
-                OnPropertyChanged(nameof(Books));
-                LoadThumbnailForPage(page);
-                FillSlotDimensionsSoon(page);
-                UpdateExportCommands();
-                RaiseStructureProgress();
+                _ = LoadThumbnailForPage(targetPage);
             }
-            else if (action == DropAction.AllBooks)
-            {
-                foreach (var book in Books)
-                {
-                    PhotoBook.Core.Page? targetPage = null;
-                    if (page.IsCover)
-                    {
-                        targetPage = book.Cover;
-                    }
-                    else
-                    {
-                        targetPage = book.Pages.FirstOrDefault(p => p.Index == page.Index);
-                    }
 
-                    if (targetPage != null)
-                    {
-                        targetPage.SourcePath = filePath;
-                        targetPage.IsLocked = true;
-                        LoadThumbnailForPage(targetPage);
-                        CopyDimensions(page, targetPage);
-                    }
-                }
+            FillSlotDimensionsSoon(targets[0]);
 
-                FillSlotDimensionsSoon(page);
-                UpdateExportCommands();
-                RaiseStructureProgress();
-            }
-            else if (action == DropAction.SelectedBooks && selectedBooks != null)
-            {
-                foreach (var book in selectedBooks)
-                {
-                    PhotoBook.Core.Page? targetPage = null;
-                    if (page.IsCover)
-                    {
-                        targetPage = book.Cover;
-                    }
-                    else
-                    {
-                        targetPage = book.Pages.FirstOrDefault(p => p.Index == page.Index);
-                    }
-
-                    if (targetPage != null)
-                    {
-                        targetPage.SourcePath = filePath;
-                        LoadThumbnailForPage(targetPage);
-                        CopyDimensions(page, targetPage);
-                    }
-                }
-
-                FillSlotDimensionsSoon(page);
-                UpdateExportCommands();
-                RaiseStructureProgress();
-            }
+            UpdateRunFrameAspect();
+            OnPropertyChanged(nameof(Books));
+            UpdateExportCommands();
+            RaiseStructureProgress();
         }
     }
 }

@@ -43,7 +43,7 @@ namespace PhotoBook.Shell.Navigation
         {
             AppMode.StartScreen => new StartScreenView(),
 
-            AppMode.ProjectList => ProjectsScreen(),
+            AppMode.ProjectList => ProjectsScreen(viewModel),
 
             AppMode.UniqueFolders => new UniqueFoldersView
             {
@@ -62,16 +62,25 @@ namespace PhotoBook.Shell.Navigation
         };
 
         /// <summary>
-        /// A projects list, built fresh and wrapped.
+        /// A projects list, wrapped around the view model the navigator was already holding.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// The view model is what the navigator had in hand; the view is this factory's job.
         /// Returning the bare view model puts a type name on the window where the screen
         /// should be, which is exactly what it did the first time.
+        /// </para>
+        /// <para>
+        /// The handed view model is used as it comes. Building another one here was measured
+        /// as a second full read of the index and a second set of cards on every visit: the
+        /// navigator had already loaded the screen's data, and the screen then threw that
+        /// away and loaded its own. The factory keeps the function for the case where the
+        /// navigator has nothing to give.
+        /// </para>
         /// </remarks>
-        private Control ProjectsScreen() => new ProjectListView
+        private Control ProjectsScreen(object viewModel) => new ProjectListView
         {
-            DataContext = _newProjectsViewModel()
+            DataContext = viewModel as ProjectListViewModel ?? _newProjectsViewModel()
         };
     }
 }

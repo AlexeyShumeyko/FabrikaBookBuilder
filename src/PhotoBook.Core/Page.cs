@@ -23,6 +23,25 @@ namespace PhotoBook.Core
             get => _sourcePath;
             set
             {
+                if (string.Equals(_sourcePath, value, StringComparison.Ordinal)) return;
+
+                // The size and the reduced copy describe the file that was here a moment
+                // ago. Keeping them while the slot points at another photograph made a
+                // replacement draw the old picture and measure nothing: the slot still
+                // claimed to know a size, so the new file was never read.
+                if (_imageWidth != 0) ImageWidth = 0;
+                if (_imageHeight != 0) ImageHeight = 0;
+                ThumbnailPath = null;
+
+                // FileName caches the old path's name once it has been read or saved.
+                if (_fileName != null)
+                {
+                    _fileName = null;
+                    OnPropertyChanged(nameof(FileName));
+                }
+
+                // Clearing happens before the source is announced, so anything listening
+                // for SourcePath already sees the slot in its new, unknown state.
                 if (SetProperty(ref _sourcePath, value))
                 {
                     // A new photo gets a fresh chance: whatever went wrong reading the old

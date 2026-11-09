@@ -30,6 +30,7 @@ namespace PhotoBook.Presentation
             Environment.GetEnvironmentVariable("FBR_PERF_TRACE") == "1";
 
         private static readonly List<(string Name, long Ms)> Marks = new();
+        private static readonly object _marksLock = new();
         private static readonly Stopwatch Clock = new();
         private static long _last;
 
@@ -39,9 +40,13 @@ namespace PhotoBook.Presentation
         public static void Reset()
         {
             if (!Enabled) return;
-            Marks.Clear();
-            Clock.Restart();
-            _last = 0;
+            lock (_marksLock)
+            {
+                Marks.Clear();
+                Counts.Clear();
+                Clock.Restart();
+                _last = 0;
+            }
         }
 
         /// <summary>Records a phase boundary. The value is the time since the previous one.</summary>
@@ -68,9 +73,12 @@ namespace PhotoBook.Presentation
         public static void Mark(string name)
         {
             if (!Enabled) return;
-            long now = Clock.ElapsedMilliseconds;
-            Marks.Add((name, now - _last));
-            _last = now;
+            lock (_marksLock)
+            {
+                long now = Clock.ElapsedMilliseconds;
+                Marks.Add((name, now - _last));
+                _last = now;
+            }
         }
 
         /// <summary>
@@ -133,7 +141,10 @@ namespace PhotoBook.Presentation
             {
                 var sb = new StringBuilder();
                 sb.AppendLine($"== {operation} == total {Clock.ElapsedMilliseconds} ms");
-                foreach (var (name, ms) in Marks) sb.AppendLine($"{ms,6} ms  {name}");
+                lock (_marksLock)
+                {
+                    foreach (var (name, ms) in Marks) sb.AppendLine($"{ms,6} ms  {name}");
+                }
 
                 sb.AppendLine("  calls during the operation:");
                 sb.Append(CountsAsText());

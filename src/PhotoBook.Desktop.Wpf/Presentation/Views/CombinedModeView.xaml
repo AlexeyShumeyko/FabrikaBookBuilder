@@ -635,7 +635,7 @@
                                                                 <Grid.Width>
                                                                     <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="width,150">
                                                                         <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
-                                                                        <Binding />
+                                                                        <Binding Path="FrameAspect" />
                                                                     </MultiBinding>
                                                                 </Grid.Width>
                                                                 <Grid.RowDefinitions>
@@ -652,20 +652,32 @@
                                                                     <Grid.Width>
                                                                         <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="width,150">
                                                                             <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
-                                                                            <Binding />
+                                                                            <Binding Path="FrameAspect" />
                                                                         </MultiBinding>
                                                                     </Grid.Width>
                                                                     <Grid.Height>
                                                                         <MultiBinding Converter="{StaticResource AdaptiveCardSizeConverter}" ConverterParameter="height,150">
                                                                             <Binding Path="ActualWidth" RelativeSource="{RelativeSource FindAncestor, AncestorType=ItemsControl}" />
-                                                                            <Binding />
+                                                                            <Binding Path="FrameAspect" />
                                                                         </MultiBinding>
                                                                     </Grid.Height>
 
-                                                                    <Image Source="{Binding Converter={StaticResource PageSourceConverter}}"
-                                                                           Stretch="UniformToFill" Tag="{Binding}"
+                                                                    <Image Stretch="UniformToFill" Tag="{Binding}"
                                                                            MouseLeftButtonDown="OnImageDoubleClick"
                                                                            Visibility="{Binding SourcePath, Converter={StaticResource HasValueConverter}}">
+                                                                        <!--
+                                                                            The paths are in the binding list so the picture
+                                                                            is re-read when the slot is given another
+                                                                            photograph. A binding to the page alone runs
+                                                                            once, when the card is built.
+                                                                        -->
+                                                                        <Image.Source>
+                                                                            <MultiBinding Converter="{StaticResource PageSourceConverter}">
+                                                                                <Binding />
+                                                                                <Binding Path="SourcePath" />
+                                                                                <Binding Path="ThumbnailPath" />
+                                                                            </MultiBinding>
+                                                                        </Image.Source>
                                                                         <Image.RenderTransform>
                                                                             <ScaleTransform x:Name="PhotoZoom" CenterX="0.5" CenterY="0.5" ScaleX="1" ScaleY="1" />
                                                                         </Image.RenderTransform>

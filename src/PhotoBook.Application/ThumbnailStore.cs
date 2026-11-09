@@ -30,6 +30,18 @@ namespace PhotoBook.Application
     /// </summary>
     public static class ThumbnailStore
     {
+        /// <summary>
+        /// Largest side of a reduced copy, and part of its file name.
+        /// </summary>
+        /// <remarks>
+        /// A slot draws at most about 190 pixels and a card on the projects screen at 48, so
+        /// 320 is already generous even on a screen at 150 percent. It was 500, and the only
+        /// thing the extra pixels bought was a slower write for every photograph in the order.
+        /// The number is in the name because changing it has to invalidate the cache: a
+        /// 500-pixel copy left behind under the old name would be read as the new one.
+        /// </remarks>
+        public const int MaxPixelSize = 320;
+
         private static readonly Lazy<string> DirectoryPath = new(() =>
             System.IO.Path.Combine(System.IO.Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails"));
 
@@ -52,7 +64,7 @@ namespace PhotoBook.Application
 
         /// <summary>The file a reduced copy of this photograph would be written to.</summary>
         public static string GetPath(string sourcePath) =>
-            System.IO.Path.Combine(Directory, $"{GetHash(sourcePath)}_thumb.jpg");
+            System.IO.Path.Combine(Directory, $"{GetHash(sourcePath)}_thumb{MaxPixelSize}.jpg");
 
         /// <summary>
         /// The path a reduced copy would have, whether or not one is there. Callers that

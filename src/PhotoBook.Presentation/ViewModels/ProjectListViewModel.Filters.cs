@@ -66,8 +66,21 @@ namespace PhotoBook.Presentation.ViewModels
         private ModeChoice _modeChoice = ModeChoice.All;
         private StatusChoice _statusChoice = StatusChoice.All;
 
-        /// <summary>The cards actually shown.</summary>
-        public ObservableCollection<ProjectInfo> FilteredProjects { get; } = new();
+        private ObservableCollection<ProjectInfo> _filteredProjects = new();
+
+        /// <summary>
+        /// The cards actually shown.
+        /// </summary>
+        /// <remarks>
+        /// Replaced rather than refilled. Clearing and adding forty-three items raised
+        /// forty-three collection notifications, and the grid rebuilt its layout for each of
+        /// them; handing over a finished collection is one change and one layout pass.
+        /// </remarks>
+        public ObservableCollection<ProjectInfo> FilteredProjects
+        {
+            get => _filteredProjects;
+            private set => SetProperty(ref _filteredProjects, value);
+        }
 
         /// <summary>The two editors.</summary>
         public IReadOnlyList<Choice<ModeChoice>> ModeChoices { get; } = new[]
@@ -157,11 +170,8 @@ namespace PhotoBook.Presentation.ViewModels
                 _ => wanted
             };
 
-            FilteredProjects.Clear();
-            foreach (var project in wanted.OrderByDescending(p => p.LastModified))
-            {
-                FilteredProjects.Add(project);
-            }
+            FilteredProjects = new ObservableCollection<ProjectInfo>(
+                wanted.OrderByDescending(p => p.LastModified));
 
             OnPropertyChanged(nameof(IsNarrowed));
             OnPropertyChanged(nameof(FilterSummary));
