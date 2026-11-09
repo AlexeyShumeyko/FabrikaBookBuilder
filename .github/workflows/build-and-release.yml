@@ -152,7 +152,12 @@ jobs:
 
     - name: Publish application
       run: |
-        dotnet publish ${{ env.SOLUTION_FILE }} `
+        # The shell project, not the solution. PublishSingleFile belongs to an executable,
+        # so publishing the solution hands that property to every class library and to
+        # the test project: the SDK then stops with NETSDK1099 (single-file needs an
+        # application) and NETSDK1098 (the test host needs UseAppHost). A release would
+        # fail on this step, so the command names the project that produces the exe.
+        dotnet publish src\PhotoBook.Desktop.Avalonia\PhotoBook.Desktop.Avalonia.csproj `
           --configuration Release `
           --output ./publish `
           --self-contained true `
