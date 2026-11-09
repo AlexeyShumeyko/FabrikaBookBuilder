@@ -1,3 +1,5 @@
+<div align="center">
+
 # Fabrika BookBuilder Studio
 
 Приложение для Windows, которое готовит тираж фотокниг к загрузке на печатный сайт:
@@ -5,8 +7,14 @@
 сайта. Исходные файлы не изменяются.
 
 ![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
+![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=sharp&logoColor=white)
 ![Avalonia](https://img.shields.io/badge/Avalonia-11.2-8B44AC?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-125%20passing-3FB950?style=for-the-badge)
+![License](https://img.shields.io/badge/license-proprietary-6E7681?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.0.0-4F46E5?style=for-the-badge)
+
+</div>
 
 ---
 
