@@ -1,5 +1,5 @@
 // Copyright (c) 2024-2026 Alexey Shumeyko. All rights reserved.
-// Licensed under the MIT License. See LICENSE in the project root for license information.
+// Proprietary and confidential. See LICENSE in the project root for the terms.
 
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
