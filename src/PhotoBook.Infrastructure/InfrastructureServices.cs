@@ -1,5 +1,9 @@
+using System;
+using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using PhotoBook.Application;
+using PhotoBook.Application.Sites;
+using PhotoBook.Infrastructure.Sites;
 
 namespace PhotoBook.Infrastructure
 {
@@ -36,6 +40,14 @@ namespace PhotoBook.Infrastructure
             services.AddSingleton<IJournal>(sp => new FileJournal(Diagnostics.Directory));
             services.AddSingleton<IProjectRepository, ProjectRepository>();
             services.AddSingleton<IProjectIndexStore, ProjectIndexStore>();
+
+            // One HTTP client for the whole program. The platform is shared by the two sites and
+            // the connection pool is the only thing that keeps repeated calls cheap; a client per
+            // request would open a socket each time and look like load from the outside.
+            services.AddSingleton<ISiteAuthService>(_ => new SiteAuthService(new HttpClient
+            {
+                Timeout = TimeSpan.FromSeconds(30)
+            }));
 
             return services;
         }
