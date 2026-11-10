@@ -81,14 +81,15 @@ namespace PhotoBook.Infrastructure.Sites
             var client = new SiteApiClient(region, _http, _retryDelay);
 
             var response = await client.SignInAsync(email, password, cancellationToken).ConfigureAwait(false);
-            if (!response.IsSuccess || response.Value is null)
+            if (!response.IsSuccess || response.Document is null)
                 return new Attempt(region, null, response.Error);
 
-            using var document = response.Value;
+            using var document = response.Document;
 
             if (!document.RootElement.TryGetProperty("access_token", out var tokenElement) ||
                 tokenElement.ValueKind != JsonValueKind.String)
-                return new Attempt(region, null, "Сайт не выдал токен доступа.");
+                return new Attempt(region, null, new SiteApiError(
+                    SiteApiErrorKind.MalformedResponse, "Сайт не выдал токен доступа."));
 
             var lifetimeSeconds = document.RootElement.TryGetProperty("expires_in", out var expiresElement) &&
                                   expiresElement.TryGetInt64(out var seconds) &&
@@ -119,10 +120,10 @@ namespace PhotoBook.Infrastructure.Sites
                 .GetAsync("creators/projects?with_update_price=1", session.AccessToken, cancellationToken)
                 .ConfigureAwait(false);
 
-            if (!response.IsSuccess || response.Value is null)
-                return Result<bool>.Fail(response.Error ?? "Сайт не ответил списком проектов.");
+            if (!response.IsSuccess || response.Document is null)
+                return Result<bool>.Fail(response.Error?.Message ?? "Сайт не ответил списком проектов.");
 
-            using var document = response.Value;
+            using var document = response.Document;
 
             var hasWork = document.RootElement.TryGetProperty("data", out var data) &&
                           data.ValueKind == JsonValueKind.Array &&
@@ -131,15 +132,26 @@ namespace PhotoBook.Infrastructure.Sites
             return Result<bool>.Ok(hasWork);
         }
 
+        /// <summary>
+        /// One sentence for the whole attempt, chosen from the first site that said something.
+        /// </summary>
+        /// <remarks>
+        /// A 401 during sign-in means the password or the address is wrong, not that a session
+        /// expired, and the site's own message says neither - so the sentence is written here
+        /// rather than taken from the transport layer, which cannot know what was being asked.
+        /// </remarks>
         private static string Describe(IReadOnlyList<Attempt> attempts)
         {
             var first = attempts
                 .Select(attempt => attempt.Error)
-                .FirstOrDefault(error => !string.IsNullOrWhiteSpace(error));
+                .FirstOrDefault(error => error is not null);
 
-            return first ?? "Не удалось войти. Попробуйте позже.";
+            if (first is null)
+                return "Не удалось войти. Попробуйте позже.";
+
+            return first.IsSessionExpired ? "Неверная почта или пароль." : first.Message;
         }
 
-        private sealed record Attempt(SiteRegion Region, SiteSession? Session, string? Error);
+        private sealed record Attempt(SiteRegion Region, SiteSession? Session, SiteApiError? Error);
     }
 }

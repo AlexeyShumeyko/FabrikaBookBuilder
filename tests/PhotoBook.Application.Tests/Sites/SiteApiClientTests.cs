@@ -22,7 +22,7 @@ namespace PhotoBook.Application.Tests.Sites
 
             var result = await CreateClient(handler).GetAsync("creators/projects", "token", default);
 
-            Assert.True(result.IsSuccess, result.Error);
+            Assert.True(result.IsSuccess, result.Error?.Message);
             Assert.Equal(2, handler.Calls);
         }
 
@@ -35,7 +35,76 @@ namespace PhotoBook.Application.Tests.Sites
 
             Assert.False(result.IsSuccess);
             Assert.Equal(1, handler.Calls);
-            Assert.Equal("Неверная почта или пароль.", result.Error);
+            Assert.Equal(SiteApiErrorKind.Unauthorized, result.Error!.Kind);
+            Assert.Equal(401, result.Error.StatusCode);
+            Assert.True(result.Error.IsSessionExpired);
+        }
+
+        [Fact]
+        public async Task Reports_a_missing_project_as_not_found()
+        {
+            var handler = new StubHttpMessageHandler(_ => StubResponses.Json("{}", HttpStatusCode.NotFound));
+
+            var result = await CreateClient(handler).GetAsync("creators/projects/edit?projectId=1", "token", default);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(SiteApiErrorKind.NotFound, result.Error!.Kind);
+            Assert.Equal(404, result.Error.StatusCode);
+            Assert.False(result.Error.IsRetryable);
+            Assert.Equal(1, handler.Calls);
+        }
+
+        [Fact]
+        public async Task Reports_a_large_file_as_too_large()
+        {
+            var handler = new StubHttpMessageHandler(_ =>
+                StubResponses.Json("{}", HttpStatusCode.RequestEntityTooLarge));
+
+            var result = await CreateClient(handler).GetAsync("creators/projects", "token", default);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(SiteApiErrorKind.FileTooLarge, result.Error!.Kind);
+            Assert.Equal(413, result.Error.StatusCode);
+        }
+
+        [Fact]
+        public async Task Reports_a_broken_server_as_retryable()
+        {
+            var handler = new StubHttpMessageHandler(_ => StubResponses.Json("{}", HttpStatusCode.BadGateway));
+
+            var result = await CreateClient(handler).GetAsync("creators/projects", "token", default);
+
+            Assert.Equal(SiteApiErrorKind.ServerUnavailable, result.Error!.Kind);
+            Assert.Equal(502, result.Error.StatusCode);
+            Assert.True(result.Error.IsRetryable);
+        }
+
+        [Fact]
+        public async Task Reports_an_answer_that_is_not_json()
+        {
+            var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("<html>maintenance</html>")
+            });
+
+            var result = await CreateClient(handler).GetAsync("creators/projects", "token", default);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(SiteApiErrorKind.MalformedResponse, result.Error!.Kind);
+        }
+
+        [Fact]
+        public async Task Reports_an_empty_answer()
+        {
+            var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(string.Empty)
+            });
+
+            var result = await CreateClient(handler).GetAsync("creators/projects", "token", default);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(SiteApiErrorKind.EmptyResponse, result.Error!.Kind);
         }
 
         [Fact]

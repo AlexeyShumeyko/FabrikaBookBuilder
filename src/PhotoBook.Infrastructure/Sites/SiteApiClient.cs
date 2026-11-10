@@ -52,7 +52,7 @@ namespace PhotoBook.Infrastructure.Sites
         /// <summary>
         /// The platform's own login endpoint, on the site's host rather than on the API host.
         /// </summary>
-        public Task<Result<JsonDocument>> SignInAsync(string email, string password, CancellationToken cancellationToken)
+        public Task<SiteApiResult> SignInAsync(string email, string password, CancellationToken cancellationToken)
         {
             return SendWithRetryAsync(
                 () =>
@@ -65,7 +65,7 @@ namespace PhotoBook.Infrastructure.Sites
                 cancellationToken);
         }
 
-        public Task<Result<JsonDocument>> GetAsync(string path, string? token, CancellationToken cancellationToken)
+        public Task<SiteApiResult> GetAsync(string path, string? token, CancellationToken cancellationToken)
         {
             return SendWithRetryAsync(
                 () => NewRequest(HttpMethod.Get, ApiUrl(path), token),
@@ -73,7 +73,7 @@ namespace PhotoBook.Infrastructure.Sites
                 cancellationToken);
         }
 
-        public Task<Result<JsonDocument>> PostJsonAsync<T>(string path, T body, string? token, CancellationToken cancellationToken)
+        public Task<SiteApiResult> PostJsonAsync<T>(string path, T body, string? token, CancellationToken cancellationToken)
         {
             return SendWithRetryAsync(
                 () =>
@@ -97,12 +97,12 @@ namespace PhotoBook.Infrastructure.Sites
             return request;
         }
 
-        private async Task<Result<JsonDocument>> SendWithRetryAsync(
+        private async Task<SiteApiResult> SendWithRetryAsync(
             Func<HttpRequestMessage> requestFactory,
             string? token,
             CancellationToken cancellationToken)
         {
-            var lastError = "Сайт не ответил.";
+            var lastError = new SiteApiError(SiteApiErrorKind.ConnectionLost, "Сайт не ответил.");
 
             for (var attempt = 1; attempt <= MaxAttempts; attempt++)
             {
@@ -124,7 +124,7 @@ namespace PhotoBook.Infrastructure.Sites
                     lastError = DescribeStatus(response.StatusCode);
 
                     if (!IsRetryable(response.StatusCode) || attempt == MaxAttempts)
-                        return Result<JsonDocument>.Fail(lastError);
+                        return SiteApiResult.Fail(lastError);
 
                     await Task.Delay(RetryDelayFor(response, attempt), cancellationToken).ConfigureAwait(false);
                 }
@@ -134,37 +134,41 @@ namespace PhotoBook.Infrastructure.Sites
                 }
                 catch (HttpRequestException exception)
                 {
-                    lastError = "Нет связи с сайтом: " + exception.Message;
+                    lastError = new SiteApiError(
+                        SiteApiErrorKind.ConnectionLost,
+                        "Нет связи с сайтом: " + exception.Message);
                     if (attempt == MaxAttempts)
-                        return Result<JsonDocument>.Fail(lastError);
+                        return SiteApiResult.Fail(lastError);
 
                     await Task.Delay(Backoff(attempt), cancellationToken).ConfigureAwait(false);
                 }
                 catch (TaskCanceledException)
                 {
-                    lastError = "Сайт не ответил вовремя.";
+                    lastError = new SiteApiError(SiteApiErrorKind.Timeout, "Сайт не ответил вовремя.");
                     if (attempt == MaxAttempts)
-                        return Result<JsonDocument>.Fail(lastError);
+                        return SiteApiResult.Fail(lastError);
 
                     await Task.Delay(Backoff(attempt), cancellationToken).ConfigureAwait(false);
                 }
             }
 
-            return Result<JsonDocument>.Fail(lastError);
+            return SiteApiResult.Fail(lastError);
         }
 
-        private static Result<JsonDocument> Parse(string text)
+        private static SiteApiResult Parse(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
-                return Result<JsonDocument>.Fail("Сайт вернул пустой ответ.");
+                return SiteApiResult.Fail(
+                    SiteApiErrorKind.EmptyResponse, "Сайт вернул пустой ответ.");
 
             try
             {
-                return Result<JsonDocument>.Ok(JsonDocument.Parse(text));
+                return SiteApiResult.Ok(JsonDocument.Parse(text));
             }
             catch (JsonException)
             {
-                return Result<JsonDocument>.Fail("Сайт вернул ответ в неизвестном формате.");
+                return SiteApiResult.Fail(
+                    SiteApiErrorKind.MalformedResponse, "Сайт вернул ответ в неизвестном формате.");
             }
         }
 
@@ -189,16 +193,28 @@ namespace PhotoBook.Infrastructure.Sites
 
         private TimeSpan Backoff(int attempt) => _retryDelay * Math.Pow(2, attempt - 1);
 
-        private static string DescribeStatus(HttpStatusCode status) => status switch
+        private static SiteApiError DescribeStatus(HttpStatusCode status)
         {
-            HttpStatusCode.Unauthorized => "Неверная почта или пароль.",
-            HttpStatusCode.Forbidden => "У аккаунта нет доступа к этому действию.",
-            HttpStatusCode.NotFound => "Сайт не нашёл запрошенные данные.",
-            HttpStatusCode.TooManyRequests => "Сайт просит подождать: слишком много запросов.",
-            HttpStatusCode.RequestEntityTooLarge => "Файл слишком велик для загрузки на сайт.",
-            _ when (int)status >= 500 => "Сайт временно недоступен. Попробуйте позже.",
-            _ => "Сайт ответил кодом " + (int)status + "."
-        };
+            var code = (int)status;
+
+            return status switch
+            {
+                HttpStatusCode.Unauthorized => new SiteApiError(
+                    SiteApiErrorKind.Unauthorized, "Нужно войти заново: сеанс истёк.", code),
+                HttpStatusCode.Forbidden => new SiteApiError(
+                    SiteApiErrorKind.Forbidden, "У аккаунта нет доступа к этому действию.", code),
+                HttpStatusCode.NotFound => new SiteApiError(
+                    SiteApiErrorKind.NotFound, "Сайт не нашёл запрошенные данные.", code),
+                HttpStatusCode.TooManyRequests => new SiteApiError(
+                    SiteApiErrorKind.RateLimited, "Сайт просит подождать: слишком много запросов.", code),
+                HttpStatusCode.RequestEntityTooLarge => new SiteApiError(
+                    SiteApiErrorKind.FileTooLarge, "Файл слишком велик для загрузки на сайт.", code),
+                _ when code >= 500 => new SiteApiError(
+                    SiteApiErrorKind.ServerUnavailable, "Сайт временно недоступен. Попробуйте позже.", code),
+                _ => new SiteApiError(
+                    SiteApiErrorKind.Other, "Сайт ответил кодом " + code + ".", code)
+            };
+        }
 
         private static string BuildUserAgent()
         {
