@@ -156,7 +156,7 @@ namespace PhotoBook.Infrastructure.Sites
                 {
                     lastError = new SiteApiError(
                         SiteApiErrorKind.ConnectionLost,
-                        "Нет связи с сайтом: " + exception.Message);
+                        "Нет связи с сайтом. Проверьте интернет и попробуйте снова.");
                     if (attempt == MaxAttempts)
                         return SiteApiResult.Fail(lastError);
 

@@ -176,20 +176,19 @@
                             Margin="10,0" VerticalAlignment="Center" />
 
                     <!--
-                        A placeholder, and it says so. A stub that looks finished and is not is
-                        how somebody files a report that a button does nothing; the other two
-                        stubs in this bar say the same thing in their tooltips and this one is
-                        no different. Signing in against an account on the site is later work -
-                        this is its seat.
+                        The one control in this bar that leads somewhere rather than being a
+                        seat: it opens the sign-in window, and after a successful sign-in it
+                        shows the account's address instead of the invitation.
 
                         No glyph in front of the word. The person mark is already on screen a
                         few pixels to the left as "contacts", and two identical marks in one
                         bar is worse than one mark fewer: a person reaches for the wrong one
                         and cannot tell why it did nothing.
                     -->
-                    <Button Classes="account" ToolTip.Tip="Вход в аккаунт — в разработке"
+                    <Button Classes="account" Click="OnAccountClick"
+                            ToolTip.Tip="Аккаунт на сайте"
                             AutomationProperties.Name="Вход">
-                        <TextBlock Text="Войти" />
+                        <TextBlock x:Name="AccountLabel" Text="Войти" />
                     </Button>
                 </StackPanel>
             </Grid>

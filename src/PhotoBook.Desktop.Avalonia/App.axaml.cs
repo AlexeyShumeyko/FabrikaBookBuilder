@@ -121,7 +121,9 @@ public partial class App : Avalonia.Application
                 _services.GetRequiredService<IJournal>());
 
             var navigator = _services.GetRequiredService<AvaloniaNavigator>();
-            var window = new MainWindow(_services.GetRequiredService<ShellHeaderViewModel>());
+            var window = new MainWindow(
+                _services.GetRequiredService<ShellHeaderViewModel>(),
+                _services.GetRequiredService<SiteLoginViewModel>());
 
             // The screen to open is decided before the window exists, which is what makes it
             // reliable. Done from a command it would be an asynchronous call whose
@@ -216,6 +218,10 @@ public partial class App : Avalonia.Application
         // The header asks the navigator where the shell is rather than holding a copy of it,
         // so a tab can never disagree with the screen behind it.
         services.AddSingleton<ShellHeaderViewModel>();
+
+        // One sign-in for the whole shell: the window it opens, the header label and the
+        // session it restores are the same object, so they cannot disagree.
+        services.AddSingleton<SiteLoginViewModel>();
 
         // The projects list is not a singleton: it is built per visit, because it exists to
         // show the projects as they are at the moment it is opened. The navigator creates it.

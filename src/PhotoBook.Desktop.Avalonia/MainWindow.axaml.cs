@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using PhotoBook.Presentation.ViewModels;
 using PhotoBook.Shell.ViewModels;
 using PhotoBook.Shell.Views;
 
@@ -20,10 +21,15 @@ namespace PhotoBook.Shell;
 /// </remarks>
 public partial class MainWindow : Window
 {
-    public MainWindow(ShellHeaderViewModel header)
+    private readonly SiteLoginViewModel _login;
+
+    public MainWindow(ShellHeaderViewModel header, SiteLoginViewModel login)
     {
         InitializeComponent();
         DataContext = header;
+
+        _login = login;
+        AccountLabel.Text = login.AccountText;
     }
 
     /// <summary>
@@ -65,6 +71,20 @@ public partial class MainWindow : Window
     /// </remarks>
     private async void OnHelpClick(object? sender, RoutedEventArgs e)
         => await new HelpWindow().ShowDialog(this);
+
+    /// <summary>
+    /// Opens the sign-in window, and afterwards says whose account is held.
+    /// </summary>
+    /// <remarks>
+    /// The header is the one place that shows the account, and the window is opened from the
+    /// header, so the label is refreshed here rather than by the sign-in view model reaching
+    /// into a window it should not know exists.
+    /// </remarks>
+    private async void OnAccountClick(object? sender, RoutedEventArgs e)
+    {
+        await new LoginWindow(_login).ShowDialog(this);
+        AccountLabel.Text = _login.AccountText;
+    }
 
     /// <summary>
     /// Puts a panel over the page, dims the page, and waits for the panel's answer.

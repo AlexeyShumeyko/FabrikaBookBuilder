@@ -27,8 +27,11 @@ namespace PhotoBook.Application.Sites
             if (session is null)
                 throw new ArgumentNullException(nameof(session));
 
-            return JsonSerializer.Serialize(
-                new Ticket(session.Region.Code, session.AccessToken, session.ExpiresAt));
+            return JsonSerializer.Serialize(new Ticket(
+                session.Region.Code,
+                session.AccessToken,
+                session.ExpiresAt,
+                session.AccountEmail));
         }
 
         /// <summary>
@@ -67,13 +70,17 @@ namespace PhotoBook.Application.Sites
                     "Сохранённая сессия относится к неизвестному сайту — войдите снова.");
             }
 
-            var session = new SiteSession(region, ticket.Token, ticket.ExpiresAt);
+            var session = new SiteSession(region, ticket.Token, ticket.ExpiresAt, ticket.Email);
 
             return session.IsExpiredAt(now)
                 ? Result<SiteSession>.Fail("Срок действия сессии истёк — войдите снова.")
                 : Result<SiteSession>.Ok(session);
         }
 
-        private sealed record Ticket(string Region, string Token, DateTimeOffset ExpiresAt);
+        private sealed record Ticket(
+            string Region,
+            string Token,
+            DateTimeOffset ExpiresAt,
+            string? Email);
     }
 }

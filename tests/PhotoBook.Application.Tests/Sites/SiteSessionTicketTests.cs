@@ -12,7 +12,11 @@ namespace PhotoBook.Application.Tests.Sites
         private static readonly DateTimeOffset Now = new(2026, 11, 10, 12, 0, 0, TimeSpan.Zero);
 
         private static SiteSession Session(SiteRegion? region = null, DateTimeOffset? expiresAt = null) =>
-            new(region ?? SiteRegion.Com, "token.with-dots.and-lines", expiresAt ?? Now.AddDays(7));
+            new(
+                region ?? SiteRegion.Com,
+                "token.with-dots.and-lines",
+                expiresAt ?? Now.AddDays(7),
+                "customer@example.com");
 
         [Fact]
         public void ReadsBackTheSessionItWrote()
@@ -25,6 +29,7 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Equal(session.Region.Code, read.Value!.Region.Code);
             Assert.Equal(session.AccessToken, read.Value.AccessToken);
             Assert.Equal(session.ExpiresAt, read.Value.ExpiresAt);
+            Assert.Equal(session.AccountEmail, read.Value.AccountEmail);
         }
 
         [Fact]

@@ -100,7 +100,8 @@ namespace PhotoBook.Infrastructure.Sites
             var session = new SiteSession(
                 region,
                 tokenElement.GetString()!,
-                _now().AddSeconds(lifetimeSeconds));
+                _now().AddSeconds(lifetimeSeconds),
+                email.Trim());
 
             return new Attempt(region, session, null);
         }
