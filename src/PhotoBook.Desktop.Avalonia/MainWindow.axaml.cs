@@ -2,6 +2,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
@@ -29,7 +30,17 @@ public partial class MainWindow : Window
         DataContext = header;
 
         _login = login;
-        AccountLabel.Text = login.AccountText;
+
+        // Bound rather than assigned once: the name arrives from the site after the window is
+        // already open, and signing out has to put the invitation back.
+        AccountLabel.Bind(TextBlock.TextProperty, new Binding(nameof(SiteLoginViewModel.AccountText))
+        {
+            Source = login
+        });
+
+        // The stored session knows the address but not the name. It is asked once, and a failure
+        // leaves the address in place.
+        Loaded += async (_, _) => await _login.RefreshProfileAsync();
     }
 
     /// <summary>
@@ -73,17 +84,18 @@ public partial class MainWindow : Window
         => await new HelpWindow().ShowDialog(this);
 
     /// <summary>
-    /// Opens the sign-in window, and afterwards says whose account is held.
+    /// Opens the account when somebody is signed in, and the sign-in form when nobody is.
     /// </summary>
     /// <remarks>
-    /// The header is the one place that shows the account, and the window is opened from the
-    /// header, so the label is refreshed here rather than by the sign-in view model reaching
-    /// into a window it should not know exists.
+    /// One place in the header for both states, so the customer does not have to find a menu to
+    /// leave an account. The label follows the session by binding; nothing is copied back here.
     /// </remarks>
     private async void OnAccountClick(object? sender, RoutedEventArgs e)
     {
-        await new LoginWindow(_login).ShowDialog(this);
-        AccountLabel.Text = _login.AccountText;
+        if (_login.IsSignedIn)
+            await new AccountWindow(_login).ShowDialog(this);
+        else
+            await new LoginWindow(_login).ShowDialog(this);
     }
 
     /// <summary>

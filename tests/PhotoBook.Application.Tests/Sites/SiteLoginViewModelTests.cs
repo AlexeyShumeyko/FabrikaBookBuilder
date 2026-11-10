@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using PhotoBook.Application;
 using PhotoBook.Application.Sites;
+using PhotoBook.Application.Sites.Catalog;
 using PhotoBook.Presentation.ViewModels;
 
 namespace PhotoBook.Application.Tests.Sites
@@ -22,7 +23,7 @@ namespace PhotoBook.Application.Tests.Sites
         public async Task AsksForMissingFieldsWithoutCallingTheSites()
         {
             var auth = new FakeAuth(_ => Result<SiteSession>.Fail("unused"));
-            var model = new SiteLoginViewModel(auth, new FakeStore());
+            var model = Model(auth, new FakeStore());
 
             await model.SignInAsync();
 
@@ -36,11 +37,7 @@ namespace PhotoBook.Application.Tests.Sites
         {
             var auth = new FakeAuth(_ => Result<SiteSession>.Fail("Неверная почта или пароль."));
             var store = new FakeStore();
-            var model = new SiteLoginViewModel(auth, store)
-            {
-                Email = "customer@example.com",
-                Password = "wrong"
-            };
+            var model = Model(auth, store, "customer@example.com", "wrong");
 
             await model.SignInAsync();
 
@@ -56,11 +53,7 @@ namespace PhotoBook.Application.Tests.Sites
         {
             var auth = new FakeAuth(_ => Result<SiteSession>.Fail(
                 "Нет связи с сайтом. Проверьте интернет и попробуйте снова."));
-            var model = new SiteLoginViewModel(auth, new FakeStore())
-            {
-                Email = "customer@example.com",
-                Password = "secret"
-            };
+            var model = Model(auth, new FakeStore(), "customer@example.com", "secret");
 
             await model.SignInAsync();
 
@@ -73,11 +66,7 @@ namespace PhotoBook.Application.Tests.Sites
         {
             var auth = new FakeAuth(email => Result<SiteSession>.Ok(Session(email)));
             var store = new FakeStore();
-            var model = new SiteLoginViewModel(auth, store)
-            {
-                Email = "  customer@example.com  ",
-                Password = "secret"
-            };
+            var model = Model(auth, store, "  customer@example.com  ", "secret");
 
             SiteSession? signedIn = null;
             model.SignedIn += (_, session) => signedIn = session;
@@ -98,7 +87,7 @@ namespace PhotoBook.Application.Tests.Sites
         public void StartsSignedInWhenASessionWasStored()
         {
             var store = new FakeStore { Stored = Session("restored@example.com") };
-            var model = new SiteLoginViewModel(new FakeAuth(_ => Result<SiteSession>.Fail("unused")), store);
+            var model = Model(new FakeAuth(_ => Result<SiteSession>.Fail("unused")), store);
 
             Assert.True(model.IsSignedIn);
             Assert.Equal("restored@example.com", model.AccountText);
@@ -110,11 +99,7 @@ namespace PhotoBook.Application.Tests.Sites
         public async Task SignsInEvenWhenTheSessionCannotBeStored()
         {
             var auth = new FakeAuth(_ => Result<SiteSession>.Ok(Session()));
-            var model = new SiteLoginViewModel(auth, new FakeStore { FailOnSave = true })
-            {
-                Email = "customer@example.com",
-                Password = "secret"
-            };
+            var model = Model(auth, new FakeStore { FailOnSave = true }, "customer@example.com", "secret");
 
             await model.SignInAsync();
 
@@ -127,11 +112,7 @@ namespace PhotoBook.Application.Tests.Sites
         {
             var pending = new TaskCompletionSource<Result<SiteSession>>();
             var auth = new FakeAuth(_ => pending.Task);
-            var model = new SiteLoginViewModel(auth, new FakeStore())
-            {
-                Email = "customer@example.com",
-                Password = "secret"
-            };
+            var model = Model(auth, new FakeStore(), "customer@example.com", "secret");
 
             var attempt = model.SignInAsync();
 
@@ -144,6 +125,45 @@ namespace PhotoBook.Application.Tests.Sites
 
             Assert.False(model.IsBusy);
             Assert.Equal("Войти", model.SignInText);
+        }
+
+        private static SiteLoginViewModel Model(
+            ISiteAuthService auth,
+            FakeStore store,
+            string? email = null,
+            string? password = null)
+        {
+            var model = new SiteLoginViewModel(auth, store, new FakeProfiles(), new FakeCache());
+
+            // Left alone when not given: a stored session fills the address in itself, and an
+            // empty assignment here would erase it before the test starts.
+            if (email is not null)
+                model.Email = email;
+            if (password is not null)
+                model.Password = password;
+
+            return model;
+        }
+
+        private sealed class FakeProfiles : ISiteProfileService
+        {
+            public Task<Result<SiteProfile>> GetAsync(
+                SiteSession session,
+                CancellationToken cancellationToken = default) =>
+                Task.FromResult(Result<SiteProfile>.Fail("unused"));
+        }
+
+        private sealed class FakeCache : ISiteCatalogCache
+        {
+            public CachedSiteDocument? Read(SiteRegion region, string document) => null;
+
+            public void Write(SiteRegion region, string document, string content)
+            {
+            }
+
+            public void Clear()
+            {
+            }
         }
 
         private sealed class FakeAuth : ISiteAuthService

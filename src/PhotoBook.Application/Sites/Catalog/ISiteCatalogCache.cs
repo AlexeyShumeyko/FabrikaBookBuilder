@@ -37,5 +37,16 @@ namespace PhotoBook.Application.Sites.Catalog
 
         /// <summary>Stores the document, replacing what was there.</summary>
         void Write(SiteRegion region, string document, string content);
+
+        /// <summary>
+        /// Forgets every stored document.
+        /// </summary>
+        /// <remarks>
+        /// Called when the customer signs out: the catalog is public data, but the cache lives
+        /// on the account's machine and keeping it after the account changed would let the next
+        /// person read options the previous one had loaded. Safe to call when there is nothing
+        /// stored.
+        /// </remarks>
+        void Clear();
     }
 }

@@ -185,6 +185,33 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
             }
         }
 
+        public void Clear()
+        {
+            string[] files;
+            try
+            {
+                if (!Directory.Exists(_directory))
+                    return;
+
+                files = Directory.GetFiles(
+                    _directory,
+                    $"catalog-v{SchemaVersion.ToString(CultureInfo.InvariantCulture)}-*.json");
+            }
+            catch (IOException error)
+            {
+                _journal.Write(JournalLevel.Warning, Source, "Не удалось прочитать папку кэша.", error);
+                return;
+            }
+            catch (UnauthorizedAccessException error)
+            {
+                _journal.Write(JournalLevel.Warning, Source, "Нет доступа к папке кэша.", error);
+                return;
+            }
+
+            foreach (var file in files)
+                Delete(file);
+        }
+
         /// <summary>The file a document of this site is stored in.</summary>
         internal string PathFor(SiteRegion region, string document)
         {

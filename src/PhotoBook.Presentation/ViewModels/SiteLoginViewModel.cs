@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using PhotoBook.Application;
 using PhotoBook.Application.Sites;
+using PhotoBook.Application.Sites.Catalog;
 
 namespace PhotoBook.Presentation.ViewModels
 {
@@ -30,20 +31,30 @@ namespace PhotoBook.Presentation.ViewModels
     {
         private readonly ISiteAuthService _auth;
         private readonly ISiteSessionStore _store;
+        private readonly ISiteProfileService _profiles;
+        private readonly ISiteCatalogCache _catalog;
 
         private string _email = string.Empty;
         private string _password = string.Empty;
         private string _message = string.Empty;
         private bool _isBusy;
         private SiteSession? _session;
+        private SiteProfile? _profile;
 
         /// <summary>Raised once a session is in hand, so the shell can show whose account it is.</summary>
         public event EventHandler<SiteSession>? SignedIn;
 
-        public SiteLoginViewModel(ISiteAuthService auth, ISiteSessionStore store, IUiThread? ui = null)
+        public SiteLoginViewModel(
+            ISiteAuthService auth,
+            ISiteSessionStore store,
+            ISiteProfileService profiles,
+            ISiteCatalogCache catalog,
+            IUiThread? ui = null)
         {
             _auth = auth ?? throw new ArgumentNullException(nameof(auth));
             _store = store ?? throw new ArgumentNullException(nameof(store));
+            _profiles = profiles ?? throw new ArgumentNullException(nameof(profiles));
+            _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
 
             if (ui is not null)
                 Ui = ui;
@@ -110,9 +121,19 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Whether a usable session is already in hand.</summary>
         public bool IsSignedIn => _session is not null;
 
-        /// <summary>What the header shows: the account's address, or the invitation to sign in.</summary>
+        /// <summary>What the header shows: the person's name, or the invitation to sign in.</summary>
         public string AccountText =>
-            _session?.AccountEmail is { Length: > 0 } address ? address : "Войти";
+            _profile?.DisplayName is { Length: > 0 } name
+                ? name
+                : _session?.AccountEmail is { Length: > 0 } address
+                    ? address
+                    : "Войти";
+
+        /// <summary>The account's address, or nothing when nobody is signed in.</summary>
+        public string EmailText => _session?.AccountEmail ?? string.Empty;
+
+        /// <summary>What the site says the account is called, once it has been read.</summary>
+        public SiteProfile? Profile => _profile;
 
         /// <summary>
         /// Signs in on whichever site owns the account, and keeps the session if one comes back.
@@ -167,12 +188,83 @@ namespace PhotoBook.Presentation.ViewModels
                 OnPropertyChanged(nameof(IsSignedIn));
                 OnPropertyChanged(nameof(AccountText));
                 OnPropertyChanged(nameof(SignedInText));
+                OnPropertyChanged(nameof(EmailText));
+
+                // The window closes on this event, and the name is fetched afterwards: a slow
+                // profile must not hold the sign-in window open after the password was accepted.
                 SignedIn?.Invoke(this, session);
+
+                await LoadProfileAsync(session, cancellationToken).ConfigureAwait(true);
             }
             finally
             {
                 IsBusy = false;
             }
+        }
+
+        /// <summary>
+        /// Reads the account's name after a restart, when only the stored session is known.
+        /// </summary>
+        /// <remarks>
+        /// The header shows the address until this answers, so a lost connection costs a name
+        /// and nothing else. It is asked once per run, not on a timer.
+        /// </remarks>
+        public async Task RefreshProfileAsync(CancellationToken cancellationToken = default)
+        {
+            if (_session is null || _profile is not null || IsBusy)
+                return;
+
+            await LoadProfileAsync(_session, cancellationToken).ConfigureAwait(true);
+        }
+
+        /// <summary>
+        /// Forgets the account: the token, the name, and the catalog the site had loaded.
+        /// </summary>
+        /// <remarks>
+        /// The cache goes with the token because the next person at this machine is a different
+        /// account even when they are the same customer, and options read for one account are
+        /// not a thing to hand to the next. The store journals a token Windows refused to
+        /// remove, so a failed sign-out leaves a trace instead of looking clean.
+        /// </remarks>
+        public void SignOut()
+        {
+            if (_session is null)
+                return;
+
+            _store.Clear();
+            _catalog.Clear();
+
+            _session = null;
+            _profile = null;
+            Email = string.Empty;
+            Password = string.Empty;
+            Message = string.Empty;
+
+            OnPropertyChanged(nameof(IsSignedIn));
+            OnPropertyChanged(nameof(AccountText));
+            OnPropertyChanged(nameof(SignedInText));
+            OnPropertyChanged(nameof(EmailText));
+            OnPropertyChanged(nameof(Profile));
+        }
+
+        /// <summary>
+        /// Fills in the profile, or leaves the address standing in for it.
+        /// </summary>
+        /// <remarks>
+        /// A profile that cannot be read is not a failed sign-in: the token works, projects can
+        /// be listed, and the only thing missing is a nicer word in the header. The reason is
+        /// not shown for the same reason - there is nothing for the customer to do about it.
+        /// </remarks>
+        private async Task LoadProfileAsync(SiteSession session, CancellationToken cancellationToken)
+        {
+            var result = await _profiles.GetAsync(session, cancellationToken).ConfigureAwait(true);
+            if (!result.IsSuccess || result.Value is null)
+                return;
+
+            _profile = result.Value;
+            OnPropertyChanged(nameof(Profile));
+            OnPropertyChanged(nameof(AccountText));
+            OnPropertyChanged(nameof(EmailText));
         }
     }
 }

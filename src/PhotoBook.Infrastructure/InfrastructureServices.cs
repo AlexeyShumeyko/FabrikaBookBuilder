@@ -53,6 +53,10 @@ namespace PhotoBook.Infrastructure
             });
             services.AddSingleton<ISiteAuthService, SiteAuthService>();
 
+            // The profile is read from the site the session belongs to, so the header can name
+            // the person rather than an address, and both sites can hold different accounts.
+            services.AddSingleton<ISiteProfileService, SiteProfileService>();
+
             // Prices are asked where the calculator page asks them: on the site host, with the
             // same query the browser sends. The API host answers zero for combinations the site
             // sells, so it cannot be used to tell a refusal from a price.
