@@ -51,6 +51,11 @@ namespace PhotoBook.Infrastructure
                 Timeout = TimeSpan.FromSeconds(30)
             }));
 
+            // The session outlives the process: the platform's token lasts seven days, and a
+            // customer who closed the program should not type the password again. The Credential
+            // Manager is the only place the token is written to.
+            services.AddSingleton<ISiteSessionStore>(_ => new CredentialManagerSiteSessionStore());
+
             // The catalog is read from the document the site's own calculator reads, so the
             // product's ids, formats, options and quantity ranges are the site's rather than
             // this program's guesses.
