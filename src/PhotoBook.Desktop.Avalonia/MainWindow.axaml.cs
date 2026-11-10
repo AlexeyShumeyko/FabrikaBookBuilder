@@ -24,6 +24,8 @@ public partial class MainWindow : Window
 {
     private readonly SiteLoginViewModel _login;
 
+    private bool _signInOpen;
+
     public MainWindow(ShellHeaderViewModel header, SiteLoginViewModel login)
     {
         InitializeComponent();
@@ -41,6 +43,10 @@ public partial class MainWindow : Window
         // The stored session knows the address but not the name. It is asked once, and a failure
         // leaves the address in place.
         Loaded += async (_, _) => await _login.RefreshProfileAsync();
+
+        // A refused token opens the same window a fresh start would, once: the profile read and
+        // the header button can both find the session gone in the same moment.
+        _login.SessionExpired += async (_, _) => await SignInAsync();
     }
 
     /// <summary>
@@ -95,7 +101,30 @@ public partial class MainWindow : Window
         if (_login.IsSignedIn)
             await new AccountWindow(_login).ShowDialog(this);
         else
+            await SignInAsync();
+    }
+
+    /// <summary>
+    /// Shows the sign-in window once, whoever asked for it.
+    /// </summary>
+    /// <remarks>
+    /// Two events can arrive together - the header pressed and the profile refused - and two
+    /// sign-in windows on top of each other would ask for the same password twice.
+    /// </remarks>
+    private async Task SignInAsync()
+    {
+        if (_signInOpen)
+            return;
+
+        _signInOpen = true;
+        try
+        {
             await new LoginWindow(_login).ShowDialog(this);
+        }
+        finally
+        {
+            _signInOpen = false;
+        }
     }
 
     /// <summary>

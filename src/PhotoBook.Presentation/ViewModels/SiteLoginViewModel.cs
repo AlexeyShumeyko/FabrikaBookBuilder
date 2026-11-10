@@ -33,6 +33,7 @@ namespace PhotoBook.Presentation.ViewModels
         private readonly ISiteSessionStore _store;
         private readonly ISiteProfileService _profiles;
         private readonly ISiteCatalogCache _catalog;
+        private readonly Func<DateTimeOffset> _now;
 
         private string _email = string.Empty;
         private string _password = string.Empty;
@@ -44,17 +45,25 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Raised once a session is in hand, so the shell can show whose account it is.</summary>
         public event EventHandler<SiteSession>? SignedIn;
 
+        /// <summary>
+        /// Raised when the site refused the stored token, so the shell can ask for the password
+        /// before the customer runs into the refusal again.
+        /// </summary>
+        public event EventHandler? SessionExpired;
+
         public SiteLoginViewModel(
             ISiteAuthService auth,
             ISiteSessionStore store,
             ISiteProfileService profiles,
             ISiteCatalogCache catalog,
-            IUiThread? ui = null)
+            IUiThread? ui = null,
+            Func<DateTimeOffset>? now = null)
         {
             _auth = auth ?? throw new ArgumentNullException(nameof(auth));
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _profiles = profiles ?? throw new ArgumentNullException(nameof(profiles));
             _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+            _now = now ?? (() => DateTimeOffset.UtcNow);
 
             if (ui is not null)
                 Ui = ui;
@@ -203,6 +212,43 @@ namespace PhotoBook.Presentation.ViewModels
         }
 
         /// <summary>
+        /// Drops a session the site has refused, keeping the address for the next attempt.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is a soft stop rather than an error: the token is gone, so the header goes back
+        /// to the invitation and the sign-in window opens. Nothing is deleted except the token
+        /// and the catalog cache, and the address stays filled in so the customer does not retype
+        /// what the program already knows.
+        /// </para>
+        /// <para>
+        /// The event is what lets the interrupted step continue: whoever was working holds its
+        /// own state, and signs in through the same window a fresh start would use.
+        /// </para>
+        /// </remarks>
+        public void ExpireSession()
+        {
+            if (_session is null)
+                return;
+
+            _store.Clear();
+            _catalog.Clear();
+
+            _session = null;
+            _profile = null;
+            Password = string.Empty;
+            Message = "Сессия закончилась. Войдите снова.";
+
+            OnPropertyChanged(nameof(IsSignedIn));
+            OnPropertyChanged(nameof(AccountText));
+            OnPropertyChanged(nameof(SignedInText));
+            OnPropertyChanged(nameof(EmailText));
+            OnPropertyChanged(nameof(Profile));
+
+            SessionExpired?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
         /// Reads the account's name after a restart, when only the stored session is known.
         /// </summary>
         /// <remarks>
@@ -257,6 +303,14 @@ namespace PhotoBook.Presentation.ViewModels
         /// </remarks>
         private async Task LoadProfileAsync(SiteSession session, CancellationToken cancellationToken)
         {
+            // A running clock says what the site would say: a token past its date is refused.
+            // Asking anyway costs a request that can only come back unauthorised.
+            if (session.IsExpiredAt(_now()))
+            {
+                ExpireSession();
+                return;
+            }
+
             var result = await _profiles.GetAsync(session, cancellationToken).ConfigureAwait(true);
             if (!result.IsSuccess || result.Value is null)
                 return;
