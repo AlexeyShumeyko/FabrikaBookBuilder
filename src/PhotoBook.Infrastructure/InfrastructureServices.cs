@@ -56,6 +56,10 @@ namespace PhotoBook.Infrastructure
             // this program's guesses.
             services.AddSingleton<ISiteProductParser, SiteProductParser>();
 
+            // The uploader's geometry comes from its own document, including the resolution: the
+            // file size a book needs is the site's number, not one compiled in here.
+            services.AddSingleton<ISiteLayoutParser, SiteLayoutParser>();
+
             return services;
         }
     }
