@@ -21,6 +21,13 @@ namespace PhotoBook.Application.Sites.Catalog
     /// A part with no quantity settings at all - the photo panel products count files, not
     /// spreads - is left alone rather than forced through a range it never had.
     /// </para>
+    /// <para>
+    /// Requiredness is checked here and not by the site: the price endpoint answers with a
+    /// price even when a required option is missing, as if it cost nothing (measured on the
+    /// live endpoint on 2026-11-10). The site's page never sends such a set, because it picks
+    /// a default for every option, so refusing it here matches what the page does rather than
+    /// what the price endpoint tolerates.
+    /// </para>
     /// </remarks>
     public sealed class PartSelectionValidator : IPartSelectionValidator
     {
