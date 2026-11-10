@@ -127,6 +127,57 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Equal("Войти", model.SignInText);
         }
 
+        [Fact]
+        public void SigningOutForgetsTheSessionTheCacheAndTheName()
+        {
+            var store = new FakeStore { Stored = Session("customer@example.com") };
+            var cache = new FakeCache();
+            var model = new SiteLoginViewModel(
+                new FakeAuth(_ => Result<SiteSession>.Fail("unused")),
+                store,
+                new FakeProfiles(),
+                cache);
+
+            model.SignOut();
+
+            Assert.False(model.IsSignedIn);
+            Assert.Equal("Войти", model.AccountText);
+            Assert.Equal(string.Empty, model.Email);
+            Assert.Null(store.Stored);
+            Assert.Equal(1, cache.Clears);
+        }
+
+        [Fact]
+        public async Task ASessionPastItsDateIsDroppedAndAsksForThePasswordAgain()
+        {
+            var expired = new SiteSession(
+                SiteRegion.Com,
+                "old-token",
+                Now.AddMinutes(-1),
+                "customer@example.com");
+            var store = new FakeStore { Stored = expired };
+            var cache = new FakeCache();
+            var model = new SiteLoginViewModel(
+                new FakeAuth(_ => Result<SiteSession>.Fail("unused")),
+                store,
+                new FakeProfiles(),
+                cache,
+                now: () => Now);
+
+            var expiredEvents = 0;
+            model.SessionExpired += (_, _) => expiredEvents++;
+
+            await model.RefreshProfileAsync();
+
+            Assert.Equal(1, expiredEvents);
+            Assert.False(model.IsSignedIn);
+            Assert.Equal("Войти", model.AccountText);
+            Assert.Equal("Сессия закончилась. Войдите снова.", model.Message);
+            Assert.Equal("customer@example.com", model.Email);
+            Assert.Null(store.Stored);
+            Assert.Equal(1, cache.Clears);
+        }
+
         private static SiteLoginViewModel Model(
             ISiteAuthService auth,
             FakeStore store,
@@ -155,15 +206,15 @@ namespace PhotoBook.Application.Tests.Sites
 
         private sealed class FakeCache : ISiteCatalogCache
         {
+            public int Clears { get; private set; }
+
             public CachedSiteDocument? Read(SiteRegion region, string document) => null;
 
             public void Write(SiteRegion region, string document, string content)
             {
             }
 
-            public void Clear()
-            {
-            }
+            public void Clear() => Clears++;
         }
 
         private sealed class FakeAuth : ISiteAuthService

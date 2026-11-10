@@ -50,6 +50,23 @@ namespace PhotoBook.Application.Tests.Sites.Catalog
         }
 
         [Fact]
+        public void ClearForgetsEveryStoredDocumentAndLeavesOtherFilesAlone()
+        {
+            var cache = CreateCache();
+            cache.Write(SiteRegion.Com, SiteCatalogDocuments.Page, Document);
+            cache.Write(SiteRegion.By, SiteCatalogDocuments.Page, Document);
+
+            var unrelated = Path.Combine(_directory, "notes.txt");
+            File.WriteAllText(unrelated, "kept");
+
+            cache.Clear();
+
+            Assert.Null(cache.Read(SiteRegion.Com, SiteCatalogDocuments.Page));
+            Assert.Null(cache.Read(SiteRegion.By, SiteCatalogDocuments.Page));
+            Assert.True(File.Exists(unrelated));
+        }
+
+        [Fact]
         public void AnswersNothingForADocumentItNeverStored()
         {
             var cache = CreateCache();
