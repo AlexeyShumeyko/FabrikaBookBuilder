@@ -64,7 +64,8 @@ namespace PhotoBook.Infrastructure.Sites
 
             foreach (var session in signedIn)
             {
-                if (await HasProjectsAsync(session, cancellationToken).ConfigureAwait(false))
+                var hasWork = await HasProjectsAsync(session, cancellationToken).ConfigureAwait(false);
+                if (hasWork.IsSuccess && hasWork.Value)
                     return Result<SiteSession>.Ok(session);
             }
 
@@ -111,7 +112,7 @@ namespace PhotoBook.Infrastructure.Sites
         /// a reason to refuse the sign-in: the account simply looks unused, and the caller still
         /// gets a session.
         /// </remarks>
-        private async Task<bool> HasProjectsAsync(SiteSession session, CancellationToken cancellationToken)
+        private async Task<Result<bool>> HasProjectsAsync(SiteSession session, CancellationToken cancellationToken)
         {
             var client = new SiteApiClient(session.Region, _http, _retryDelay);
             var response = await client
@@ -119,13 +120,15 @@ namespace PhotoBook.Infrastructure.Sites
                 .ConfigureAwait(false);
 
             if (!response.IsSuccess || response.Value is null)
-                return false;
+                return Result<bool>.Fail(response.Error ?? "Сайт не ответил списком проектов.");
 
             using var document = response.Value;
 
-            return document.RootElement.TryGetProperty("data", out var data) &&
-                   data.ValueKind == JsonValueKind.Array &&
-                   data.GetArrayLength() > 0;
+            var hasWork = document.RootElement.TryGetProperty("data", out var data) &&
+                          data.ValueKind == JsonValueKind.Array &&
+                          data.GetArrayLength() > 0;
+
+            return Result<bool>.Ok(hasWork);
         }
 
         private static string Describe(IReadOnlyList<Attempt> attempts)
