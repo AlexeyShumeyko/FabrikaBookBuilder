@@ -3,7 +3,9 @@ using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using PhotoBook.Application;
 using PhotoBook.Application.Sites;
+using PhotoBook.Application.Sites.Catalog;
 using PhotoBook.Infrastructure.Sites;
+using PhotoBook.Infrastructure.Sites.Catalog;
 
 namespace PhotoBook.Infrastructure
 {
@@ -48,6 +50,11 @@ namespace PhotoBook.Infrastructure
             {
                 Timeout = TimeSpan.FromSeconds(30)
             }));
+
+            // The catalog is read from the document the site's own calculator reads, so the
+            // product's ids, formats, options and quantity ranges are the site's rather than
+            // this program's guesses.
+            services.AddSingleton<ISiteProductParser, SiteProductParser>();
 
             return services;
         }
