@@ -1,6 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
+using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Catalog;
+using PhotoBook.Application.Sites.Pricing;
 using PhotoBook.Infrastructure;
+using PhotoBook.Infrastructure.Sites;
 using PhotoBook.Infrastructure.Sites.Catalog;
 
 namespace PhotoBook.Application.Tests.Sites
@@ -22,9 +25,10 @@ namespace PhotoBook.Application.Tests.Sites
             services.AddPhotoBookInfrastructure();
 
             using var provider = services.BuildServiceProvider();
-            var cache = provider.GetRequiredService<ISiteCatalogCache>();
 
-            Assert.IsType<FileSiteCatalogCache>(cache);
+            Assert.IsType<FileSiteCatalogCache>(provider.GetRequiredService<ISiteCatalogCache>());
+            Assert.IsType<SiteAuthService>(provider.GetRequiredService<ISiteAuthService>());
+            Assert.IsType<SitePriceService>(provider.GetRequiredService<ISitePriceService>());
         }
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PhotoBook.Application;
 using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Catalog;
+using PhotoBook.Application.Sites.Pricing;
 using PhotoBook.Infrastructure.Sites;
 using PhotoBook.Infrastructure.Sites.Catalog;
 
@@ -46,10 +47,16 @@ namespace PhotoBook.Infrastructure
             // One HTTP client for the whole program. The platform is shared by the two sites and
             // the connection pool is the only thing that keeps repeated calls cheap; a client per
             // request would open a socket each time and look like load from the outside.
-            services.AddSingleton<ISiteAuthService>(_ => new SiteAuthService(new HttpClient
+            services.AddSingleton(_ => new HttpClient
             {
                 Timeout = TimeSpan.FromSeconds(30)
-            }));
+            });
+            services.AddSingleton<ISiteAuthService, SiteAuthService>();
+
+            // Prices are asked where the calculator page asks them: on the site host, with the
+            // same query the browser sends. The API host answers zero for combinations the site
+            // sells, so it cannot be used to tell a refusal from a price.
+            services.AddSingleton<ISitePriceService, SitePriceService>();
 
             // The session outlives the process: the platform's token lasts seven days, and a
             // customer who closed the program should not type the password again. The Credential

@@ -73,6 +73,26 @@ namespace PhotoBook.Infrastructure.Sites
                 cancellationToken);
         }
 
+        /// <summary>
+        /// A GET on the site's own host rather than on the API host.
+        /// </summary>
+        /// <remarks>
+        /// The calculator's price endpoint lives on the site host, next to the page that calls
+        /// it, while the catalog and the projects live under the site's prefix of the shared API
+        /// host. The two are different roots of the same region, and the price must be asked
+        /// where the page asks it: the API host answers zero for combinations the site sells.
+        /// </remarks>
+        public Task<SiteApiResult> GetOnSiteAsync(string pathAndQuery, string? token, CancellationToken cancellationToken)
+        {
+            return SendWithRetryAsync(
+                () => NewRequest(
+                    HttpMethod.Get,
+                    Region.SiteUrl + "/" + (pathAndQuery ?? string.Empty).TrimStart('/'),
+                    token),
+                token,
+                cancellationToken);
+        }
+
         public Task<SiteApiResult> PostJsonAsync<T>(string path, T body, string? token, CancellationToken cancellationToken)
         {
             return SendWithRetryAsync(
