@@ -86,9 +86,6 @@ namespace PhotoBook.Infrastructure.Sites
                 cancellationToken);
         }
 
-        /// <summary>Where a project of this region can be opened in a browser.</summary>
-        public string ProjectUrl(long projectId) => $"{Region.SiteUrl}/orders/new";
-
         private string ApiUrl(string path) => $"{Region.ApiRoot}/{path.TrimStart('/')}";
 
         private HttpRequestMessage NewRequest(HttpMethod method, string url, string? token)
