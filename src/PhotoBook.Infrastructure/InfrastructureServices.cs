@@ -65,6 +65,11 @@ namespace PhotoBook.Infrastructure
             // file size a book needs is the site's number, not one compiled in here.
             services.AddSingleton<ISiteLayoutParser, SiteLayoutParser>();
 
+            // The catalog is fetched once and reused: the platform is shared by two sites and
+            // must not be asked for the same option list whenever a window opens. What cannot be
+            // cached is journalled, so a cache that stopped writing is visible rather than silent.
+            services.AddSingleton<ISiteCatalogCache, FileSiteCatalogCache>();
+
             return services;
         }
     }
