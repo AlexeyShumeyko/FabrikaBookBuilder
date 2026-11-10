@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text.Json;
 using PhotoBook.Application;
 using PhotoBook.Application.Sites.Catalog;
@@ -45,10 +44,10 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
                 }
 
                 return Result<SiteProduct>.Ok(new SiteProduct(
-                    ReadLong(product, "id"),
+                    SiteJson.Number(product, "id"),
                     slug,
-                    ReadString(product, "name") ?? slug,
-                    ReadString(product, "kind") ?? string.Empty,
+                    SiteJson.Text(product, "name") ?? slug,
+                    SiteJson.Text(product, "kind") ?? string.Empty,
                     ReadVariants(product)));
             }
             catch (JsonException)
@@ -84,8 +83,8 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
                 }
 
                 variants.Add(new ProductVariant(
-                    ReadLong(variant, "id"),
-                    ReadString(variant, "name") ?? string.Empty,
+                    SiteJson.Number(variant, "id"),
+                    SiteJson.Text(variant, "name") ?? string.Empty,
                     cover,
                     parts));
             }
@@ -119,8 +118,8 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
                 }
 
                 parts.Add(new ProductPart(
-                    ReadLong(part, "id"),
-                    ReadString(part, "name") ?? string.Empty,
+                    SiteJson.Number(part, "id"),
+                    SiteJson.Text(part, "name") ?? string.Empty,
                     options,
                     quantity));
             }
@@ -144,19 +143,19 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
                     foreach (var element in list.EnumerateArray())
                     {
                         elements.Add(new OptionElement(
-                            ReadLong(element, "id"),
-                            ReadString(element, "name") ?? string.Empty));
+                            SiteJson.Number(element, "id"),
+                            SiteJson.Text(element, "name") ?? string.Empty));
                     }
                 }
 
                 parsed.Add(new ProductOption(
-                    ReadLong(option, "id"),
-                    ReadString(option, "name") ?? string.Empty,
-                    ReadFlag(option, "required"),
-                    None(ReadString(option, "dependOptionId")),
-                    ReadStringList(option, "dependElementsIds"),
-                    None(ReadString(option, "excludedOptionId")),
-                    ReadStringList(option, "excludedElementsIds"),
+                    SiteJson.Number(option, "id"),
+                    SiteJson.Text(option, "name") ?? string.Empty,
+                    SiteJson.Flag(option, "required"),
+                    None(SiteJson.Text(option, "dependOptionId")),
+                    SiteJson.Texts(option, "dependElementsIds"),
+                    None(SiteJson.Text(option, "excludedOptionId")),
+                    SiteJson.Texts(option, "excludedElementsIds"),
                     elements));
             }
 
@@ -165,7 +164,7 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
 
         private static ProductQuantitySettings ReadQuantity(JsonElement settings)
         {
-            var displayName = ReadString(settings, "displayName") ?? string.Empty;
+            var displayName = SiteJson.Text(settings, "displayName") ?? string.Empty;
             var rules = new List<QuantityRule>();
 
             if (settings.TryGetProperty("quantityByOptionsSettings", out var byOption) &&
@@ -175,7 +174,7 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
             {
                 foreach (var rule in list.EnumerateArray())
                 {
-                    var optionId = ReadString(rule, "option_id");
+                    var optionId = SiteJson.Text(rule, "option_id");
                     if (string.IsNullOrWhiteSpace(optionId))
                         continue;
 
@@ -185,7 +184,7 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
 
                     rules.Add(new QuantityRule(
                         optionId,
-                        ReadStringList(rule, "option_elements_ids"),
+                        SiteJson.Texts(rule, "option_elements_ids"),
                         range));
                 }
             }
@@ -194,7 +193,7 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
                 displayName,
                 UnitOf(displayName),
                 ReadRange(settings, "from", "to", "step"),
-                ReadFlag(settings, "allowManualInput"),
+                SiteJson.Flag(settings, "allowManualInput"),
                 rules);
         }
 
@@ -225,80 +224,13 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
 
         private static QuantityRange? ReadRange(JsonElement parent, string from, string to, string step)
         {
-            var start = ReadInt(parent, from);
-            var end = ReadInt(parent, to);
-            var increment = ReadInt(parent, step);
+            var start = SiteJson.Integer(parent, from);
+            var end = SiteJson.Integer(parent, to);
+            var increment = SiteJson.Integer(parent, step);
 
             return start is { } s && end is { } e && increment is { } i
                 ? new QuantityRange(s, e, i)
                 : null;
-        }
-
-        private static string? ReadString(JsonElement parent, string name) =>
-            parent.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
-                ? value.GetString()
-                : null;
-
-        private static long ReadLong(JsonElement parent, string name)
-        {
-            if (!parent.TryGetProperty(name, out var value))
-                return 0;
-
-            return value.ValueKind switch
-            {
-                JsonValueKind.Number when value.TryGetInt64(out var number) => number,
-                JsonValueKind.String when long.TryParse(value.GetString(), NumberStyles.Integer,
-                    CultureInfo.InvariantCulture, out var parsed) => parsed,
-                _ => 0
-            };
-        }
-
-        private static int? ReadInt(JsonElement parent, string name)
-        {
-            if (!parent.TryGetProperty(name, out var value))
-                return null;
-
-            return value.ValueKind switch
-            {
-                JsonValueKind.Number when value.TryGetInt32(out var number) => number,
-                JsonValueKind.String when int.TryParse(value.GetString(), NumberStyles.Integer,
-                    CultureInfo.InvariantCulture, out var parsed) => parsed,
-                _ => null
-            };
-        }
-
-        /// <summary>
-        /// The site writes flags as booleans on one page and as "1"/"0" on another, so both are
-        /// read rather than one of them silently meaning false.
-        /// </summary>
-        private static bool ReadFlag(JsonElement parent, string name)
-        {
-            if (!parent.TryGetProperty(name, out var value))
-                return false;
-
-            return value.ValueKind switch
-            {
-                JsonValueKind.True => true,
-                JsonValueKind.Number when value.TryGetInt32(out var number) => number != 0,
-                JsonValueKind.String => string.Equals(value.GetString(), "1", StringComparison.Ordinal) ||
-                                        string.Equals(value.GetString(), "true", StringComparison.OrdinalIgnoreCase),
-                _ => false
-            };
-        }
-
-        private static IReadOnlyList<string> ReadStringList(JsonElement parent, string name)
-        {
-            if (!parent.TryGetProperty(name, out var value) || value.ValueKind != JsonValueKind.Array)
-                return Array.Empty<string>();
-
-            var items = new List<string>();
-            foreach (var item in value.EnumerateArray())
-            {
-                if (item.ValueKind == JsonValueKind.String && item.GetString() is { } text && text.Length > 0)
-                    items.Add(text);
-            }
-
-            return items;
         }
 
         private static string? None(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
