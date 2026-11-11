@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using PhotoBook.Application.Sites.Books.Files;
 
 namespace PhotoBook.Application
 {
@@ -27,6 +28,7 @@ namespace PhotoBook.Application
             services.AddSingleton<IProjectBuilder, ProjectBuilder>();
             services.AddSingleton<IEditHistory, EditHistory>();
             services.AddSingleton<IProjectListService, ProjectListService>();
+            services.AddSingleton<IBookFileInspector, BookFileInspector>();
 
             return services;
         }
