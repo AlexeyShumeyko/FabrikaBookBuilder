@@ -2,6 +2,8 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Collections.Generic;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading;
@@ -104,6 +106,60 @@ namespace PhotoBook.Infrastructure.Sites
                 },
                 token,
                 cancellationToken);
+        }
+
+        /// <summary>
+        /// One multipart request with a file. Not retried, unlike the reads above: a page sent
+        /// twice at one position may land as two pages, and a customer pressing the button
+        /// again is a better answer than a silent repeat.
+        /// </summary>
+        public async Task<SiteApiResult> PostMultipartAsync(
+            string path,
+            IReadOnlyDictionary<string, string> fields,
+            string filePath,
+            string? token,
+            CancellationToken cancellationToken)
+        {
+            using var request = NewRequest(HttpMethod.Post, ApiUrl(path), token);
+            using var content = new MultipartFormDataContent();
+
+            foreach (var field in fields)
+                content.Add(new StringContent(field.Value), field.Key);
+
+            var file = new StreamContent(System.IO.File.OpenRead(filePath));
+            file.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+            content.Add(file, "file", System.IO.Path.GetFileName(filePath));
+
+            request.Content = content;
+
+            try
+            {
+                using var response = await _http
+                    .SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
+                    .ConfigureAwait(false);
+
+                var text = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+                return response.IsSuccessStatusCode
+                    ? Parse(text)
+                    : SiteApiResult.Fail(DescribeStatus(response.StatusCode));
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (HttpRequestException)
+            {
+                return SiteApiResult.Fail(new SiteApiError(
+                    SiteApiErrorKind.ConnectionLost,
+                    "Нет связи с сайтом. Проверьте интернет и попробуйте снова."));
+            }
+            catch (TaskCanceledException)
+            {
+                return SiteApiResult.Fail(new SiteApiError(
+                    SiteApiErrorKind.Timeout,
+                    "Сайт не ответил вовремя."));
+            }
         }
 
         private string ApiUrl(string path) => $"{Region.ApiRoot}/{path.TrimStart('/')}";

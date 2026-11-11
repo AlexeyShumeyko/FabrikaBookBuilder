@@ -6,6 +6,7 @@ using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Catalog;
 using PhotoBook.Application.Sites.Pricing;
 using PhotoBook.Application.Sites.Projects;
+using PhotoBook.Application.Sites.Upload;
 using PhotoBook.Infrastructure.Sites;
 using PhotoBook.Infrastructure.Sites.Catalog;
 
@@ -81,6 +82,10 @@ namespace PhotoBook.Infrastructure
             // retry after a dropped connection does not make a second project for the same books.
             services.AddSingleton<ISiteProjectService, SiteProjectService>();
             services.AddSingleton<ICreatedProjectStore>(sp => new FileCreatedProjectStore(sp.GetRequiredService<IJournal>()));
+
+            // Files go up one page at a time through the same uploader endpoint the site's own
+            // page uses; the answer's body decides success, not the status code.
+            services.AddSingleton<ISiteFileUploadService, SiteFileUploadService>();
 
             // The catalog is fetched once and reused: the platform is shared by two sites and
             // must not be asked for the same option list whenever a window opens. What cannot be
