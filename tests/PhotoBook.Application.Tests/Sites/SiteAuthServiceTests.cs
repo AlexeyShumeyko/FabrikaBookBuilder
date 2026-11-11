@@ -59,6 +59,21 @@ namespace PhotoBook.Application.Tests.Sites
         }
 
         [Fact]
+        public async Task Reports_a_platform_refusal_as_a_wrong_password()
+        {
+            // The live platform answers 422 to a refused password, not 401: its validation
+            // error, which the customer must read as one sentence and not as a status code.
+            var handler = new StubHttpMessageHandler(_ => StubResponses.Json(
+                "{\"message\":\"The given data was invalid.\"}",
+                System.Net.HttpStatusCode.UnprocessableEntity));
+
+            var result = await CreateService(handler).SignInAsync("customer@example.com", "wrong");
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Неверная почта или пароль.", result.Error);
+        }
+
+        [Fact]
         public async Task Does_not_call_the_sites_without_credentials()
         {
             var handler = new StubHttpMessageHandler(_ => StubResponses.Json("{}"));

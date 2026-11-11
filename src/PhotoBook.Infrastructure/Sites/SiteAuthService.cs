@@ -140,6 +140,9 @@ namespace PhotoBook.Infrastructure.Sites
         /// A 401 during sign-in means the password or the address is wrong, not that a session
         /// expired, and the site's own message says neither - so the sentence is written here
         /// rather than taken from the transport layer, which cannot know what was being asked.
+        /// The live platform answers 422 to a refused password instead, which is its validation
+        /// error rather than the standard one, so both codes are read as the same refusal. Left
+        /// unhandled, 422 reached the customer as "Сайт ответил кодом 422."
         /// </remarks>
         private static string Describe(IReadOnlyList<Attempt> attempts)
         {
@@ -150,8 +153,13 @@ namespace PhotoBook.Infrastructure.Sites
             if (first is null)
                 return "Не удалось войти. Попробуйте позже.";
 
-            return first.IsSessionExpired ? "Неверная почта или пароль." : first.Message;
+            return first.IsSessionExpired || first.StatusCode == UnprocessableEntity
+                ? "Неверная почта или пароль."
+                : first.Message;
         }
+
+        /// <summary>The platform's answer to a refused password, spelled out where it is read.</summary>
+        private const int UnprocessableEntity = 422;
 
         private sealed record Attempt(SiteRegion Region, SiteSession? Session, SiteApiError? Error);
     }
