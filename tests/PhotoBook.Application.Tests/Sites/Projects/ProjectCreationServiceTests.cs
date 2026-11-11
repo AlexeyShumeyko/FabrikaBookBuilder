@@ -123,6 +123,12 @@ namespace PhotoBook.Application.Tests.Sites.Projects
 
             internal List<CreateProjectRequest> Asked { get; } = new();
 
+            public Task<Result<SiteProjectSnapshot>> ReadAsync(
+                SiteSession session,
+                long projectId,
+                CancellationToken cancellationToken = default) =>
+                throw new NotSupportedException("Creation never reads a project back here.");
+
             public Task<Result<SiteProject>> CreateAsync(
                 SiteSession session,
                 CreateProjectRequest request,
