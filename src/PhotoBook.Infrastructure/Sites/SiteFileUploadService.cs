@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using PhotoBook.Application;
 using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Upload;
 
@@ -36,7 +35,7 @@ namespace PhotoBook.Infrastructure.Sites
             _http = http ?? throw new ArgumentNullException(nameof(http));
         }
 
-        public async Task<Result> UploadAsync(
+        public async Task<PageUpload> UploadAsync(
             SiteSession session,
             long projectId,
             int position,
@@ -50,7 +49,7 @@ namespace PhotoBook.Infrastructure.Sites
             if (position < 0)
                 throw new ArgumentOutOfRangeException(nameof(position), "Страница не может быть раньше первой.");
             if (string.IsNullOrWhiteSpace(filePath))
-                return Result.Fail("Не указан файл страницы.");
+                return PageUpload.Refused(UploadFailureKind.File, "Не указан файл страницы.");
 
             var client = new SiteApiClient(session.Region, _http);
 
@@ -65,20 +64,37 @@ namespace PhotoBook.Infrastructure.Sites
                 .ConfigureAwait(false);
 
             if (!response.IsSuccess || response.Document is null)
-                return Result.Fail(response.Error?.Message ?? "Сайт не принял файл.");
+            {
+                return PageUpload.Refused(
+                    KindOf(response.Error),
+                    response.Error?.Message ?? "Сайт не принял файл.");
+            }
 
             using var document = response.Document;
 
             if (document.RootElement.TryGetProperty("corrupted_file", out var corrupted) &&
                 corrupted.ValueKind == JsonValueKind.String)
             {
-                return Result.Fail(
+                return PageUpload.Refused(
+                    UploadFailureKind.File,
                     "Сайт не смог прочитать файл: " +
                     (corrupted.GetString() ?? "файл повреждён") +
                     ". Проверьте фотографию.");
             }
 
-            return Result.Ok();
+            return PageUpload.Accepted;
         }
+
+        /// <summary>The client's reason, in the words the upload screen switches on.</summary>
+        private static UploadFailureKind KindOf(SiteApiError? error) => error?.Kind switch
+        {
+            SiteApiErrorKind.Unauthorized => UploadFailureKind.Unauthorized,
+            SiteApiErrorKind.RateLimited => UploadFailureKind.RateLimited,
+            SiteApiErrorKind.ServerUnavailable => UploadFailureKind.ServerUnavailable,
+            SiteApiErrorKind.ConnectionLost or SiteApiErrorKind.Timeout => UploadFailureKind.ConnectionLost,
+            SiteApiErrorKind.FileTooLarge => UploadFailureKind.File,
+            SiteApiErrorKind.InvalidRequest or SiteApiErrorKind.NotFound => UploadFailureKind.Parameters,
+            _ => UploadFailureKind.Other
+        };
     }
 }

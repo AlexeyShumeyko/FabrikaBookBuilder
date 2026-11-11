@@ -19,21 +19,29 @@ namespace PhotoBook.Application.Sites.Upload
     /// asked to stop, so it is reported as cancelled rather than as an error, and nothing is
     /// deleted from the site.
     /// </para>
+    /// <para>
+    /// Where the book starts is asked of the record before anything is sent, so an upload that
+    /// lost its connection, or the program it ran in, continues at the next page instead of
+    /// starting over. Every accepted page is written down at once, and the record is dropped when
+    /// the book is whole: one that outlived its book would make a later upload skip pages.
+    /// </para>
     /// </remarks>
     public sealed class BookUploadService : IBookUploadService
     {
         private readonly ISiteFileUploadService _upload;
+        private readonly IAcceptedFilesStore? _accepted;
 
-        public BookUploadService(ISiteFileUploadService upload)
+        public BookUploadService(ISiteFileUploadService upload, IAcceptedFilesStore? accepted = null)
         {
             _upload = upload ?? throw new ArgumentNullException(nameof(upload));
+            _accepted = accepted;
         }
 
         public async Task<BookUploadResult> UploadAsync(
             SiteSession session,
             long projectId,
             IReadOnlyList<PageFile> files,
-            int alreadyUploaded = 0,
+            int? alreadyUploaded = null,
             IProgress<UploadProgress>? progress = null,
             CancellationToken cancellationToken = default)
         {
@@ -44,7 +52,9 @@ namespace PhotoBook.Application.Sites.Upload
             if (projectId <= 0)
                 throw new ArgumentOutOfRangeException(nameof(projectId), "У проекта нет номера.");
 
-            var uploaded = Math.Clamp(alreadyUploaded, 0, files.Count);
+            var start = alreadyUploaded ?? _accepted?.Accepted(session.Region, projectId, files.Count) ?? 0;
+            var uploaded = Math.Clamp(start, 0, files.Count);
+            string? notice = null;
 
             for (var position = uploaded; position < files.Count; position++)
             {
@@ -54,49 +64,85 @@ namespace PhotoBook.Application.Sites.Upload
 
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    return Result(
+                    return Ended(
                         UploadState.Cancelled,
                         session,
                         projectId,
                         files.Count,
                         uploaded,
-                        "Загрузка отменена.");
+                        UploadFailureKind.None,
+                        "Загрузка отменена.",
+                        notice);
                 }
 
                 progress?.Report(new UploadProgress(files.Count, uploaded, file.Path));
 
-                var sent = await _upload
+                var page = await _upload
                     .UploadAsync(session, projectId, position, file.Path, cancellationToken)
                     .ConfigureAwait(false);
 
-                if (!sent.IsSuccess)
+                if (!page.IsAccepted)
                 {
-                    return Result(
+                    return Ended(
                         UploadState.Failed,
                         session,
                         projectId,
                         files.Count,
                         uploaded,
-                        sent.Error ?? "Сайт не принял файл.");
+                        page.Kind,
+                        page.Error ?? "Сайт не принял файл.",
+                        notice);
                 }
 
                 uploaded = position + 1;
+                notice = Remember(session.Region, projectId, files.Count, uploaded) ?? notice;
+
                 progress?.Report(new UploadProgress(files.Count, uploaded, string.Empty));
             }
 
-            return Result(UploadState.Completed, session, projectId, files.Count, uploaded, null);
+            if (uploaded >= files.Count && _accepted is not null && !_accepted.Forget(session.Region, projectId).IsSuccess)
+            {
+                notice = "Книга загружена, но запись о ней не удалилась — при следующей отправке она может быть пропущена.";
+            }
+
+            return Ended(
+                UploadState.Completed,
+                session,
+                projectId,
+                files.Count,
+                uploaded,
+                UploadFailureKind.None,
+                null,
+                notice);
         }
 
-        private static BookUploadResult Result(
+        /// <summary>Writes down how far the book got, or says why it could not.</summary>
+        private string? Remember(SiteRegion region, long projectId, int total, int uploaded)
+        {
+            if (_accepted is null)
+                return null;
+
+            var written = _accepted.Remember(new UploadSession(region, projectId, total, uploaded));
+
+            return written.IsSuccess
+                ? null
+                : "Загрузка идёт, но запись о ней не сохранилась — после перезапуска она начнётся заново.";
+        }
+
+        private static BookUploadResult Ended(
             UploadState state,
             SiteSession session,
             long projectId,
             int total,
             int uploaded,
-            string? error) =>
+            UploadFailureKind kind,
+            string? error,
+            string? notice) =>
             new(
                 state,
                 new UploadSession(session.Region, projectId, total, uploaded),
-                error);
+                error,
+                kind,
+                notice);
     }
 }

@@ -12,6 +12,9 @@ namespace PhotoBook.Application.Sites
         /// <summary>The project, product or file is not on this site.</summary>
         NotFound,
 
+        /// <summary>The site refused the request’s own parameters.</summary>
+        InvalidRequest,
+
         /// <summary>The platform asked us to slow down.</summary>
         RateLimited,
 

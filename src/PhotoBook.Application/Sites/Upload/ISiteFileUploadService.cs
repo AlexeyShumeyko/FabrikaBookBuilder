@@ -13,13 +13,14 @@ namespace PhotoBook.Application.Sites.Upload
     /// <para>
     /// The answer is read, not assumed: the endpoint replies <c>200</c> with
     /// <c>{"corrupted_file": "..."}</c> for a file it cannot use, so a success status alone
-    /// means nothing here.
+    /// means nothing here. The refusal comes back as a kind, so the screen can tell an expired
+    /// session from a photograph the site could not read.
     /// </para>
     /// </remarks>
     public interface ISiteFileUploadService
     {
         /// <summary>Sends one file; the answer says whether the site could use it.</summary>
-        Task<Result> UploadAsync(
+        Task<PageUpload> UploadAsync(
             SiteSession session,
             long projectId,
             int position,

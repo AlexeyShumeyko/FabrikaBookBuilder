@@ -87,6 +87,10 @@ namespace PhotoBook.Infrastructure
             // page uses; the answer's body decides success, not the status code.
             services.AddSingleton<ISiteFileUploadService, SiteFileUploadService>();
 
+            // How far each book got survives a restart, so a dropped connection continues at the
+            // next page instead of sending ten spreads over the ones the site already holds.
+            services.AddSingleton<IAcceptedFilesStore>(sp => new FileAcceptedFilesStore(sp.GetRequiredService<IJournal>()));
+
             // The catalog is fetched once and reused: the platform is shared by two sites and
             // must not be asked for the same option list whenever a window opens. What cannot be
             // cached is journalled, so a cache that stopped writing is visible rather than silent.

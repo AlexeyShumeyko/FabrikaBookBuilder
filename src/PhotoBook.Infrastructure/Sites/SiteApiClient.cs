@@ -281,6 +281,8 @@ namespace PhotoBook.Infrastructure.Sites
                     SiteApiErrorKind.Forbidden, "У аккаунта нет доступа к этому действию.", code),
                 HttpStatusCode.NotFound => new SiteApiError(
                     SiteApiErrorKind.NotFound, "Сайт не нашёл запрошенные данные.", code),
+                HttpStatusCode.UnprocessableEntity => new SiteApiError(
+                    SiteApiErrorKind.InvalidRequest, "Сайт не принял параметры запроса.", code),
                 HttpStatusCode.TooManyRequests => new SiteApiError(
                     SiteApiErrorKind.RateLimited, "Сайт просит подождать: слишком много запросов.", code),
                 HttpStatusCode.RequestEntityTooLarge => new SiteApiError(

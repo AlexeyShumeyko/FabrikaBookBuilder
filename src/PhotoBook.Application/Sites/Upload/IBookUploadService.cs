@@ -18,14 +18,17 @@ namespace PhotoBook.Application.Sites.Upload
         /// <param name="session">The session; it fixes the site the project lives on.</param>
         /// <param name="projectId">The project the pages go into.</param>
         /// <param name="files">The book's pages, in page order.</param>
-        /// <param name="alreadyUploaded">How many the site already has; a retry starts after them.</param>
+        /// <param name="alreadyUploaded">
+        /// How many the site already has; null asks the record, so a restart continues where it
+        /// stopped instead of starting the book over.
+        /// </param>
         /// <param name="progress">Told after each file, for a bar that matches the site.</param>
         /// <param name="cancellationToken">Stops between files; sent files stay sent.</param>
         Task<BookUploadResult> UploadAsync(
             SiteSession session,
             long projectId,
             IReadOnlyList<PageFile> files,
-            int alreadyUploaded = 0,
+            int? alreadyUploaded = null,
             IProgress<UploadProgress>? progress = null,
             CancellationToken cancellationToken = default);
     }
