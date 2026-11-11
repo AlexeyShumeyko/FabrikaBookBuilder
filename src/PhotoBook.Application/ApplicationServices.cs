@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using PhotoBook.Application.Sites.Books.Files;
+using PhotoBook.Application.Sites.Books.Pricing;
 
 namespace PhotoBook.Application
 {
@@ -29,6 +30,7 @@ namespace PhotoBook.Application
             services.AddSingleton<IEditHistory, EditHistory>();
             services.AddSingleton<IProjectListService, ProjectListService>();
             services.AddSingleton<IBookFileInspector, BookFileInspector>();
+            services.AddSingleton<IGroupQuoteService, GroupQuoteService>();
 
             return services;
         }
