@@ -15,6 +15,7 @@ namespace PhotoBook.Application.Tests.Sites.Catalog
         private const string Layflat = """
         {
           "integration": {
+            "id": 37556,
             "settings": { "outputResolution": "300" },
             "elements": [
               {
@@ -133,6 +134,10 @@ namespace PhotoBook.Application.Tests.Sites.Catalog
             Assert.Equal(300, layout.ResolutionDpi);
             Assert.Equal(4494, layout.ProductId);
             Assert.Equal(9255, layout.ComponentId);
+
+            // The uploader's integration, which the create-project endpoint needs and which is
+            // not the format id: without it the endpoint answers 404 with a model-not-found.
+            Assert.Equal(37556, layout.IntegrationId);
             Assert.Equal(2, layout.Parts.Count);
 
             var cover = layout.Part(93);

@@ -14,7 +14,8 @@ namespace PhotoBook.Application.Sites.Catalog.Layout
         long ProductId,
         long ComponentId,
         int ResolutionDpi,
-        IReadOnlyList<PartLayout> Parts)
+        IReadOnlyList<PartLayout> Parts,
+        long IntegrationId = 0)
     {
         public PartLayout? Part(long partId)
         {

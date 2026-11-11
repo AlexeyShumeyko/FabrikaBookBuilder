@@ -57,7 +57,8 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
                     SiteJson.Number(root, "productId"),
                     SiteJson.Number(root, "productComponentId"),
                     dpi,
-                    parts));
+                    parts,
+                    SiteJson.Number(integration, "id")));
             }
             catch (JsonException)
             {
