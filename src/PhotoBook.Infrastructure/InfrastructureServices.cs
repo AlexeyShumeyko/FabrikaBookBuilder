@@ -5,6 +5,7 @@ using PhotoBook.Application;
 using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Catalog;
 using PhotoBook.Application.Sites.Pricing;
+using PhotoBook.Application.Sites.Projects;
 using PhotoBook.Infrastructure.Sites;
 using PhotoBook.Infrastructure.Sites.Catalog;
 
@@ -75,6 +76,11 @@ namespace PhotoBook.Infrastructure
             // The uploader's geometry comes from its own document, including the resolution: the
             // file size a book needs is the site's number, not one compiled in here.
             services.AddSingleton<ISiteLayoutParser, SiteLayoutParser>();
+
+            // Projects are created on the site once per group and remembered by their key, so a
+            // retry after a dropped connection does not make a second project for the same books.
+            services.AddSingleton<ISiteProjectService, SiteProjectService>();
+            services.AddSingleton<ICreatedProjectStore>(sp => new FileCreatedProjectStore(sp.GetRequiredService<IJournal>()));
 
             // The catalog is fetched once and reused: the platform is shared by two sites and
             // must not be asked for the same option list whenever a window opens. What cannot be
