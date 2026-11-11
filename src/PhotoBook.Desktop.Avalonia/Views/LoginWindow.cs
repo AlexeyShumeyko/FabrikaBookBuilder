@@ -27,6 +27,12 @@ namespace PhotoBook.Shell.Views
     /// asking for the same password again - the token lasts seven days, and the customer
     /// closed the program for lunch, not for a week.
     /// </para>
+    /// <para>
+    /// The card is part of the window here, not decoration: the window has no system frame and
+    /// a transparent background, so without it the form floated over whatever was behind the
+    /// program and the fields had nothing to sit on. The eighteen pixels of margin are where
+    /// the shadow falls.
+    /// </para>
     /// </remarks>
     public class LoginWindow : Window
     {
@@ -44,7 +50,7 @@ namespace PhotoBook.Shell.Views
             DataContext = model;
 
             Title = "Вход в аккаунт";
-            Width = 440;
+            Width = 476;
             SizeToContent = SizeToContent.Height;
             CanResize = false;
             ShowInTaskbar = false;
@@ -56,24 +62,13 @@ namespace PhotoBook.Shell.Views
             // frame with its own buttons would look like another program's dialog.
             SystemDecorations = SystemDecorations.None;
 
-            _email = new TextBox
-            {
-                Watermark = "Почта",
-                FontSize = 14,
-                Margin = new Thickness(0, 0, 0, 10)
-            };
+            _email = Field("Почта", secret: false);
             _email.Bind(TextBox.TextProperty, new Binding(nameof(SiteLoginViewModel.Email))
             {
                 Mode = BindingMode.TwoWay
             });
 
-            _password = new TextBox
-            {
-                Watermark = "Пароль",
-                PasswordChar = '●',
-                FontSize = 14,
-                Margin = new Thickness(0, 0, 0, 10)
-            };
+            _password = Field("Пароль", secret: true);
             _password.Bind(TextBox.TextProperty, new Binding(nameof(SiteLoginViewModel.Password))
             {
                 Mode = BindingMode.TwoWay
@@ -85,7 +80,7 @@ namespace PhotoBook.Shell.Views
                 Foreground = ConfirmWindow.Brush("#B91C1C"),
                 TextWrapping = TextWrapping.Wrap,
                 LineHeight = 18,
-                Margin = new Thickness(0, 0, 0, 10)
+                Margin = new Thickness(0, 2, 0, 10)
             };
             _message.Bind(TextBlock.TextProperty, new Binding(nameof(SiteLoginViewModel.Message)));
             _message.Bind(IsVisibleProperty, new Binding(nameof(SiteLoginViewModel.HasMessage)));
@@ -100,8 +95,9 @@ namespace PhotoBook.Shell.Views
                 Foreground = Brushes.White,
                 FontSize = 13,
                 FontWeight = FontWeight.SemiBold,
-                CornerRadius = new CornerRadius(10),
-                BorderThickness = new Thickness(0)
+                CornerRadius = new CornerRadius(12),
+                BorderThickness = new Thickness(0),
+                Cursor = new Cursor(StandardCursorType.Hand)
             };
             _submit.Bind(ContentControl.ContentProperty, new Binding(nameof(SiteLoginViewModel.SignInText)));
             _submit.Bind(IsEnabledProperty, new Binding(nameof(SiteLoginViewModel.CanSignIn)));
@@ -118,12 +114,14 @@ namespace PhotoBook.Shell.Views
                 Content = "Закрыть",
                 HorizontalAlignment = HorizontalAlignment.Right,
                 Padding = new Thickness(16, 9),
-                Background = ConfirmWindow.Brush("#F1F5F9"),
+                Background = ConfirmWindow.Brush("#FFFFFF"),
+                BorderBrush = ConfirmWindow.Brush("#E2E8F0"),
+                BorderThickness = new Thickness(1),
                 Foreground = ConfirmWindow.Brush("#334155"),
                 FontSize = 12,
                 FontWeight = FontWeight.SemiBold,
-                CornerRadius = new CornerRadius(10),
-                BorderThickness = new Thickness(0)
+                CornerRadius = new CornerRadius(12),
+                Cursor = new Cursor(StandardCursorType.Hand)
             };
             close.Click += (_, _) => Close();
 
@@ -144,7 +142,7 @@ namespace PhotoBook.Shell.Views
             _already.Bind(IsVisibleProperty, new Binding(nameof(SiteLoginViewModel.IsSignedIn)));
             _form.Bind(IsVisibleProperty, new Binding("!IsSignedIn"));
 
-            Content = Build();
+            Content = Build(close);
 
             model.SignedIn += (_, _) => Close(true);
 
@@ -183,7 +181,28 @@ namespace PhotoBook.Shell.Views
                 _password.Focus();
         }
 
-        private Control Build()
+        /// <summary>
+        /// One input on the card.
+        /// </summary>
+        /// <remarks>
+        /// The theme's own box is a different grey from the card and the two looked like one
+        /// surface with a faint line across it. A white box with a hairline border, on white
+        /// paper, is the shape every other field in this program has.
+        /// </remarks>
+        private static TextBox Field(string watermark, bool secret) => new()
+        {
+            Watermark = watermark,
+            PasswordChar = secret ? '●' : default,
+            FontSize = 13,
+            Padding = new Thickness(12, 9),
+            CornerRadius = new CornerRadius(10),
+            Background = ConfirmWindow.Brush("#FFFFFF"),
+            BorderBrush = ConfirmWindow.Brush("#CBD5E1"),
+            BorderThickness = new Thickness(1),
+            Margin = new Thickness(0, 0, 0, 10)
+        };
+
+        private Control Build(Button close)
         {
             var heading = new TextBlock
             {
@@ -191,7 +210,34 @@ namespace PhotoBook.Shell.Views
                 FontSize = 16,
                 FontWeight = FontWeight.Bold,
                 Foreground = ConfirmWindow.Brush("#0F172A"),
-                Margin = new Thickness(0, 0, 0, 6)
+                VerticalAlignment = VerticalAlignment.Center
+            };
+
+            var tile = new Border
+            {
+                Width = 36,
+                Height = 36,
+                CornerRadius = new CornerRadius(10),
+                Background = ConfirmWindow.Brush("#EEF2FF"),
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = new TextBlock
+                {
+                    Text = ((char)0xE77B).ToString(),
+                    FontFamily = new FontFamily("Segoe MDL2 Assets"),
+                    FontSize = 15,
+                    Foreground = ConfirmWindow.Brush("#4F46E5"),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                }
+            };
+
+            Grid.SetColumn(tile, 0);
+            Grid.SetColumn(heading, 1);
+
+            var header = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+                Children = { tile, heading }
             };
 
             var subtitle = new TextBlock
@@ -201,7 +247,7 @@ namespace PhotoBook.Shell.Views
                 Foreground = ConfirmWindow.Brush("#475569"),
                 TextWrapping = TextWrapping.Wrap,
                 LineHeight = 18,
-                Margin = new Thickness(0, 0, 0, 18)
+                Margin = new Thickness(48, 6, 0, 18)
             };
 
             var rule = new Border
@@ -211,32 +257,22 @@ namespace PhotoBook.Shell.Views
                 Margin = new Thickness(0, 18, 0, 16)
             };
 
-            var close = new Button
-            {
-                Content = "Закрыть",
-                HorizontalAlignment = HorizontalAlignment.Right,
-                Padding = new Thickness(16, 9),
-                Background = ConfirmWindow.Brush("#F1F5F9"),
-                Foreground = ConfirmWindow.Brush("#334155"),
-                FontSize = 12,
-                FontWeight = FontWeight.SemiBold,
-                CornerRadius = new CornerRadius(10),
-                BorderThickness = new Thickness(0)
-            };
-            close.Click += (_, _) => Close();
-
-            var footer = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Right,
-                Children = { close }
-            };
-
-            return new StackPanel
+            var body = new StackPanel
             {
                 Margin = new Thickness(24, 22, 24, 20),
                 Spacing = 0,
-                Children = { heading, subtitle, _form, _already, rule, footer }
+                Children = { header, subtitle, _form, _already, rule, close }
+            };
+
+            return new Border
+            {
+                Margin = new Thickness(18),
+                Background = ConfirmWindow.Brush("#FFFFFF"),
+                CornerRadius = new CornerRadius(16),
+                BorderBrush = ConfirmWindow.Brush("#E2E8F0"),
+                BorderThickness = new Thickness(1),
+                BoxShadow = new BoxShadows(BoxShadow.Parse("0 12 50 0 #40000000")),
+                Child = body
             };
         }
     }
