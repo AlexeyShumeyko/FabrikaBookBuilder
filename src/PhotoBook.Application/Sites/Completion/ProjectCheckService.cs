@@ -66,7 +66,7 @@ namespace PhotoBook.Application.Sites.Completion
             for (var index = 0; index < books; index++)
                 differences.AddRange(CompareBook(index + 1, project.Items[index], expected.PagesPerBook[index]));
 
-            return Result<ProjectCheck>.Ok(new ProjectCheck(project, Link(session.Region, project), differences));
+            return Result<ProjectCheck>.Ok(new ProjectCheck(project, ProjectLink.Of(session.Region, project), differences));
         }
 
         /// <summary>What one book on the site has to say about itself.</summary>
@@ -92,22 +92,6 @@ namespace PhotoBook.Application.Sites.Completion
                 yield return "Книга " + number + ", страница " + (page.Position + 1) + ": " +
                     string.Join("; ", page.Alerts);
             }
-        }
-
-        /// <summary>
-        /// The project's page on the site, built from the product page the site names and the
-        /// query parameter its own editor reads.
-        /// </summary>
-        private static string Link(SiteRegion region, SiteProjectSnapshot project)
-        {
-            if (project.Id <= 0 || string.IsNullOrWhiteSpace(project.ProductUrl))
-                return string.Empty;
-
-            var path = project.ProductUrl.StartsWith("/", StringComparison.Ordinal)
-                ? project.ProductUrl
-                : "/" + project.ProductUrl;
-
-            return region.SiteUrl + path + "?projectId=" + project.Id;
         }
     }
 }
