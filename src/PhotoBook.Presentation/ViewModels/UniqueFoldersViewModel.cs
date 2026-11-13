@@ -129,6 +129,11 @@ namespace PhotoBook.Presentation.ViewModels
             LoadFoldersCommand = new AsyncRelayCommand(LoadFoldersAsync);
             SelectCoverCommand = new AsyncRelayCommand<Book?>(SelectCoverAsync);
             ExportCommand = new AsyncRelayCommand(ExportAsync, () => Project?.IsValid ?? false);
+            // The order page belongs to the shell, not to the editor: the editor only says that
+            // someone pressed the button on a project that is assembled.
+            OrderOnSiteCommand = new RelayCommand(
+                () => OrderRequested?.Invoke(this, EventArgs.Empty),
+                () => Project?.IsValid ?? false);
             ExportWithFolderCommand = new AsyncRelayCommand(ExportWithFolderAsync, () => Project?.IsValid ?? false);
             BackCommand = new AsyncRelayCommand(async () =>
             {
@@ -281,6 +286,9 @@ namespace PhotoBook.Presentation.ViewModels
         public ICommand LoadFoldersCommand { get; }
         public ICommand SelectCoverCommand { get; }
         public ICommand ExportCommand { get; }
+
+        /// <summary>Opens the order page for this project; only a full project may go.</summary>
+        public ICommand OrderOnSiteCommand { get; }
         public ICommand ExportWithFolderCommand { get; }
         public ICommand BackCommand { get; private set; }
         public ICommand SaveProjectCommand { get; }

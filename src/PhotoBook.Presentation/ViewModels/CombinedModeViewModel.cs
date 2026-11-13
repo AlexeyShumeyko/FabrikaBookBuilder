@@ -78,6 +78,11 @@ namespace PhotoBook.Presentation.ViewModels
                 ConfirmStructure,
                 () => NumberOfBooks > 0 && SpreadsPerBook > 0 && RunNumbersAreValid);
             ExportCommand = new AsyncRelayCommand(ExportAsync, () => Project?.IsValid ?? false);
+            // An editor cannot say which screen comes next, so it asks the shell - the same way
+            // a finished export asks it to end the session.
+            OrderOnSiteCommand = new RelayCommand(
+                () => OrderRequested?.Invoke(this, EventArgs.Empty),
+                () => Project?.IsValid ?? false);
             ExportWithFolderCommand = new AsyncRelayCommand(ExportWithFolderAsync, () => Project?.IsValid ?? false);
             // Enabled as soon as there is anything to save. Not tied to
             // CurrentProjectInfo: the record is created by the save itself, so tying it
@@ -168,6 +173,9 @@ namespace PhotoBook.Presentation.ViewModels
         public ICommand GenerateStructureCommand { get; }
         public ICommand ConfirmStructureCommand { get; }
         public ICommand ExportCommand { get; }
+
+        /// <summary>Opens the order page for this project; only a full project may go.</summary>
+        public ICommand OrderOnSiteCommand { get; }
         public ICommand ExportWithFolderCommand { get; }
         public ICommand SaveProjectCommand { get; }
         public ICommand BackCommand { get; }

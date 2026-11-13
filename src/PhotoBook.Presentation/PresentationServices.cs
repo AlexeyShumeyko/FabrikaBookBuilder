@@ -30,6 +30,9 @@ namespace PhotoBook.Presentation
             // The upload screen keeps the run it started: its progress, its projects and its
             // result outlive a view swap, and a second copy would start the order again.
             services.AddSingleton<SiteUploadViewModel>();
+            // The order page reads the open project each time it is opened, so one copy is
+            // enough and a second would only hold a stale project.
+            services.AddSingleton<SiteOrderViewModel>();
 
             return services;
         }

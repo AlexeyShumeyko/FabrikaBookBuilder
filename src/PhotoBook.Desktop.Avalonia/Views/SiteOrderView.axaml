@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PhotoBook.Shell.Views.SiteOrderView"
+             FontFamily="Inter">
+
+    <!--
+        The order page is reached from the project's own panel, beside export, and it is a
+        page rather than a dialog on purpose: an order is assembled over several steps and the
+        customer needs to come back to the project, change a photograph, and return without
+        losing what the page already showed.
+
+        Rules are the product's: container max 1200 with a 32 margin, blocks 32 apart, cards
+        with a 1px slate-200 edge and 16 radius. Nothing here invents a new size or colour.
+    -->
+    <Grid RowDefinitions="Auto,*" Margin="32,16">
+        <Border Grid.Row="0" Classes="card" Padding="20,16" MaxWidth="1200" HorizontalAlignment="Stretch">
+            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock Text="Загрузка на сайт" Classes="t20Bold" />
+                    <TextBlock Text="{Binding ProjectName}" Classes="t12" Foreground="{DynamicResource Slate500}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="24"
+                            HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="{Binding BookCountText}" Classes="t14SemiBold" />
+                        <TextBlock Text="книг в заказе" Classes="t11" Foreground="{DynamicResource Slate500}" />
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="{Binding SpreadCount}" Classes="t14SemiBold" />
+                        <TextBlock Text="разворотов" Classes="t11" Foreground="{DynamicResource Slate500}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Classes="outline" Padding="12,10"
+                            AutomationProperties.Name="Вернуться к проекту"
+                            Click="OnBack">
+                        <TextBlock Text="Вернуться к проекту" VerticalAlignment="Center" />
+                    </Button>
+
+                    <!--
+                        Disabled until the parameter step exists. The page says so in words
+                        instead of offering a button that would only look broken.
+                    -->
+                    <Button Classes="primary" Padding="16,10" IsEnabled="False"
+                            AutomationProperties.Name="Загрузить на сайт"
+                            ToolTip.Tip="Форматы, цена и отправка появятся на следующем шаге">
+                        <TextBlock Text="Загрузить на сайт" Foreground="White" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" Classes="card" Padding="0" Margin="0,24,0,0"
+                MaxWidth="1200" HorizontalAlignment="Stretch" VerticalAlignment="Top">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- the column headings, once -->
+                <Grid Grid.Row="0" ColumnDefinitions="56,*,120,120,180" Margin="20,16,20,12">
+                    <TextBlock Grid.Column="0" Text="№" Classes="t11" Foreground="{DynamicResource Slate500}" />
+                    <TextBlock Grid.Column="1" Text="Книга" Classes="t11" Foreground="{DynamicResource Slate500}" />
+                    <TextBlock Grid.Column="2" Text="Развороты" Classes="t11" Foreground="{DynamicResource Slate500}" />
+                    <TextBlock Grid.Column="3" Text="Фотографии" Classes="t11" Foreground="{DynamicResource Slate500}" />
+                    <TextBlock Grid.Column="4" Text="Состояние" Classes="t11" Foreground="{DynamicResource Slate500}" />
+                </Grid>
+
+                <Border Grid.Row="0" Height="1" Background="{DynamicResource Slate200}"
+                        VerticalAlignment="Bottom" />
+
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding Books}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="56,*,120,120,180" Margin="20,12">
+                                <TextBlock Grid.Column="0" Text="{Binding Number}" Classes="t12"
+                                           Foreground="{DynamicResource Slate500}" />
+                                <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="t12" />
+                                <TextBlock Grid.Column="2" Text="{Binding Spreads}" Classes="t12" />
+                                <TextBlock Grid.Column="3" Text="{Binding Photos}" Classes="t12" />
+                                <TextBlock Grid.Column="4" Text="{Binding ConditionText}" Classes="t12" />
+                                <Border Grid.ColumnSpan="5" Height="1"
+                                        Background="{DynamicResource Slate100}"
+                                        VerticalAlignment="Bottom" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Border Grid.Row="2" Padding="20,16" IsVisible="{Binding HasMessage}">
+                    <TextBlock Text="{Binding Message}" Classes="t12"
+                               Foreground="{DynamicResource Slate600}" TextWrapping="Wrap" />
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

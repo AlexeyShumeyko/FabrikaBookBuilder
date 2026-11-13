@@ -205,12 +205,14 @@ public partial class App : Avalonia.Application
         services.AddSingleton<IScreenViewFactory>(sp => new AvaloniaScreenViewFactory(
             sp.GetRequiredService<UniqueFoldersViewModel>(),
             sp.GetRequiredService<CombinedModeViewModel>(),
+            sp.GetRequiredService<SiteOrderViewModel>(),
             () => sp.GetRequiredService<ProjectListViewModel>()));
 
         services.AddSingleton(sp => new AvaloniaNavigator(
             sp.GetRequiredService<IScreenViewFactory>(),
             sp.GetRequiredService<UniqueFoldersViewModel>(),
             sp.GetRequiredService<CombinedModeViewModel>(),
+            sp.GetRequiredService<SiteOrderViewModel>(),
             () => sp.GetRequiredService<ProjectListViewModel>()));
 
         services.AddSingleton<IShellNavigator>(sp => sp.GetRequiredService<AvaloniaNavigator>());

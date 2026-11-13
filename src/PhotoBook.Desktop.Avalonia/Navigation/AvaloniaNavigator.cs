@@ -27,6 +27,7 @@ namespace PhotoBook.Shell.Navigation
         private readonly IScreenViewFactory _screens;
         private readonly UniqueFoldersViewModel _uniqueFolders;
         private readonly CombinedModeViewModel _combined;
+        private readonly SiteOrderViewModel _siteOrder;
 
         private ContentControl? _host;
         private AppMode _currentMode = AppMode.ProjectList;
@@ -37,11 +38,13 @@ namespace PhotoBook.Shell.Navigation
             IScreenViewFactory screens,
             UniqueFoldersViewModel uniqueFolders,
             CombinedModeViewModel combined,
+            SiteOrderViewModel siteOrder,
             Func<ProjectListViewModel> projectListProvider)
         {
             _screens = screens;
             _uniqueFolders = uniqueFolders;
             _combined = combined;
+            _siteOrder = siteOrder;
             ProjectListProvider = projectListProvider;
 
             // The header reads the name off the editor rather than keeping a copy, so that a
@@ -58,6 +61,12 @@ namespace PhotoBook.Shell.Navigation
             // list already showed as ready to print.
             _uniqueFolders.ProjectExported += (_, _) => EndSession();
             _combined.ProjectExported += (_, _) => EndSession();
+
+            // The order page is a page of the open project rather than a session of its own:
+            // leaving it puts the editor back under the same project, untouched.
+            _uniqueFolders.OrderRequested += (_, _) => OpenOrder(AppMode.UniqueFolders);
+            _combined.OrderRequested += (_, _) => OpenOrder(AppMode.Combined);
+            _siteOrder.BackRequested += (_, _) => CurrentMode = _sessionMode ?? AppMode.ProjectList;
         }
 
         private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -137,6 +146,7 @@ namespace PhotoBook.Shell.Navigation
             {
                 AppMode.UniqueFolders => (object)_uniqueFolders,
                 AppMode.Combined => _combined,
+                AppMode.SiteOrder => _siteOrder,
                 _ => ProjectListProvider()
             };
 
@@ -148,6 +158,11 @@ namespace PhotoBook.Shell.Navigation
             // looks open.
             DeliverPending();
 
+            // The page reads the project as it stands the moment it is opened, and the
+            // project is delivered above, so the books are already there.
+            if (_currentMode == AppMode.SiteOrder && _sessionMode is { } sessionMode)
+                _siteOrder.Prepare(ProjectOf(sessionMode), NameOf(sessionMode));
+
             _host.Content = _screens.CreateScreen(_currentMode, viewModel);
 
             // The mode-select screen has no view model: it asks a question and raises the
@@ -156,6 +171,26 @@ namespace PhotoBook.Shell.Navigation
             if (_host.Content is Views.StartScreenView startScreen)
                 startScreen.Chosen += CreateProject;
         }
+
+        private void OpenOrder(AppMode mode)
+        {
+            _sessionMode = mode;
+            CurrentMode = AppMode.SiteOrder;
+        }
+
+        private string? NameOf(AppMode mode) => mode switch
+        {
+            AppMode.UniqueFolders => _uniqueFolders.ProjectName,
+            AppMode.Combined => _combined.ProjectName,
+            _ => null
+        };
+
+        private PhotoBook.Core.Project? ProjectOf(AppMode mode) => mode switch
+        {
+            AppMode.UniqueFolders => _uniqueFolders.Project,
+            AppMode.Combined => _combined.Project,
+            _ => null
+        };
 
         public void OpenProject(AppMode mode)
         {

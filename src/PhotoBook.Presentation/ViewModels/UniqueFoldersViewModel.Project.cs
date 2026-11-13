@@ -300,5 +300,8 @@ namespace PhotoBook.Presentation.ViewModels
         /// </summary>
         public event EventHandler? ProjectExported;
 
+        /// <summary>Raised when the customer asks to send the project to the site.</summary>
+        public event EventHandler? OrderRequested;
+
     }
 }
