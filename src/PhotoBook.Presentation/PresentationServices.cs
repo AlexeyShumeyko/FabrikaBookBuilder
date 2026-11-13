@@ -27,6 +27,10 @@ namespace PhotoBook.Presentation
             services.AddSingleton<UniqueFoldersViewModel>();
             services.AddSingleton<CombinedModeViewModel>();
 
+            // The upload screen keeps the run it started: its progress, its projects and its
+            // result outlive a view swap, and a second copy would start the order again.
+            services.AddSingleton<SiteUploadViewModel>();
+
             return services;
         }
     }
