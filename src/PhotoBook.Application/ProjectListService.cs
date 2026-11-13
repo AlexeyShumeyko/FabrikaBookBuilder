@@ -312,8 +312,24 @@ namespace PhotoBook.Application
                     // The card's pictures and its total travel with the record. They used to
                     // be dropped here, which is part of why the list had to open every project
                     // file to draw a card: nothing had ever written them down.
-                    foreach (var photo in projectInfo.PreviewPhotos) allProjects[existingIndex].PreviewPhotos.Add(photo);
-                    allProjects[existingIndex].TotalPhotoCount = projectInfo.TotalPhotoCount;
+                    //
+                    // An editor that saves a name or a book count says nothing about pictures,
+                    // and saying nothing is not a claim that they are gone. Taking the empty
+                    // list as the truth wiped the strip on every card whose project had just
+                    // been opened and closed. The strip is cleared only by the refresh that
+                    // reads the project itself and finds the photographs missing.
+                    if (projectInfo.PreviewPhotos.Count > 0)
+                    {
+                        foreach (var photo in projectInfo.PreviewPhotos) allProjects[existingIndex].PreviewPhotos.Add(photo);
+                        allProjects[existingIndex].TotalPhotoCount = projectInfo.TotalPhotoCount;
+                    }
+                    else
+                    {
+                        // The record was replaced above, so what the index knew is on the
+                        // old object: it is carried over here rather than lost with it.
+                        foreach (var photo in existing.PreviewPhotos) allProjects[existingIndex].PreviewPhotos.Add(photo);
+                        allProjects[existingIndex].TotalPhotoCount = existing.TotalPhotoCount;
+                    }
                 }
                 else
                 {

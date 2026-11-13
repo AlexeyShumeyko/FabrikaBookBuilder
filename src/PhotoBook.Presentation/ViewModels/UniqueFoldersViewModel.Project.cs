@@ -37,6 +37,10 @@ namespace PhotoBook.Presentation.ViewModels
             var projectStatus = projectInfo.Status;
             var projectCreatedDate = projectInfo.CreatedDate;
             var projectLastModified = projectInfo.LastModified;
+            // The pictures on the card travel with the record too: the copy below is what the
+            // editor saves back into the index, and a copy that forgets them is a strip erased.
+            var projectPreviews = new List<string>(projectInfo.PreviewPhotos);
+            var projectPhotoCount = projectInfo.TotalPhotoCount;
 
             if (string.IsNullOrEmpty(projectId))
             {
@@ -52,8 +56,11 @@ namespace PhotoBook.Presentation.ViewModels
                 BookCount = projectBookCount,
                 Status = projectStatus,
                 CreatedDate = projectCreatedDate,
-                LastModified = projectLastModified
+                LastModified = projectLastModified,
+                TotalPhotoCount = projectPhotoCount
             };
+
+            foreach (var photo in projectPreviews) projectInfoCopy.PreviewPhotos.Add(photo);
 
             CurrentProjectInfo = projectInfoCopy;
             ProjectName = projectInfoCopy.Name;
