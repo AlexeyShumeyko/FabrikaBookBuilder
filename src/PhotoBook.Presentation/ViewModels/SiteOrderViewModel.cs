@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using PhotoBook.Application.Sites.Books;
 using CoreProject = PhotoBook.Core.Project;
@@ -66,10 +67,11 @@ namespace PhotoBook.Presentation.ViewModels
             }
         }
 
-        /// <summary>How many books are going, in words.</summary>
-        public string BookCountText => Books.Count == 1
-            ? "1 книга"
-            : Books.Count + " книг";
+        /// <summary>
+        /// How many books are going. The number alone: the label under it already says
+        /// «книг в заказе», and a count that repeats the word reads as a stutter.
+        /// </summary>
+        public string BookCountText => Books.Count.ToString(CultureInfo.CurrentCulture);
 
         /// <summary>The project's name, as the header shows it.</summary>
         public string ProjectName

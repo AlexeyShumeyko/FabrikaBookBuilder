@@ -27,7 +27,7 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Equal("Лето 2026", page.ProjectName);
             Assert.Equal(2, page.Books.Count);
             Assert.Equal(4, page.SpreadCount);
-            Assert.Equal("2 книг", page.BookCountText);
+            Assert.Equal("2", page.BookCountText);
             Assert.All(page.Books, book => Assert.True(book.IsReady));
             Assert.Equal(new[] { "Book 1", "Book 2" }, page.Books.Select(book => book.Name));
             Assert.Equal(new[] { "Готова", "Готова" }, page.Books.Select(book => book.ConditionText));
