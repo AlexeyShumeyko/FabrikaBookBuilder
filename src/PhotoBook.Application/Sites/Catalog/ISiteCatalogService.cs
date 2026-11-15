@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PhotoBook.Application.Sites.Catalog.Layout;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -49,6 +50,21 @@ namespace PhotoBook.Application.Sites.Catalog
         /// It is public, so choosing a format costs no sign-in.
         /// </remarks>
         Task<Result<SiteProduct>> GetFormatAsync(
+            SiteRegion region,
+            long productId,
+            long componentId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// The geometry of one format: the page size, its bleed and the pixel size a file must
+        /// be, as the uploader's own document states them.
+        /// </summary>
+        /// <remarks>
+        /// It comes from the same document <see cref="GetFormatAsync"/> reads, so asking for
+        /// both costs one request: the file check needs the geometry, and a second shape of the
+        /// same answer would be a second place for the site's numbers to drift apart.
+        /// </remarks>
+        Task<Result<SiteLayout>> GetLayoutAsync(
             SiteRegion region,
             long productId,
             long componentId,

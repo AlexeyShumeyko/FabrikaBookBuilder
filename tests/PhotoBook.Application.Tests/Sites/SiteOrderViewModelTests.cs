@@ -5,6 +5,7 @@ using PhotoBook.Application.Sites.Books;
 using PhotoBook.Application.Sites.Books;
 using PhotoBook.Application.Sites.Books.Pricing;
 using PhotoBook.Application.Sites.Catalog;
+using PhotoBook.Application.Sites.Catalog.Layout;
 using PhotoBook.Application.Sites.Pricing;
 using PhotoBook.Core;
 using PhotoBook.Presentation.ViewModels;
@@ -347,6 +348,18 @@ namespace PhotoBook.Application.Tests.Sites
             Task.FromResult(Format is null
                 ? Result<SiteProduct>.Fail("Формат не открылся.")
                 : Result<SiteProduct>.Ok(Format));
+
+        /// <summary>The geometry the test has, if it needs one.</summary>
+        public SiteLayout? Geometry { get; init; }
+
+        public Task<Result<SiteLayout>> GetLayoutAsync(
+            SiteRegion region,
+            long productId,
+            long componentId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Geometry is null
+                ? Result<SiteLayout>.Fail("Геометрия не открылась.")
+                : Result<SiteLayout>.Ok(Geometry));
 
         public Task<Result<SiteProduct>> GetProductAsync(
             SiteRegion region,

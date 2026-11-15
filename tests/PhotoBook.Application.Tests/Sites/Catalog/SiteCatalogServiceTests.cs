@@ -133,6 +133,28 @@ namespace PhotoBook.Application.Tests.Sites.Catalog
         }
 
         [Fact]
+        public async Task ReadsTheGeometryFromTheSameDocumentWithoutAskingAgain()
+        {
+            const string document = "{\"productTitle\":\"Лайфлат\",\"integration\":{\"id\":37556,\"settings\":" +
+                "{\"outputResolution\":\"300\"},\"elements\":[{\"id\":26129,\"settings\":" +
+                "{\"productPartId\":\"94\",\"pagesCountPartId\":\"94\",\"imageSizeWay\":\"manually\"," +
+                "\"imageSizeWidth\":\"410\",\"imageSizeHeight\":\"290\"}}]}}";
+            var cache = new MemoryCache();
+            var handler = new StubHttpMessageHandler(_ => Json(document));
+            var service = Service(handler, cache);
+
+            await service.GetFormatAsync(SiteRegion.Com, 4494, 9255);
+            var layout = await service.GetLayoutAsync(SiteRegion.Com, 4494, 9255);
+
+            // One answer, two readers: the geometry comes from the document the format already
+            // fetched, so a page checking files costs the site nothing extra.
+            Assert.True(layout.IsSuccess);
+            Assert.Equal(37556, layout.Value!.IntegrationId);
+            Assert.Equal(300, layout.Value!.ResolutionDpi);
+            Assert.Single(handler.Urls);
+        }
+
+        [Fact]
         public async Task ReportsTheSitesRefusalInsteadOfAnEmptyCatalog()
         {
             var cache = new MemoryCache();
@@ -150,7 +172,7 @@ namespace PhotoBook.Application.Tests.Sites.Catalog
         }
 
         private static SiteCatalogService Service(StubHttpMessageHandler handler, MemoryCache cache) =>
-            new(new HttpClient(handler), cache, new SiteProductParser(), new SiteProductsParser(), new SiteFormatParser(), TimeSpan.Zero);
+            new(new HttpClient(handler), cache, new SiteProductParser(), new SiteProductsParser(), new SiteFormatParser(), new SiteLayoutParser(), TimeSpan.Zero);
 
         private static HttpResponseMessage Json(string body) =>
             new(HttpStatusCode.OK) { Content = new StringContent(body) };

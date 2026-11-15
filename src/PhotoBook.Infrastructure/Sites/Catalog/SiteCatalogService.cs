@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using PhotoBook.Application;
 using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Catalog;
+using PhotoBook.Application.Sites.Catalog.Layout;
 
 namespace PhotoBook.Infrastructure.Sites.Catalog
 {
@@ -38,6 +39,7 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
         private readonly ISiteProductParser _parser;
         private readonly ISiteProductsParser _products;
         private readonly ISiteFormatParser _format;
+        private readonly ISiteLayoutParser _layout;
         private readonly TimeSpan _retryDelay;
 
         public SiteCatalogService(
@@ -46,6 +48,7 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
             ISiteProductParser parser,
             ISiteProductsParser products,
             ISiteFormatParser format,
+            ISiteLayoutParser layout,
             TimeSpan? retryDelay = null)
         {
             _http = http ?? throw new ArgumentNullException(nameof(http));
@@ -53,6 +56,7 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
             _parser = parser ?? throw new ArgumentNullException(nameof(parser));
             _products = products ?? throw new ArgumentNullException(nameof(products));
             _format = format ?? throw new ArgumentNullException(nameof(format));
+            _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             _retryDelay = retryDelay ?? TimeSpan.FromMilliseconds(500);
         }
 
@@ -115,6 +119,60 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
                     return cached;
             }
 
+            var fetched = await FetchFormatAsync(region, productId, componentId, document, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!fetched.IsSuccess || fetched.Value is null)
+                return Result<SiteProduct>.Fail(fetched.Error ?? "Описание формата не открылось.");
+
+            return _format.Parse(fetched.Value, productId, componentId);
+        }
+
+        /// <summary>
+        /// The geometry of a format, from the document the catalog already keeps.
+        /// </summary>
+        /// <remarks>
+        /// The same document answers both questions, so a page that asks for the format and then
+        /// for its geometry costs one request: the second call reads what the first stored.
+        /// </remarks>
+        public async Task<Result<SiteLayout>> GetLayoutAsync(
+            SiteRegion region,
+            long productId,
+            long componentId,
+            CancellationToken cancellationToken = default)
+        {
+            if (region is null)
+                throw new ArgumentNullException(nameof(region));
+            if (productId <= 0 || componentId <= 0)
+                throw new ArgumentException("Формат опознаётся парой идентификаторов, и оба нужны.");
+
+            var document = FormatDocument + ":" + productId + ":" + componentId;
+
+            var stored = _cache.Read(region, document);
+            if (stored is not null)
+            {
+                var cached = _layout.Parse(stored.Content);
+                if (cached.IsSuccess)
+                    return cached;
+            }
+
+            var fetched = await FetchFormatAsync(region, productId, componentId, document, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!fetched.IsSuccess || fetched.Value is null)
+                return Result<SiteLayout>.Fail(fetched.Error ?? "Геометрия макета не открылась.");
+
+            return _layout.Parse(fetched.Value);
+        }
+
+        /// <summary>Asks the site for a format's document and keeps it when it is readable.</summary>
+        private async Task<Result<string>> FetchFormatAsync(
+            SiteRegion region,
+            long productId,
+            long componentId,
+            string document,
+            CancellationToken cancellationToken)
+        {
             var client = new SiteApiClient(region, _http, _retryDelay);
             var answer = await client
                 .GetAsync(
@@ -128,7 +186,7 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
             if (!answer.IsSuccess || answer.Document is null)
             {
                 var reason = answer.Error?.Message;
-                return Result<SiteProduct>.Fail(string.IsNullOrWhiteSpace(reason)
+                return Result<string>.Fail(string.IsNullOrWhiteSpace(reason)
                     ? "Описание формата не открылось."
                     : reason!);
             }
@@ -136,11 +194,9 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
             var json = answer.Document.RootElement.GetRawText();
             answer.Document.Dispose();
 
-            var parsed = _format.Parse(json, productId, componentId);
-            if (parsed.IsSuccess)
-                _cache.Write(region, document, json);
+            _cache.Write(region, document, json);
 
-            return parsed;
+            return Result<string>.Ok(json);
         }
 
         public async Task<Result<SiteProduct>> GetProductAsync(
