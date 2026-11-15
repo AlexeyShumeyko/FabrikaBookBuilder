@@ -102,6 +102,8 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
 
             public bool FileExists(string path) => _present.Contains(path);
 
+            public long FileLength(string path) => 0;
+
             public Task<List<string>> GetJpegFilesAsync(string folderPath) =>
                 throw new NotSupportedException();
 

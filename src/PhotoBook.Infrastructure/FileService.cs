@@ -172,6 +172,23 @@ namespace PhotoBook.Infrastructure
             return System.IO.File.Exists(path);
         }
 
+        public long FileLength(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return 0;
+
+            try
+            {
+                var info = new System.IO.FileInfo(path);
+                return info.Exists ? info.Length : 0;
+            }
+            catch (System.IO.IOException)
+            {
+                // A file that cannot be measured is reported as having nothing to send, and the
+                // check that reads the book says the page is missing rather than sending it.
+                return 0;
+            }
+        }
+
         /// <summary>
         /// Creating a folder can fail for reasons the caller can do nothing about - no
         /// permission, a path that is a file, a disk that is full. The failure is reported

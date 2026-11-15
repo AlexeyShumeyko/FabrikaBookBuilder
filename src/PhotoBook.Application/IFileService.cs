@@ -38,6 +38,13 @@ namespace PhotoBook.Application
         /// </remarks>
         bool FileExists(string path);
 
+        /// <summary>How many bytes a file holds, or zero when it is not there.</summary>
+        /// <remarks>
+        /// The upload has to say how much it is sending before it starts, and it says so per
+        /// page. Asking here keeps the size of a file in the same layer as its existence.
+        /// </remarks>
+        long FileLength(string path);
+
         /// <summary>
         /// Creates a folder if it is not already there. The export writes into a folder the
         /// user picked, which may legitimately not exist yet, and creating it is a decision
