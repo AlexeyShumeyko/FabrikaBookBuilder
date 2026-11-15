@@ -86,6 +86,76 @@ namespace PhotoBook.Application.Tests.Sites.Books.Order
         }
 
         [Fact]
+        public void SaysWhichParameterOfTheFormatIsStillUnanswered()
+        {
+            var demanding = Catalog(part: new ProductPart(
+                SpreadPart,
+                "Разворот",
+                new List<ProductOption>
+                {
+                    new(65738, "Прослойка", true, null, Array.Empty<string>(), null,
+                        Array.Empty<string>(), new[] { new OptionElement(420268, "Белая") }),
+                },
+                Counts(QuantityUnit.Spreads),
+                true));
+
+            var draft = OrderDraft.From(ProjectWith(Book(Page(1))), new[] { demanding }, _files);
+
+            Assert.Empty(draft.Books);
+            Assert.Contains(draft.Problems, problem => problem.Contains("Прослойка") &&
+                problem.Contains("не выбран параметр"));
+        }
+
+        [Fact]
+        public void SendsTheChosenParametersAndTheQuantityOfEveryPart()
+        {
+            var format = CatalogWithParts(
+                new ProductPart(93, "Обложка", new List<ProductOption>
+                {
+                    new(70519, "Ламинация обложки", true, null, Array.Empty<string>(), null,
+                        Array.Empty<string>(), new[] { new OptionElement(450642, "Глянцевая") }),
+                }, new ProductQuantitySettings(string.Empty, QuantityUnit.Copies,
+                    new QuantityRange(1, 1, 1), false, Array.Empty<QuantityRule>())),
+                Part(SpreadPart, "Разворот", QuantityUnit.Spreads));
+
+            var book = Book(Page(1));
+            book.SetSiteOption(70519, 450642);
+
+            var draft = OrderDraft.From(ProjectWith(book), new[] { format }, _files);
+
+            Assert.True(draft.IsComplete);
+            var order = Assert.Single(draft.Books);
+            Assert.Equal(93, order.Parts[0].PartId);
+            Assert.Equal(1, order.Parts[0].Selection.Quantity);
+            Assert.Equal(450642, order.Parts[0].Selection.ElementOf(70519));
+            Assert.Equal(1, order.Parts[1].Selection.Quantity);
+        }
+
+        [Fact]
+        public void RefusesAParameterChoiceTheFormatDoesNotOffer()
+        {
+            var format = Catalog(part: new ProductPart(
+                SpreadPart,
+                "Разворот",
+                new List<ProductOption>
+                {
+                    new(65738, "Прослойка", true, null, Array.Empty<string>(), null,
+                        Array.Empty<string>(), new[] { new OptionElement(420268, "Белая") }),
+                },
+                Counts(QuantityUnit.Spreads),
+                true));
+
+            var book = Book(Page(1));
+            book.SetSiteOption(65738, 420269);
+
+            var draft = OrderDraft.From(ProjectWith(book), new[] { format }, _files);
+
+            Assert.Empty(draft.Books);
+            Assert.Contains(draft.Problems, problem => problem.Contains("Прослойка") &&
+                problem.Contains("неизвестен"));
+        }
+
+        [Fact]
         public void RefusesABookWhosePhotographIsGone()
         {
             var project = ProjectWith(Book(Page(1)));

@@ -2,7 +2,10 @@ using System;
 using System.Linq;
 using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Books;
+using PhotoBook.Application.Sites.Books;
+using PhotoBook.Application.Sites.Books.Pricing;
 using PhotoBook.Application.Sites.Catalog;
+using PhotoBook.Application.Sites.Pricing;
 using PhotoBook.Core;
 using PhotoBook.Presentation.ViewModels;
 
@@ -95,7 +98,7 @@ namespace PhotoBook.Application.Tests.Sites
             page.Prepare(project, "Проект");
 
             var saves = 0;
-            page.FormatChosen += (_, _) => saves++;
+            page.ChoiceChanged += (_, _) => saves++;
 
             await page.LoadFormatsAsync();
 
@@ -113,6 +116,63 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.True(page.IsReady);
             Assert.Equal("Лайфлат 20x20", page.Books[0].FormatText);
             Assert.Equal("у всех книг выбран формат", page.ChosenFormatText);
+        }
+
+        [Fact]
+        public async Task AsksTheFormatsParametersAndRemembersTheAnswers()
+        {
+            var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
+            var catalog = new StubCatalog(
+                new CatalogProduct(4494, "Лайфлат", "kit", 1, new[] { new CatalogFormat(9255, "21x30") }))
+            {
+                Format = TestFormats.WithCondition(),
+            };
+            var page = new SiteOrderViewModel(catalog, new StubSessionStore());
+            page.Prepare(project, "Проект");
+
+            await page.LoadFormatsAsync();
+            page.Books[0].SelectedFormat = page.Books[0].Formats[0];
+            await page.LoadFormatsAsync();
+
+            var block = Assert.Single(page.Parameters);
+            var question = Assert.Single(block.Parameters);
+            Assert.Equal("Прослойка", question.Title);
+            Assert.True(question.IsRequired);
+            Assert.False(page.IsReady);
+
+            question.Selected = question.Elements[0];
+
+            Assert.Equal(420268, project.Books[0].SiteOptions[65738]);
+            Assert.True(page.IsReady);
+        }
+
+        [Fact]
+        public async Task PricesTheOrderOnCommandAndShowsTheSitesTotal()
+        {
+            var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
+            var catalog = new StubCatalog(
+                new CatalogProduct(4494, "Лайфлат", "kit", 1, new[] { new CatalogFormat(9255, "21x30") }))
+            {
+                Format = TestFormats.WithCondition(),
+            };
+            var page = new SiteOrderViewModel(
+                catalog, new StubSessionStore(), new StubQuotes(), new StubFiles());
+            page.Prepare(project, "Проект");
+
+            await page.LoadFormatsAsync();
+            page.Books[0].SelectedFormat = page.Books[0].Formats[0];
+            await page.LoadFormatsAsync();
+            page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
+
+            await page.RecalculateAsync();
+
+            // The price is the site's own text, and the total is the same number written with
+            // the site's currency, so both name the sum and the currency rather than a layout.
+            Assert.Contains("RUB", page.Books[0].PriceText, StringComparison.Ordinal);
+            Assert.Contains("1 024", page.Books[0].PriceText, StringComparison.Ordinal);
+            Assert.Contains("024,00", page.TotalText, StringComparison.Ordinal);
+            Assert.Contains("RUB", page.TotalText, StringComparison.Ordinal);
+            Assert.True(page.HasTotal);
         }
 
         [Fact]
@@ -164,6 +224,31 @@ namespace PhotoBook.Application.Tests.Sites
         }
     }
 
+    /// <summary>One format as the uploader describes it: a cover, spreads and one question.</summary>
+    internal static class TestFormats
+    {
+        public static SiteProduct WithCondition() => new(
+            4494,
+            string.Empty,
+            "Лайфлат",
+            "kit",
+            new[]
+            {
+                new ProductVariant(9255, "21x30", Array.Empty<ProductOption>(), new[]
+                {
+                    new ProductPart(93, "Обложка", Array.Empty<ProductOption>(),
+                        new ProductQuantitySettings(string.Empty, QuantityUnit.Copies,
+                            new QuantityRange(1, 1, 1), false, Array.Empty<QuantityRule>())),
+                    new ProductPart(94, "Разворот", new[]
+                    {
+                        new ProductOption(65738, "Прослойка", true, null, Array.Empty<string>(),
+                            null, Array.Empty<string>(), new[] { new OptionElement(420268, "Белая") }),
+                    }, new ProductQuantitySettings(string.Empty, QuantityUnit.Spreads,
+                        new QuantityRange(1, 60, 1), false, Array.Empty<QuantityRule>()), true),
+                }),
+            });
+    }
+
     internal sealed class StubCatalog : ISiteCatalogService
     {
         private readonly IReadOnlyList<CatalogProduct> _products;
@@ -184,12 +269,17 @@ namespace PhotoBook.Application.Tests.Sites
                 ? Result<IReadOnlyList<CatalogProduct>>.Ok(_products)
                 : Result<IReadOnlyList<CatalogProduct>>.Fail(_failure));
 
+        /// <summary>The document the site sends for a chosen format, if the test has one.</summary>
+        public SiteProduct? Format { get; init; }
+
         public Task<Result<SiteProduct>> GetFormatAsync(
             SiteRegion region,
             long productId,
             long componentId,
             CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
+            Task.FromResult(Format is null
+                ? Result<SiteProduct>.Fail("Формат не открылся.")
+                : Result<SiteProduct>.Ok(Format));
 
         public Task<Result<SiteProduct>> GetProductAsync(
             SiteRegion region,
@@ -207,5 +297,41 @@ namespace PhotoBook.Application.Tests.Sites
         public void Save(SiteSession session) => _session = session;
 
         public void Clear() => _session = null;
+    }
+
+    internal sealed class StubQuotes : IGroupQuoteService
+    {
+        public Task<GroupQuote> QuoteAsync(
+            SiteSession session,
+            IReadOnlyList<PhotoBook.Application.Sites.Books.Book> books,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new GroupQuote(books
+                .Select((book, index) => new BookQuote(index + 1, book,
+                    SitePriceCheck.Valid(new SitePriceQuote(1024m, "1 024,00 RUB", "RUB"))))
+                .ToList()));
+    }
+
+    /// <summary>The disk, as the order needs it: a file with a length and nothing else.</summary>
+    internal sealed class StubFiles : IFileService
+    {
+        public Task<List<string>> GetJpegFilesAsync(string folderPath) =>
+            Task.FromResult(new List<string>());
+
+        public Task<ValidationResult> ValidateFoldersDetailedAsync(List<string> folderPaths) =>
+            Task.FromResult(new ValidationResult());
+
+        public Task CopyFileAsync(string source, string destination) => Task.CompletedTask;
+
+        public bool IsJpegFile(string filePath) => true;
+
+        public bool DirectoryExists(string path) => true;
+
+        public bool FileExists(string path) => true;
+
+        public long FileLength(string path) => 1024;
+
+        public void EnsureDirectory(string path)
+        {
+        }
     }
 }

@@ -222,6 +222,26 @@ public class ProjectRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task KeepsTheChosenParametersOfTheFormat()
+    {
+        var project = OneBookProject();
+        var book = project.Books[0];
+        book.SiteProductId = 4494;
+        book.SiteVariantId = 9255;
+        book.SetSiteOption(70519, 450642);
+        book.SetSiteOption(65075, 417891);
+
+        var path = At("format-options.json");
+        await Repository().SaveAsync(project, path);
+
+        var loaded = await Repository().LoadAsync(path);
+
+        Assert.Equal(2, loaded!.Books[0].SiteOptions.Count);
+        Assert.Equal(450642, loaded.Books[0].SiteOptions[70519]);
+        Assert.Equal(417891, loaded.Books[0].SiteOptions[65075]);
+    }
+
+    [Fact]
     public async Task ABookWrittenBeforeFormatsExistedHasNoFormat()
     {
         // The file on other people's disks has no site fields at all, and that is not a

@@ -121,6 +121,9 @@ namespace PhotoBook.Infrastructure
                                 SiteVariantTitle = bookData.SiteVariantTitle
                             };
 
+                            foreach (var option in bookData.SiteOptions ?? new Dictionary<long, long>())
+                                book.SetSiteOption(option.Key, option.Value);
+
                             if (bookData.Pages != null && bookData.Pages.Count > 0)
                             {
                                 foreach (var page in bookData.Pages)
@@ -206,5 +209,9 @@ namespace PhotoBook.Infrastructure
         public long? SiteVariantId { get; set; }
         public string? SiteProductTitle { get; set; }
         public string? SiteVariantTitle { get; set; }
+
+        // The parameters chosen for the format. Absent in every file written before the order
+        // page could price a book, and read back as "nothing chosen".
+        public Dictionary<long, long>? SiteOptions { get; set; }
     }
 }

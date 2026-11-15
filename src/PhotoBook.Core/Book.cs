@@ -12,6 +12,7 @@ namespace PhotoBook.Core
         private long? _siteVariantId;
         private string? _siteProductTitle;
         private string? _siteVariantTitle;
+        private Dictionary<long, long> _siteOptions = new();
         private string? _folderPath;
         private string? _name;
         private Page? _cover;
@@ -315,6 +316,50 @@ namespace PhotoBook.Core
         public bool HasSiteFormat => SiteProductId is > 0 && SiteVariantId is > 0;
 
         /// <summary>
+        /// What the customer chose for the format's parameters: option id to element id.
+        /// </summary>
+        /// <remarks>
+        /// The site prices and produces by these choices, so they belong to the book and are
+        /// saved with the project - a format whose parameters are not chosen has no price at
+        /// all, and asking again after a restart would make the customer repeat work they had
+        /// already done. The ids are the site's own; nothing here is interpreted.
+        /// </remarks>
+        public IReadOnlyDictionary<long, long> SiteOptions => _siteOptions;
+
+        /// <summary>Records one parameter of the format, or replaces the choice already made.</summary>
+        public void SetSiteOption(long optionId, long elementId)
+        {
+            if (optionId <= 0 || elementId <= 0)
+                throw new ArgumentOutOfRangeException(nameof(optionId), "Параметр и его значение — идентификаторы сайта.");
+
+            if (_siteOptions.TryGetValue(optionId, out var current) && current == elementId)
+                return;
+
+            _siteOptions[optionId] = elementId;
+            OnPropertyChanged(nameof(SiteOptions));
+        }
+
+        /// <summary>Drops one parameter's answer, for when the site stops offering it.</summary>
+        public void RemoveSiteOption(long optionId)
+        {
+            if (_siteOptions.Remove(optionId))
+                OnPropertyChanged(nameof(SiteOptions));
+        }
+
+        /// <summary>
+        /// Forgets the parameter choices, which is what happens when the format changes: the
+        /// choices belong to the format that was chosen before.
+        /// </summary>
+        public void ClearSiteOptions()
+        {
+            if (_siteOptions.Count == 0)
+                return;
+
+            _siteOptions.Clear();
+            OnPropertyChanged(nameof(SiteOptions));
+        }
+
+        /// <summary>
         /// Width / height of this book's card frames. Same value on every page of the
         /// book - see <see cref="UpdateFrameAspect"/> for why it is per book and how it is
         /// clamped.
@@ -403,6 +448,9 @@ namespace PhotoBook.Core
                 SiteProductTitle = SiteProductTitle,
                 SiteVariantTitle = SiteVariantTitle
             };
+
+            foreach (var option in SiteOptions)
+                clone.SetSiteOption(option.Key, option.Value);
 
             foreach (var page in Pages)
             {

@@ -111,6 +111,13 @@ namespace PhotoBook.Application.Sites.Books.Order
                 return null;
             }
 
+            var parts = PartsOf(source, variant, pagePart.Id, pages.Count, out var unanswered);
+            if (parts is null)
+            {
+                problems.Add(name + ": " + unanswered);
+                return null;
+            }
+
             var fileList = new List<PageFile>(pages.Count);
             foreach (var page in pages)
             {
@@ -124,12 +131,65 @@ namespace PhotoBook.Application.Sites.Books.Order
                 fileList.Add(new PageFile(page.SourcePath!, length));
             }
 
-            var parts = new List<SelectedPart>
-            {
-                new(pagePart.Id, new PartSelection(new Dictionary<long, long>(), pages.Count))
-            };
-
             return new Book(product, variant, pagePart.Id, parts, fileList);
+        }
+
+        /// <summary>
+        /// Every part of the format with what the customer chose, or the reason the book cannot
+        /// be priced yet.
+        /// </summary>
+        /// <remarks>
+        /// The site prices a book by its parts and by the element chosen for each parameter, so
+        /// a part without its required choice is not a default - it is an unanswered question,
+        /// and the site answers it with a zero. The choices are checked against the format's own
+        /// elements here, because a choice stored against another format (or an element the
+        /// site has since withdrawn) would otherwise reach the site as a combination it does not
+        /// sell.
+        /// </remarks>
+        private static List<SelectedPart>? PartsOf(
+            CoreBook source,
+            ProductVariant variant,
+            long pagePartId,
+            int pages,
+            out string unanswered)
+        {
+            unanswered = string.Empty;
+            var parts = new List<SelectedPart>();
+
+            foreach (var part in variant.Parts ?? Array.Empty<ProductPart>())
+            {
+                var chosen = new Dictionary<long, long>();
+
+                foreach (var option in part.Options ?? Array.Empty<ProductOption>())
+                {
+                    if (!source.SiteOptions.TryGetValue(option.Id, out var elementId))
+                    {
+                        if (option.IsRequired)
+                        {
+                            unanswered = "не выбран параметр «" + option.Title + "».";
+                            return null;
+                        }
+
+                        continue;
+                    }
+
+                    if (!option.Elements.Any(element => element.Id == elementId))
+                    {
+                        unanswered = "выбранный вариант параметра «" + option.Title + "» сайту неизвестен.";
+                        return null;
+                    }
+
+                    chosen[option.Id] = elementId;
+                }
+
+                var quantity = part.Id == pagePartId
+                    ? pages
+                    : part.Quantity?.Default?.From ?? 0;
+
+                parts.Add(new SelectedPart(part.Id, new PartSelection(chosen, quantity)));
+            }
+
+            return parts;
         }
 
         private static List<PhotoBook.Core.Page> PagesOf(CoreBook book) =>

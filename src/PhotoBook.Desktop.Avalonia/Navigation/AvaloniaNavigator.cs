@@ -67,7 +67,7 @@ namespace PhotoBook.Shell.Navigation
             _uniqueFolders.OrderRequested += (_, _) => OpenOrder(AppMode.UniqueFolders);
             _combined.OrderRequested += (_, _) => OpenOrder(AppMode.Combined);
             _siteOrder.BackRequested += (_, _) => CurrentMode = _sessionMode ?? AppMode.ProjectList;
-            _siteOrder.FormatChosen += (_, _) => SaveChoice();
+            _siteOrder.ChoiceChanged += (_, _) => SaveChoice();
         }
 
         private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

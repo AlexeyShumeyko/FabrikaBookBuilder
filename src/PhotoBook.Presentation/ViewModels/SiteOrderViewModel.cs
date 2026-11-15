@@ -3,126 +3,19 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using PhotoBook.Application;
 using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Books;
+using PhotoBook.Application.Sites.Books.Order;
+using PhotoBook.Application.Sites.Books.Pricing;
 using PhotoBook.Application.Sites.Catalog;
-using CoreBook = PhotoBook.Core.Book;
 using CoreProject = PhotoBook.Core.Project;
 
 namespace PhotoBook.Presentation.ViewModels
 {
-    /// <summary>One format the customer can pick for a book.</summary>
-    /// <param name="Product">The product it belongs to.</param>
-    /// <param name="Format">The product's format.</param>
-    public sealed record FormatChoice(CatalogProduct Product, CatalogFormat Format)
-    {
-        /// <summary>The line the picker shows: «Лайфлат 21x30».</summary>
-        public string DisplayText => Product.Name + " " + Format.Name;
-    }
-
-    /// <summary>One book of the order as the page lists it, with its format.</summary>
-    /// <remarks>
-    /// The row reads the format list through the page rather than keeping a copy: the catalog
-    /// is read after the rows are made, and a copy taken at construction would leave every row
-    /// showing an empty picker.
-    /// </remarks>
-    public sealed class OrderBookRow : ViewModelBase
-    {
-        private readonly CoreBook _book;
-        private readonly int _number;
-        private readonly Func<IReadOnlyList<FormatChoice>> _formats;
-        private readonly Action<OrderBookRow> _chosen;
-
-        private FormatChoice? _selected;
-
-        public OrderBookRow(
-            CoreBook book,
-            int number,
-            Func<IReadOnlyList<FormatChoice>> formats,
-            Action<OrderBookRow> chosen)
-        {
-            _book = book;
-            _number = number;
-            _formats = formats;
-            _chosen = chosen;
-        }
-
-        /// <summary>The book's place in the order, starting at one.</summary>
-        public int Number => _number;
-
-        /// <summary>Its name, or «Книга N» when it has none.</summary>
-        public string Name => string.IsNullOrWhiteSpace(_book.Name)
-            ? "Книга " + Number
-            : _book.Name!.Trim();
-
-        /// <summary>Spreads in the book, the cover not counted.</summary>
-        public int Spreads => _book.Pages.Count(page => !page.IsCover);
-
-        /// <summary>Slots holding a photo, the cover counted.</summary>
-        public int Photos => _book.FilledSlotCount;
-
-        /// <summary>Whether every slot holds a photograph.</summary>
-        public bool IsReady => _book.IsValid;
-
-        /// <summary>What the book still needs before it can go.</summary>
-        public BookCondition Condition => IsReady
-            ? BookCondition.Ready
-            : _book.FilledSlotCount == 0
-                ? BookCondition.NoPhotos
-                : BookCondition.Incomplete;
-
-        /// <summary>How the row describes the book's state.</summary>
-        public string ConditionText => IsReady
-            ? "Готова"
-            : _book.FilledSlotCount == 0
-                ? "Нет фотографий"
-                : "Не хватает фотографий";
-
-        /// <summary>Everything the picker offers.</summary>
-        public IReadOnlyList<FormatChoice> Formats => _formats();
-
-        /// <summary>
-        /// The format chosen for this book. Choosing one writes it into the book, so the choice
-        /// is saved with the project rather than living in the window.
-        /// </summary>
-        public FormatChoice? SelectedFormat
-        {
-            get => _selected ??= Formats.FirstOrDefault(choice =>
-                _book.SiteProductId == choice.Product.Id && _book.SiteVariantId == choice.Format.Id);
-            set
-            {
-                if (ReferenceEquals(SelectedFormat, value)) return;
-
-                _selected = value;
-
-                if (value is not null)
-                {
-                    _book.SiteProductId = value.Product.Id;
-                    _book.SiteVariantId = value.Format.Id;
-                    _book.SiteProductTitle = value.Product.Name;
-                    _book.SiteVariantTitle = value.Format.Name;
-                }
-
-                OnPropertyChanged(nameof(SelectedFormat));
-                OnPropertyChanged(nameof(FormatText));
-                _chosen(this);
-            }
-        }
-
-        /// <summary>The chosen format as the row shows it, or a note that none is chosen.</summary>
-        public string FormatText => SelectedFormat?.DisplayText ?? "не выбран";
-
-        /// <summary>Tells the row the catalog arrived, so the picker fills in.</summary>
-        public void RefreshFormats()
-        {
-            OnPropertyChanged(nameof(Formats));
-            OnPropertyChanged(nameof(SelectedFormat));
-            OnPropertyChanged(nameof(FormatText));
-        }
-    }
-
     /// <summary>
-    /// The order page: the project's books, their formats, what is wrong and the way on.
+    /// The order page: the project's books, their formats and parameters, the price and the way
+    /// on.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -132,37 +25,59 @@ namespace PhotoBook.Presentation.ViewModels
     /// </para>
     /// <para>
     /// What the page shows is read from the project every time it is opened, not stored, and a
-    /// chosen format is written into the book itself: the project is where the order lives, so
-    /// closing the window must not lose what was picked.
+    /// chosen format and its parameters are written into the book itself: the project is where
+    /// the order lives, so closing the window must not lose what was picked.
+    /// </para>
+    /// <para>
+    /// The price is asked for on the customer's command rather than on every keystroke. The
+    /// platform is shared, one book is one request, and a page that repriced itself as the
+    /// choices changed would spend a request per click for a number nobody asked for yet.
     /// </para>
     /// </remarks>
     public sealed class SiteOrderViewModel : ViewModelBase
     {
         private readonly ISiteCatalogService? _catalog;
         private readonly ISiteSessionStore? _sessions;
+        private readonly OrderPriceService? _prices;
+        private readonly SiteOrderParameters _parameters;
 
         private IReadOnlyList<OrderBookRow> _books = Array.Empty<OrderBookRow>();
         private IReadOnlyList<FormatChoice> _formats = Array.Empty<FormatChoice>();
+        private CoreProject? _project;
         private string _projectName = string.Empty;
         private int _spreadCount;
         private string _message = string.Empty;
+        private string _totalText = string.Empty;
         private bool _isReady;
         private bool _isLoadingFormats;
+        private bool _isPricing;
 
-        public SiteOrderViewModel(ISiteCatalogService? catalog = null, ISiteSessionStore? sessions = null)
+        public SiteOrderViewModel(
+            ISiteCatalogService? catalog = null,
+            ISiteSessionStore? sessions = null,
+            IGroupQuoteService? quotes = null,
+            IFileService? files = null)
         {
             _catalog = catalog;
             _sessions = sessions;
+
+            // The price is the order service's job; the page only carries its answer. The two
+            // ports are given together because one without the other can price nothing.
+            _prices = quotes is not null && files is not null
+                ? new OrderPriceService(files, quotes)
+                : null;
+
+            _parameters = new SiteOrderParameters(catalog, sessions);
+            _parameters.Answered += (_, _) => OnAnswerChanged();
         }
 
         /// <summary>Raised when the customer asks to go back to the project.</summary>
         public event EventHandler? BackRequested;
 
         /// <summary>
-        /// Raised when a format was chosen, so the shell can save the project the choice
-        /// belongs to.
+        /// Raised when a choice was made, so the shell can save the project it belongs to.
         /// </summary>
-        public event EventHandler? FormatChosen;
+        public event EventHandler? ChoiceChanged;
 
         /// <summary>The books of the order, in the project's order.</summary>
         public IReadOnlyList<OrderBookRow> Books
@@ -177,6 +92,23 @@ namespace PhotoBook.Presentation.ViewModels
                 }
             }
         }
+
+        /// <summary>The parameters of each format chosen in the order.</summary>
+        public IReadOnlyList<OrderFormatParameters> Parameters
+        {
+            get => _parameters.Blocks;
+            private set
+            {
+                // The blocks live in the parameters collaborator; the page only re-reads them,
+                // which is what telling the view about a change means here.
+                _ = value;
+                OnPropertyChanged(nameof(Parameters));
+                OnPropertyChanged(nameof(HasParameters));
+            }
+        }
+
+        /// <summary>Whether there is anything to answer.</summary>
+        public bool HasParameters => Parameters.Count > 0;
 
         /// <summary>How many books are going. The label under it names them.</summary>
         public string BookCountText => Books.Count.ToString(CultureInfo.CurrentCulture);
@@ -209,7 +141,7 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Whether there is anything to say.</summary>
         public bool HasMessage => _message.Length > 0;
 
-        /// <summary>Whether every book has a format and is full.</summary>
+        /// <summary>Whether every book is full, has a format and its parameters answered.</summary>
         public bool IsReady
         {
             get => _isReady;
@@ -222,6 +154,36 @@ namespace PhotoBook.Presentation.ViewModels
             get => _isLoadingFormats;
             private set => SetProperty(ref _isLoadingFormats, value);
         }
+
+        /// <summary>Whether the site is being asked for a price right now.</summary>
+        public bool IsPricing
+        {
+            get => _isPricing;
+            private set
+            {
+                if (SetProperty(ref _isPricing, value))
+                    OnPropertyChanged(nameof(CanPrice));
+            }
+        }
+
+        /// <summary>Whether asking for a price would reach the site with a complete order.</summary>
+        public bool CanPrice =>
+            !_isPricing && _prices is not null && Books.Count > 0 &&
+            Books.All(book => book.SelectedFormat is not null);
+
+        /// <summary>The order's total as the site wrote it, empty until it named one.</summary>
+        public string TotalText
+        {
+            get => _totalText;
+            private set
+            {
+                if (SetProperty(ref _totalText, value ?? string.Empty))
+                    OnPropertyChanged(nameof(HasTotal));
+            }
+        }
+
+        /// <summary>Whether the site has named a total.</summary>
+        public bool HasTotal => _totalText.Length > 0;
 
         /// <summary>How many books still need a format, in words.</summary>
         public string ChosenFormatText
@@ -242,12 +204,18 @@ namespace PhotoBook.Presentation.ViewModels
         /// </summary>
         public void Prepare(CoreProject? project, string? projectName = null)
         {
+            _project = project;
+
             if (project is null)
             {
                 Books = Array.Empty<OrderBookRow>();
+                _parameters.Clear();
+                OnPropertyChanged(nameof(Parameters));
+                OnPropertyChanged(nameof(HasParameters));
                 ProjectName = string.Empty;
                 SpreadCount = 0;
                 IsReady = false;
+                TotalText = string.Empty;
                 Message = "Проект не открыт.";
                 return;
             }
@@ -260,17 +228,20 @@ namespace PhotoBook.Presentation.ViewModels
 
             ProjectName = string.IsNullOrWhiteSpace(projectName) ? "Проект" : projectName!.Trim();
             SpreadCount = inventory.Books.Sum(book => book.Spreads);
+            TotalText = string.Empty;
             Message = Problems(inventory);
 
             RefreshReadiness();
         }
 
         /// <summary>
-        /// Reads the formats the site offers and hands them to every row.
+        /// Reads the formats the site offers and the parameters of the ones already chosen.
         /// </summary>
         /// <remarks>
         /// One read for the page rather than one per book: the list is the same for all of them,
-        /// and asking per row would multiply the same request by the size of the order.
+        /// and asking per row would multiply the same request by the size of the order. The
+        /// parameters come from the uploader's document for each chosen format, kept by the
+        /// catalog service, so a second visit to the page asks the site nothing.
         /// </remarks>
         public async Task LoadFormatsAsync()
         {
@@ -296,6 +267,7 @@ namespace PhotoBook.Presentation.ViewModels
                 }
 
                 ApplyFormats(result.Value);
+                await LoadParametersAsync().ConfigureAwait(true);
             }
             catch (Exception ex)
             {
@@ -305,6 +277,108 @@ namespace PhotoBook.Presentation.ViewModels
             {
                 IsLoadingFormats = false;
             }
+        }
+
+        /// <summary>
+        /// Asks the site for the order's price and shows it book by book.
+        /// </summary>
+        /// <remarks>
+        /// The books travel as the order itself, not as the page's own idea of it: the same
+        /// assembly that the upload will use builds the request, so the price shown is the price
+        /// of what would be sent. A book that cannot be assembled is reported by name, and the
+        /// rest of the order is still priced - the total is worth having even when one book
+        /// needs an answer.
+        /// </remarks>
+        public async Task RecalculateAsync()
+        {
+            if (_catalog is null || _sessions is null || _prices is null || _project is null)
+                return;
+
+            var session = _sessions.Load();
+            if (session is null)
+            {
+                Message = "Цена считается после входа на сайт.";
+                return;
+            }
+
+            IsPricing = true;
+            try
+            {
+                var formats = await ReadChosenFormatsAsync(session).ConfigureAwait(true);
+                if (formats is null)
+                    return;
+
+                foreach (var row in Books)
+                    row.ForgetPrice();
+
+                TotalText = string.Empty;
+
+                var priced = await _prices
+                    .PriceAsync(session, _project, formats)
+                    .ConfigureAwait(true);
+
+                if (priced.Quote is null)
+                {
+                    Message = string.Join(Environment.NewLine, priced.Problems);
+                    return;
+                }
+
+                for (var index = 0; index < Books.Count && index < priced.Quote.Books.Count; index++)
+                {
+                    var book = priced.Quote.Books[index];
+                    Books[index].ShowPrice(book.IsPriced ? book.Check.Quote!.Formatted : "не названа");
+                }
+
+                if (priced.IsPriced)
+                {
+                    TotalText = priced.TotalText;
+                    Message = string.Empty;
+                }
+                else
+                {
+                    Message = string.Join(Environment.NewLine, priced.Problems);
+                }
+            }
+            catch (Exception ex)
+            {
+                Message = "Цена не получена: " + ex.Message;
+            }
+            finally
+            {
+                IsPricing = false;
+            }
+        }
+
+        /// <summary>Says something on the page that came from outside it, such as a failed save.</summary>
+        public void ShowMessage(string text) => Message = text ?? string.Empty;
+
+        /// <summary>Goes back to the project the page was opened from.</summary>
+        public void Back() => BackRequested?.Invoke(this, EventArgs.Empty);
+
+        private async Task<IReadOnlyList<SiteProduct>?> ReadChosenFormatsAsync(SiteSession session)
+        {
+            var formats = new List<SiteProduct>();
+
+            foreach (var choice in Books
+                         .Select(row => row.SelectedFormat)
+                         .Where(choice => choice is not null)
+                         .Select(choice => choice!)
+                         .DistinctBy(choice => (choice.Product.Id, choice.Format.Id)))
+            {
+                var document = await _catalog!
+                    .GetFormatAsync(session.Region, choice.Product.Id, choice.Format.Id)
+                    .ConfigureAwait(true);
+
+                if (!document.IsSuccess || document.Value is null)
+                {
+                    Message = document.Error ?? "Описание формата не открылось.";
+                    return null;
+                }
+
+                formats.Add(document.Value);
+            }
+
+            return formats;
         }
 
         private void ApplyFormats(IReadOnlyList<CatalogProduct> products)
@@ -329,24 +403,61 @@ namespace PhotoBook.Presentation.ViewModels
             RefreshReadiness();
         }
 
-        /// <summary>Says something on the page that came from outside it, such as a failed save.</summary>
-        public void ShowMessage(string text) => Message = text ?? string.Empty;
+        private async Task LoadParametersAsync()
+        {
+            await _parameters.LoadAsync(Books).ConfigureAwait(true);
 
-        /// <summary>Goes back to the project the page was opened from.</summary>
-        public void Back() => BackRequested?.Invoke(this, EventArgs.Empty);
+            if (_parameters.Problem is { Length: > 0 } problem)
+                Message = problem;
+
+            OnPropertyChanged(nameof(Parameters));
+            OnPropertyChanged(nameof(HasParameters));
+            RefreshReadiness();
+        }
 
         private void OnFormatChosen(OrderBookRow row)
         {
             RefreshReadiness();
-            FormatChosen?.Invoke(this, EventArgs.Empty);
+            TotalText = string.Empty;
+
+            foreach (var book in Books)
+                book.ForgetPrice();
+
+            ChoiceChanged?.Invoke(this, EventArgs.Empty);
+            _ = LoadParametersForChosenAsync();
+        }
+
+        private async Task LoadParametersForChosenAsync()
+        {
+            try
+            {
+                await LoadParametersAsync().ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                Message = "Параметры формата не открылись: " + ex.Message;
+            }
+        }
+
+        private void OnAnswerChanged()
+        {
+            foreach (var row in Books)
+                row.ForgetPrice();
+
+            TotalText = string.Empty;
+            ChoiceChanged?.Invoke(this, EventArgs.Empty);
+            OnPropertyChanged(nameof(Parameters));
+            RefreshReadiness();
         }
 
         private void RefreshReadiness()
         {
             IsReady = Books.Count > 0 &&
-                Books.All(book => book.IsReady && book.SelectedFormat is not null);
+                Books.All(book => book.IsReady && book.SelectedFormat is not null) &&
+                _parameters.IsAnswered;
 
             OnPropertyChanged(nameof(ChosenFormatText));
+            OnPropertyChanged(nameof(CanPrice));
         }
 
         /// <summary>Why the order cannot go, or the note that says what comes next.</summary>
