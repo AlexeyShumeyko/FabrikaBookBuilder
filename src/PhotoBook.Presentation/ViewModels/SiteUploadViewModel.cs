@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using PhotoBook.Application;
 using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Books;
+using PhotoBook.Application.Sites.Books.Files;
 using PhotoBook.Application.Sites.Books.Grouping;
 using PhotoBook.Application.Sites.Books.Submission;
 using PhotoBook.Application.Sites.Completion;
@@ -94,6 +95,8 @@ namespace PhotoBook.Presentation.ViewModels
         private readonly IProjectCreationService _creation;
         private readonly IBookUploadService _upload;
         private readonly IProjectCheckService _check;
+        private readonly OrderFileCheckService? _fileCheck;
+        private CancellationTokenSource? _cancelFiles;
 
         private SiteSession? _session;
         private SubmissionSummary? _summary;
@@ -118,11 +121,13 @@ namespace PhotoBook.Presentation.ViewModels
             IProjectCreationService creation,
             IBookUploadService upload,
             IProjectCheckService check,
+            OrderFileCheckService? fileCheck = null,
             IUiThread? ui = null)
         {
             _creation = creation ?? throw new ArgumentNullException(nameof(creation));
             _upload = upload ?? throw new ArgumentNullException(nameof(upload));
             _check = check ?? throw new ArgumentNullException(nameof(check));
+            _fileCheck = fileCheck;
 
             if (ui is not null)
                 Ui = ui;
@@ -250,9 +255,14 @@ namespace PhotoBook.Presentation.ViewModels
             _ => "Загрузить на сайт"
         };
 
-        /// <summary>Whether the button may be pressed.</summary>
-        public bool CanUpload => !IsBusy && _session is not null && _summary is { CanUpload: true } &&
-            _groups.Count > 0 && _groups.All(group => group.Pages.Count > 0 && group.Group.Books.Count == 1);
+        /// <summary>
+        /// Whether the button may be pressed: the order may go, and the files have been read and
+        /// found sendable, with every question answered by the customer.
+        /// </summary>
+        public bool CanUpload => !IsBusy && !IsCheckingFiles && _session is not null &&
+            _summary is { CanUpload: true } &&
+            _groups.Count > 0 && _groups.All(group => group.Pages.Count > 0 && group.Group.Books.Count == 1) &&
+            _files is { CanSend: true } && (!NeedsConfirmation || _confirmationsAccepted);
 
         /// <summary>Whether the customer may stop the run.</summary>
         public bool CanCancel => IsBusy;
@@ -280,6 +290,7 @@ namespace PhotoBook.Presentation.ViewModels
             _problems = problems ?? Array.Empty<string>();
 
             Step = UploadStep.Ready;
+            ForgetFiles();
             Uploaded = 0;
             _completedBeforeGroup = 0;
             Total = _groups.Sum(group => group.Pages.Count);

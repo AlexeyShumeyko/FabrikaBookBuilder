@@ -58,6 +58,45 @@
                                Foreground="{DynamicResource Slate600}" TextWrapping="Wrap" />
                 </Border>
 
+                <!-- What the file check found, before anything is sent. The button waits for
+                     it, and a file the site may trim needs the customer's yes in this card. -->
+                <Border Classes="card" Padding="20,16">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="2">
+                                <TextBlock Text="Файлы" Classes="t14SemiBold" />
+                                <TextBlock Text="{Binding FilesText}" Classes="t12"
+                                           Foreground="{DynamicResource Slate500}" TextWrapping="Wrap"
+                                           IsVisible="{Binding HasFilesText}" />
+                            </StackPanel>
+
+                            <Button Grid.Column="1" Classes="outline" Padding="12,8"
+                                    IsEnabled="{Binding CanCheckFiles}"
+                                    AutomationProperties.Name="Проверить файлы"
+                                    Click="OnCheckFiles">
+                                <TextBlock Text="Проверить ещё раз" VerticalAlignment="Center" />
+                            </Button>
+                        </Grid>
+
+                        <ItemsControl ItemsSource="{Binding FileLines}" IsVisible="{Binding HasFileProblems}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Classes="t11"
+                                               Foreground="{DynamicResource Slate600}"
+                                               TextWrapping="Wrap" Margin="0,0,0,4" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <CheckBox IsVisible="{Binding NeedsConfirmation}"
+                                  IsChecked="{Binding ConfirmationsAccepted, Mode=TwoWay}"
+                                  AutomationProperties.Name="Подтвердить файлы">
+                            <TextBlock Text="Да, отправить эти файлы — край сайт может обрезать."
+                                       Classes="t12" TextWrapping="Wrap" />
+                        </CheckBox>
+                    </StackPanel>
+                </Border>
+
                 <Border Classes="card" Padding="20,16" IsVisible="{Binding HasResult}">
                     <StackPanel Spacing="12">
                         <TextBlock Text="Итог" Classes="t14SemiBold" />

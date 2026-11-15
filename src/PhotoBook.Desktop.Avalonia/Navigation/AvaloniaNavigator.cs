@@ -251,6 +251,10 @@ namespace PhotoBook.Shell.Navigation
 
             _upload.Prepare(session, plan.Summary, plan.Groups, plan.Problems);
             CurrentMode = AppMode.SiteUpload;
+
+            // The files are read as the screen opens, before the button can be pressed: the
+            // check is what the button waits for, so it must not wait for a second click.
+            _ = _upload.CheckFilesAsync();
         }
 
         private void OpenOrder(AppMode mode)

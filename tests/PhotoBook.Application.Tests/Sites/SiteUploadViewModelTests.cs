@@ -5,6 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Books;
+using PhotoBook.Application.Sites.Books.Files;
+using PhotoBook.Application.Sites.Catalog.Layout;
 using PhotoBook.Application.Sites.Books.Grouping;
 using PhotoBook.Application.Sites.Books.Pricing;
 using PhotoBook.Application.Sites.Books.Submission;
@@ -183,9 +185,10 @@ namespace PhotoBook.Application.Tests.Sites
             StubCheck check,
             int groups,
             int pages,
-            int booksPerGroup = 1)
+            int booksPerGroup = 1,
+            PixelSize? size = null)
         {
-            var screen = new SiteUploadViewModel(creation, upload, check);
+            var screen = new SiteUploadViewModel(creation, upload, check, Files(size));
             var books = Enumerable.Range(0, groups)
                 .Select(_ => Enumerable.Range(0, booksPerGroup).Select(_ => Book()).ToList())
                 .ToList();
@@ -208,7 +211,155 @@ namespace PhotoBook.Application.Tests.Sites
                 .ToList();
 
             screen.Prepare(Session, summary, groupsToSend);
+            screen.CheckFilesAsync().GetAwaiter().GetResult();
             return screen;
+        }
+
+        [Fact]
+        public void APageTooSmallKeepsTheButtonOffAndSaysWhy()
+        {
+            var screen = Screen(
+                new StubCreation(1001),
+                new StubUpload((session, projectId, pages, _, _, _) =>
+                    Task.FromResult(Accepted(projectId, pages.Count))),
+                new StubCheck(true),
+                groups: 1,
+                pages: 2,
+                size: new PixelSize(800, 600));
+
+            Assert.False(screen.CanUpload);
+            Assert.True(screen.HasFileProblems);
+            Assert.Contains(screen.FileLines, line => line.Contains("Страница 1:"));
+            Assert.Contains("исправьте", screen.FilesText);
+        }
+
+        [Fact]
+        public void AWiderPageAsksAndTheButtonWaitsForTheAnswer()
+        {
+            var screen = Screen(
+                new StubCreation(1001),
+                new StubUpload((session, projectId, pages, _, _, _) =>
+                    Task.FromResult(Accepted(projectId, pages.Count))),
+                new StubCheck(true),
+                groups: 1,
+                pages: 1,
+                size: new PixelSize(5000, 3500));
+
+            Assert.True(screen.NeedsConfirmation);
+            Assert.False(screen.CanUpload);
+
+            screen.ConfirmationsAccepted = true;
+
+            Assert.True(screen.CanUpload);
+        }
+
+        [Fact]
+        public void ReadFilesThatFitSaySoAndTheButtonComesOn()
+        {
+            var screen = Screen(
+                new StubCreation(1001),
+                new StubUpload((session, projectId, pages, _, _, _) =>
+                    Task.FromResult(Accepted(projectId, pages.Count))),
+                new StubCheck(true),
+                groups: 1,
+                pages: 2);
+
+            Assert.True(screen.CanUpload);
+            Assert.False(screen.NeedsConfirmation);
+            Assert.Contains("всё совпадает", screen.FilesText);
+            Assert.Single(screen.FileLines);
+        }
+
+        [Fact]
+        public async Task TheCheckForgetsTheOldYesWhenTheFilesAreReadAgain()
+        {
+            var screen = Screen(
+                new StubCreation(1001),
+                new StubUpload((session, projectId, pages, _, _, _) =>
+                    Task.FromResult(Accepted(projectId, pages.Count))),
+                new StubCheck(true),
+                groups: 1,
+                pages: 1,
+                size: new PixelSize(5000, 3500));
+
+            screen.ConfirmationsAccepted = true;
+            await screen.CheckFilesAsync();
+
+            Assert.False(screen.ConfirmationsAccepted);
+            Assert.False(screen.CanUpload);
+        }
+
+        /// <summary>The file check over a page of the given pixel size.</summary>
+        private static OrderFileCheckService Files(PixelSize? size = null)
+        {
+            var layout = new SiteLayout(
+                4494,
+                9255,
+                300,
+                new[]
+                {
+                    new PartLayout(
+                        94,
+                        "Разворот",
+                        Array.Empty<PageSizeRange>(),
+                        new PageSize(410, 290),
+                        PrintMargins.None,
+                        Array.Empty<SizeIndexCondition>(),
+                        PrintMargins.None,
+                        0)
+                },
+                37556);
+
+            var required = layout.RequiredPixels(94, 10, null)!;
+
+            return new OrderFileCheckService(
+                new FileCatalog(layout),
+                new FileInspector(size ?? required));
+        }
+
+        private sealed class FileCatalog : ISiteCatalogService
+        {
+            private readonly SiteLayout _layout;
+
+            internal FileCatalog(SiteLayout layout) => _layout = layout;
+
+            public Task<Result<SiteLayout>> GetLayoutAsync(
+                SiteRegion region,
+                long productId,
+                long componentId,
+                CancellationToken cancellationToken = default) =>
+                Task.FromResult(Result<SiteLayout>.Ok(_layout));
+
+            public Task<Result<IReadOnlyList<CatalogProduct>>> GetProductsAsync(
+                SiteRegion region,
+                CancellationToken cancellationToken = default) =>
+                throw new NotSupportedException();
+
+            public Task<Result<SiteProduct>> GetFormatAsync(
+                SiteRegion region,
+                long productId,
+                long componentId,
+                CancellationToken cancellationToken = default) =>
+                throw new NotSupportedException();
+
+            public Task<Result<SiteProduct>> GetProductAsync(
+                SiteRegion region,
+                string slug,
+                CancellationToken cancellationToken = default) =>
+                throw new NotSupportedException();
+        }
+
+        private sealed class FileInspector : IBookFileInspector
+        {
+            private readonly PixelSize _size;
+
+            internal FileInspector(PixelSize size) => _size = size;
+
+            public Task<IReadOnlyList<PageFileFacts>> InspectAsync(
+                IReadOnlyList<PageFile> files,
+                CancellationToken cancellationToken = default) =>
+                Task.FromResult<IReadOnlyList<PageFileFacts>>(
+                    files.Select(file => new PageFileFacts(file.Path, true, _size)).ToList());
         }
 
         private static Book Book() =>
