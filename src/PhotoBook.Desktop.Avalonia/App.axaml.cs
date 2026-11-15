@@ -147,6 +147,15 @@ public partial class App : Avalonia.Application
             // puts the current screen up.
             navigator.Attach(window.ScreenHost);
 
+            // A run that meets an expired token asks for the password where passwords are
+            // asked, and then carries on with the session that came back: the screens stay
+            // where they were, so what the site already holds is not thrown away.
+            navigator.SignInRequested += async (_, _) =>
+            {
+                await window.SignInAsync();
+                navigator.ResumeAfterSignIn();
+            };
+
             desktop.MainWindow = window;
 
             // Only useful while FBR_PERF_TRACE=1; harmless otherwise. Installed here rather

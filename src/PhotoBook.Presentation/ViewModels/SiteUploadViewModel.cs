@@ -331,6 +331,23 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(ButtonText));
         }
 
+        /// <summary>
+        /// Takes the session the shell has just obtained, without rebuilding the screen.
+        /// </summary>
+        /// <remarks>
+        /// An expired token stops a run halfway, and the customer signs in again in the shell's
+        /// own window. What the site already holds was written down, so the same screen carries
+        /// on from the page that failed - losing the plan and the price to a password prompt
+        /// would be a second refusal for no reason.
+        /// </remarks>
+        public void RefreshSession(SiteSession session)
+        {
+            _session = session ?? throw new ArgumentNullException(nameof(session));
+
+            OnPropertyChanged(nameof(CanUpload));
+            OnPropertyChanged(nameof(CanCheckFiles));
+        }
+
         /// <summary>What the screen says instead of a run: everything that blocks the button.</summary>
         private string Blockers(IReadOnlyList<string> problems)
         {

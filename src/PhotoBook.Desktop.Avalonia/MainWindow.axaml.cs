@@ -111,7 +111,7 @@ public partial class MainWindow : Window
     /// Two events can arrive together - the header pressed and the profile refused - and two
     /// sign-in windows on top of each other would ask for the same password twice.
     /// </remarks>
-    private async Task SignInAsync()
+    public async Task SignInAsync()
     {
         if (_signInOpen)
             return;

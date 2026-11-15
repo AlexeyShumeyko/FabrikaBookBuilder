@@ -116,7 +116,7 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Equal(UploadStep.Stopped, screen.Step);
             Assert.Equal(1, screen.Uploaded);
             Assert.True(screen.CanUpload);
-            Assert.Equal("Продолжить загрузку", screen.ButtonText);
+            Assert.Equal(UploadStep.Stopped, screen.Step);
 
             await screen.UploadAsync();
 
@@ -213,6 +213,34 @@ namespace PhotoBook.Application.Tests.Sites
             screen.Prepare(Session, summary, groupsToSend);
             screen.CheckFilesAsync().GetAwaiter().GetResult();
             return screen;
+        }
+
+        [Fact]
+        public async Task ARunThatMeetsAnExpiredTokenAsksForAPasswordAndCarriesOn()
+        {
+            var creation = new StubCreation(1001);
+            var upload = new StubUpload((session, projectId, pages, _, _, _) =>
+                Task.FromResult(new BookUploadResult(
+                    UploadState.Failed,
+                    new UploadSession(SiteRegion.Com, projectId, pages.Count, 0),
+                    "Нужно войти заново: сеанс истёк.",
+                    UploadFailureKind.Unauthorized)));
+            var screen = Screen(creation, upload, new StubCheck(true), groups: 1, pages: 2);
+
+            var asked = 0;
+            screen.NeedsSignIn += (_, _) => asked++;
+
+            await screen.UploadAsync();
+
+            Assert.Equal(1, asked);
+            Assert.False(screen.CanUpload);
+
+            // What the shell does after the customer signs in: the same screen keeps its plan
+            // and its price, so continuing is one press rather than a new order.
+            screen.RefreshSession(Session);
+
+            Assert.True(screen.CanUpload);
+            Assert.Equal(UploadStep.Stopped, screen.Step);
         }
 
         [Fact]

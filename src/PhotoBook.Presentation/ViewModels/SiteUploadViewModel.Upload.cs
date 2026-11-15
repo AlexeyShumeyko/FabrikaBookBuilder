@@ -198,6 +198,12 @@ namespace PhotoBook.Presentation.ViewModels
 
             if (sent.NeedsSignIn)
             {
+                // The token the screen holds is the one the site just refused, so it is dropped
+                // before the password is asked for: a button that kept it would offer to try
+                // again with the same dead token.
+                _session = null;
+                OnPropertyChanged(nameof(CanUpload));
+
                 NeedsSignIn?.Invoke(this, EventArgs.Empty);
 
                 return (result, new StopReason(UploadStep.Stopped, sent.Error ?? "Нужно войти заново: сеанс истёк."));

@@ -83,6 +83,10 @@ namespace PhotoBook.Shell.Navigation
             // this one shows what will be written before anything is written.
             _siteOrder.UploadRequested += (_, _) => OpenUpload();
             _upload.BackRequested += (_, _) => CurrentMode = AppMode.SiteOrder;
+
+            // An expired token is the shell's business: the screen only knows the site refused
+            // it, and a password belongs in the window that asks for passwords.
+            _upload.NeedsSignIn += (_, _) => SignInRequested?.Invoke(this, EventArgs.Empty);
         }
 
         private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -92,6 +96,9 @@ namespace PhotoBook.Shell.Navigation
 
         /// <summary>Builds the next projects list, once per visit.</summary>
         public Func<ProjectListViewModel> ProjectListProvider { get; }
+
+        /// <summary>Raised when a screen needs a password the shell has to ask for.</summary>
+        public event EventHandler? SignInRequested;
 
         /// <summary>Raised whenever the mode changes, so a shell can react.</summary>
         public event EventHandler<AppMode>? ModeChanged;
@@ -255,6 +262,19 @@ namespace PhotoBook.Shell.Navigation
             // The files are read as the screen opens, before the button can be pressed: the
             // check is what the button waits for, so it must not wait for a second click.
             _ = _upload.CheckFilesAsync();
+        }
+
+        /// <summary>
+        /// Hands the screen the session the customer has just obtained, so the run can go on.
+        /// </summary>
+        /// <remarks>
+        /// Nothing happens without a session: a cancelled sign-in leaves the screen as it was,
+        /// with the reason already on it, rather than pretending the run can continue.
+        /// </remarks>
+        public void ResumeAfterSignIn()
+        {
+            if (_sessions.Load() is { } session)
+                _upload.RefreshSession(session);
         }
 
         private void OpenOrder(AppMode mode)
