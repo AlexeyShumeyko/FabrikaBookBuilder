@@ -22,14 +22,49 @@ namespace PhotoBook.Application.Sites.Books
     /// photos" cannot be told from a title: the site labels it «Разворот» on one product and
     /// «Страница» on another.
     /// </para>
+    /// <para>
+    /// The cover is a part of its own with one file, and the site numbers that file first: its
+    /// position is 0 and the spreads start at 1. So <see cref="Files"/> stays the spreads, which
+    /// are what pricing and readiness count, and <see cref="AllFiles"/> is what the upload sends.
+    /// </para>
     /// </remarks>
     public sealed record Book(
         SiteProduct Product,
         ProductVariant Variant,
         long PagePartId,
         IReadOnlyList<SelectedPart> Parts,
-        IReadOnlyList<PageFile> Files)
+        IReadOnlyList<PageFile> Files,
+        long CoverPartId = 0,
+        PageFile? CoverFile = null)
     {
+        /// <summary>The choice made for the cover part, if the format has one.</summary>
+        public SelectedPart? CoverPart =>
+            CoverPartId > 0 ? Parts?.FirstOrDefault(part => part.PartId == CoverPartId) : null;
+
+        /// <summary>Whether the format asks for a cover file at all.</summary>
+        public bool NeedsCover => CoverPartId > 0;
+
+        /// <summary>Whether the cover file is there to be sent.</summary>
+        public bool HasCover => CoverFile is not null;
+
+        /// <summary>The files as the site receives them: the cover first, then the spreads.</summary>
+        public IReadOnlyList<PageFile> AllFiles
+        {
+            get
+            {
+                var spreads = Files ?? Array.Empty<PageFile>();
+                if (CoverFile is null)
+                    return spreads;
+
+                var all = new List<PageFile>(spreads.Count + 1) { CoverFile };
+                all.AddRange(spreads);
+                return all;
+            }
+        }
+
+        /// <summary>How many files the upload sends, the cover counted.</summary>
+        public int SentFileCount => FileCount + (HasCover ? 1 : 0);
+
         /// <summary>The choice made for the part that holds the photos, if there is one.</summary>
         public SelectedPart? PagePart =>
             Parts?.FirstOrDefault(part => part.PartId == PagePartId);

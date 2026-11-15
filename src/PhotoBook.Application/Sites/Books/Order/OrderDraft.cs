@@ -118,6 +118,29 @@ namespace PhotoBook.Application.Sites.Books.Order
                 return null;
             }
 
+            if (!TryCoverPartOf(variant, name, problems, out var coverPart))
+                return null;
+
+            var coverFile = default(PageFile);
+            if (coverPart is not null)
+            {
+                var cover = source.Cover;
+                if (cover is null || cover.IsEmpty || string.IsNullOrWhiteSpace(cover.SourcePath))
+                {
+                    problems.Add(name + ": не загружена обложка — сайт принимает её отдельным файлом.");
+                    return null;
+                }
+
+                var coverLength = files.FileLength(cover.SourcePath!);
+                if (coverLength <= 0)
+                {
+                    problems.Add(name + ": файл обложки не найден — " + cover.FileName + ".");
+                    return null;
+                }
+
+                coverFile = new PageFile(cover.SourcePath!, coverLength);
+            }
+
             var fileList = new List<PageFile>(pages.Count);
             foreach (var page in pages)
             {
@@ -131,7 +154,38 @@ namespace PhotoBook.Application.Sites.Books.Order
                 fileList.Add(new PageFile(page.SourcePath!, length));
             }
 
-            return new Book(product, variant, pagePart.Id, parts, fileList);
+            return new Book(product, variant, pagePart.Id, parts, fileList, coverPart?.Id ?? 0, coverFile);
+        }
+
+        /// <summary>
+        /// The part that holds the single cover file, or null when the format has no such part.
+        /// </summary>
+        /// <remarks>
+        /// The site's document names the part the spreads go into and leaves the cover part
+        /// unnamed: it is the one with a fixed quantity, which the uploader prices as one file.
+        /// When more than one part has a fixed quantity the document does not say which is the
+        /// cover, and a guess would send the cover into, say, a slipcase.
+        /// </remarks>
+        private static bool TryCoverPartOf(
+            ProductVariant variant,
+            string name,
+            List<string> problems,
+            out ProductPart? coverPart)
+        {
+            var singleFile = (variant.Parts ?? Array.Empty<ProductPart>())
+                .Where(part => !part.HoldsPages)
+                .Where(part => part.Quantity?.Default is { } range && range.From == range.To)
+                .ToList();
+
+            coverPart = singleFile.Count == 1 ? singleFile[0] : null;
+
+            if (singleFile.Count > 1)
+            {
+                problems.Add(name + ": у формата несколько частей с одним файлом, какая из них — обложка, не ясно.");
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>

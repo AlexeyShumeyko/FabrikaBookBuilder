@@ -51,6 +51,27 @@ namespace PhotoBook.Application.Tests.Sites.Upload
         }
 
         [Fact]
+        public void SendsTheCoverBeforeTheSpreads()
+        {
+            var book = Book(Layflat, "21x30") with
+            {
+                CoverPartId = 93,
+                CoverFile = new PageFile(@"C:\photos\cover.jpg", 1024),
+            };
+
+            var plan = UploadPlans.Build(
+                SiteRegion.Com,
+                new OrderDraft(new[] { book }, Array.Empty<string>()),
+                Quote(book),
+                Formats());
+
+            var pages = Assert.Single(plan.Groups).Pages;
+            Assert.EndsWith("cover.jpg", pages[0].Path, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(book.FileCount + 1, pages.Count);
+            Assert.Equal("/photos/1.jpg", pages[1].Path);
+        }
+
+        [Fact]
         public void LeavesOutABookWhoseFormatTheSiteDidNotGiveAnIntegration()
         {
             var known = Book(Layflat, "21x30");

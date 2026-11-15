@@ -28,6 +28,20 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
         }
 
         [Fact]
+        public void CallsTheSingleFileByItsOwnNameWhenItIsNotAPage()
+        {
+            // The cover is one file with its own size; calling it «Страница 1» would point the
+            // customer at a spread they never sent.
+            var cover = new[] { Page("cover.jpg", new PixelSize(800, 600)) };
+
+            var alert = Assert.Single(BookFileCheck.Check(cover, PageImageRuleTests.Rule(), "Обложка"));
+
+            Assert.Null(alert.PageNumber);
+            Assert.StartsWith("Обложка: ", alert.Message, System.StringComparison.Ordinal);
+            Assert.DoesNotContain("Страница", alert.Message);
+        }
+
+        [Fact]
         public void ReportsAWiderFileAsAQuestionRatherThanARefusal()
         {
             // The roadmap's own case: 87 px wider and 5 px taller than the page.

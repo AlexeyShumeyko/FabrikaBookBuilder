@@ -154,6 +154,7 @@ namespace PhotoBook.Application.Tests.Sites.Books.Order
 
             var book = Book(Page(1));
             book.SetSiteOption(70519, 450642);
+            GiveCover(book);
 
             var draft = OrderDraft.From(ProjectWith(book), new[] { format }, _files);
 
@@ -163,6 +164,52 @@ namespace PhotoBook.Application.Tests.Sites.Books.Order
             Assert.Equal(1, order.Parts[0].Selection.Quantity);
             Assert.Equal(450642, order.Parts[0].Selection.ElementOf(70519));
             Assert.Equal(1, order.Parts[1].Selection.Quantity);
+        }
+
+        [Fact]
+        public void SendsTheCoverFirstAndTheSpreadsAfterIt()
+        {
+            var book = Book(Page(1), Page(2));
+            GiveCover(book);
+
+            var draft = OrderDraft.From(ProjectWith(book), new[] { CoverCatalog() }, _files);
+
+            var order = Assert.Single(draft.Books);
+            Assert.Equal(93, order.CoverPartId);
+            Assert.True(order.HasCover);
+            Assert.Equal(3, order.SentFileCount);
+            Assert.Equal(3, order.AllFiles.Count);
+            Assert.EndsWith("cover.jpg", order.AllFiles[0].Path, StringComparison.OrdinalIgnoreCase);
+            Assert.EndsWith("1.jpg", order.AllFiles[1].Path, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(2, order.Files.Count);
+        }
+
+        [Fact]
+        public void RefusesABookWhoseCoverWasNotPutIn()
+        {
+            var draft = OrderDraft.From(
+                ProjectWith(Book(Page(1))), new[] { CoverCatalog() }, _files);
+
+            Assert.Empty(draft.Books);
+            Assert.Contains(draft.Problems, problem => problem.Contains("обложка"));
+        }
+
+        [Fact]
+        public void RefusesAFormatWithTwoPartsOfOneFileEach()
+        {
+            var format = CatalogWithParts(
+                new ProductPart(93, "Обложка", new List<ProductOption>(),
+                    new ProductQuantitySettings(string.Empty, QuantityUnit.Copies, new QuantityRange(1, 1, 1), false,
+                        Array.Empty<QuantityRule>())),
+                new ProductPart(95, "Футляр", new List<ProductOption>(),
+                    new ProductQuantitySettings(string.Empty, QuantityUnit.Copies, new QuantityRange(1, 1, 1), false,
+                        Array.Empty<QuantityRule>())),
+                Part(SpreadPart, "Разворот", QuantityUnit.Spreads));
+
+            var draft = OrderDraft.From(ProjectWith(Book(Page(1))), new[] { format }, _files);
+
+            Assert.Empty(draft.Books);
+            Assert.Contains(draft.Problems, problem => problem.Contains("несколько частей с одним файлом"));
         }
 
         [Fact]
@@ -257,6 +304,28 @@ namespace PhotoBook.Application.Tests.Sites.Books.Order
             book.UpdatePageSlots();
             return book;
         }
+
+        /// <summary>Puts a cover file into the book, the way the customer fills the cover slot.</summary>
+        private void GiveCover(PhotoBook.Core.Book book)
+        {
+            var path = System.IO.Path.Combine(_root, "cover.jpg");
+            System.IO.File.WriteAllBytes(path, new byte[16]);
+
+            book.Cover = new PhotoBook.Core.Page
+            {
+                SourcePath = path,
+                FileName = "cover.jpg",
+                IsCover = true
+            };
+        }
+
+        /// <summary>A format with a cover part of one file and the spreads, as the site describes it.</summary>
+        private static SiteProduct CoverCatalog() =>
+            CatalogWithParts(
+                new ProductPart(93, "Обложка", new List<ProductOption>(),
+                    new ProductQuantitySettings(string.Empty, QuantityUnit.Copies, new QuantityRange(1, 1, 1), false,
+                        Array.Empty<QuantityRule>())),
+                Part(SpreadPart, "Разворот", QuantityUnit.Spreads));
 
         private static PhotoBook.Core.Project ProjectWith(params PhotoBook.Core.Book[] books)
         {

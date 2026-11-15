@@ -22,6 +22,7 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
         private const long Product = 4494;
         private const long Layflat = 9255;
         private const long PagePart = 94;
+        private const long CoverPart = 93;
 
         [Fact]
         public async Task BlocksABookWhosePhotoIsSmallerThanThePage()
@@ -108,6 +109,44 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
             Assert.Equal(2, catalog.Calls);
         }
 
+        [Fact]
+        public async Task ChecksTheCoverAgainstTheCoverPartAndTheSpreadsAgainstTheirs()
+        {
+            var layout = LayoutWithCover(1827.5, 1299.5);
+            var cover = layout.RequiredPixels(CoverPart, 1, null)!;
+            var spread = layout.RequiredPixels(PagePart, 10, null)!;
+
+            var check = await new OrderFileCheckService(
+                    new StubCatalog(layout),
+                    new StubInspector(spread, new Dictionary<string, PixelSize>
+                    {
+                        ["cover.jpg"] = cover,
+                        ["1.jpg"] = spread,
+                    }))
+                .CheckAsync(new[] { GroupWithCover(PageFile("1.jpg")) });
+
+            Assert.True(check.CanSend);
+            Assert.Empty(Assert.Single(check.Books).Alerts);
+        }
+
+        [Fact]
+        public async Task BlocksACoverThatIsTheSizeOfASpread()
+        {
+            var layout = LayoutWithCover(1827.5, 1299.5);
+            var spread = layout.RequiredPixels(PagePart, 10, null)!;
+
+            var check = await new OrderFileCheckService(
+                    new StubCatalog(layout),
+                    new StubInspector(spread))
+                .CheckAsync(new[] { GroupWithCover(PageFile("1.jpg")) });
+
+            var alert = Assert.Single(check.Books[0].Alerts);
+            Assert.Equal(FileAlertLevel.Blocking, alert.Level);
+            Assert.Null(alert.PageNumber);
+            Assert.StartsWith("Обложка: ", alert.Message, StringComparison.Ordinal);
+            Assert.False(check.CanSend);
+        }
+
         private static OrderFileCheckService Service(SiteLayout layout, PixelSize size) =>
             new(new StubCatalog(layout), new StubInspector(size));
 
@@ -130,6 +169,54 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
                 0);
 
             return new SiteLayout(Product, Layflat, 300, new[] { page }, 37556);
+        }
+
+        /// <summary>A layout with a cover part of its own and the spread part, as the site sends it.</summary>
+        private static SiteLayout LayoutWithCover(double coverWidthMm, double coverHeightMm) =>
+            new(
+                Product,
+                Layflat,
+                300,
+                new[]
+                {
+                    new PartLayout(
+                        CoverPart,
+                        "Обложка",
+                        Array.Empty<PageSizeRange>(),
+                        new PageSize(coverWidthMm, coverHeightMm),
+                        PrintMargins.None,
+                        Array.Empty<SizeIndexCondition>(),
+                        PrintMargins.None,
+                        0),
+                    new PartLayout(
+                        PagePart,
+                        "Разворот",
+                        Array.Empty<PageSizeRange>(),
+                        new PageSize(410, 290),
+                        PrintMargins.None,
+                        Array.Empty<SizeIndexCondition>(),
+                        PrintMargins.None,
+                        0),
+                },
+                37556);
+
+        private static UploadGroup GroupWithCover(params PageFile[] pages)
+        {
+            var cover = PageFile("cover.jpg");
+            var book = new Book(
+                new SiteProduct(Product, "layflat", "Лайфлат", "photo-book", new List<ProductVariant>()),
+                new ProductVariant(Layflat, "21x30", new List<ProductOption>(), new List<ProductPart>()),
+                PagePartId: PagePart,
+                new List<SelectedPart> { new(PagePart, new PartSelection(new Dictionary<long, long>(), 10)) },
+                pages,
+                CoverPartId: CoverPart,
+                CoverFile: cover);
+
+            return new UploadGroup(
+                1,
+                new OrderGroup(SiteRegion.Com, new[] { book }),
+                new CreateProjectRequest(Product, Layflat, 37556),
+                new[] { cover }.Concat(pages).ToArray());
         }
 
         private static UploadGroup Group(params PageFile[] pages)
@@ -200,8 +287,13 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
         private sealed class StubInspector : IBookFileInspector
         {
             private readonly PixelSize _size;
+            private readonly IReadOnlyDictionary<string, PixelSize>? _byName;
 
-            public StubInspector(PixelSize size) => _size = size;
+            public StubInspector(PixelSize size, IReadOnlyDictionary<string, PixelSize>? byName = null)
+            {
+                _size = size;
+                _byName = byName;
+            }
 
             public int Calls { get; private set; }
 
@@ -213,7 +305,11 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
 
                 var facts = new List<PageFileFacts>(files.Count);
                 foreach (var file in files)
-                    facts.Add(new PageFileFacts(file.Path, Exists: true, _size));
+                {
+                    var name = System.IO.Path.GetFileName(file.Path);
+                    var size = _byName is not null && _byName.TryGetValue(name, out var byName) ? byName : _size;
+                    facts.Add(new PageFileFacts(file.Path, Exists: true, size));
+                }
 
                 return Task.FromResult<IReadOnlyList<PageFileFacts>>(facts);
             }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using PhotoBook.Application.Sites.Books;
 using PhotoBook.Application.Sites.Catalog;
 using PhotoBook.Application.Sites.Upload;
 
@@ -144,11 +145,60 @@ namespace PhotoBook.Application.Sites.Books.Files
                 return Refused(number, name, ": сайт не описал страницу этого формата, проверить файлы нечем.");
 
             var rule = PageImageRule.For(required, page.ErrorMm, layout.Value.ResolutionDpi);
+
+            var alerts = new List<FileAlert>();
+            alerts.AddRange(await CheckCoverAsync(book, name, layout.Value, cancellationToken)
+                .ConfigureAwait(false));
+
+            // The plan sends the cover first; the page rule is for the spreads only, so the
+            // inspection names them rather than taking whatever the group holds.
+            var spreadFiles = book.Files ?? (IReadOnlyList<PageFile>)Array.Empty<PageFile>();
             var facts = await _inspector
-                .InspectAsync(group.Pages, cancellationToken)
+                .InspectAsync(spreadFiles, cancellationToken)
                 .ConfigureAwait(false);
 
-            return new CheckedBook(number, name, rule, BookFileCheck.Check(facts, rule));
+            alerts.AddRange(BookFileCheck.Check(facts, rule));
+
+            return new CheckedBook(number, name, rule, alerts);
+        }
+
+        /// <summary>The cover's own size, checked against the cover part and not the spread.</summary>
+        /// <remarks>
+        /// The two are different files of different sizes, and the site says so itself: the cover
+        /// is two spreads plus the spine, and a cover checked against a spread's pixels would be
+        /// refused for being right.
+        /// </remarks>
+        private async System.Threading.Tasks.Task<IReadOnlyList<FileAlert>> CheckCoverAsync(
+            Books.Book book,
+            string name,
+            Catalog.Layout.SiteLayout layout,
+            CancellationToken cancellationToken)
+        {
+            if (!book.NeedsCover || book.CoverFile is not { } cover)
+                return Array.Empty<FileAlert>();
+
+            var coverPart = layout.Part(book.CoverPartId);
+            var required = coverPart is null
+                ? null
+                : layout.RequiredPixels(book.CoverPartId, 1, book.CoverPart?.Selection.Elements);
+
+            if (required is null)
+            {
+                return new[]
+                {
+                    new FileAlert(
+                        FileAlertLevel.Blocking,
+                        null,
+                        name + ": сайт не описал обложку этого формата, проверить её размер нечем."),
+                };
+            }
+
+            var rule = PageImageRule.For(required, coverPart!.ErrorMm, layout.ResolutionDpi);
+            var facts = await _inspector
+                .InspectAsync(new[] { cover }, cancellationToken)
+                .ConfigureAwait(false);
+
+            return BookFileCheck.Check(facts, rule, "Обложка");
         }
 
         private static CheckedBook Refused(int number, string name, string reason) =>

@@ -22,9 +22,14 @@ namespace PhotoBook.Application.Sites.Books.Files
         /// <summary>What is wrong with the files, in page order.</summary>
         /// <param name="pages">The book's files, in page order, with what the disk said.</param>
         /// <param name="rule">What a page of this book has to be.</param>
+        /// <param name="title">
+        /// What to call the files when they are not pages, such as «Обложка»: the cover is one
+        /// file with its own size, and calling it «Страница 1» would misname it to the customer.
+        /// </param>
         public static IReadOnlyList<FileAlert> Check(
             IReadOnlyList<PageFileFacts> pages,
-            PageImageRule rule)
+            PageImageRule rule,
+            string? title = null)
         {
             if (pages is null)
                 throw new ArgumentNullException(nameof(pages));
@@ -39,7 +44,7 @@ namespace PhotoBook.Application.Sites.Books.Files
                 if (page is null)
                     continue;
 
-                var alert = Describe(page, index + 1, rule);
+                var alert = Describe(page, index + 1, rule, title);
                 if (alert is not null)
                     alerts.Add(alert);
             }
@@ -47,32 +52,38 @@ namespace PhotoBook.Application.Sites.Books.Files
             return alerts;
         }
 
-        private static FileAlert? Describe(PageFileFacts page, int pageNumber, PageImageRule rule)
+        private static FileAlert? Describe(
+            PageFileFacts page,
+            int pageNumber,
+            PageImageRule rule,
+            string? title)
         {
             var name = System.IO.Path.GetFileName(page.Path);
+            var where = title ?? "Страница " + pageNumber;
+            var number = title is null ? pageNumber : (int?)null;
 
             if (!page.Exists)
             {
                 return new FileAlert(
                     FileAlertLevel.Blocking,
-                    pageNumber,
-                    $"Страница {pageNumber}: файл «{name}» не найден.");
+                    number,
+                    $"{where}: файл «{name}» не найден.");
             }
 
             if (!rule.Accepts(page.Path))
             {
                 return new FileAlert(
                     FileAlertLevel.Blocking,
-                    pageNumber,
-                    $"Страница {pageNumber}: «{name}» — сайт принимает только JPEG (.jpg).");
+                    number,
+                    $"{where}: «{name}» — сайт принимает только JPEG (.jpg).");
             }
 
             if (page.Size is not { } size)
             {
                 return new FileAlert(
                     FileAlertLevel.Blocking,
-                    pageNumber,
-                    $"Страница {pageNumber}: «{name}» не читается как изображение.");
+                    number,
+                    $"{where}: «{name}» не читается как изображение.");
             }
 
             var required = rule.Required;
@@ -81,8 +92,8 @@ namespace PhotoBook.Application.Sites.Books.Files
             {
                 return new FileAlert(
                     FileAlertLevel.Blocking,
-                    pageNumber,
-                    $"Страница {pageNumber}: «{name}» — {size} при требуемых {required}. " +
+                    number,
+                    $"{where}: «{name}» — {size} при требуемых {required}. " +
                     "Файл меньше страницы, сайт его не примет.");
             }
 
@@ -90,8 +101,8 @@ namespace PhotoBook.Application.Sites.Books.Files
             {
                 return new FileAlert(
                     FileAlertLevel.NeedsConfirmation,
-                    pageNumber,
-                    $"Страница {pageNumber}: «{name}» — {size} при требуемых {required}. " +
+                    number,
+                    $"{where}: «{name}» — {size} при требуемых {required}. " +
                     "Сайт может обрезать файл по краям.");
             }
 
@@ -99,8 +110,8 @@ namespace PhotoBook.Application.Sites.Books.Files
             {
                 return new FileAlert(
                     FileAlertLevel.Information,
-                    pageNumber,
-                    $"Страница {pageNumber}: «{name}» — {size} вместо {required}, " +
+                    number,
+                    $"{where}: «{name}» — {size} вместо {required}, " +
                     $"в пределах допуска сайта ±{rule.TolerancePixels} px.");
             }
 

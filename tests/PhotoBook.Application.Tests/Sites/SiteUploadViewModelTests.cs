@@ -189,8 +189,16 @@ namespace PhotoBook.Application.Tests.Sites
             PixelSize? size = null)
         {
             var screen = new SiteUploadViewModel(creation, upload, check, Files(size));
-            var books = Enumerable.Range(0, groups)
-                .Select(_ => Enumerable.Range(0, booksPerGroup).Select(_ => Book()).ToList())
+            var pagesOfGroup = Enumerable.Range(0, groups)
+                .Select(index => Enumerable.Range(0, pages)
+                    .Select(page => new PageFile($@"C:\p{index}-{page}.jpg", 1024))
+                    .ToList())
+                .ToList();
+
+            var books = pagesOfGroup
+                .Select(groupPages => Enumerable.Range(0, booksPerGroup)
+                    .Select(_ => Book(groupPages))
+                    .ToList())
                 .ToList();
 
             var layout = BookGrouping.FromManual(SiteRegion.Com, books);
@@ -207,7 +215,7 @@ namespace PhotoBook.Application.Tests.Sites
                     index + 1,
                     group,
                     new CreateProjectRequest(4494, 9255, 37556),
-                    Enumerable.Range(0, pages).Select(page => new PageFile($@"C:\p{index}-{page}.jpg", 1024)).ToList()))
+                    pagesOfGroup[index]))
                 .ToList();
 
             screen.Prepare(Session, summary, groupsToSend);
@@ -413,13 +421,13 @@ namespace PhotoBook.Application.Tests.Sites
                     files.Select(file => new PageFileFacts(file.Path, true, _size)).ToList());
         }
 
-        private static Book Book() =>
+        private static Book Book(IReadOnlyList<PageFile>? files = null) =>
             new(
                 new SiteProduct(4494, "layflat", "Лайфлат", "photo-book", new List<ProductVariant>()),
                 new ProductVariant(9255, "21x30", new List<ProductOption>(), new List<ProductPart>()),
                 PagePartId: 94,
                 new List<SelectedPart> { new(94, new PartSelection(new Dictionary<long, long>(), 10)) },
-                new List<PageFile>());
+                files ?? new List<PageFile>());
 
         private sealed class StubCreation : IProjectCreationService
         {

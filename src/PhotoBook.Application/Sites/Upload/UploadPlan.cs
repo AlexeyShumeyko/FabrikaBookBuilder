@@ -94,7 +94,7 @@ namespace PhotoBook.Application.Sites.Upload
                     number,
                     group,
                     new CreateProjectRequest(book.Product.Id, book.Variant.Id, integration),
-                    book.Files));
+                    book.AllFiles));
 
                 sent.Add(group);
                 quotes.Add(new GroupQuote(new[] { priced }));
