@@ -163,11 +163,12 @@ namespace PhotoBook.Presentation.ViewModels
                         : "Проверяем книгу " + report.BookNumber + " из " + report.BooksTotal + ".";
                 });
 
-                Files = await _fileCheck
+                var check = await _fileCheck
                     .CheckAsync(_groups, progress, cancel.Token)
                     .ConfigureAwait(true);
 
-                FilesText = Describe(_files);
+                Files = check;
+                FilesText = Describe(check);
             }
             catch (OperationCanceledException) when (cancel.IsCancellationRequested)
             {
