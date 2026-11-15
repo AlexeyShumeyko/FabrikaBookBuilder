@@ -1,15 +1,22 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using PhotoBook.Application.Sites.Catalog;
 
 namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>One parameter of a chosen format, with what the customer picked.</summary>
+    /// <remarks>
+    /// The row is updated in place rather than replaced. The window lays panels out while it
+    /// measures them, and swapping the whole list under a panel mid-measure is what made the
+    /// page crash when an answer changed which questions the site offers.
+    /// </remarks>
     public sealed class OrderParameterRow : ViewModelBase
     {
         private readonly Action _changed;
 
+        private IReadOnlyList<ParameterElement> _elements;
         private ParameterElement? _selected;
 
         public OrderParameterRow(
@@ -19,7 +26,7 @@ namespace PhotoBook.Presentation.ViewModels
             Action changed)
         {
             Option = option;
-            Elements = elements;
+            _elements = elements;
             _selected = selected;
             _changed = changed;
         }
@@ -34,7 +41,7 @@ namespace PhotoBook.Presentation.ViewModels
         public string Title => Option.Title;
 
         /// <summary>What the customer may pick.</summary>
-        public IReadOnlyList<ParameterElement> Elements { get; }
+        public IReadOnlyList<ParameterElement> Elements => _elements;
 
         /// <summary>Whether the site refuses to price the book without this answer.</summary>
         public bool IsRequired => Option.IsRequired;
@@ -45,7 +52,10 @@ namespace PhotoBook.Presentation.ViewModels
             get => _selected;
             set
             {
-                if (ReferenceEquals(_selected, value)) return;
+                // Compared by value, not by reference: the same choice arrives as a fresh
+                // instance after the block is rebuilt, and treating it as a new answer made the
+                // binding write it back, which rebuilt the block again.
+                if (Equals(_selected, value)) return;
 
                 _selected = value;
                 OnPropertyChanged(nameof(Selected));
@@ -58,6 +68,47 @@ namespace PhotoBook.Presentation.ViewModels
 
         /// <summary>The choice as the row shows it, or a note that none is chosen.</summary>
         public string SelectedText => _selected?.Title ?? "не выбран";
+
+        /// <summary>Shows what the site offers now, keeping the row itself in place.</summary>
+        public void Show(IReadOnlyList<ParameterElement> elements, ParameterElement? selected)
+        {
+            var sameChoice = Equals(_selected, selected);
+
+            // The same choices arrive as fresh instances after a rebuild. Keeping the instance
+            // the window already shows keeps its list untouched: a replaced list makes the
+            // window drop its own selection and write "no answer" back, which reads as a new
+            // answer and rebuilds the block again.
+            if (!SameElements(_elements, elements))
+            {
+                _elements = elements;
+                OnPropertyChanged(nameof(Elements));
+            }
+
+            // Announcing an unchanged answer would send the window's own write-back through the
+            // setter and rebuild this very block; only a real change is announced.
+            if (sameChoice)
+                return;
+
+            _selected = selected;
+            OnPropertyChanged(nameof(Selected));
+            OnPropertyChanged(nameof(SelectedText));
+        }
+
+        private static bool SameElements(
+            IReadOnlyList<ParameterElement> current,
+            IReadOnlyList<ParameterElement> next)
+        {
+            if (current.Count != next.Count)
+                return false;
+
+            for (var index = 0; index < current.Count; index++)
+            {
+                if (!Equals(current[index], next[index]))
+                    return false;
+            }
+
+            return true;
+        }
     }
 
     /// <summary>
@@ -70,10 +121,10 @@ namespace PhotoBook.Presentation.ViewModels
     /// </remarks>
     public sealed class OrderFormatParameters : ViewModelBase
     {
-        public OrderFormatParameters(FormatChoice choice, IReadOnlyList<OrderParameterRow> parameters)
+        public OrderFormatParameters(FormatChoice choice, IEnumerable<OrderParameterRow> parameters)
         {
             Choice = choice;
-            Parameters = parameters;
+            Parameters = new ObservableCollection<OrderParameterRow>(parameters);
         }
 
         /// <summary>The format these parameters belong to.</summary>
@@ -83,7 +134,7 @@ namespace PhotoBook.Presentation.ViewModels
         public string Title => Choice.DisplayText;
 
         /// <summary>Every parameter the format offers right now.</summary>
-        public IReadOnlyList<OrderParameterRow> Parameters { get; private set; }
+        public ObservableCollection<OrderParameterRow> Parameters { get; }
 
         /// <summary>Whether every required parameter has an answer.</summary>
         public bool IsAnswered => Parameters.All(row => !row.IsRequired || row.Selected is not null);
@@ -93,14 +144,37 @@ namespace PhotoBook.Presentation.ViewModels
             ? "все параметры выбраны"
             : "не выбрано: " + Parameters.Count(row => row.IsRequired && row.Selected is null);
 
-        /// <summary>Replaces the visible parameters after an answer changed what is available.</summary>
-        public void Show(IReadOnlyList<OrderParameterRow> parameters)
+        /// <summary>
+        /// Brings the block up to date with what the site offers, changing the rows that are
+        /// still asked and adding the ones an answer has just unlocked.
+        /// </summary>
+        public void Sync(IReadOnlyList<OrderParameterRow> offered)
         {
-            Parameters = parameters;
-            OnPropertyChanged(nameof(Parameters));
+            for (var index = Parameters.Count - 1; index >= 0; index--)
+            {
+                if (!offered.Any(row => row.OptionId == Parameters[index].OptionId))
+                    Parameters.RemoveAt(index);
+            }
+
+            foreach (var row in offered)
+            {
+                var existing = Parameters.FirstOrDefault(item => item.OptionId == row.OptionId);
+
+                if (existing is null)
+                    Parameters.Add(row);
+                else
+                    existing.Show(row.Elements, row.Selected);
+            }
+
             OnPropertyChanged(nameof(IsAnswered));
             OnPropertyChanged(nameof(StateText));
         }
 
+        /// <summary>Re-reads the answers, which change the section's own line.</summary>
+        public void Refresh()
+        {
+            OnPropertyChanged(nameof(IsAnswered));
+            OnPropertyChanged(nameof(StateText));
+        }
     }
 }

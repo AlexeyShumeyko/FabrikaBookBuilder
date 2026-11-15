@@ -32,6 +32,9 @@ namespace PhotoBook.Shell.Navigation
         private ContentControl? _host;
         private AppMode _currentMode = AppMode.ProjectList;
         private AppMode? _sessionMode;
+
+        /// <summary>Whether a save of the order's choices is already running.</summary>
+        private bool _savingChoice;
         private (Project Project, ProjectInfo Record)? _pending;
 
         public AvaloniaNavigator(
@@ -186,11 +189,17 @@ namespace PhotoBook.Shell.Navigation
         /// </summary>
         private async void SaveChoice()
         {
+            // One save at a time. A save refreshes the list the window is built from, and that
+            // refresh can come back as another choice; without this guard the two called each
+            // other until the stack ran out.
+            if (_savingChoice) return;
+
             if (_sessionMode is not { } mode) return;
 
             var editor = EditorFor(mode);
             if (editor is null) return;
 
+            _savingChoice = true;
             try
             {
                 await editor.QuickSaveAsync();
@@ -198,6 +207,10 @@ namespace PhotoBook.Shell.Navigation
             catch (Exception ex)
             {
                 _siteOrder.ShowMessage("Не удалось сохранить проект: " + ex.Message);
+            }
+            finally
+            {
+                _savingChoice = false;
             }
         }
 

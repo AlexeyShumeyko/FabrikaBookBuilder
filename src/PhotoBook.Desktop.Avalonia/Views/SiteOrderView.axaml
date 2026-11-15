@@ -12,7 +12,10 @@
         Rules are the product's: container max 1200 with a 32 margin, blocks 32 apart, cards
         with a 1px slate-200 edge and 16 radius. Nothing here invents a new size or colour.
     -->
-    <Grid RowDefinitions="Auto,Auto,*" Margin="32,16">
+    <!-- An order can hold twenty books and more. The header stays put and everything under it
+         scrolls in the page's own area: a list that grows past the window with nothing to turn
+         would hide books the customer is paying for. -->
+    <Grid RowDefinitions="Auto,*" Margin="32,16">
         <Border Grid.Row="0" Classes="card" Padding="20,16" MaxWidth="1200" HorizontalAlignment="Stretch">
             <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
                 <StackPanel Grid.Column="0" Spacing="2">
@@ -69,8 +72,11 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" Classes="card" Padding="0" Margin="0,24,0,0"
-                MaxWidth="1200" HorizontalAlignment="Stretch" VerticalAlignment="Top">
+        <ScrollViewer Grid.Row="1" Classes="contentScroll" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled" Margin="0,24,0,0">
+            <StackPanel Spacing="16" MaxWidth="1200" HorizontalAlignment="Stretch">
+        <Border Classes="card" Padding="0"
+                HorizontalAlignment="Stretch" VerticalAlignment="Top">
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- the column headings, once -->
                 <Grid Grid.Row="0" ColumnDefinitions="56,*,260,100,110,150,150" Margin="20,16,20,12">
@@ -130,8 +136,8 @@
             The parameters belong to the format, not to a copy: books of one format are one
             identical order, and the questions are asked once.
         -->
-        <Border Grid.Row="2" Classes="card" Padding="20,16" Margin="0,16,0,0"
-                MaxWidth="1200" HorizontalAlignment="Stretch" VerticalAlignment="Top"
+        <Border Classes="card" Padding="20,16"
+                HorizontalAlignment="Stretch" VerticalAlignment="Top"
                 IsVisible="{Binding HasParameters}">
             <StackPanel Spacing="16">
                 <TextBlock Text="Параметры формата" Classes="t14SemiBold" />
@@ -147,10 +153,13 @@
                                                VerticalAlignment="Center" />
                                 </StackPanel>
 
+                                <!-- A row, not a wrapping panel: a format asks at most a few
+                                     questions, and a wrapping panel inside a scrolling card kept
+                                     the window re-measuring itself. -->
                                 <ItemsControl ItemsSource="{Binding Parameters}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <WrapPanel Orientation="Horizontal" />
+                                            <StackPanel Orientation="Horizontal" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
@@ -174,5 +183,7 @@
                 </ItemsControl>
             </StackPanel>
         </Border>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>

@@ -160,7 +160,14 @@ namespace PhotoBook.Application.Sites.Books.Order
             {
                 var chosen = new Dictionary<long, long>();
 
-                foreach (var option in part.Options ?? Array.Empty<ProductOption>())
+                // Only the questions the site still asks. An option excluded by an answer
+                // already given (the interlayer for cardboard when paper was chosen) is not a
+                // missing answer: demanding it made a complete book unpriced.
+                var offered = OfferedParameters.Available(
+                    part.Options ?? Array.Empty<ProductOption>(),
+                    source.SiteOptions);
+
+                foreach (var option in offered)
                 {
                     if (!source.SiteOptions.TryGetValue(option.Id, out var elementId))
                     {

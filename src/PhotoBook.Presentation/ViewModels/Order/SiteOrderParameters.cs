@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using PhotoBook.Application.Sites;
@@ -29,7 +30,9 @@ namespace PhotoBook.Presentation.ViewModels
         private readonly ISiteCatalogService? _catalog;
         private readonly ISiteSessionStore? _sessions;
 
-        private IReadOnlyList<OrderFormatParameters> _blocks = Array.Empty<OrderFormatParameters>();
+        /// <summary>Whether a block is being rebuilt right now.</summary>
+        private bool _reloading;
+
 
         public SiteOrderParameters(ISiteCatalogService? catalog, ISiteSessionStore? sessions)
         {
@@ -41,11 +44,13 @@ namespace PhotoBook.Presentation.ViewModels
         public event EventHandler? Answered;
 
         /// <summary>The blocks on the page, one per format.</summary>
-        public IReadOnlyList<OrderFormatParameters> Blocks
-        {
-            get => _blocks;
-            private set => _blocks = value ?? Array.Empty<OrderFormatParameters>();
-        }
+        /// <remarks>
+        /// The collection is updated, never replaced: the window measures the panels while it
+        /// arranges them, and a list swapped underneath a measuring panel is what crashed the
+        /// page once.
+        /// </remarks>
+        public ObservableCollection<OrderFormatParameters> Blocks { get; } =
+            new ObservableCollection<OrderFormatParameters>();
 
         /// <summary>Whether every required parameter of every format has an answer.</summary>
         public bool IsAnswered => Blocks.All(block => block.IsAnswered);
@@ -65,23 +70,32 @@ namespace PhotoBook.Presentation.ViewModels
             if (session is null)
                 return;
 
-            var blocks = new List<OrderFormatParameters>();
+            var choices = rows
+                .Select(row => row.SelectedFormat)
+                .Where(choice => choice is not null)
+                .Select(choice => choice!)
+                .DistinctBy(choice => (choice.Product.Id, choice.Format.Id))
+                .ToList();
 
-            foreach (var choice in rows
-                         .Select(row => row.SelectedFormat)
-                         .Where(choice => choice is not null)
-                         .Select(choice => choice!)
-                         .DistinctBy(choice => (choice.Product.Id, choice.Format.Id)))
+            for (var index = Blocks.Count - 1; index >= 0; index--)
             {
-                var block = await BuildAsync(session.Region, choice, rows).ConfigureAwait(true);
-
-                if (block is null)
-                    continue;
-
-                blocks.Add(block);
+                if (!choices.Contains(Blocks[index].Choice))
+                    Blocks.RemoveAt(index);
             }
 
-            Blocks = blocks;
+            foreach (var choice in choices)
+            {
+                var offered = await BuildRowsAsync(session.Region, choice, rows).ConfigureAwait(true);
+                if (offered is null)
+                    continue;
+
+                var existing = Blocks.FirstOrDefault(block => block.Choice == choice);
+
+                if (existing is null)
+                    Blocks.Add(new OrderFormatParameters(choice, offered));
+                else
+                    existing.Sync(offered);
+            }
         }
 
         /// <summary>Rebuilds one format's block after its answers changed something.</summary>
@@ -94,23 +108,21 @@ namespace PhotoBook.Presentation.ViewModels
             if (session is null)
                 return;
 
-            var rebuilt = await BuildAsync(session.Region, choice, rows).ConfigureAwait(true);
-            if (rebuilt is null)
+            var offered = await BuildRowsAsync(session.Region, choice, rows).ConfigureAwait(true);
+            if (offered is null)
                 return;
 
-            Blocks = Blocks
-                .Select(block => block.Choice == choice ? rebuilt : block)
-                .ToList();
+            Blocks.FirstOrDefault(block => block.Choice == choice)?.Sync(offered);
         }
 
         /// <summary>Forgets the questions, for when the order no longer has formats.</summary>
         public void Clear()
         {
             Problem = null;
-            Blocks = Array.Empty<OrderFormatParameters>();
+            Blocks.Clear();
         }
 
-        private async Task<OrderFormatParameters?> BuildAsync(
+        private async Task<List<OrderParameterRow>?> BuildRowsAsync(
             SiteRegion region,
             FormatChoice choice,
             IReadOnlyList<OrderBookRow> rows)
@@ -132,7 +144,7 @@ namespace PhotoBook.Presentation.ViewModels
                 return null;
             }
 
-            return new OrderFormatParameters(choice, BuildRows(choice, variant, rows));
+            return BuildRows(choice, variant, rows);
         }
 
         /// <summary>
@@ -188,6 +200,13 @@ namespace PhotoBook.Presentation.ViewModels
 
             Answered?.Invoke(this, EventArgs.Empty);
 
+            // One rebuild at a time. A rebuild updates the window, and the window answering
+            // that update is not a new answer: reloading again from inside the first one is how
+            // the page once rebuilt itself until the stack ran out.
+            if (_reloading)
+                return;
+
+            _reloading = true;
             try
             {
                 await ReloadAsync(choice, rows).ConfigureAwait(true);
@@ -195,6 +214,10 @@ namespace PhotoBook.Presentation.ViewModels
             catch (Exception ex)
             {
                 Problem = "Параметры формата не обновились: " + ex.Message;
+            }
+            finally
+            {
+                _reloading = false;
             }
         }
 

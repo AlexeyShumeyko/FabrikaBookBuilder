@@ -121,6 +121,11 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Tells the row the catalog arrived, so the picker fills in.</summary>
         public void RefreshFormats()
         {
+            // Re-resolved from the list the picker is about to show: a choice kept from the list
+            // read before would no longer be one of its items, and the window draws that as an
+            // empty picker over a book whose format is chosen.
+            _selected = Formats.FirstOrDefault(choice => choice.Matches(_book));
+
             OnPropertyChanged(nameof(Formats));
             OnPropertyChanged(nameof(SelectedFormat));
             OnPropertyChanged(nameof(FormatText));

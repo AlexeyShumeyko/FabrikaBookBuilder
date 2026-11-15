@@ -107,6 +107,40 @@ namespace PhotoBook.Application.Tests.Sites.Books.Order
         }
 
         [Fact]
+        public void DoesNotDemandAParameterTheSiteExcludesForTheChosenAnswer()
+        {
+            // The interlayer for cardboard is required in the product, but the site excludes it
+            // once paper is chosen: a book answering every question it is actually asked is
+            // complete, and refusing to price it left a finished book without a price.
+            var format = Catalog(part: new ProductPart(
+                SpreadPart,
+                "Разворот",
+                new List<ProductOption>
+                {
+                    new(65075, "Плотность разворотов", true, null, Array.Empty<string>(), null,
+                        Array.Empty<string>(), new[]
+                        {
+                            new OptionElement(417892, "Картон"),
+                            new OptionElement(417891, "Бумага"),
+                        }),
+                    // As the site states it for the interlayer of cardboard: required, and
+                    // excluded as soon as paper is the answer to the density.
+                    new(65740, "Прослойка разворотов", true, null, Array.Empty<string>(), "65075",
+                        new[] { "417891" }, new[] { new OptionElement(420271, "Прослойка 2 мм") }),
+                },
+                Counts(QuantityUnit.Spreads),
+                true));
+
+            var book = Book(Page(1));
+            book.SetSiteOption(65075, 417891);
+
+            var draft = OrderDraft.From(ProjectWith(book), new[] { format }, _files);
+
+            Assert.True(draft.IsComplete);
+            Assert.Empty(draft.Problems);
+        }
+
+        [Fact]
         public void SendsTheChosenParametersAndTheQuantityOfEveryPart()
         {
             var format = CatalogWithParts(

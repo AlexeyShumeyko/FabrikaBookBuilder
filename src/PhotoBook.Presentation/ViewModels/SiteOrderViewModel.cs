@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -69,6 +70,7 @@ namespace PhotoBook.Presentation.ViewModels
 
             _parameters = new SiteOrderParameters(catalog, sessions);
             _parameters.Answered += (_, _) => OnAnswerChanged();
+            _parameters.Blocks.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasParameters));
         }
 
         /// <summary>Raised when the customer asks to go back to the project.</summary>
@@ -94,18 +96,12 @@ namespace PhotoBook.Presentation.ViewModels
         }
 
         /// <summary>The parameters of each format chosen in the order.</summary>
-        public IReadOnlyList<OrderFormatParameters> Parameters
-        {
-            get => _parameters.Blocks;
-            private set
-            {
-                // The blocks live in the parameters collaborator; the page only re-reads them,
-                // which is what telling the view about a change means here.
-                _ = value;
-                OnPropertyChanged(nameof(Parameters));
-                OnPropertyChanged(nameof(HasParameters));
-            }
-        }
+        /// <remarks>
+        /// The collection belongs to the parameters collaborator and is updated there; the page
+        /// re-reads it for the view rather than replacing it, because a list swapped while the
+        /// window arranges its panels is what crashed the page once.
+        /// </remarks>
+        public ObservableCollection<OrderFormatParameters> Parameters => _parameters.Blocks;
 
         /// <summary>Whether there is anything to answer.</summary>
         public bool HasParameters => Parameters.Count > 0;
@@ -210,7 +206,6 @@ namespace PhotoBook.Presentation.ViewModels
             {
                 Books = Array.Empty<OrderBookRow>();
                 _parameters.Clear();
-                OnPropertyChanged(nameof(Parameters));
                 OnPropertyChanged(nameof(HasParameters));
                 ProjectName = string.Empty;
                 SpreadCount = 0;
@@ -410,7 +405,6 @@ namespace PhotoBook.Presentation.ViewModels
             if (_parameters.Problem is { Length: > 0 } problem)
                 Message = problem;
 
-            OnPropertyChanged(nameof(Parameters));
             OnPropertyChanged(nameof(HasParameters));
             RefreshReadiness();
         }
@@ -446,7 +440,6 @@ namespace PhotoBook.Presentation.ViewModels
 
             TotalText = string.Empty;
             ChoiceChanged?.Invoke(this, EventArgs.Empty);
-            OnPropertyChanged(nameof(Parameters));
             RefreshReadiness();
         }
 
