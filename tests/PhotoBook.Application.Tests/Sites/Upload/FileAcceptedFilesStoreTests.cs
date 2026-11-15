@@ -24,7 +24,7 @@ namespace PhotoBook.Application.Tests.Sites.Upload
                 .Remember(new UploadSession(SiteRegion.Com, 527733, 10, 4));
 
             Assert.True(written.IsSuccess);
-            Assert.Equal(4, ReadAt(path).Accepted(SiteRegion.Com, 527733, 10));
+            Assert.Equal(4, ReadAt(path).Accepted(SiteRegion.Com, 527733, 0, 10));
         }
 
         [Fact]
@@ -38,7 +38,37 @@ namespace PhotoBook.Application.Tests.Sites.Upload
 
             // The customer swapped a photograph: the book has another length now, and the old
             // count would skip pages that are not in the same places any more.
-            Assert.Equal(0, ReadAt(path).Accepted(SiteRegion.Com, 527733, 12));
+            Assert.Equal(0, ReadAt(path).Accepted(SiteRegion.Com, 527733, 0, 12));
+        }
+
+        [Fact]
+        public void KeepsTheBooksOfOneProjectApart()
+        {
+            using var folder = new TempFolder();
+            var path = folder.PathTo("accepted.json");
+            var store = new FileAcceptedFilesStore(new SilentJournal(), path);
+
+            store.Remember(new UploadSession(SiteRegion.Com, 527733, 10, 4, 5000));
+            store.Remember(new UploadSession(SiteRegion.Com, 527733, 12, 9, 5001));
+
+            Assert.Equal(4, ReadAt(path).Accepted(SiteRegion.Com, 527733, 5000, 10));
+            Assert.Equal(9, ReadAt(path).Accepted(SiteRegion.Com, 527733, 5001, 12));
+        }
+
+        [Fact]
+        public void ForgetsOneBookWithoutTouchingTheOther()
+        {
+            using var folder = new TempFolder();
+            var path = folder.PathTo("accepted.json");
+            var store = new FileAcceptedFilesStore(new SilentJournal(), path);
+
+            store.Remember(new UploadSession(SiteRegion.Com, 527733, 10, 4, 5000));
+            store.Remember(new UploadSession(SiteRegion.Com, 527733, 10, 7, 5001));
+
+            store.Forget(SiteRegion.Com, 527733, 5000);
+
+            Assert.Equal(0, ReadAt(path).Accepted(SiteRegion.Com, 527733, 5000, 10));
+            Assert.Equal(7, ReadAt(path).Accepted(SiteRegion.Com, 527733, 5001, 10));
         }
 
         [Fact]
@@ -50,7 +80,7 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             new FileAcceptedFilesStore(new SilentJournal(), path)
                 .Remember(new UploadSession(SiteRegion.Com, 527733, 10, 4));
 
-            Assert.Equal(0, ReadAt(path).Accepted(SiteRegion.By, 527733, 10));
+            Assert.Equal(0, ReadAt(path).Accepted(SiteRegion.By, 527733, 0, 10));
         }
 
         [Fact]
@@ -61,10 +91,10 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             var store = new FileAcceptedFilesStore(new SilentJournal(), path);
 
             store.Remember(new UploadSession(SiteRegion.Com, 527733, 10, 4));
-            var forgotten = store.Forget(SiteRegion.Com, 527733);
+            var forgotten = store.Forget(SiteRegion.Com, 527733, 0);
 
             Assert.True(forgotten.IsSuccess);
-            Assert.Equal(0, ReadAt(path).Accepted(SiteRegion.Com, 527733, 10));
+            Assert.Equal(0, ReadAt(path).Accepted(SiteRegion.Com, 527733, 0, 10));
         }
 
         [Fact]
@@ -77,7 +107,7 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             var journal = new SilentJournal();
             var store = new FileAcceptedFilesStore(journal, path);
 
-            Assert.Equal(0, store.Accepted(SiteRegion.Com, 527733, 10));
+            Assert.Equal(0, store.Accepted(SiteRegion.Com, 527733, 0, 10));
             Assert.True(store.Remember(new UploadSession(SiteRegion.Com, 527733, 10, 2)).IsSuccess);
             Assert.Single(journal.Entries);
         }

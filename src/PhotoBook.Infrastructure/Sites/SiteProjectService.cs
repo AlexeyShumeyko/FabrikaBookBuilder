@@ -35,6 +35,7 @@ namespace PhotoBook.Infrastructure.Sites
     internal sealed class SiteProjectService : ISiteProjectService
     {
         private const string CreatePath = "creators/projects/create";
+        private const string ItemsPath = "creators/projects/items";
         private const string ParamsPath = "creators/projects/params";
         private const string EditPath = "creators/projects/edit";
         private const string ListPath = "creators/projects?with_update_price=1";
@@ -92,9 +93,49 @@ namespace PhotoBook.Infrastructure.Sites
 
             var productId = Number(data, "product_id");
             var title = Text(data, "title") ?? string.Empty;
+            var items = Items(data);
+            var firstItemId = items.Count > 0 ? items[0].Id : 0;
 
             return Result<SiteProject>.Ok(
-                new SiteProject(id, productId > 0 ? productId : request.ProductId, title));
+                new SiteProject(id, productId > 0 ? productId : request.ProductId, title, firstItemId));
+        }
+
+        public async Task<Result<long>> AddBookAsync(
+            SiteSession session,
+            long projectId,
+            int position,
+            CancellationToken cancellationToken = default)
+        {
+            if (session is null)
+                throw new ArgumentNullException(nameof(session));
+            if (projectId <= 0)
+                return Result<long>.Fail("У проекта нет номера.");
+            if (position <= 0)
+                return Result<long>.Fail("Книга не может быть раньше первой.");
+
+            var client = new SiteApiClient(session.Region, _http, _retryDelay);
+
+            var response = await client
+                .PostJsonAsync(ItemsPath, new { projectId, position }, session.AccessToken, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!response.IsSuccess || response.Document is null)
+                return Result<long>.Fail(response.Error?.Message ?? "Сайт не добавил книгу в проект.");
+
+            using var document = response.Document;
+
+            if (!document.RootElement.TryGetProperty("data", out var data))
+                return Result<long>.Fail("Сайт не назвал добавленную книгу.");
+
+            var items = Items(data);
+            if (items.Count == 0)
+                return Result<long>.Fail("Сайт не назвал добавленную книгу.");
+
+            // The answer lists every book of the project; the one just added is the last.
+            var added = items[^1].Id;
+            return added > 0
+                ? Result<long>.Ok(added)
+                : Result<long>.Fail("Сайт не назвал номер добавленной книги.");
         }
 
         public async Task<Result> SetUpAsync(

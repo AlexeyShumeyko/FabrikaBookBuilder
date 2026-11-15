@@ -165,6 +165,13 @@ namespace PhotoBook.Application.Tests.Sites.Completion
                 CancellationToken cancellationToken = default) =>
                 throw new NotSupportedException("The check never creates projects.");
 
+            public Task<Result<long>> AddBookAsync(
+                SiteSession session,
+                long projectId,
+                int position,
+                CancellationToken cancellationToken = default) =>
+                throw new NotSupportedException("The check never adds books.");
+
             public Task<Result> SetUpAsync(
                 SiteSession session,
                 long projectId,

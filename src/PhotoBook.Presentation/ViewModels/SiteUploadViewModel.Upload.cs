@@ -42,6 +42,7 @@ namespace PhotoBook.Presentation.ViewModels
                     .ConfigureAwait(true);
 
                 var projects = new Dictionary<int, long>();
+                var books = new Dictionary<int, IReadOnlyList<long>>();
                 var results = new List<UploadGroupResult>();
 
                 foreach (var created in plan.Groups)
@@ -49,6 +50,7 @@ namespace PhotoBook.Presentation.ViewModels
                     if (created.HasProject)
                     {
                         projects[created.Number] = created.ProjectId;
+                        books[created.Number] = created.BookIds;
                     }
                     else
                     {
@@ -86,7 +88,13 @@ namespace PhotoBook.Presentation.ViewModels
                     if (!projects.TryGetValue(group.Number, out var projectId))
                         continue;
 
-                    var sent = await SendAsync(session, group, projectId, cancel.Token).ConfigureAwait(true);
+                    var sent = await SendAsync(
+                            session,
+                            group,
+                            projectId,
+                            books.TryGetValue(group.Number, out var ids) ? ids : Array.Empty<long>(),
+                            cancel.Token)
+                        .ConfigureAwait(true);
 
                     results.Add(sent.Result);
 
@@ -172,42 +180,84 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Stops the queue between files; what the site already has stays there.</summary>
         public void Cancel() => _cancel?.Cancel();
 
-        /// <summary>One group's pages, with the stop reason when there is one.</summary>
+        /// <summary>One group's books, with the stop reason when there is one.</summary>
+        /// <remarks>
+        /// The books go one after another, each against the number the site gave it: files of
+        /// one book are numbered from the cover, so sending them under another book's number
+        /// would replace that book's pages instead of adding a new one.
+        /// </remarks>
         private async Task<(UploadGroupResult Result, StopReason? Stop)> SendAsync(
             SiteSession session,
             UploadGroup group,
             long projectId,
+            IReadOnlyList<long> bookIds,
             CancellationToken cancellationToken)
         {
-            var progress = new Progress<UploadProgress>(report =>
+            var sentBeforeBook = 0;
+
+            for (var index = 0; index < group.Group.Books.Count; index++)
             {
-                Uploaded = _completedBeforeGroup + report.FilesUploaded;
-                ProgressValue = Total == 0 ? 0 : Math.Min(1, (double)Uploaded / Total);
-                ProgressText = string.IsNullOrEmpty(report.CurrentFile)
-                    ? "Отправлено " + Uploaded + " из " + Total + "."
-                    : "Отправляем " + System.IO.Path.GetFileName(report.CurrentFile) + " — " +
-                        Uploaded + " из " + Total + ".";
-            });
+                var book = group.Group.Books[index];
+                var pages = book.AllFiles;
+                if (pages.Count == 0)
+                    continue;
 
-            var sent = await _upload
-                .UploadAsync(session, projectId, group.Pages, progress: progress, cancellationToken: cancellationToken)
-                .ConfigureAwait(true);
+                var itemId = index < bookIds.Count ? bookIds[index] : 0;
+                var offset = _completedBeforeGroup + sentBeforeBook;
 
-            // The count the site reports is the truth, whether or not a progress report made it
-            // here first: a screen that only trusted callbacks would show zero after a silent run.
-            Uploaded = _completedBeforeGroup + sent.Session.FilesUploaded;
-            _completedBeforeGroup = Uploaded;
+                var progress = new Progress<UploadProgress>(report =>
+                {
+                    Uploaded = offset + report.FilesUploaded;
+                    ProgressValue = Total == 0 ? 0 : Math.Min(1, (double)Uploaded / Total);
+                    ProgressText = string.IsNullOrEmpty(report.CurrentFile)
+                        ? "Отправлено " + Uploaded + " из " + Total + "."
+                        : "Отправляем " + System.IO.Path.GetFileName(report.CurrentFile) + " — " +
+                            Uploaded + " из " + Total + ".";
+                });
+
+                var sent = await _upload
+                    .UploadAsync(
+                        session,
+                        projectId,
+                        pages,
+                        progress: progress,
+                        cancellationToken: cancellationToken,
+                        projectItemId: itemId)
+                    .ConfigureAwait(true);
+
+                // The count the site reports is the truth, whether or not a progress report made
+                // it here first: a screen that only trusted callbacks would show zero after a
+                // silent run.
+                sentBeforeBook += sent.Session.FilesUploaded;
+                Uploaded = _completedBeforeGroup + sentBeforeBook;
+                _completedBeforeGroup = Uploaded;
+
+                if (sent.IsComplete)
+                    continue;
+
+                var failed = new UploadGroupResult(
+                    group.Number,
+                    projectId,
+                    sentBeforeBook,
+                    group.Pages.Count,
+                    sent.Error is null ? Array.Empty<string>() : new[] { sent.Error });
+
+                return (failed, StopOf(sent));
+            }
 
             var result = new UploadGroupResult(
                 group.Number,
                 projectId,
-                sent.Session.FilesUploaded,
+                sentBeforeBook,
                 group.Pages.Count,
-                sent.Error is null ? Array.Empty<string>() : new[] { sent.Error });
+                Array.Empty<string>());
 
-            if (sent.IsComplete)
-                return (result, null);
+            return (result, null);
+        }
 
+        /// <summary>Why a book of the group stopped, in terms of the screen.</summary>
+        private StopReason StopOf(BookUploadResult sent)
+        {
             if (sent.NeedsSignIn)
             {
                 // The token the screen holds is the one the site just refused, so it is dropped
@@ -218,18 +268,18 @@ namespace PhotoBook.Presentation.ViewModels
 
                 NeedsSignIn?.Invoke(this, EventArgs.Empty);
 
-                return (result, new StopReason(UploadStep.Stopped, sent.Error ?? "Нужно войти заново: сеанс истёк."));
+                return new StopReason(UploadStep.Stopped, sent.Error ?? "Нужно войти заново: сеанс истёк.");
             }
 
-            return (result, sent.WasCancelled
+            return sent.WasCancelled
                 ? new StopReason(UploadStep.Stopped, "Загрузка остановлена. Уже отправленное осталось на сайте.")
-                : new StopReason(UploadStep.Stopped, sent.Error ?? "Сайт не принял файл."));
+                : new StopReason(UploadStep.Stopped, sent.Error ?? "Сайт не принял файл.");
         }
 
-        /// <summary>The groups that can be sent now: one book, at least one page.</summary>
+        /// <summary>The groups that can be sent now: at least one book with at least one page.</summary>
         private IReadOnlyList<GroupRequest> Requests() =>
             _groups
-                .Where(group => group.Group.Books.Count == 1 && group.Pages.Count > 0)
+                .Where(group => group.Group.Books.Count > 0 && group.Pages.Count > 0)
                 .Select(group => new GroupRequest(group.Group, group.Request, group.Price))
                 .ToList();
 

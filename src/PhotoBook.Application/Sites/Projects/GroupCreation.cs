@@ -29,8 +29,12 @@ namespace PhotoBook.Application.Sites.Projects
         OrderGroup Group,
         GroupCreationState State,
         long ProjectId,
-        string? Error)
+        string? Error,
+        IReadOnlyList<long>? ItemIds = null)
     {
+        /// <summary>The site's number for each book of the group, in the group's order.</summary>
+        public IReadOnlyList<long> BookIds => ItemIds ?? Array.Empty<long>();
+
         /// <summary>Whether the site holds the project now.</summary>
         public bool HasProject => State != GroupCreationState.Failed;
     }

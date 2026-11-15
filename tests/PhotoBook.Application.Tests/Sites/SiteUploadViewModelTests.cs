@@ -502,6 +502,7 @@ namespace PhotoBook.Application.Tests.Sites
                 IReadOnlyList<PageFile> files,
                 int? alreadyUploaded = null,
                 IProgress<UploadProgress>? progress = null,
+                long projectItemId = 0,
                 CancellationToken cancellationToken = default)
             {
                 Calls.Add(projectId);

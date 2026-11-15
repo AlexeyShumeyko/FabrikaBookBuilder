@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using PhotoBook.Application;
@@ -85,12 +86,20 @@ namespace PhotoBook.Application.Sites.Projects
                     // The parameters are written again for a project found in the record: a run
                     // that stopped before naming them left exactly such a project behind, and
                     // naming them twice costs one request and changes nothing.
+                    var knownBooks = await BookIdsAsync(session, known, group.Group.Books.Count, null, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    var knownNamed = knownBooks.Error is null
+                        ? await SetUpAsync(session, known, group, cancellationToken).ConfigureAwait(false)
+                        : null;
+
                     outcomes.Add(new GroupCreation(
                         number,
                         group.Group,
                         GroupCreationState.AlreadyCreated,
                         known,
-                        await SetUpAsync(session, known, group, cancellationToken).ConfigureAwait(false)));
+                        Join(knownBooks.Error, knownNamed),
+                        knownBooks.Items));
                     continue;
                 }
 
@@ -122,7 +131,13 @@ namespace PhotoBook.Application.Sites.Projects
                     Source,
                     $"Проект {project.Id} создан: книг {group.Group.Books.Count}.");
 
-                var named = await SetUpAsync(session, project.Id, group, cancellationToken).ConfigureAwait(false);
+                var books = await BookIdsAsync(session, project.Id, group.Group.Books.Count, project, cancellationToken)
+                    .ConfigureAwait(false);
+
+                var named = books.Error is null
+                    ? await SetUpAsync(session, project.Id, group, cancellationToken).ConfigureAwait(false)
+                    : null;
+
                 var notRecorded = remembered.IsSuccess
                     ? null
                     : "Проект создан, но запись об этом не сохранилась — при повторной отправке он может создаться снова.";
@@ -132,10 +147,82 @@ namespace PhotoBook.Application.Sites.Projects
                     group.Group,
                     GroupCreationState.Created,
                     project.Id,
-                    Join(notRecorded, named)));
+                    Join(notRecorded, Join(books.Error, named)),
+                    books.Items));
             }
 
             return new ProjectCreationPlan(outcomes);
+        }
+
+        /// <summary>
+        /// The site's number for every book of the group, adding the ones the project lacks.
+        /// </summary>
+        /// <remarks>
+        /// The site creates a project with one book, so a group of three needs two more. Adding
+        /// them one position at a time is the only way the site offers, and a book that did not
+        /// arrive is reported rather than skipped: a project with fewer books would be priced
+        /// for a group it does not hold.
+        /// </remarks>
+        private async Task<(IReadOnlyList<long> Items, string? Error)> BookIdsAsync(
+            SiteSession session,
+            long projectId,
+            int books,
+            SiteProject? created,
+            CancellationToken cancellationToken)
+        {
+            var ids = new List<long>(books);
+
+            if (created is not null && created.FirstItemId > 0)
+            {
+                ids.Add(created.FirstItemId);
+            }
+            else
+            {
+                // A project an earlier run made: its books are read back, not guessed.
+                var read = await _projects.ReadAsync(session, projectId, cancellationToken).ConfigureAwait(false);
+
+                if (!read.IsSuccess || read.Value is null)
+                {
+                    return (ids, "Проект уже был создан, но сайт не отдал его книги: " +
+                        (read.Error ?? "без причины") + ". Отправка остановлена.");
+                }
+
+                ids.AddRange(read.Value.Items.Where(item => item.Id > 0).Select(item => item.Id));
+            }
+
+            while (ids.Count < books)
+            {
+                var position = ids.Count + 1;
+                var added = await _projects.AddBookAsync(session, projectId, position, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!added.IsSuccess || added.Value <= 0)
+                {
+                    _journal?.Write(
+                        JournalLevel.Warning,
+                        Source,
+                        $"В проект {projectId} не добавлена книга {position} из {books}: " +
+                        (added.Error ?? "сайт не назвал книгу"));
+
+                    return (ids, $"В проект не удалось добавить книгу {position} из {books}: " +
+                        (added.Error ?? "сайт не назвал книгу") + ".");
+                }
+
+                ids.Add(added.Value);
+
+                _journal?.Write(
+                    JournalLevel.Information,
+                    Source,
+                    $"В проект {projectId} добавлена книга {position} из {books}: {added.Value}.");
+            }
+
+            if (ids.Count > books)
+            {
+                return (ids.Take(books).ToList(),
+                    $"В проекте на сайте больше книг, чем в группе: {ids.Count} вместо {books}. Отправка остановлена.");
+            }
+
+            return (ids, null);
         }
 
         /// <summary>

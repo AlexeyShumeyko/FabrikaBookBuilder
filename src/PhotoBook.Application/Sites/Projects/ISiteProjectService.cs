@@ -29,6 +29,20 @@ namespace PhotoBook.Application.Sites.Projects
             CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Adds a book to an existing project, which is how one project holds a whole group.
+        /// </summary>
+        /// <param name="position">The book's place in the project, counting from one.</param>
+        /// <remarks>
+        /// The site creates a project with exactly one book, so a group of three needs two more.
+        /// The number it answers with is what every file of that book is uploaded against.
+        /// </remarks>
+        Task<Result<long>> AddBookAsync(
+            SiteSession session,
+            long projectId,
+            int position,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Names the project's parameters and its price, which the site keeps as given.
         /// </summary>
         /// <remarks>

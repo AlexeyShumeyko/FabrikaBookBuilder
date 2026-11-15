@@ -26,7 +26,7 @@ namespace PhotoBook.Application.Tests.Sites
             using var page = new TempPage();
             var handler = new CapturingHandler();
 
-            var sent = await Service(handler).UploadAsync(Session, 527733, 2, page.Path);
+            var sent = await Service(handler).UploadAsync(Session, 527733, 0, 2, page.Path);
 
             Assert.True(sent.IsAccepted);
             Assert.Contains("name=projectId", handler.Body);
@@ -38,6 +38,19 @@ namespace PhotoBook.Application.Tests.Sites
         }
 
         [Fact]
+        public async Task NamesTheBookTheFileBelongsTo()
+        {
+            using var page = new TempPage();
+            var handler = new CapturingHandler();
+
+            var sent = await Service(handler).UploadAsync(Session, 527733, 65075, 2, page.Path);
+
+            Assert.True(sent.IsAccepted);
+            Assert.Contains("name=projectItemId", handler.Body);
+            Assert.Contains("65075", handler.Body);
+        }
+
+        [Fact]
         public async Task AFileTheSiteCannotReadIsNotSuccessEvenWithA200()
         {
             using var page = new TempPage();
@@ -45,7 +58,7 @@ namespace PhotoBook.Application.Tests.Sites
                 HttpStatusCode.OK,
                 "{\"corrupted_file\":\"The file is corrupted.\"}"));
 
-            var sent = await Service(handler).UploadAsync(Session, 527733, 0, page.Path);
+            var sent = await Service(handler).UploadAsync(Session, 527733, 0, 0, page.Path);
 
             Assert.False(sent.IsAccepted);
             Assert.Equal(UploadFailureKind.File, sent.Kind);
@@ -58,7 +71,7 @@ namespace PhotoBook.Application.Tests.Sites
             using var page = new TempPage();
             var handler = new StubHttpMessageHandler(_ => Json(HttpStatusCode.Unauthorized, "{}"));
 
-            var sent = await Service(handler).UploadAsync(Session, 527733, 0, page.Path);
+            var sent = await Service(handler).UploadAsync(Session, 527733, 0, 0, page.Path);
 
             Assert.Equal(UploadFailureKind.Unauthorized, sent.Kind);
             Assert.True(sent.NeedsSignIn);
@@ -72,7 +85,7 @@ namespace PhotoBook.Application.Tests.Sites
             using var page = new TempPage();
             var handler = new StubHttpMessageHandler(_ => Json(HttpStatusCode.UnprocessableEntity, "{}"));
 
-            var sent = await Service(handler).UploadAsync(Session, 527733, 0, page.Path);
+            var sent = await Service(handler).UploadAsync(Session, 527733, 0, 0, page.Path);
 
             Assert.Equal(UploadFailureKind.Parameters, sent.Kind);
             Assert.False(sent.CanResume);
@@ -84,7 +97,7 @@ namespace PhotoBook.Application.Tests.Sites
             using var page = new TempPage();
             var handler = new StubHttpMessageHandler(_ => Json(HttpStatusCode.TooManyRequests, "{}"));
 
-            var sent = await Service(handler).UploadAsync(Session, 527733, 0, page.Path);
+            var sent = await Service(handler).UploadAsync(Session, 527733, 0, 0, page.Path);
 
             Assert.Equal(UploadFailureKind.RateLimited, sent.Kind);
             Assert.True(sent.CanResume);
@@ -99,7 +112,7 @@ namespace PhotoBook.Application.Tests.Sites
             using var page = new TempPage();
             var handler = new StubHttpMessageHandler(_ => Json(HttpStatusCode.ServiceUnavailable, "{}"));
 
-            var sent = await Service(handler).UploadAsync(Session, 527733, 0, page.Path);
+            var sent = await Service(handler).UploadAsync(Session, 527733, 0, 0, page.Path);
 
             Assert.Equal(UploadFailureKind.ServerUnavailable, sent.Kind);
             Assert.True(sent.CanResume);
@@ -111,7 +124,7 @@ namespace PhotoBook.Application.Tests.Sites
             using var page = new TempPage();
             var handler = new StubHttpMessageHandler(_ => throw new HttpRequestException("no route"));
 
-            var sent = await Service(handler).UploadAsync(Session, 527733, 0, page.Path);
+            var sent = await Service(handler).UploadAsync(Session, 527733, 0, 0, page.Path);
 
             Assert.Equal(UploadFailureKind.ConnectionLost, sent.Kind);
             Assert.True(sent.CanResume);

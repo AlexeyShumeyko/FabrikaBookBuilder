@@ -38,6 +38,7 @@ namespace PhotoBook.Infrastructure.Sites
         public async Task<PageUpload> UploadAsync(
             SiteSession session,
             long projectId,
+            long projectItemId,
             int position,
             string filePath,
             CancellationToken cancellationToken = default)
@@ -58,6 +59,12 @@ namespace PhotoBook.Infrastructure.Sites
                 ["projectId"] = projectId.ToString(CultureInfo.InvariantCulture),
                 ["position"] = position.ToString(CultureInfo.InvariantCulture)
             };
+
+            // Which book of the project the file belongs to. Without it the site puts every
+            // file into the first book and replaces whatever already sits at that position, so
+            // a project of three books would end up holding one.
+            if (projectItemId > 0)
+                fields["projectItemId"] = projectItemId.ToString(CultureInfo.InvariantCulture);
 
             var response = await client
                 .PostMultipartAsync(UploadPath, fields, filePath, session.AccessToken, cancellationToken)

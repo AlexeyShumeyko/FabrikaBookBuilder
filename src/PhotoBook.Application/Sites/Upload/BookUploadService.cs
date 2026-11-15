@@ -57,6 +57,7 @@ namespace PhotoBook.Application.Sites.Upload
             IReadOnlyList<PageFile> files,
             int? alreadyUploaded = null,
             IProgress<UploadProgress>? progress = null,
+            long projectItemId = 0,
             CancellationToken cancellationToken = default)
         {
             if (session is null)
@@ -66,7 +67,9 @@ namespace PhotoBook.Application.Sites.Upload
             if (projectId <= 0)
                 throw new ArgumentOutOfRangeException(nameof(projectId), "У проекта нет номера.");
 
-            var start = alreadyUploaded ?? _accepted?.Accepted(session.Region, projectId, files.Count) ?? 0;
+            var start = alreadyUploaded
+                ?? _accepted?.Accepted(session.Region, projectId, projectItemId, files.Count)
+                ?? 0;
             var uploaded = Math.Clamp(start, 0, files.Count);
             string? notice = null;
 
@@ -97,7 +100,7 @@ namespace PhotoBook.Application.Sites.Upload
                 progress?.Report(new UploadProgress(files.Count, uploaded, file.Path));
 
                 var page = await _upload
-                    .UploadAsync(session, projectId, position, file.Path, cancellationToken)
+                    .UploadAsync(session, projectId, projectItemId, position, file.Path, cancellationToken)
                     .ConfigureAwait(false);
 
                 if (!page.IsAccepted)
@@ -119,12 +122,13 @@ namespace PhotoBook.Application.Sites.Upload
                 }
 
                 uploaded = position + 1;
-                notice = Remember(session.Region, projectId, files.Count, uploaded) ?? notice;
+                notice = Remember(session.Region, projectId, projectItemId, files.Count, uploaded) ?? notice;
 
                 progress?.Report(new UploadProgress(files.Count, uploaded, string.Empty));
             }
 
-            if (uploaded >= files.Count && _accepted is not null && !_accepted.Forget(session.Region, projectId).IsSuccess)
+            if (uploaded >= files.Count && _accepted is not null &&
+                !_accepted.Forget(session.Region, projectId, projectItemId).IsSuccess)
             {
                 notice = "Книга загружена, но запись о ней не удалилась — при следующей отправке она может быть пропущена.";
             }
@@ -146,12 +150,12 @@ namespace PhotoBook.Application.Sites.Upload
         }
 
         /// <summary>Writes down how far the book got, or says why it could not.</summary>
-        private string? Remember(SiteRegion region, long projectId, int total, int uploaded)
+        private string? Remember(SiteRegion region, long projectId, long itemId, int total, int uploaded)
         {
             if (_accepted is null)
                 return null;
 
-            var written = _accepted.Remember(new UploadSession(region, projectId, total, uploaded));
+            var written = _accepted.Remember(new UploadSession(region, projectId, total, uploaded, itemId));
 
             return written.IsSuccess
                 ? null

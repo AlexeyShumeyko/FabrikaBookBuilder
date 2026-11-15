@@ -29,8 +29,12 @@ namespace PhotoBook.Infrastructure.Sites
     {
         private const string Source = "site-uploads";
 
-        /// <summary>Bumped when the stored shape changes; older files are simply not read.</summary>
-        internal const int SchemaVersion = 1;
+        /// <summary>
+        /// Bumped when the stored shape changes; older files are simply not read. Version 2
+        /// keys a record by the book as well as the project, because one project now holds
+        /// several books and a count that ignored the book would resume the wrong one.
+        /// </summary>
+        internal const int SchemaVersion = 2;
 
         private static readonly JsonSerializerOptions Options = new()
         {
@@ -57,14 +61,14 @@ namespace PhotoBook.Infrastructure.Sites
             "SiteUploads",
             "accepted.json");
 
-        public int Accepted(SiteRegion region, long projectId, int filesTotal)
+        public int Accepted(SiteRegion region, long projectId, long itemId, int filesTotal)
         {
             if (region is null || projectId <= 0)
                 return 0;
 
             lock (_gate)
             {
-                return Read().TryGetValue(Key(region, projectId), out var stored) &&
+                return Read().TryGetValue(Key(region, projectId, itemId), out var stored) &&
                     stored.FilesTotal == filesTotal
                     ? Math.Clamp(stored.FilesUploaded, 0, filesTotal)
                     : 0;
@@ -82,14 +86,14 @@ namespace PhotoBook.Infrastructure.Sites
             lock (_gate)
             {
                 var stored = Read();
-                stored[Key(session.Region, session.SiteProjectId)] =
+                stored[Key(session.Region, session.SiteProjectId, session.SiteItemId)] =
                     new Acceptance(session.FilesTotal, session.FilesUploaded);
 
                 return Write(stored, "Не удалось сохранить, сколько страниц уже загружено.");
             }
         }
 
-        public Result Forget(SiteRegion region, long projectId)
+        public Result Forget(SiteRegion region, long projectId, long itemId)
         {
             if (region is null || projectId <= 0)
                 return Result.Ok();
@@ -97,15 +101,16 @@ namespace PhotoBook.Infrastructure.Sites
             lock (_gate)
             {
                 var stored = Read();
-                if (!stored.Remove(Key(region, projectId)))
+                if (!stored.Remove(Key(region, projectId, itemId)))
                     return Result.Ok();
 
                 return Write(stored, "Не удалось удалить запись о законченной загрузке.");
             }
         }
 
-        private static string Key(SiteRegion region, long projectId) =>
-            region.Code + ":" + projectId.ToString(CultureInfo.InvariantCulture);
+        private static string Key(SiteRegion region, long projectId, long itemId) =>
+            region.Code + ":" + projectId.ToString(CultureInfo.InvariantCulture) +
+            (itemId > 0 ? ":" + itemId.ToString(CultureInfo.InvariantCulture) : string.Empty);
 
         private Result Write(Dictionary<string, Acceptance> stored, string failure)
         {

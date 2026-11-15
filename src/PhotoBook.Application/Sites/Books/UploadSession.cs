@@ -22,7 +22,8 @@ namespace PhotoBook.Application.Sites.Books
         SiteRegion Region,
         long SiteProjectId,
         int FilesTotal,
-        int FilesUploaded)
+        int FilesUploaded,
+        long SiteItemId = 0)
     {
         /// <summary>Files still to send.</summary>
         public int Remaining => Math.Max(0, FilesTotal - FilesUploaded);

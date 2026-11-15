@@ -43,6 +43,18 @@ namespace PhotoBook.Application.Tests.Sites.Upload
         }
 
         [Fact]
+        public async Task SendsEveryPageAgainstTheBookTheProjectHolds()
+        {
+            var upload = new StubUpload();
+
+            var result = await new BookUploadService(upload)
+                .UploadAsync(Session, 527733, Pages(3), projectItemId: 65075);
+
+            Assert.True(result.IsComplete);
+            Assert.All(upload.ItemIds, id => Assert.Equal(65075, id));
+        }
+
+        [Fact]
         public async Task StartsAfterThePagesTheSiteAlreadyHas()
         {
             var upload = new StubUpload();
@@ -262,7 +274,7 @@ namespace PhotoBook.Application.Tests.Sites.Upload
 
             internal int Forgotten { get; private set; }
 
-            public int Accepted(SiteRegion region, long projectId, int filesTotal) => _start;
+            public int Accepted(SiteRegion region, long projectId, long itemId, int filesTotal) => _start;
 
             public Result Remember(UploadSession session)
             {
@@ -273,7 +285,7 @@ namespace PhotoBook.Application.Tests.Sites.Upload
                 return Result.Ok();
             }
 
-            public Result Forget(SiteRegion region, long projectId)
+            public Result Forget(SiteRegion region, long projectId, long itemId)
             {
                 Forgotten++;
                 return Result.Ok();
@@ -303,15 +315,19 @@ namespace PhotoBook.Application.Tests.Sites.Upload
 
             internal List<string> Paths { get; } = new();
 
+            internal List<long> ItemIds { get; } = new();
+
             public Task<PageUpload> UploadAsync(
                 SiteSession session,
                 long projectId,
+                long projectItemId,
                 int position,
                 string filePath,
                 CancellationToken cancellationToken = default)
             {
                 Positions.Add(position);
                 Paths.Add(filePath);
+                ItemIds.Add(projectItemId);
 
                 if (position == _failAt)
                     return Task.FromResult(PageUpload.Refused(_refusal, _error));

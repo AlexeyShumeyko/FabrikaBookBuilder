@@ -26,7 +26,9 @@ namespace PhotoBook.Application.Tests.Sites.Projects
                 new ProductVariant(variantId, "21x30", new List<ProductOption>(), new List<ProductPart>()),
                 PagePartId: 94,
                 new List<SelectedPart> { new(94, new PartSelection(new Dictionary<long, long>(), 10)) },
-                files.Select(path => new PageFile(path, 1024)).ToList());
+                files.Select(path => new PageFile(path, 1024)).ToList(),
+                CoverPartId: 93,
+                CoverFile: new PageFile("cover.jpg", 1024));
 
         private static GroupRequest Group(params Book[] books) =>
             new(
@@ -122,6 +124,57 @@ namespace PhotoBook.Application.Tests.Sites.Projects
         }
 
         [Fact]
+        public async Task FillsOneProjectWithEveryBookOfTheGroup()
+        {
+            var projects = new StubProjects(1001);
+            var books = new[] { Book(9255), Book(9255), Book(9255) };
+
+            var plan = await new ProjectCreationService(projects, new MemoryCreated())
+                .CreateAsync(Session, new[] { PricedGroup(3000m, books) });
+
+            var created = Assert.Single(plan.Groups);
+            Assert.Equal(new long[] { 5000, 7000, 7001 }, created.BookIds);
+            Assert.Equal(new[] { (1001L, 2), (1001L, 3) }, projects.Added.ToArray());
+            Assert.Equal(3, Assert.Single(projects.SetUps).Parameters.Books);
+            Assert.Equal(3000m, Assert.Single(projects.SetUps).Parameters.Price);
+        }
+
+        [Fact]
+        public async Task StopsAGroupWhenABookCannotBeAdded()
+        {
+            var projects = new StubProjects(1001) { AddBookFails = true };
+
+            var plan = await new ProjectCreationService(projects, new MemoryCreated())
+                .CreateAsync(Session, new[] { PricedGroup(3000m, Book(9255), Book(9255)) });
+
+            var group = Assert.Single(plan.Groups);
+            Assert.True(group.HasProject);
+            Assert.Contains("добавить книгу", group.Error, StringComparison.Ordinal);
+            Assert.Empty(projects.SetUps);
+        }
+
+        /// <summary>
+        /// A project an earlier run made: its books are read back so the pages land in them
+        /// instead of being stacked on the first one.
+        /// </summary>
+        [Fact]
+        public async Task ReadsTheBooksOfAProjectFoundInTheRecord()
+        {
+            var projects = new StubProjects(1001) { ItemsInExistingProject = 2 };
+            var created = new MemoryCreated();
+            var group = Group(Book(9255), Book(9255));
+            created.Remember(GroupKey.For(SiteRegion.Com, group.Group.Books), 1001);
+
+            var plan = await new ProjectCreationService(projects, created)
+                .CreateAsync(Session, new[] { group });
+
+            var sent = Assert.Single(plan.Groups);
+            Assert.Equal(new long[] { 9001, 9002 }, sent.BookIds);
+            Assert.Empty(projects.Added);
+            Assert.Null(sent.Error);
+        }
+
+        [Fact]
         public async Task NamesTheParametersAndThePriceRightAfterCreatingTheProject()
         {
             var projects = new StubProjects(1001);
@@ -190,7 +243,30 @@ namespace PhotoBook.Application.Tests.Sites.Projects
 
             internal bool SetUpFails { get; init; }
 
+            private long _nextItemId = 7000;
+
             internal List<CreateProjectRequest> Asked { get; } = new();
+
+            public Task<Result<long>> AddBookAsync(
+                SiteSession session,
+                long projectId,
+                int position,
+                CancellationToken cancellationToken = default)
+            {
+                Added.Add((projectId, position));
+
+                if (AddBookFails)
+                    return Task.FromResult(Result<long>.Fail("Сайт не добавил книгу."));
+
+                var id = _nextItemId++;
+                return Task.FromResult(Result<long>.Ok(id));
+            }
+
+            internal List<(long ProjectId, int Position)> Added { get; } = new();
+
+            internal bool AddBookFails { get; init; }
+
+            internal long ItemsInExistingProject { get; init; } = 1;
 
             public Task<Result> SetUpAsync(
                 SiteSession session,
@@ -211,8 +287,15 @@ namespace PhotoBook.Application.Tests.Sites.Projects
             public Task<Result<SiteProjectSnapshot>> ReadAsync(
                 SiteSession session,
                 long projectId,
-                CancellationToken cancellationToken = default) =>
-                throw new NotSupportedException("Creation never reads a project back here.");
+                CancellationToken cancellationToken = default)
+            {
+                var items = Enumerable.Range(1, (int)ItemsInExistingProject)
+                    .Select(index => new SiteProjectItem(9000 + index, null, 1, Array.Empty<SiteProjectPage>()))
+                    .ToList();
+
+                return Task.FromResult(Result<SiteProjectSnapshot>.Ok(
+                    new SiteProjectSnapshot(projectId, 4494, string.Empty, "/layflat", true, items)));
+            }
 
             public Task<Result<SiteProject>> CreateAsync(
                 SiteSession session,
@@ -225,7 +308,7 @@ namespace PhotoBook.Application.Tests.Sites.Projects
                 var answer = _answers.Count > 0 ? _answers.Dequeue() : null;
 
                 return Task.FromResult(answer is { } id
-                    ? Result<SiteProject>.Ok(new SiteProject(id, request.ProductId, string.Empty))
+                    ? Result<SiteProject>.Ok(new SiteProject(id, request.ProductId, string.Empty, 5000))
                     : Result<SiteProject>.Fail("Сайт не создал проект."));
             }
         }

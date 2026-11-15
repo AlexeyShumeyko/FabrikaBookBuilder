@@ -23,6 +23,7 @@ namespace PhotoBook.Application.Sites.Upload
         Task<PageUpload> UploadAsync(
             SiteSession session,
             long projectId,
+            long projectItemId,
             int position,
             string filePath,
             CancellationToken cancellationToken = default);
