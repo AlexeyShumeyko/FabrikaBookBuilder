@@ -34,6 +34,7 @@ namespace PhotoBook.Application
             services.AddSingleton<IEditHistory, EditHistory>();
             services.AddSingleton<IProjectListService, ProjectListService>();
             services.AddSingleton<IBookFileInspector, BookFileInspector>();
+            services.AddSingleton<OrderFileCheckService>();
             services.AddSingleton<IGroupQuoteService, GroupQuoteService>();
             services.AddSingleton<OrderPriceService>();
             services.AddSingleton<IProjectCreationService, ProjectCreationService>();

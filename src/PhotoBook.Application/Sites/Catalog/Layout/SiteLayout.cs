@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace PhotoBook.Application.Sites.Catalog.Layout
 {
@@ -26,6 +27,45 @@ namespace PhotoBook.Application.Sites.Catalog.Layout
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// The pixel size a page of this part has to be, for the choices a book actually made.
+        /// </summary>
+        /// <remarks>
+        /// A cover's size depends on which element of an option was picked - a thicker spine for
+        /// cardboard - so the book's own selection is what names the index. Trying the selection
+        /// keeps the rule in the site's document: the program does not know which option sizes a
+        /// page, and does not have to.
+        /// </remarks>
+        public PixelSize? RequiredPixels(
+            long partId,
+            int quantity,
+            IReadOnlyDictionary<long, long>? elements)
+        {
+            var part = Part(partId);
+            if (part is null)
+                return null;
+
+            if (part.FixedSize is not null || elements is null)
+                return RequiredPixels(partId, quantity, null, null);
+
+            foreach (var condition in part.SizeIndexes)
+            {
+                foreach (var chosen in elements)
+                {
+                    if (!condition.Describes(
+                            chosen.Key.ToString(CultureInfo.InvariantCulture),
+                            chosen.Value.ToString(CultureInfo.InvariantCulture)))
+                        continue;
+
+                    var entry = part.EntryFor(condition.IndexFor(quantity));
+                    if (entry is not null)
+                        return PageGeometry.Required(entry.Size, entry.Bleeds, ResolutionDpi);
+                }
+            }
+
+            return RequiredPixels(partId, quantity, null, null);
         }
 
         /// <summary>

@@ -1,0 +1,232 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using PhotoBook.Application.Sites;
+using PhotoBook.Application.Sites.Books;
+using PhotoBook.Application.Sites.Books.Files;
+using PhotoBook.Application.Sites.Catalog;
+using PhotoBook.Application.Sites.Catalog.Layout;
+using PhotoBook.Application.Sites.Projects;
+using PhotoBook.Application.Sites.Upload;
+
+namespace PhotoBook.Application.Tests.Sites.Books.Files
+{
+    /// <summary>
+    /// The batch check of 4.3 reads every book of the plan in turn, keeps going past a book the
+    /// site could not describe, and stops when the customer cancels. Each of those is a decision
+    /// the screen relies on, so each is pinned here rather than left to the window.
+    /// </summary>
+    public class OrderFileCheckTests
+    {
+        private const long Product = 4494;
+        private const long Layflat = 9255;
+        private const long PagePart = 94;
+
+        [Fact]
+        public async Task BlocksABookWhosePhotoIsSmallerThanThePage()
+        {
+            var book = Group(PageFile("1.jpg"), PageFile("2.jpg"));
+
+            var check = await Service(SpreadLayout(410, 290), new PixelSize(800, 600))
+                .CheckAsync(new[] { book });
+
+            var checkedBook = Assert.Single(check.Books);
+            Assert.Equal(2, checkedBook.Alerts.Count);
+            Assert.All(checkedBook.Alerts, alert => Assert.Equal(FileAlertLevel.Blocking, alert.Level));
+            Assert.False(check.CanSend);
+            Assert.Equal(2, check.BlockingCount);
+        }
+
+        [Fact]
+        public async Task SaysNothingWhenEveryPhotoIsThePage()
+        {
+            var layout = SpreadLayout(410, 290);
+            var rule = PageImageRule.For(layout.RequiredPixels(PagePart, 10, null)!, 0, layout.ResolutionDpi);
+
+            var check = await Service(layout, rule.Required).CheckAsync(new[] { Group(PageFile("1.jpg")) });
+
+            Assert.True(check.CanSend);
+            Assert.Empty(Assert.Single(check.Books).Alerts);
+        }
+
+        [Fact]
+        public async Task ChecksTheOtherBooksWhenOneFormatsGeometryIsMissing()
+        {
+            var missing = Group(PageFile("1.jpg"));
+            var present = Group(PageFile("2.jpg"));
+
+            var check = await ServiceFor(
+                call => call == 1 ? null : SpreadLayout(410, 290),
+                new PixelSize(4913, 3495))
+                .CheckAsync(new[] { missing, present });
+
+            Assert.Equal(2, check.Books.Count);
+            Assert.Equal(FileAlertLevel.Blocking, Assert.Single(check.Books[0].Alerts).Level);
+            Assert.DoesNotContain(check.Books[1].Alerts, alert => alert.Level == FileAlertLevel.Blocking);
+            Assert.False(check.CanSend);
+        }
+
+        [Fact]
+        public async Task ReportsProgressForEveryBookAndFinishesOnTheLast()
+        {
+            var reports = new List<FileCheckProgress>();
+            var layout = SpreadLayout(410, 290);
+            var rule = PageImageRule.For(layout.RequiredPixels(PagePart, 10, null)!, 0, layout.ResolutionDpi);
+
+            await Service(layout, rule.Required).CheckAsync(
+                new[] { Group(PageFile("1.jpg")), Group(PageFile("2.jpg")) },
+                new ImmediateProgress(reports));
+
+            Assert.Equal(3, reports.Count);
+            Assert.Equal((0, 1), (reports[0].BooksDone, reports[0].BookNumber));
+            Assert.Equal((1, 2), (reports[1].BooksDone, reports[1].BookNumber));
+            Assert.Equal((2, 2), (reports[2].BooksDone, reports[2].BooksTotal));
+        }
+
+        [Fact]
+        public async Task StopsBeforeTheFirstBookWhenTheCustomerCancels()
+        {
+            var inspector = new StubInspector(new PixelSize(4913, 3495));
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+                new OrderFileCheckService(new StubCatalog(SpreadLayout(410, 290)), inspector)
+                    .CheckAsync(new[] { Group(PageFile("1.jpg")) }, null, new CancellationToken(true)));
+
+            Assert.Equal(0, inspector.Calls);
+        }
+
+        [Fact]
+        public async Task AsksTheSiteForTheGeometryOfEachBookOnce()
+        {
+            var catalog = new StubCatalog(SpreadLayout(410, 290));
+            var inspector = new StubInspector(new PixelSize(4913, 3495));
+
+            await new OrderFileCheckService(catalog, inspector)
+                .CheckAsync(new[] { Group(PageFile("1.jpg")), Group(PageFile("2.jpg")) });
+
+            Assert.Equal(2, catalog.Calls);
+        }
+
+        private static OrderFileCheckService Service(SiteLayout layout, PixelSize size) =>
+            new(new StubCatalog(layout), new StubInspector(size));
+
+        private static OrderFileCheckService ServiceFor(
+            Func<int, SiteLayout?> byCall,
+            PixelSize size) =>
+            new(new StubCatalog(null, byCall), new StubInspector(size));
+
+        /// <summary>A book whose page part is 410×290 mm at 300 dpi with ten spreads.</summary>
+        private static SiteLayout SpreadLayout(double widthMm, double heightMm)
+        {
+            var page = new PartLayout(
+                PagePart,
+                "Разворот",
+                Array.Empty<PageSizeRange>(),
+                new PageSize(widthMm, heightMm),
+                PrintMargins.None,
+                Array.Empty<SizeIndexCondition>(),
+                PrintMargins.None,
+                0);
+
+            return new SiteLayout(Product, Layflat, 300, new[] { page }, 37556);
+        }
+
+        private static UploadGroup Group(params PageFile[] pages)
+        {
+            var book = new Book(
+                new SiteProduct(Product, "layflat", "Лайфлат", "photo-book", new List<ProductVariant>()),
+                new ProductVariant(Layflat, "21x30", new List<ProductOption>(), new List<ProductPart>()),
+                PagePartId: PagePart,
+                new List<SelectedPart> { new(PagePart, new PartSelection(new Dictionary<long, long>(), 10)) },
+                pages);
+
+            return new UploadGroup(
+                1,
+                new OrderGroup(SiteRegion.Com, new[] { book }),
+                new CreateProjectRequest(Product, Layflat, 37556),
+                pages);
+        }
+
+        private static PageFile PageFile(string name) => new(@"C:\photos\" + name, 1024);
+
+        private sealed class StubCatalog : ISiteCatalogService
+        {
+            private readonly SiteLayout? _layout;
+            private readonly Func<int, SiteLayout?>? _byCall;
+
+            public StubCatalog(SiteLayout? layout, Func<int, SiteLayout?>? byCall = null)
+            {
+                _layout = layout;
+                _byCall = byCall;
+            }
+
+            public int Calls { get; private set; }
+
+            public Task<Result<SiteLayout>> GetLayoutAsync(
+                SiteRegion region,
+                long productId,
+                long componentId,
+                CancellationToken cancellationToken = default)
+            {
+                Calls++;
+
+                var layout = _byCall is null ? _layout : _byCall(Calls);
+
+                return Task.FromResult(layout is null
+                    ? Result<SiteLayout>.Fail("Сайт не назвал геометрию.")
+                    : Result<SiteLayout>.Ok(layout));
+            }
+
+            public Task<Result<IReadOnlyList<CatalogProduct>>> GetProductsAsync(
+                SiteRegion region,
+                CancellationToken cancellationToken = default) =>
+                throw new NotSupportedException();
+
+            public Task<Result<SiteProduct>> GetFormatAsync(
+                SiteRegion region,
+                long productId,
+                long componentId,
+                CancellationToken cancellationToken = default) =>
+                throw new NotSupportedException();
+
+            public Task<Result<SiteProduct>> GetProductAsync(
+                SiteRegion region,
+                string slug,
+                CancellationToken cancellationToken = default) =>
+                throw new NotSupportedException();
+        }
+
+        private sealed class StubInspector : IBookFileInspector
+        {
+            private readonly PixelSize _size;
+
+            public StubInspector(PixelSize size) => _size = size;
+
+            public int Calls { get; private set; }
+
+            public Task<IReadOnlyList<PageFileFacts>> InspectAsync(
+                IReadOnlyList<PageFile> files,
+                CancellationToken cancellationToken = default)
+            {
+                Calls++;
+
+                var facts = new List<PageFileFacts>(files.Count);
+                foreach (var file in files)
+                    facts.Add(new PageFileFacts(file.Path, Exists: true, _size));
+
+                return Task.FromResult<IReadOnlyList<PageFileFacts>>(facts);
+            }
+        }
+
+        /// <summary>Progress that runs as it is reported, so the order of reports is the order seen.</summary>
+        private sealed class ImmediateProgress : IProgress<FileCheckProgress>
+        {
+            private readonly List<FileCheckProgress> _reports;
+
+            public ImmediateProgress(List<FileCheckProgress> reports) => _reports = reports;
+
+            public void Report(FileCheckProgress value) => _reports.Add(value);
+        }
+    }
+}
