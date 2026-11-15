@@ -96,6 +96,9 @@ namespace PhotoBook.Infrastructure
             // cached is journalled, so a cache that stopped writing is visible rather than silent.
             services.AddSingleton<ISiteCatalogCache, FileSiteCatalogCache>();
 
+            // One product read per installed copy, from the stored document when there is one.
+            services.AddSingleton<ISiteCatalogService, SiteCatalogService>();
+
             return services;
         }
     }
