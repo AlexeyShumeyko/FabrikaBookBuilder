@@ -45,8 +45,9 @@ namespace PhotoBook.Presentation.ViewModels
 
         private IReadOnlyList<OrderBookRow> _books = Array.Empty<OrderBookRow>();
         private IReadOnlyList<FormatChoice> _formats = Array.Empty<FormatChoice>();
+        private readonly SiteOrderUpload _upload;
+
         private CoreProject? _project;
-        private UploadPlan? _plan;
         private string _projectName = string.Empty;
         private int _spreadCount;
         private string _message = string.Empty;
@@ -70,6 +71,9 @@ namespace PhotoBook.Presentation.ViewModels
                 ? new OrderPriceService(files, quotes)
                 : null;
 
+            _upload = new SiteOrderUpload(() => OnPropertyChanged(nameof(CanUpload)));
+            _upload.Requested += (_, _) => UploadRequested?.Invoke(this, EventArgs.Empty);
+
             _parameters = new SiteOrderParameters(catalog, sessions);
             _parameters.Answered += (_, _) => OnAnswerChanged();
             _parameters.Blocks.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasParameters));
@@ -90,7 +94,7 @@ namespace PhotoBook.Presentation.ViewModels
         public event EventHandler? UploadRequested;
 
         /// <summary>The plan the upload screen is to send, once the customer has asked for it.</summary>
-        public UploadPlan? PendingUpload { get; private set; }
+        public UploadPlan? PendingUpload => _upload.Pending;
 
         /// <summary>The books of the order, in the project's order.</summary>
         public IReadOnlyList<OrderBookRow> Books
@@ -196,7 +200,7 @@ namespace PhotoBook.Presentation.ViewModels
         /// Whether the order can be sent: priced, complete and with every book's integration
         /// known. Sending is a write, so nothing but a finished order reaches the button.
         /// </summary>
-        public bool CanUpload => !_isPricing && _plan is { IsComplete: true };
+        public bool CanUpload => !_isPricing && _upload.CanUpload;
 
         /// <summary>How many books still need a format, in words.</summary>
         public string ChosenFormatText
@@ -241,7 +245,7 @@ namespace PhotoBook.Presentation.ViewModels
             ProjectName = string.IsNullOrWhiteSpace(projectName) ? "Проект" : projectName!.Trim();
             SpreadCount = inventory.Books.Sum(book => book.Spreads);
             TotalText = string.Empty;
-            Message = Problems(inventory);
+            Message = ProjectProblems.Of(inventory);
 
             RefreshReadiness();
         }
@@ -316,9 +320,17 @@ namespace PhotoBook.Presentation.ViewModels
             IsPricing = true;
             try
             {
-                var formats = await ReadChosenFormatsAsync(session).ConfigureAwait(true);
-                if (formats is null)
+                var read = await ChosenFormatDocuments
+                    .ReadAsync(_catalog, session.Region, Books.Select(row => row.SelectedFormat))
+                    .ConfigureAwait(true);
+
+                if (!read.IsSuccess || read.Value is null)
+                {
+                    Message = read.Error ?? "Описание формата не открылось.";
                     return;
+                }
+
+                var formats = read.Value;
 
                 foreach (var row in Books)
                     row.ForgetPrice();
@@ -375,48 +387,10 @@ namespace PhotoBook.Presentation.ViewModels
         /// Hands the priced order to the shell, which opens the upload screen. Nothing is sent
         /// until that screen's own button is pressed.
         /// </summary>
-        public void Upload()
-        {
-            if (_plan is not { IsComplete: true })
-                return;
-
-            PendingUpload = _plan;
-            UploadRequested?.Invoke(this, EventArgs.Empty);
-        }
+        public void Upload() => _upload.Request();
 
         /// <summary>Keeps the button and the plan in step with what the page knows.</summary>
-        private void SetPlan(UploadPlan? plan)
-        {
-            _plan = plan;
-            PendingUpload = null;
-            OnPropertyChanged(nameof(CanUpload));
-        }
-
-        private async Task<IReadOnlyList<SiteProduct>?> ReadChosenFormatsAsync(SiteSession session)
-        {
-            var formats = new List<SiteProduct>();
-
-            foreach (var choice in Books
-                         .Select(row => row.SelectedFormat)
-                         .Where(choice => choice is not null)
-                         .Select(choice => choice!)
-                         .DistinctBy(choice => (choice.Product.Id, choice.Format.Id)))
-            {
-                var document = await _catalog!
-                    .GetFormatAsync(session.Region, choice.Product.Id, choice.Format.Id)
-                    .ConfigureAwait(true);
-
-                if (!document.IsSuccess || document.Value is null)
-                {
-                    Message = document.Error ?? "Описание формата не открылось.";
-                    return null;
-                }
-
-                formats.Add(document.Value);
-            }
-
-            return formats;
-        }
+        private void SetPlan(UploadPlan? plan) => _upload.Offer(plan);
 
         private void ApplyFormats(IReadOnlyList<CatalogProduct> products)
         {
@@ -497,34 +471,5 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(CanPrice));
         }
 
-        /// <summary>Why the order cannot go, or the note that says what comes next.</summary>
-        private string Problems(BookInventory inventory)
-        {
-            var lines = new List<string>();
-
-            foreach (var book in inventory.Books.Where(book => !book.CanUpload))
-            {
-                lines.Add(book.Name + ": " +
-                    (book.Condition == BookCondition.NoPhotos
-                        ? "нет ни одной фотографии."
-                        : "заполнено " + book.Photos + " из " + book.Slots + " слотов."));
-            }
-
-            if (inventory.Books.Count == 0)
-                lines.Add("В проекте нет ни одной книги.");
-
-            if (inventory.LeftoverPhotos > 0)
-            {
-                lines.Add("Фотографий вне книги: " + inventory.LeftoverPhotos +
-                    " — они не попадут на сайт.");
-            }
-
-            if (lines.Count == 0)
-            {
-                lines.Add("Выберите формат для каждой книги — цена считается по нему.");
-            }
-
-            return string.Join(Environment.NewLine, lines);
-        }
     }
 }
