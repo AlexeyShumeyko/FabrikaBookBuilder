@@ -38,6 +38,9 @@ namespace PhotoBook.Shell.Navigation
 
         /// <summary>Whether a save of the order's choices is already running.</summary>
         private bool _savingChoice;
+
+        /// <summary>What the shell will do once a password arrives, when it had to stop and ask.</summary>
+        private Action? _afterSignIn;
         private (Project Project, ProjectInfo Record)? _pending;
 
         public AvaloniaNavigator(
@@ -241,18 +244,18 @@ namespace PhotoBook.Shell.Navigation
 
         /// <summary>Opens the upload screen for the plan the order page has in hand.</summary>
         /// <remarks>
-        /// The plan is what the page just priced; a session that is gone is the sign-in
-        /// window's business, so the page is told and stays where it is.
+        /// The plan is what the page just priced. Without a session the window goes on asking for
+        /// nothing: the shell asks for the password and repeats this same step once the customer
+        /// is in, so sending leads to the sign-in rather than to a message about it.
         /// </remarks>
         private void OpenUpload()
         {
             if (_siteOrder.PendingUpload is not { } plan)
                 return;
 
-            var session = _sessions.Load();
-            if (session is null)
+            if (_sessions.Load() is not { } session)
             {
-                _siteOrder.ShowMessage("Отправка требует входа на сайт.");
+                AskToSignIn(OpenUpload);
                 return;
             }
 
@@ -273,14 +276,45 @@ namespace PhotoBook.Shell.Navigation
         /// </remarks>
         public void ResumeAfterSignIn()
         {
-            if (_sessions.Load() is { } session)
-                _upload.RefreshSession(session);
+            if (_sessions.Load() is not { } session)
+            {
+                _afterSignIn = null;
+                return;
+            }
+
+            _upload.RefreshSession(session);
+
+            var then = _afterSignIn;
+            _afterSignIn = null;
+            then?.Invoke();
         }
 
         private void OpenOrder(AppMode mode)
         {
+            // The order page is the site's: formats, parameters and prices are the site's own
+            // answers, so the page opens only for a customer the site knows.
+            if (_sessions.Load() is null)
+            {
+                AskToSignIn(() => OpenOrder(mode));
+                return;
+            }
+
             _sessionMode = mode;
             CurrentMode = AppMode.SiteOrder;
+        }
+
+        /// <summary>
+        /// Asks the shell for a password and remembers what the customer was doing.
+        /// </summary>
+        /// <remarks>
+        /// One pending step, not a queue: the customer asked to go somewhere once, and a second
+        /// answer about the same place would only send them twice. A closed sign-in window drops
+        /// the step, so the answer to a cancelled question is nothing.
+        /// </remarks>
+        private void AskToSignIn(Action after)
+        {
+            _afterSignIn = after;
+            SignInRequested?.Invoke(this, EventArgs.Empty);
         }
 
         private string? NameOf(AppMode mode) => mode switch
