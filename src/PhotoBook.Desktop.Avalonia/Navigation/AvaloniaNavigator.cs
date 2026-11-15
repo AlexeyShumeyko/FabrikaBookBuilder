@@ -256,7 +256,7 @@ namespace PhotoBook.Shell.Navigation
                 return;
             }
 
-            _upload.Prepare(session, plan.Summary, plan.Groups, plan.Problems);
+            _upload.Prepare(session, plan.Summary, plan.Groups, plan.Problems, plan.Notes);
             CurrentMode = AppMode.SiteUpload;
 
             // The files are read as the screen opens, before the button can be pressed: the

@@ -123,7 +123,7 @@ namespace PhotoBook.Presentation.ViewModels
                         .CheckAsync(
                             session,
                             result.ProjectId,
-                            new ProjectExpectation(new[] { result.Total }),
+                            new ProjectExpectation(PagesPerBook(result.Number, result.Total)),
                             cancel.Token)
                         .ConfigureAwait(true);
 
@@ -274,6 +274,27 @@ namespace PhotoBook.Presentation.ViewModels
             return sent.WasCancelled
                 ? new StopReason(UploadStep.Stopped, "Загрузка остановлена. Уже отправленное осталось на сайте.")
                 : new StopReason(UploadStep.Stopped, sent.Error ?? "Сайт не принял файл.");
+        }
+
+        /// <summary>
+        /// How many files each book of a project should have, so the check compares book by book.
+        /// </summary>
+        /// <remarks>
+        /// The site keeps the books apart inside a project, so a run of three books has to be read
+        /// back as three books: one total would make a project of three short books look like one
+        /// long book and hide a book that lost its cover.
+        /// </remarks>
+        private IReadOnlyList<int> PagesPerBook(int number, int total)
+        {
+            var group = _groups.FirstOrDefault(item => item.Number == number);
+            if (group is null || group.Group.Books.Count == 0)
+                return new[] { total };
+
+            var counts = new List<int>(group.Group.Books.Count);
+            foreach (var book in group.Group.Books)
+                counts.Add(book.AllFiles.Count);
+
+            return counts;
         }
 
         /// <summary>The groups that can be sent now: at least one book with at least one page.</summary>

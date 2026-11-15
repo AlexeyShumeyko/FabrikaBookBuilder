@@ -124,19 +124,31 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Equal(2, upload.Calls.Count);
         }
 
+        /// <summary>
+        /// A project holds every book of its format, and each book is sent against its own number
+        /// in that project: sent as one long book, the second book's pages would land on the
+        /// first one's.
+        /// </summary>
         [Fact]
-        public async Task AGroupWithSeveralBooksIsReportedInsteadOfSent()
+        public async Task AProjectWithSeveralBooksSendsEveryBookInIt()
         {
-            var creation = new StubCreation(1001);
+            var creation = new StubCreation(1001) { Items = new long[] { 65075, 65076 } };
+            var upload = new StubUpload();
+            var check = new StubCheck(true);
 
-            var screen = Screen(creation, new StubUpload(), new StubCheck(true), groups: 1, pages: 3, booksPerGroup: 2);
+            var screen = Screen(creation, upload, check, groups: 1, pages: 3, booksPerGroup: 2);
 
-            Assert.False(screen.CanUpload);
-            Assert.Contains("несколько книг", screen.Message);
+            Assert.True(screen.CanUpload);
+            Assert.Equal(6, screen.Total);
 
             await screen.UploadAsync();
 
-            Assert.Empty(creation.Asked);
+            Assert.Equal(UploadStep.Done, screen.Step);
+            Assert.Equal(2, upload.Calls.Count);
+            Assert.Equal(new long[] { 65075, 65076 }, upload.ItemIds.ToArray());
+
+            // The site is read back book by book, not as one long book of six files.
+            Assert.Equal(new[] { 3, 3 }, Assert.Single(check.Expectations));
         }
 
         [Fact]
@@ -215,7 +227,7 @@ namespace PhotoBook.Application.Tests.Sites
                     index + 1,
                     group,
                     new CreateProjectRequest(4494, 9255, 37556),
-                    pagesOfGroup[index]))
+                    group.Books.SelectMany(book => book.AllFiles).ToList()))
                 .ToList();
 
             screen.Prepare(Session, summary, groupsToSend);
@@ -455,6 +467,8 @@ namespace PhotoBook.Application.Tests.Sites
 
             internal string? Error { get; init; }
 
+            internal IReadOnlyList<long>? Items { get; init; }
+
             internal List<IReadOnlyList<GroupRequest>> Asked { get; } = new();
 
             public Task<ProjectCreationPlan> CreateAsync(
@@ -470,7 +484,8 @@ namespace PhotoBook.Application.Tests.Sites
                         group.Group,
                         GroupCreationState.Created,
                         _ids[Math.Min(index, _ids.Length - 1)],
-                        Error))
+                        Error,
+                        Items ?? Array.Empty<long>()))
                     .ToList();
 
                 return Task.FromResult(new ProjectCreationPlan(created));
@@ -496,6 +511,8 @@ namespace PhotoBook.Application.Tests.Sites
 
             internal List<long> Calls { get; } = new();
 
+            internal List<long> ItemIds { get; } = new();
+
             public Task<BookUploadResult> UploadAsync(
                 SiteSession session,
                 long projectId,
@@ -506,6 +523,7 @@ namespace PhotoBook.Application.Tests.Sites
                 CancellationToken cancellationToken = default)
             {
                 Calls.Add(projectId);
+                ItemIds.Add(projectItemId);
                 return _answer(session, projectId, files, alreadyUploaded, progress, cancellationToken);
             }
         }
@@ -516,12 +534,16 @@ namespace PhotoBook.Application.Tests.Sites
 
             internal StubCheck(bool noDifferences) => _noDifferences = noDifferences;
 
+            internal List<IReadOnlyList<int>> Expectations { get; } = new();
+
             public Task<Result<ProjectCheck>> CheckAsync(
                 SiteSession session,
                 long projectId,
                 ProjectExpectation expected,
                 CancellationToken cancellationToken = default)
             {
+                Expectations.Add(expected.PagesPerBook);
+
                 var project = new SiteProjectSnapshot(
                     projectId,
                     4494,

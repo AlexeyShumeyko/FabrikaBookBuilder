@@ -70,8 +70,10 @@ namespace PhotoBook.Application.Sites.Books.Files
     /// <para>
     /// The plan is the unit, not the book: it is exactly what the upload would send, so a book
     /// the plan left out is not checked and an order that cannot go at all has nothing to check.
-    /// The books are read one after another, each announcing progress, and the whole run stops
-    /// between books and between pages when the customer cancels.
+    /// Every book of a project is checked, not just the first: a project holds several books and
+    /// the site refuses the whole project over one bad file in any of them. The books are read
+    /// one after another, each announcing progress, and the whole run stops between books and
+    /// between pages when the customer cancels.
     /// </para>
     /// <para>
     /// A format whose geometry cannot be read is a blocking alert on that book, not a failed
@@ -99,30 +101,37 @@ namespace PhotoBook.Application.Sites.Books.Files
             if (groups is null)
                 throw new ArgumentNullException(nameof(groups));
 
-            var books = new List<CheckedBook>(groups.Count);
-
+            var total = 0;
             for (var index = 0; index < groups.Count; index++)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
+                total += groups[index].Group.Books.Count;
 
-                var number = index + 1;
-                progress?.Report(new FileCheckProgress(index, groups.Count, number));
-                books.Add(await CheckGroupAsync(groups[index], number, cancellationToken)
-                    .ConfigureAwait(false));
+            var books = new List<CheckedBook>(total);
+
+            foreach (var group in groups)
+            {
+                foreach (var book in group.Group.Books)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    var number = books.Count + 1;
+                    progress?.Report(new FileCheckProgress(books.Count, total, number));
+                    books.Add(await CheckBookAsync(group, book, number, cancellationToken)
+                        .ConfigureAwait(false));
+                }
             }
 
-            if (groups.Count > 0)
-                progress?.Report(new FileCheckProgress(books.Count, groups.Count, groups.Count));
+            if (total > 0)
+                progress?.Report(new FileCheckProgress(books.Count, total, total));
 
             return new OrderFileCheck(books, Array.Empty<FileAlert>());
         }
 
-        private async System.Threading.Tasks.Task<CheckedBook> CheckGroupAsync(
+        private async System.Threading.Tasks.Task<CheckedBook> CheckBookAsync(
             UploadGroup group,
+            Book book,
             int number,
             CancellationToken cancellationToken)
         {
-            var book = group.Group.Books[0];
             var name = NameOf(book, number);
 
             var layout = await _catalog

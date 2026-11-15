@@ -12,9 +12,11 @@ using PhotoBook.Application.Sites.Upload;
 namespace PhotoBook.Application.Tests.Sites.Upload
 {
     /// <summary>
-    /// The upload sends one project per book, with the ids the site needs and the price already
-    /// obtained. A book that cannot go is named rather than guessed at, because a project created
-    /// without its price or its integration is one the customer never confirmed.
+    /// The upload sends one project per format, with the ids the site needs and the price already
+    /// obtained. Books of one format share a project; the project's price is the sum of its
+    /// books, since the site never multiplies. A book that cannot go is named rather than guessed
+    /// at, because a project created without its price or its integration is one the customer
+    /// never confirmed.
     /// </summary>
     public class UploadPlanTests
     {
@@ -48,6 +50,72 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             Assert.Equal(Life, plan.Groups[1].Request.ProductComponentId);
             Assert.Equal(2, plan.Summary.ProjectCount);
             Assert.Equal(2, plan.Summary.BookCount);
+        }
+
+        [Fact]
+        public void KeepsBooksOfOneFormatInOneProjectAndAddsUpTheirPrices()
+        {
+            var first = Book(Layflat, "21x30");
+            var second = Book(Layflat, "21x30");
+            var other = Book(Life, "20x20");
+
+            var plan = UploadPlans.Build(
+                SiteRegion.Com,
+                new OrderDraft(new[] { first, second, other }, Array.Empty<string>()),
+                Quote(first, second, other),
+                Formats());
+
+            Assert.True(plan.IsComplete);
+            Assert.Equal(2, plan.Groups.Count);
+
+            var shared = plan.Groups[0];
+            Assert.Equal(2, shared.Group.Books.Count);
+            Assert.Equal(2, shared.Pages.Count);
+            Assert.Equal(2048m, shared.Price);
+            Assert.Equal(3, plan.Summary.BookCount);
+            Assert.Equal(2048m + 1024m, plan.Summary.Total);
+        }
+
+        [Fact]
+        public void StopsTheWholeProjectWhenOneOfItsBooksHasNoPrice()
+        {
+            var priced = Book(Layflat, "21x30");
+            var unpriced = Book(Layflat, "21x30");
+
+            var plan = UploadPlans.Build(
+                SiteRegion.Com,
+                new OrderDraft(new[] { priced, unpriced }, Array.Empty<string>()),
+                Quote(priced),
+                Formats());
+
+            Assert.False(plan.IsComplete);
+            Assert.Empty(plan.Groups);
+            Assert.Contains(plan.Problems, problem => problem.Contains("цена не получена"));
+        }
+
+        /// <summary>
+        /// The site takes no more than 500 files in one project, so a group of sixty books goes
+        /// up as two projects, in the order the books came in, with a line saying why.
+        /// </summary>
+        [Fact]
+        public void SplitsAGroupThatWouldNotFitOneProject()
+        {
+            var books = Enumerable.Range(0, 60).Select(_ => Book(Layflat, "21x30", 9)).ToList();
+
+            var plan = UploadPlans.Build(
+                SiteRegion.Com,
+                new OrderDraft(books, Array.Empty<string>()),
+                Quote(books.ToArray()),
+                Formats());
+
+            Assert.True(plan.IsComplete);
+            Assert.Equal(2, plan.Groups.Count);
+            Assert.Equal(55, plan.Groups[0].Group.Books.Count);
+            Assert.Equal(5, plan.Groups[1].Group.Books.Count);
+            Assert.Equal(495, plan.Groups[0].Pages.Count);
+            Assert.Equal(45, plan.Groups[1].Pages.Count);
+            Assert.Contains(plan.Notes!, note => note.Contains("500", StringComparison.Ordinal));
+            Assert.Equal(60, plan.Summary.BookCount);
         }
 
         [Fact]
@@ -115,7 +183,7 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             Assert.Single(plan.Problems);
         }
 
-        private static Book Book(long variantId, string title) =>
+        private static Book Book(long variantId, string title, int spreads = 1) =>
             new(
                 new SiteProduct(Product, "layflat", "Лайфлат", "photo-book", new List<ProductVariant>()),
                 new ProductVariant(variantId, title, new List<ProductOption>(), new List<ProductPart>()),
@@ -124,7 +192,9 @@ namespace PhotoBook.Application.Tests.Sites.Upload
                 {
                     new(94, new PartSelection(new Dictionary<long, long>(), 10))
                 },
-                new List<PageFile> { new("/photos/1.jpg", 1024) });
+                Enumerable.Range(1, spreads)
+                    .Select(number => new PageFile("/photos/" + number + ".jpg", 1024))
+                    .ToList());
 
         private static GroupQuote Quote(params Book[] books) =>
             new(books

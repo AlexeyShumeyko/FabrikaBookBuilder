@@ -85,9 +85,9 @@ namespace PhotoBook.Presentation.ViewModels
     /// written down, so the next press starts at the page that failed.
     /// </para>
     /// <para>
-    /// The screen sends one book per project. A group with several books is reported as
-    /// unsupported rather than sent as one long book: the site's project holds one item today,
-    /// and pretending otherwise would put the second book's pages into the first.
+    /// A group is one project on the site, and it holds every book of its format: the books go
+    /// up one after another, each against the number the site gave it, so a project of three
+    /// books ends up with three covers and three sets of spreads rather than one long book.
     /// </para>
     /// </remarks>
     public sealed partial class SiteUploadViewModel : ViewModelBase
@@ -285,7 +285,7 @@ namespace PhotoBook.Presentation.ViewModels
         /// </summary>
         public bool CanUpload => !IsBusy && !IsCheckingFiles && _session is not null &&
             _summary is { CanUpload: true } &&
-            _groups.Count > 0 && _groups.All(group => group.Pages.Count > 0 && group.Group.Books.Count == 1) &&
+            _groups.Count > 0 && _groups.All(group => group.Pages.Count > 0) &&
             _files is { CanSend: true } && (!NeedsConfirmation || _confirmationsAccepted);
 
         /// <summary>Whether the customer may stop the run.</summary>
@@ -297,16 +297,18 @@ namespace PhotoBook.Presentation.ViewModels
         /// </summary>
         /// <param name="session">The session the run will write with.</param>
         /// <param name="summary">The order as the customer reviews it.</param>
-        /// <param name="groups">The groups to send, one book each.</param>
+        /// <param name="groups">The groups to send, one project each.</param>
         /// <param name="problems">
         /// Books the order page left out, and why. Any entry keeps the button off: a run that
         /// silently skipped a book would leave a project the customer never asked for.
         /// </param>
+        /// <param name="notes">What the customer should know but need not fix.</param>
         public void Prepare(
             SiteSession session,
             SubmissionSummary summary,
             IReadOnlyList<UploadGroup> groups,
-            IReadOnlyList<string>? problems = null)
+            IReadOnlyList<string>? problems = null,
+            IReadOnlyList<string>? notes = null)
         {
             _session = session ?? throw new ArgumentNullException(nameof(session));
             _summary = summary ?? throw new ArgumentNullException(nameof(summary));
@@ -324,7 +326,7 @@ namespace PhotoBook.Presentation.ViewModels
             ResultText = string.Empty;
             ProgressText = Total == 0 ? string.Empty : "Страниц к отправке: " + Total + ".";
 
-            Message = Blockers(_problems);
+            Message = Blockers(_problems, notes ?? Array.Empty<string>());
 
             OnPropertyChanged(nameof(Summary));
             OnPropertyChanged(nameof(CanUpload));
@@ -349,19 +351,16 @@ namespace PhotoBook.Presentation.ViewModels
         }
 
         /// <summary>What the screen says instead of a run: everything that blocks the button.</summary>
-        private string Blockers(IReadOnlyList<string> problems)
+        private string Blockers(IReadOnlyList<string> problems, IReadOnlyList<string> notes)
         {
             var lines = new List<string>(problems);
 
             if (_summary is not null)
                 lines.AddRange(_summary.Blockers);
 
-            foreach (var group in _groups.Where(group => group.Group.Books.Count > 1))
-            {
-                lines.Add(
-                    "Группа " + group.Number + ": в проекте несколько книг. Сейчас на сайт уходит одна книга на " +
-                    "проект — разложите книги по одной или подождите, пока появится поддержка нескольких книг.");
-            }
+            // Notes explain the plan and do not keep the button off, so they come last.
+            foreach (var note in notes)
+                lines.Add(note);
 
             foreach (var group in _groups.Where(group => group.Pages.Count == 0))
                 lines.Add("Группа " + group.Number + ": в книге нет страниц.");

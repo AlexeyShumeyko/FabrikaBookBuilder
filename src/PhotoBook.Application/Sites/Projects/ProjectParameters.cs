@@ -15,7 +15,8 @@ namespace PhotoBook.Application.Sites.Projects
     /// </para>
     /// <para>
     /// The quantity the site wants is the number of books in the project, not the number of
-    /// spreads: spreads are a part quantity, and they travel in the same body.
+    /// spreads: spreads are a part quantity, and they travel in the same body. The price is for
+    /// all those books together; the site keeps it as sent and never multiplies it by the count.
     /// </para>
     /// </remarks>
     public sealed record ProjectParameters(

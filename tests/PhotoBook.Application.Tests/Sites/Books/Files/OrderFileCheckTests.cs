@@ -129,6 +129,36 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
             Assert.Empty(Assert.Single(check.Books).Alerts);
         }
 
+        /// <summary>
+        /// A project holds several books, and the site refuses the whole project over one bad
+        /// file in any of them: checking only the first book would hide the others.
+        /// </summary>
+        [Fact]
+        public async Task ChecksEveryBookOfAProjectAndNotOnlyTheFirst()
+        {
+            var layout = SpreadLayout(410, 290);
+            var spread = layout.RequiredPixels(PagePart, 10, null)!;
+
+            var good = BookOf(PageFile("1.jpg"));
+            var bad = BookOf(PageFile("2.jpg"));
+
+            var check = await new OrderFileCheckService(
+                    new StubCatalog(layout),
+                    new StubInspector(spread, new Dictionary<string, PixelSize>
+                    {
+                        ["1.jpg"] = spread,
+                        ["2.jpg"] = new PixelSize(800, 600),
+                    }))
+                .CheckAsync(new[] { GroupOf(good, bad) });
+
+            Assert.Equal(2, check.Books.Count);
+            Assert.Equal(new[] { 1, 2 }, check.Books.Select(book => book.Number).ToArray());
+            Assert.Empty(check.Books[0].Alerts);
+            Assert.Single(check.Books[1].Alerts);
+            Assert.Equal(1, check.BlockingCount);
+            Assert.False(check.CanSend);
+        }
+
         [Fact]
         public async Task BlocksACoverThatIsTheSizeOfASpread()
         {
@@ -219,21 +249,23 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
                 new[] { cover }.Concat(pages).ToArray());
         }
 
-        private static UploadGroup Group(params PageFile[] pages)
-        {
-            var book = new Book(
+        private static UploadGroup Group(params PageFile[] pages) => GroupOf(BookOf(pages));
+
+        /// <summary>One project with several books in it, as the plan sends them.</summary>
+        private static UploadGroup GroupOf(params Book[] books) =>
+            new(
+                1,
+                new OrderGroup(SiteRegion.Com, books),
+                new CreateProjectRequest(Product, Layflat, 37556),
+                books.SelectMany(book => book.AllFiles).ToList());
+
+        private static Book BookOf(params PageFile[] pages) =>
+            new(
                 new SiteProduct(Product, "layflat", "Лайфлат", "photo-book", new List<ProductVariant>()),
                 new ProductVariant(Layflat, "21x30", new List<ProductOption>(), new List<ProductPart>()),
                 PagePartId: PagePart,
                 new List<SelectedPart> { new(PagePart, new PartSelection(new Dictionary<long, long>(), 10)) },
                 pages);
-
-            return new UploadGroup(
-                1,
-                new OrderGroup(SiteRegion.Com, new[] { book }),
-                new CreateProjectRequest(Product, Layflat, 37556),
-                pages);
-        }
 
         private static PageFile PageFile(string name) => new(@"C:\photos\" + name, 1024);
 
