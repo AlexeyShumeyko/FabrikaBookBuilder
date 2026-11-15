@@ -85,7 +85,6 @@ namespace PhotoBook.Shell.Navigation
             // Sending is a screen of its own: the order page hands over a priced plan, and
             // this one shows what will be written before anything is written.
             _siteOrder.UploadRequested += (_, _) => OpenUpload();
-            _upload.BackRequested += (_, _) => CurrentMode = AppMode.SiteOrder;
 
             // An expired token is the shell's business: the screen only knows the site refused
             // it, and a password belongs in the window that asks for passwords.
@@ -99,6 +98,16 @@ namespace PhotoBook.Shell.Navigation
 
         /// <summary>Builds the next projects list, once per visit.</summary>
         public Func<ProjectListViewModel> ProjectListProvider { get; }
+
+        /// <summary>Raised when the upload screen is ready and the shell should show it.</summary>
+        /// <remarks>
+        /// The shell decides how: a window over the order page, not a page of its own, so the
+        /// customer stays where the order was assembled while it is being written.
+        /// </remarks>
+        public event EventHandler? UploadWindowRequested;
+
+        /// <summary>The upload screen, prepared and ready to be shown.</summary>
+        public SiteUploadViewModel UploadScreen => _upload;
 
         /// <summary>Raised when a screen needs a password the shell has to ask for.</summary>
         public event EventHandler? SignInRequested;
@@ -260,11 +269,12 @@ namespace PhotoBook.Shell.Navigation
             }
 
             _upload.Prepare(session, plan.Summary, plan.Groups, plan.Problems, plan.Notes);
-            CurrentMode = AppMode.SiteUpload;
 
             // The files are read as the screen opens, before the button can be pressed: the
             // check is what the button waits for, so it must not wait for a second click.
             _ = _upload.CheckFilesAsync();
+
+            UploadWindowRequested?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>

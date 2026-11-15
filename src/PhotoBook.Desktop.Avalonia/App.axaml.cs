@@ -167,6 +167,18 @@ public partial class App : Avalonia.Application
                 navigator.ResumeAfterSignIn();
             };
 
+            // Sending is a window over the order page rather than a page of its own: the order
+            // stays behind it, so a stopped run does not cost the customer the plan they built.
+            // A closed window with "вернуться к проектам" ends the session the way an export
+            // does, because the order it belonged to is finished.
+            navigator.UploadWindowRequested += async (_, _) =>
+            {
+                var upload = new UploadWindow(navigator.UploadScreen);
+
+                if (await upload.ShowDialog<bool>(window))
+                    navigator.EndSession();
+            };
+
             desktop.MainWindow = window;
 
             // Only useful while FBR_PERF_TRACE=1; harmless otherwise. Installed here rather

@@ -45,5 +45,8 @@ namespace PhotoBook.Shell.Views
 
         private void OnBack(object? sender, RoutedEventArgs e) =>
             (DataContext as SiteUploadViewModel)?.Back();
+
+        private void OnProjects(object? sender, RoutedEventArgs e) =>
+            (DataContext as SiteUploadViewModel)?.GoToProjects();
     }
 }

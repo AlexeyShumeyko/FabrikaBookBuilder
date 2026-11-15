@@ -41,8 +41,18 @@
                         <TextBlock Text="Открыть на сайте" VerticalAlignment="Center" />
                     </Button>
 
+                    <!-- After a finished run the customer is done with the order and goes back
+                         to the projects; before it, leaving means the order page. -->
+                    <Button Classes="outline" Padding="12,10"
+                            IsVisible="{Binding IsDone}"
+                            AutomationProperties.Name="Вернуться к проектам"
+                            Click="OnProjects">
+                        <TextBlock Text="Вернуться к проектам" VerticalAlignment="Center" />
+                    </Button>
+
                     <Button Classes="outline" Padding="12,10"
                             IsEnabled="{Binding !IsBusy}"
+                            IsVisible="{Binding !IsDone}"
                             AutomationProperties.Name="Вернуться к заказу"
                             Click="OnBack">
                         <TextBlock Text="Вернуться к заказу" VerticalAlignment="Center" />

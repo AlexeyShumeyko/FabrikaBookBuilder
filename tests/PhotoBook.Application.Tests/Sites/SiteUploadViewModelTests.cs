@@ -133,6 +133,29 @@ namespace PhotoBook.Application.Tests.Sites
         /// The grid shows a project's books on the left and what the site was told about it on
         /// the right, so a price is never read away from the books it belongs to.
         /// </summary>
+        /// <summary>
+        /// After a finished run the customer is done with the order: the window closes towards
+        /// the projects list rather than back into a page for a project that is already sent.
+        /// </summary>
+        [Fact]
+        public async Task AFinishedRunOffersTheProjectsList()
+        {
+            var screen = Screen(new StubCreation(1001), new StubUpload(), new StubCheck(true), groups: 1, pages: 2);
+
+            var asked = 0;
+            screen.ProjectsRequested += (_, _) => asked++;
+
+            Assert.False(screen.IsDone);
+
+            await screen.UploadAsync();
+
+            Assert.True(screen.IsDone);
+
+            screen.GoToProjects();
+
+            Assert.Equal(1, asked);
+        }
+
         [Fact]
         public void EachProjectIsShownWithItsFormatAndItsPrice()
         {

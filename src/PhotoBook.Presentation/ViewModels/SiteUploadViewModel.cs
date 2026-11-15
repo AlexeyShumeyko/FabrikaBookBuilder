@@ -139,6 +139,9 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Raised when the customer leaves the screen for the order behind it.</summary>
         public event EventHandler? BackRequested;
 
+        /// <summary>Raised when the customer leaves a finished run for the projects list.</summary>
+        public event EventHandler? ProjectsRequested;
+
         /// <summary>The summary the button was enabled by; null until the screen is prepared.</summary>
         public SubmissionSummary? Summary => _summary;
 
@@ -154,6 +157,7 @@ namespace PhotoBook.Presentation.ViewModels
                 OnPropertyChanged(nameof(CanUpload));
                 OnPropertyChanged(nameof(CanCancel));
                 OnPropertyChanged(nameof(ButtonText));
+                OnPropertyChanged(nameof(IsDone));
             }
         }
 
@@ -264,6 +268,12 @@ namespace PhotoBook.Presentation.ViewModels
                     OnPropertyChanged(nameof(HasResults));
             }
         }
+
+        /// <summary>Whether the run finished and the result is on the screen.</summary>
+        public bool IsDone => Step == UploadStep.Done;
+
+        /// <summary>Leaves a finished run for the projects list.</summary>
+        public void GoToProjects() => ProjectsRequested?.Invoke(this, EventArgs.Empty);
 
         /// <summary>Whether the site is being written to right now.</summary>
         public bool IsBusy => Step is UploadStep.Creating or UploadStep.Uploading or UploadStep.Checking;
