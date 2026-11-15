@@ -36,17 +36,6 @@ namespace PhotoBook.Presentation.ViewModels
         Stopped
     }
 
-    /// <summary>One group the screen will send, with everything the site needs for it.</summary>
-    /// <param name="Number">The group's place in the order, starting at one.</param>
-    /// <param name="Group">The books laid out into this project.</param>
-    /// <param name="Request">The product, its format and the uploader's integration.</param>
-    /// <param name="Pages">The spreads of the group's single book, in page order.</param>
-    public sealed record UploadGroup(
-        int Number,
-        OrderGroup Group,
-        CreateProjectRequest Request,
-        IReadOnlyList<PageFile> Pages);
-
     /// <summary>What became of one group, for the list under the button.</summary>
     /// <param name="Number">The group's place in the order.</param>
     /// <param name="ProjectId">The project the site holds, or zero.</param>
