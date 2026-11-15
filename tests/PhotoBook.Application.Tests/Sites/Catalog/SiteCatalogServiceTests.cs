@@ -112,6 +112,27 @@ namespace PhotoBook.Application.Tests.Sites.Catalog
         }
 
         [Fact]
+        public async Task AsksForTheChosenFormatByItsTwoIdsAndKeepsTheAnswer()
+        {
+            const string document = "{\"productTitle\":\"Лайфлат\",\"productPartsTitles\":{\"94\":\"Разворот\"}," +
+                "\"integration\":{\"elements\":[{\"settings\":{\"pagesCountPartId\":\"94\"}}]}}";
+            var cache = new MemoryCache();
+            var handler = new StubHttpMessageHandler(_ => Json(document));
+            var service = Service(handler, cache);
+
+            var result = await service.GetFormatAsync(SiteRegion.Com, 4494, 9255);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal("Лайфлат", result.Value!.Title);
+            Assert.True(result.Value!.Variants[0].Parts[0].HoldsPages);
+            var url = Assert.Single(handler.Urls);
+            Assert.Contains("products/data", url, StringComparison.Ordinal);
+            Assert.Contains("productId=4494", url, StringComparison.Ordinal);
+            Assert.Contains("productComponentId=9255", url, StringComparison.Ordinal);
+            Assert.Equal(document, cache.Documents["format:4494:9255"]);
+        }
+
+        [Fact]
         public async Task ReportsTheSitesRefusalInsteadOfAnEmptyCatalog()
         {
             var cache = new MemoryCache();
@@ -129,7 +150,7 @@ namespace PhotoBook.Application.Tests.Sites.Catalog
         }
 
         private static SiteCatalogService Service(StubHttpMessageHandler handler, MemoryCache cache) =>
-            new(new HttpClient(handler), cache, new SiteProductParser(), new SiteProductsParser(), TimeSpan.Zero);
+            new(new HttpClient(handler), cache, new SiteProductParser(), new SiteProductsParser(), new SiteFormatParser(), TimeSpan.Zero);
 
         private static HttpResponseMessage Json(string body) =>
             new(HttpStatusCode.OK) { Content = new StringContent(body) };

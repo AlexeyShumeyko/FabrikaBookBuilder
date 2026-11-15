@@ -30,11 +30,14 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
         private const string ProductDocument = "page-data";
         private const string ProductsDocument = "products-list";
         private const string ProductsPath = "creators/photo-book-uploader/products";
+        private const string FormatPath = "creators/photo-book-uploader/products/data";
+        private const string FormatDocument = "format";
 
         private readonly HttpClient _http;
         private readonly ISiteCatalogCache _cache;
         private readonly ISiteProductParser _parser;
         private readonly ISiteProductsParser _products;
+        private readonly ISiteFormatParser _format;
         private readonly TimeSpan _retryDelay;
 
         public SiteCatalogService(
@@ -42,12 +45,14 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
             ISiteCatalogCache cache,
             ISiteProductParser parser,
             ISiteProductsParser products,
+            ISiteFormatParser format,
             TimeSpan? retryDelay = null)
         {
             _http = http ?? throw new ArgumentNullException(nameof(http));
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _parser = parser ?? throw new ArgumentNullException(nameof(parser));
             _products = products ?? throw new ArgumentNullException(nameof(products));
+            _format = format ?? throw new ArgumentNullException(nameof(format));
             _retryDelay = retryDelay ?? TimeSpan.FromMilliseconds(500);
         }
 
@@ -85,6 +90,55 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
             var parsed = _products.Parse(json);
             if (parsed.IsSuccess)
                 _cache.Write(region, ProductsDocument, json);
+
+            return parsed;
+        }
+
+        public async Task<Result<SiteProduct>> GetFormatAsync(
+            SiteRegion region,
+            long productId,
+            long componentId,
+            CancellationToken cancellationToken = default)
+        {
+            if (region is null)
+                throw new ArgumentNullException(nameof(region));
+            if (productId <= 0 || componentId <= 0)
+                throw new ArgumentException("Формат опознаётся парой идентификаторов, и оба нужны.");
+
+            var document = FormatDocument + ":" + productId + ":" + componentId;
+
+            var stored = _cache.Read(region, document);
+            if (stored is not null)
+            {
+                var cached = _format.Parse(stored.Content, productId, componentId);
+                if (cached.IsSuccess)
+                    return cached;
+            }
+
+            var client = new SiteApiClient(region, _http, _retryDelay);
+            var answer = await client
+                .GetAsync(
+                    FormatPath +
+                    "?productId=" + productId.ToString(System.Globalization.CultureInfo.InvariantCulture) +
+                    "&productComponentId=" + componentId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    token: null,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!answer.IsSuccess || answer.Document is null)
+            {
+                var reason = answer.Error?.Message;
+                return Result<SiteProduct>.Fail(string.IsNullOrWhiteSpace(reason)
+                    ? "Описание формата не открылось."
+                    : reason!);
+            }
+
+            var json = answer.Document.RootElement.GetRawText();
+            answer.Document.Dispose();
+
+            var parsed = _format.Parse(json, productId, componentId);
+            if (parsed.IsSuccess)
+                _cache.Write(region, document, json);
 
             return parsed;
         }

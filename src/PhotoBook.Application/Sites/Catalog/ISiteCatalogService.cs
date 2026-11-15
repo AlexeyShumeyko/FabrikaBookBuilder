@@ -40,6 +40,20 @@ namespace PhotoBook.Application.Sites.Catalog
         /// <param name="region">The site the product is read from; it is never switched.</param>
         /// <param name="slug">The product's slug, e.g. <c>layflat</c>.</param>
         /// <param name="cancellationToken">Stops the request; nothing is stored.</param>
+        /// <summary>
+        /// The uploader's own document for one format, read by the two ids the customer chose.
+        /// </summary>
+        /// <remarks>
+        /// This is the document the uploader itself loads: it names the part that holds pages
+        /// and lists the options that have to be answered before the site will price the book.
+        /// It is public, so choosing a format costs no sign-in.
+        /// </remarks>
+        Task<Result<SiteProduct>> GetFormatAsync(
+            SiteRegion region,
+            long productId,
+            long componentId,
+            CancellationToken cancellationToken = default);
+
         Task<Result<SiteProduct>> GetProductAsync(
             SiteRegion region,
             string slug,

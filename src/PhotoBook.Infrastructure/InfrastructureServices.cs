@@ -98,6 +98,7 @@ namespace PhotoBook.Infrastructure
 
             // One product read per installed copy, from the stored document when there is one.
             services.AddSingleton<ISiteProductsParser, SiteProductsParser>();
+            services.AddSingleton<ISiteFormatParser, SiteFormatParser>();
             services.AddSingleton<ISiteCatalogService, SiteCatalogService>();
 
             return services;

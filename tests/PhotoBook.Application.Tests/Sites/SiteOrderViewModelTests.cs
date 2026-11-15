@@ -184,6 +184,13 @@ namespace PhotoBook.Application.Tests.Sites
                 ? Result<IReadOnlyList<CatalogProduct>>.Ok(_products)
                 : Result<IReadOnlyList<CatalogProduct>>.Fail(_failure));
 
+        public Task<Result<SiteProduct>> GetFormatAsync(
+            SiteRegion region,
+            long productId,
+            long componentId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public Task<Result<SiteProduct>> GetProductAsync(
             SiteRegion region,
             string slug,

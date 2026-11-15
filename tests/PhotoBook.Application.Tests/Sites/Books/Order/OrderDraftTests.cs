@@ -76,8 +76,8 @@ namespace PhotoBook.Application.Tests.Sites.Books.Order
         public void RefusesAFormatWhoseSpreadPartCannotBeToldApart()
         {
             var ambiguous = CatalogWithParts(
-                new ProductPart(1, "Развороты", new List<ProductOption>(), Counts(QuantityUnit.Spreads)),
-                new ProductPart(2, "Страницы", new List<ProductOption>(), Counts(QuantityUnit.Pages)));
+                Part(1, "Развороты", QuantityUnit.Spreads),
+                Part(2, "Страницы", QuantityUnit.Pages));
 
             var draft = OrderDraft.From(ProjectWith(Book(Page(1))), new[] { ambiguous }, _files);
 
@@ -165,6 +165,23 @@ namespace PhotoBook.Application.Tests.Sites.Books.Order
             new(unit == QuantityUnit.Spreads ? "Количество разворотов" : "Количество страниц",
                 unit, new QuantityRange(from, to, 1), false, Array.Empty<QuantityRule>());
 
+        /// <summary>
+        /// A part as the product page describes it: the site counts it in spreads or pages, and
+        /// that is where the photographs go.
+        /// </summary>
+        private static ProductPart Part(
+            long id,
+            string title,
+            QuantityUnit unit,
+            int from = 1,
+            int to = 60) =>
+            new(
+                id,
+                title,
+                new List<ProductOption>(),
+                Counts(unit, from, to),
+                unit is QuantityUnit.Spreads or QuantityUnit.Pages);
+
         private static SiteProduct CatalogWithParts(params ProductPart[] parts)
         {
             var variant = new ProductVariant(Variant, "21×30", new List<ProductOption>(), parts);
@@ -176,11 +193,7 @@ namespace PhotoBook.Application.Tests.Sites.Books.Order
             int from = 1,
             int to = 60)
         {
-            var pagePart = part ?? new ProductPart(
-                SpreadPart,
-                "Разворот",
-                new List<ProductOption>(),
-                Counts(QuantityUnit.Spreads, from, to));
+            var pagePart = part ?? Part(SpreadPart, "Разворот", QuantityUnit.Spreads, from, to);
 
             var variant = new ProductVariant(
                 Variant,

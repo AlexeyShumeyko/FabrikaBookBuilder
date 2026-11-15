@@ -121,7 +121,8 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
                     SiteJson.Number(part, "id"),
                     SiteJson.Text(part, "name") ?? string.Empty,
                     options,
-                    quantity));
+                    quantity,
+                    Holds(quantity)));
             }
 
             return parts;
@@ -221,6 +222,10 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
 
             return QuantityUnit.Unknown;
         }
+
+        /// <summary>Whether the site counts this part in spreads or pages, which is where photos go.</summary>
+        private static bool Holds(ProductQuantitySettings quantity) =>
+            quantity.Unit is QuantityUnit.Spreads or QuantityUnit.Pages;
 
         private static QuantityRange? ReadRange(JsonElement parent, string from, string to, string step)
         {

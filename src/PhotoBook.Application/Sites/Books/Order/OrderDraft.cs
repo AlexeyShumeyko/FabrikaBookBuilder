@@ -91,7 +91,7 @@ namespace PhotoBook.Application.Sites.Books.Order
             }
 
             var pageParts = (variant.Parts ?? Array.Empty<ProductPart>())
-                .Where(part => IsCountedInSpreadsOrPages(part))
+                .Where(part => part.HoldsPages)
                 .ToList();
 
             if (pageParts.Count != 1)
@@ -131,17 +131,6 @@ namespace PhotoBook.Application.Sites.Books.Order
 
             return new Book(product, variant, pagePart.Id, parts, fileList);
         }
-
-        /// <summary>
-        /// Whether this part is the one the pages go into.
-        /// </summary>
-        /// <remarks>
-        /// The site does not say so: it names what the part counts in its own words, and the
-        /// parser reads those into a unit. A layflat counts spreads, a page book counts pages;
-        /// the cover counts copies and is not the part the photographs fill.
-        /// </remarks>
-        private static bool IsCountedInSpreadsOrPages(ProductPart part) =>
-            part.Quantity?.Unit is QuantityUnit.Spreads or QuantityUnit.Pages;
 
         private static List<PhotoBook.Core.Page> PagesOf(CoreBook book) =>
             (book.Pages ?? new System.Collections.ObjectModel.ObservableCollection<PhotoBook.Core.Page>())
