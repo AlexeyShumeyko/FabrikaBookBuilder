@@ -129,6 +129,31 @@ namespace PhotoBook.Application.Tests.Sites
         /// in that project: sent as one long book, the second book's pages would land on the
         /// first one's.
         /// </summary>
+        /// <summary>
+        /// The grid shows a project's books on the left and what the site was told about it on
+        /// the right, so a price is never read away from the books it belongs to.
+        /// </summary>
+        [Fact]
+        public void EachProjectIsShownWithItsFormatAndItsPrice()
+        {
+            var screen = Screen(
+                new StubCreation(1001),
+                new StubUpload(),
+                new StubCheck(true),
+                groups: 1,
+                pages: 2,
+                booksPerGroup: 2);
+
+            var project = Assert.Single(screen.GroupRows);
+
+            Assert.Equal("Проект 1", project.NumberText);
+            Assert.Equal("Лайфлат 21x30", project.FormatText);
+            Assert.Equal("2 книг", project.BooksText);
+            Assert.Equal("Разворотов: 4", project.SpreadsText);
+            Assert.Contains("084,00 RUB", project.PriceText, StringComparison.Ordinal);
+            Assert.Equal(2, project.Books.Count);
+        }
+
         [Fact]
         public async Task AProjectWithSeveralBooksSendsEveryBookInIt()
         {
@@ -231,7 +256,9 @@ namespace PhotoBook.Application.Tests.Sites
                     index + 1,
                     group,
                     new CreateProjectRequest(4494, 9255, 37556),
-                    group.Books.SelectMany(book => book.AllFiles).ToList()))
+                    group.Books.SelectMany(book => book.AllFiles).ToList(),
+                    group.Books.Count * 542m,
+                    "RUB"))
                 .ToList();
 
             screen.Prepare(Session, summary, groupsToSend);

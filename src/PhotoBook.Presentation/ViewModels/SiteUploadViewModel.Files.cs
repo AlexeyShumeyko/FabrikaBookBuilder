@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using PhotoBook.Application.Sites.Books;
 using PhotoBook.Application.Sites.Books.Files;
+using PhotoBook.Application.Sites.Upload;
 
 namespace PhotoBook.Presentation.ViewModels
 {
@@ -70,6 +71,27 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Whether there are books to list.</summary>
         public bool HasBookRows => _books.Count > 0;
 
+        private IReadOnlyList<UploadGroupRow> _groupRows = Array.Empty<UploadGroupRow>();
+
+        /// <summary>One row per project, with its books and its parameters.</summary>
+        /// <remarks>
+        /// The projects are the screen's grid: the books of a project sit on the left, the
+        /// format, the spreads and the price the site named for it sit on the right of the same
+        /// row, so a number is never read away from the books it belongs to.
+        /// </remarks>
+        public IReadOnlyList<UploadGroupRow> GroupRows
+        {
+            get => _groupRows;
+            private set
+            {
+                if (SetProperty(ref _groupRows, value))
+                    OnPropertyChanged(nameof(HasGroupRows));
+            }
+        }
+
+        /// <summary>Whether there are projects to show.</summary>
+        public bool HasGroupRows => _groupRows.Count > 0;
+
         /// <summary>What the files as a whole came to, one line each.</summary>
         public IReadOnlyList<string> OrderAlertLines =>
             _files is null
@@ -86,22 +108,50 @@ namespace PhotoBook.Presentation.ViewModels
             foreach (var book in _files?.Books ?? Array.Empty<CheckedBook>())
                 checkedBooks[book.Number] = book;
 
+            var groups = new List<UploadGroupRow>();
             var rows = new List<UploadBookRow>();
             var number = 0;
 
             foreach (var group in _groups)
             {
+                var books = new List<UploadBookRow>();
+                var spreads = 0;
+
                 foreach (var book in group.Group.Books)
                 {
                     number++;
                     checkedBooks.TryGetValue(number, out var checkedBook);
-                    rows.Add(Row(number, book, checkedBook));
+
+                    var row = Row(number, book, checkedBook);
+                    books.Add(row);
+                    rows.Add(row);
+
+                    spreads += book.Files?.Count ?? 0;
                 }
+
+                groups.Add(new UploadGroupRow(
+                    group.Number,
+                    FormatOf(group),
+                    spreads,
+                    group.Price,
+                    group.Currency,
+                    books));
             }
 
+            GroupRows = groups;
             BookRows = rows;
             OnPropertyChanged(nameof(OrderAlertLines));
             OnPropertyChanged(nameof(HasOrderAlerts));
+        }
+
+        /// <summary>The format a project is for, as the site names it.</summary>
+        private static string FormatOf(UploadGroup group)
+        {
+            if (group.Group.Books.Count == 0)
+                return "формат не выбран";
+
+            var book = group.Group.Books[0];
+            return book.Product.Title + " " + book.Variant.Title;
         }
 
         /// <summary>One book with its status and the files it would send.</summary>

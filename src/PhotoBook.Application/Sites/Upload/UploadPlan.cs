@@ -136,7 +136,8 @@ namespace PhotoBook.Application.Sites.Upload
                         partGroup,
                         new CreateProjectRequest(first.Product.Id, first.Variant.Id, integration),
                         part.SelectMany(book => book.AllFiles).ToList(),
-                        partQuote.Total));
+                        partQuote.Total,
+                        partQuote.Currency));
 
                     sent.Add(partGroup);
                     quotes.Add(partQuote);

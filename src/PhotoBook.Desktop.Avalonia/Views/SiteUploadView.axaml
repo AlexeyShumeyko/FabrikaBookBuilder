@@ -68,8 +68,9 @@
                 </Border>
 
                 <!-- What the check found, before anything is sent. The files are read as the
-                     screen opens, so there is no button here: a book carries its own word, opens
-                     itself when something is wrong, and lists the spreads it would send. -->
+                     screen opens, so there is no button here: each project is a row of the grid,
+                     with its books on the left and the format, spreads and price the site named
+                     for it on the right. -->
                 <Border Classes="card" Padding="20,16">
                     <StackPanel Spacing="12">
                         <StackPanel Spacing="2">
@@ -79,61 +80,115 @@
                                        IsVisible="{Binding HasFilesText}" />
                         </StackPanel>
 
-                        <ItemsControl ItemsSource="{Binding BookRows}" IsVisible="{Binding HasBookRows}">
+                        <ItemsControl ItemsSource="{Binding GroupRows}" IsVisible="{Binding HasGroupRows}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Expander IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
-                                              HorizontalAlignment="Stretch" Margin="0,0,0,4">
-                                        <Expander.Header>
-                                            <Grid ColumnDefinitions="40,*,140" VerticalAlignment="Center">
-                                                <TextBlock Grid.Column="0" Text="{Binding NumberText}"
-                                                           Classes="t11"
-                                                           Foreground="{DynamicResource Slate500}" />
-                                                <TextBlock Grid.Column="1" Text="{Binding Name}"
-                                                           Classes="t12"
-                                                           TextTrimming="CharacterEllipsis" />
-                                                <!-- A book that needs attention is red and says why
-                                                     inside; a clean book is one quiet word. -->
-                                                <TextBlock Grid.Column="2" Text="{Binding StatusText}"
-                                                           Classes="t11" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource Red600}"
-                                                           IsVisible="{Binding IsFailed}" />
-                                                <TextBlock Grid.Column="2" Text="{Binding StatusText}"
-                                                           Classes="t11" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource Slate600}"
-                                                           IsVisible="{Binding !IsFailed}" />
-                                            </Grid>
-                                        </Expander.Header>
+                                    <Grid ColumnDefinitions="*,320" Margin="0,0,0,16">
+                                        <StackPanel Grid.Column="0" Spacing="8" Margin="0,0,16,0">
+                                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                                <TextBlock Text="{Binding NumberText}" Classes="t12"
+                                                           FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding FormatText}" Classes="t12"
+                                                           Foreground="{DynamicResource Slate600}" />
+                                                <TextBlock Text="{Binding BooksText}" Classes="t11"
+                                                           Foreground="{DynamicResource Slate500}"
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
 
-                                        <StackPanel Spacing="6" Margin="40,4,0,6">
-                                            <TextBlock Text="{Binding ReasonsText}" Classes="t11"
-                                                       Foreground="{DynamicResource Red700}"
-                                                       TextWrapping="Wrap"
-                                                       IsVisible="{Binding HasReasons}" />
-
-                                            <ItemsControl ItemsSource="{Binding Files}"
-                                                          IsVisible="{Binding HasFiles}">
+                                            <ItemsControl ItemsSource="{Binding Books}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Grid ColumnDefinitions="140,*,Auto"
-                                                              Margin="0,0,0,2">
-                                                            <TextBlock Grid.Column="0" Text="{Binding Title}"
-                                                                       Classes="t11"
-                                                                       Foreground="{DynamicResource Slate500}" />
-                                                            <TextBlock Grid.Column="1" Text="{Binding FileName}"
-                                                                       Classes="t11"
-                                                                       TextTrimming="CharacterEllipsis" />
-                                                            <TextBlock Grid.Column="2" Text="{Binding Problem}"
-                                                                       Classes="t11" Margin="12,0,0,0"
-                                                                       Foreground="{DynamicResource Red600}"
-                                                                       TextWrapping="Wrap"
-                                                                       IsVisible="{Binding HasProblem}" />
-                                                        </Grid>
+                                                        <Expander IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
+                                                                  HorizontalAlignment="Stretch"
+                                                                  Margin="0,0,0,4">
+                                                            <Expander.Header>
+                                                                <Grid ColumnDefinitions="40,*,140"
+                                                                      VerticalAlignment="Center">
+                                                                    <TextBlock Grid.Column="0"
+                                                                               Text="{Binding NumberText}"
+                                                                               Classes="t11"
+                                                                               Foreground="{DynamicResource Slate500}" />
+                                                                    <TextBlock Grid.Column="1"
+                                                                               Text="{Binding Name}"
+                                                                               Classes="t12"
+                                                                               TextTrimming="CharacterEllipsis" />
+                                                                    <!-- A book that needs attention is
+                                                                         red and says why inside; a clean
+                                                                         book is one quiet word. -->
+                                                                    <TextBlock Grid.Column="2"
+                                                                               Text="{Binding StatusText}"
+                                                                               Classes="t11"
+                                                                               FontWeight="SemiBold"
+                                                                               Foreground="{DynamicResource Red600}"
+                                                                               IsVisible="{Binding IsFailed}" />
+                                                                    <TextBlock Grid.Column="2"
+                                                                               Text="{Binding StatusText}"
+                                                                               Classes="t11"
+                                                                               FontWeight="SemiBold"
+                                                                               Foreground="{DynamicResource Slate600}"
+                                                                               IsVisible="{Binding !IsFailed}" />
+                                                                </Grid>
+                                                            </Expander.Header>
+
+                                                            <StackPanel Spacing="6" Margin="40,4,0,6">
+                                                                <TextBlock Text="{Binding ReasonsText}"
+                                                                           Classes="t11"
+                                                                           Foreground="{DynamicResource Red700}"
+                                                                           TextWrapping="Wrap"
+                                                                           IsVisible="{Binding HasReasons}" />
+
+                                                                <ItemsControl ItemsSource="{Binding Files}"
+                                                                              IsVisible="{Binding HasFiles}">
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <Grid ColumnDefinitions="140,*,Auto"
+                                                                                  Margin="0,0,0,2">
+                                                                                <TextBlock Grid.Column="0"
+                                                                                           Text="{Binding Title}"
+                                                                                           Classes="t11"
+                                                                                           Foreground="{DynamicResource Slate500}" />
+                                                                                <TextBlock Grid.Column="1"
+                                                                                           Text="{Binding FileName}"
+                                                                                           Classes="t11"
+                                                                                           TextTrimming="CharacterEllipsis" />
+                                                                                <TextBlock Grid.Column="2"
+                                                                                           Text="{Binding Problem}"
+                                                                                           Classes="t11"
+                                                                                           Margin="12,0,0,0"
+                                                                                           Foreground="{DynamicResource Red600}"
+                                                                                           TextWrapping="Wrap"
+                                                                                           IsVisible="{Binding HasProblem}" />
+                                                                            </Grid>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
+                                                            </StackPanel>
+                                                        </Expander>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
                                         </StackPanel>
-                                    </Expander>
+
+                                        <!-- The parameters this project is priced and sent with:
+                                             answers the order page already took. -->
+                                        <Border Grid.Column="1" Background="{DynamicResource Slate50}"
+                                                CornerRadius="12" Padding="14,12"
+                                                VerticalAlignment="Top">
+                                            <StackPanel Spacing="6">
+                                                <TextBlock Text="Параметры проекта" Classes="t11"
+                                                           Foreground="{DynamicResource Slate500}" />
+                                                <TextBlock Text="{Binding FormatText}" Classes="t12"
+                                                           FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding BooksText}" Classes="t11"
+                                                           Foreground="{DynamicResource Slate600}" />
+                                                <TextBlock Text="{Binding SpreadsText}" Classes="t11"
+                                                           Foreground="{DynamicResource Slate600}" />
+                                                <TextBlock Text="{Binding PriceText}" Classes="t12"
+                                                           FontWeight="SemiBold"
+                                                           IsVisible="{Binding HasPrice}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
