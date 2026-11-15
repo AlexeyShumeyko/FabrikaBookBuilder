@@ -11,7 +11,15 @@ namespace PhotoBook.Application.Sites.Books.Order
     /// <summary>What the site said about an assembled order.</summary>
     /// <param name="Quote">The price of every book, when the order could be assembled at all.</param>
     /// <param name="Problems">What stops the order, or why some book has no price.</param>
-    public sealed record PricedOrder(GroupQuote? Quote, IReadOnlyList<string> Problems)
+    /// <param name="Draft">
+    /// The books as they were priced. The upload sends exactly these, so the screen that sends
+    /// does not assemble the order a second time and cannot send something the price was not
+    /// asked for.
+    /// </param>
+    public sealed record PricedOrder(
+        GroupQuote? Quote,
+        IReadOnlyList<string> Problems,
+        OrderDraft? Draft = null)
     {
         /// <summary>Whether every book of the order has a price.</summary>
         public bool IsPriced => Quote is { IsPriced: true };
@@ -60,7 +68,7 @@ namespace PhotoBook.Application.Sites.Books.Order
 
             var quote = await _quotes.QuoteAsync(session, draft.Books, cancellationToken).ConfigureAwait(false);
 
-            return new PricedOrder(quote, quote.Problems);
+            return new PricedOrder(quote, quote.Problems, draft);
         }
     }
 }

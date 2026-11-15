@@ -10,6 +10,7 @@ using PhotoBook.Application.Sites.Books;
 using PhotoBook.Application.Sites.Books.Order;
 using PhotoBook.Application.Sites.Books.Pricing;
 using PhotoBook.Application.Sites.Catalog;
+using PhotoBook.Application.Sites.Upload;
 using CoreProject = PhotoBook.Core.Project;
 
 namespace PhotoBook.Presentation.ViewModels
@@ -45,6 +46,7 @@ namespace PhotoBook.Presentation.ViewModels
         private IReadOnlyList<OrderBookRow> _books = Array.Empty<OrderBookRow>();
         private IReadOnlyList<FormatChoice> _formats = Array.Empty<FormatChoice>();
         private CoreProject? _project;
+        private UploadPlan? _plan;
         private string _projectName = string.Empty;
         private int _spreadCount;
         private string _message = string.Empty;
@@ -80,6 +82,15 @@ namespace PhotoBook.Presentation.ViewModels
         /// Raised when a choice was made, so the shell can save the project it belongs to.
         /// </summary>
         public event EventHandler? ChoiceChanged;
+
+        /// <summary>
+        /// Raised when the customer asks to send the order, which is the only thing that starts
+        /// a write. The plan is in <see cref="PendingUpload"/>.
+        /// </summary>
+        public event EventHandler? UploadRequested;
+
+        /// <summary>The plan the upload screen is to send, once the customer has asked for it.</summary>
+        public UploadPlan? PendingUpload { get; private set; }
 
         /// <summary>The books of the order, in the project's order.</summary>
         public IReadOnlyList<OrderBookRow> Books
@@ -180,6 +191,12 @@ namespace PhotoBook.Presentation.ViewModels
 
         /// <summary>Whether the site has named a total.</summary>
         public bool HasTotal => _totalText.Length > 0;
+
+        /// <summary>
+        /// Whether the order can be sent: priced, complete and with every book's integration
+        /// known. Sending is a write, so nothing but a finished order reaches the button.
+        /// </summary>
+        public bool CanUpload => !_isPricing && _plan is { IsComplete: true };
 
         /// <summary>How many books still need a format, in words.</summary>
         public string ChosenFormatText
@@ -333,6 +350,10 @@ namespace PhotoBook.Presentation.ViewModels
                 {
                     Message = string.Join(Environment.NewLine, priced.Problems);
                 }
+
+                // The plan is built from the answer that was just priced, so the button sends
+                // exactly what the customer saw a total for.
+                SetPlan(UploadPlans.Build(session.Region, priced.Draft, priced.Quote, formats));
             }
             catch (Exception ex)
             {
@@ -349,6 +370,27 @@ namespace PhotoBook.Presentation.ViewModels
 
         /// <summary>Goes back to the project the page was opened from.</summary>
         public void Back() => BackRequested?.Invoke(this, EventArgs.Empty);
+
+        /// <summary>
+        /// Hands the priced order to the shell, which opens the upload screen. Nothing is sent
+        /// until that screen's own button is pressed.
+        /// </summary>
+        public void Upload()
+        {
+            if (_plan is not { IsComplete: true })
+                return;
+
+            PendingUpload = _plan;
+            UploadRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>Keeps the button and the plan in step with what the page knows.</summary>
+        private void SetPlan(UploadPlan? plan)
+        {
+            _plan = plan;
+            PendingUpload = null;
+            OnPropertyChanged(nameof(CanUpload));
+        }
 
         private async Task<IReadOnlyList<SiteProduct>?> ReadChosenFormatsAsync(SiteSession session)
         {
@@ -413,6 +455,7 @@ namespace PhotoBook.Presentation.ViewModels
         {
             RefreshReadiness();
             TotalText = string.Empty;
+            SetPlan(null);
 
             foreach (var book in Books)
                 book.ForgetPrice();
@@ -439,6 +482,7 @@ namespace PhotoBook.Presentation.ViewModels
                 row.ForgetPrice();
 
             TotalText = string.Empty;
+            SetPlan(null);
             ChoiceChanged?.Invoke(this, EventArgs.Empty);
             RefreshReadiness();
         }

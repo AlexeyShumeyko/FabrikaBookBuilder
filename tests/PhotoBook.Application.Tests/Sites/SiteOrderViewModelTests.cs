@@ -147,6 +147,72 @@ namespace PhotoBook.Application.Tests.Sites
         }
 
         [Fact]
+        public async Task HandsThePricedOrderToTheUploadOnlyWhenAsked()
+        {
+            var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
+            var catalog = new StubCatalog(
+                new CatalogProduct(4494, "Лайфлат", "kit", 1, new[] { new CatalogFormat(9255, "21x30") }))
+            {
+                Format = TestFormats.WithCondition(37556),
+            };
+            var page = new SiteOrderViewModel(
+                catalog, new StubSessionStore(), new StubQuotes(), new StubFiles());
+            page.Prepare(project, "Проект");
+
+            await page.LoadFormatsAsync();
+            page.Books[0].SelectedFormat = page.Books[0].Formats[0];
+            await page.LoadFormatsAsync();
+            page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
+
+            // Nothing to send before the price is known: a project created without a total is
+            // one the customer never confirmed.
+            Assert.False(page.CanUpload);
+
+            await page.RecalculateAsync();
+
+            var asked = 0;
+            page.UploadRequested += (_, _) => asked++;
+
+            Assert.True(page.CanUpload);
+
+            page.Upload();
+
+            Assert.Equal(1, asked);
+            Assert.NotNull(page.PendingUpload);
+            var group = Assert.Single(page.PendingUpload!.Groups);
+            Assert.Equal(37556, group.Request.IntegrationId);
+            Assert.Equal(1, page.PendingUpload.Summary.ProjectCount);
+        }
+
+        [Fact]
+        public async Task ForgetsThePlanWhenAChoiceChanges()
+        {
+            var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
+            var catalog = new StubCatalog(
+                new CatalogProduct(4494, "Лайфлат", "kit", 1, new[] { new CatalogFormat(9255, "21x30") }))
+            {
+                Format = TestFormats.WithCondition(37556),
+            };
+            var page = new SiteOrderViewModel(
+                catalog, new StubSessionStore(), new StubQuotes(), new StubFiles());
+            page.Prepare(project, "Проект");
+
+            await page.LoadFormatsAsync();
+            page.Books[0].SelectedFormat = page.Books[0].Formats[0];
+            await page.LoadFormatsAsync();
+            page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
+            await page.RecalculateAsync();
+
+            Assert.True(page.CanUpload);
+
+            // The site was priced for one combination; another one has no price yet.
+            page.Parameters[0].Parameters[0].Selected = null;
+
+            Assert.False(page.CanUpload);
+            Assert.Null(page.PendingUpload);
+        }
+
+        [Fact]
         public async Task PricesTheOrderOnCommandAndShowsTheSitesTotal()
         {
             var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
@@ -227,7 +293,7 @@ namespace PhotoBook.Application.Tests.Sites
     /// <summary>One format as the uploader describes it: a cover, spreads and one question.</summary>
     internal static class TestFormats
     {
-        public static SiteProduct WithCondition() => new(
+        public static SiteProduct WithCondition(long integration = 0) => new(
             4494,
             string.Empty,
             "Лайфлат",
@@ -246,7 +312,8 @@ namespace PhotoBook.Application.Tests.Sites
                     }, new ProductQuantitySettings(string.Empty, QuantityUnit.Spreads,
                         new QuantityRange(1, 60, 1), false, Array.Empty<QuantityRule>()), true),
                 }),
-            });
+            },
+            integration);
     }
 
     internal sealed class StubCatalog : ISiteCatalogService

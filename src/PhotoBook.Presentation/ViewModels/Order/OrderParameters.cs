@@ -61,8 +61,9 @@ namespace PhotoBook.Presentation.ViewModels
                 OnPropertyChanged(nameof(Selected));
                 OnPropertyChanged(nameof(SelectedText));
 
-                if (value is not null)
-                    _changed();
+                // Taking an answer back is a change like any other: the book loses the choice
+                // and the price the page holds was asked for another combination.
+                _changed();
             }
         }
 
