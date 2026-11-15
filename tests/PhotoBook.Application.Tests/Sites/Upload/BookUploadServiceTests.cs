@@ -206,6 +206,38 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             Assert.Equal(0, result.Session.FilesTotal);
         }
 
+        [Fact]
+        public async Task ARefusedPageIsWrittenDownWithTheProjectPositionAndFile()
+        {
+            var journal = new RecordingJournal();
+            var upload = new StubUpload(failAt: 3, error: "Сайт не принял файл: страница 4.");
+
+            await new BookUploadService(upload, journal: journal)
+                .UploadAsync(Session, 527733, Pages(6));
+
+            var entry = Assert.Single(journal.Entries);
+            Assert.Equal(JournalLevel.Warning, entry.Level);
+            Assert.Equal("Отправка на сайт", entry.Source);
+            Assert.Contains("527733", entry.Message, StringComparison.Ordinal);
+            Assert.Contains("4 из 6", entry.Message, StringComparison.Ordinal);
+            Assert.Contains("4.jpg", entry.Message, StringComparison.Ordinal);
+            Assert.Contains("страница 4", entry.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public async Task AFinishedBookIsWrittenDown()
+        {
+            var journal = new RecordingJournal();
+
+            await new BookUploadService(new StubUpload(), journal: journal)
+                .UploadAsync(Session, 527733, Pages(2));
+
+            var entry = Assert.Single(journal.Entries);
+            Assert.Equal(JournalLevel.Information, entry.Level);
+            Assert.Contains("527733", entry.Message, StringComparison.Ordinal);
+            Assert.Contains("файлов 2", entry.Message, StringComparison.Ordinal);
+        }
+
         private sealed class Immediate : IProgress<UploadProgress>
         {
             private readonly List<UploadProgress> _reports;

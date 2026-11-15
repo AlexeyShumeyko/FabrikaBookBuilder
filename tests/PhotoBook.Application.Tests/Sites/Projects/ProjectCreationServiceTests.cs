@@ -115,6 +115,36 @@ namespace PhotoBook.Application.Tests.Sites.Projects
             Assert.Empty(projects.Asked);
         }
 
+        [Fact]
+        public async Task ACreatedProjectIsWrittenDownWithItsNumberAndBooks()
+        {
+            var journal = new RecordingJournal();
+
+            await new ProjectCreationService(new StubProjects(1001), new MemoryCreated(), journal)
+                .CreateAsync(Session, new[] { Group(Book(9255), Book(9255)) });
+
+            Assert.Contains(
+                journal.Entries,
+                entry => entry.Level == JournalLevel.Information &&
+                         entry.Message.Contains("Проект 1001 создан", StringComparison.Ordinal) &&
+                         entry.Message.Contains("книг 2", StringComparison.Ordinal));
+        }
+
+        [Fact]
+        public async Task AFailedGroupIsWrittenDownWithWhatTheSiteSaid()
+        {
+            var journal = new RecordingJournal();
+
+            await new ProjectCreationService(new StubProjects((long?)null), new MemoryCreated(), journal)
+                .CreateAsync(Session, new[] { Group(Book(9255)) });
+
+            var entry = Assert.Single(journal.Entries);
+            Assert.Equal(JournalLevel.Warning, entry.Level);
+            Assert.Equal("Создание проекта", entry.Source);
+            Assert.Contains("книг 1", entry.Message, StringComparison.Ordinal);
+            Assert.Contains("Сайт не создал проект", entry.Message, StringComparison.Ordinal);
+        }
+
         private sealed class StubProjects : ISiteProjectService
         {
             private readonly Queue<long?> _answers;

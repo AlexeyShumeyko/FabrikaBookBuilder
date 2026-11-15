@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
-using PhotoBook.Application.Sites.Books;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using PhotoBook.Application;
+using PhotoBook.Application.Sites.Books;
 
 namespace PhotoBook.Application.Sites.Upload
 {
@@ -25,16 +27,28 @@ namespace PhotoBook.Application.Sites.Upload
     /// starting over. Every accepted page is written down at once, and the record is dropped when
     /// the book is whole: one that outlived its book would make a later upload skip pages.
     /// </para>
+    /// <para>
+    /// How it ended is written to the journal: when a customer says the upload failed, the
+    /// entry naming the project, the page and the file is the only account support has. The
+    /// path itself is not written down - the file name and the position are enough to find it.
+    /// </para>
     /// </remarks>
     public sealed class BookUploadService : IBookUploadService
     {
+        private const string Source = "Отправка на сайт";
+
         private readonly ISiteFileUploadService _upload;
         private readonly IAcceptedFilesStore? _accepted;
+        private readonly IJournal? _journal;
 
-        public BookUploadService(ISiteFileUploadService upload, IAcceptedFilesStore? accepted = null)
+        public BookUploadService(
+            ISiteFileUploadService upload,
+            IAcceptedFilesStore? accepted = null,
+            IJournal? journal = null)
         {
             _upload = upload ?? throw new ArgumentNullException(nameof(upload));
             _accepted = accepted;
+            _journal = journal;
         }
 
         public async Task<BookUploadResult> UploadAsync(
@@ -64,6 +78,11 @@ namespace PhotoBook.Application.Sites.Upload
 
                 if (cancellationToken.IsCancellationRequested)
                 {
+                    _journal?.Write(
+                        JournalLevel.Information,
+                        Source,
+                        $"Отправка отменена: проект {projectId}, отправлено {uploaded} из {files.Count}.");
+
                     return Ended(
                         UploadState.Cancelled,
                         session,
@@ -83,6 +102,11 @@ namespace PhotoBook.Application.Sites.Upload
 
                 if (!page.IsAccepted)
                 {
+                    _journal?.Write(
+                        JournalLevel.Warning,
+                        Source,
+                        $"Книга не отправлена: проект {projectId}, файл {position + 1} из {files.Count} «{Path.GetFileName(file.Path)}»: {page.Error ?? "Сайт не принял файл."}");
+
                     return Ended(
                         UploadState.Failed,
                         session,
@@ -104,6 +128,11 @@ namespace PhotoBook.Application.Sites.Upload
             {
                 notice = "Книга загружена, но запись о ней не удалилась — при следующей отправке она может быть пропущена.";
             }
+
+            _journal?.Write(
+                JournalLevel.Information,
+                Source,
+                $"Книга отправлена: проект {projectId}, файлов {files.Count}.");
 
             return Ended(
                 UploadState.Completed,
