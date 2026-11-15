@@ -51,6 +51,20 @@ namespace PhotoBook.Presentation.ViewModels
     {
         /// <summary>Whether the site holds every page and nothing is wrong.</summary>
         public bool IsComplete => ProjectId > 0 && Uploaded >= Total && Problems.Count == 0;
+
+        /// <summary>The project on the site, or the note that there is none.</summary>
+        public string ProjectText => ProjectId > 0
+            ? "Проект " + ProjectId + " на сайте"
+            : "Проект не создан";
+
+        /// <summary>What arrived, in the site's own counting of pages.</summary>
+        public string PagesText => "Страниц на сайте: " + Uploaded + " из " + Total;
+
+        /// <summary>What does not match, one line each; empty when everything arrived.</summary>
+        public string ProblemsText => string.Join(System.Environment.NewLine, Problems);
+
+        /// <summary>Whether there is anything wrong with this group.</summary>
+        public bool HasProblems => Problems.Count > 0;
     }
 
     /// <summary>
@@ -93,6 +107,7 @@ namespace PhotoBook.Presentation.ViewModels
         private string _url = string.Empty;
         private string _resultText = string.Empty;
         private IReadOnlyList<UploadGroupResult> _results = Array.Empty<UploadGroupResult>();
+        private IReadOnlyList<string> _problems = Array.Empty<string>();
         private int _uploaded;
         private int _total;
 
@@ -115,6 +130,9 @@ namespace PhotoBook.Presentation.ViewModels
 
         /// <summary>Raised when the site refused the token; the shell opens the sign-in window.</summary>
         public event EventHandler? NeedsSignIn;
+
+        /// <summary>Raised when the customer leaves the screen for the order behind it.</summary>
+        public event EventHandler? BackRequested;
 
         /// <summary>The summary the button was enabled by; null until the screen is prepared.</summary>
         public SubmissionSummary? Summary => _summary;
@@ -204,11 +222,18 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Whether the run ended and there is something to read.</summary>
         public bool HasResult => _resultText.Length > 0;
 
+        /// <summary>Whether there is a line per project to show.</summary>
+        public bool HasResults => _results.Count > 0;
+
         /// <summary>One line per group: the project, its pages, and what is wrong.</summary>
         public IReadOnlyList<UploadGroupResult> Results
         {
             get => _results;
-            private set => SetProperty(ref _results, value);
+            private set
+            {
+                if (SetProperty(ref _results, value))
+                    OnPropertyChanged(nameof(HasResults));
+            }
         }
 
         /// <summary>Whether the site is being written to right now.</summary>
@@ -236,11 +261,23 @@ namespace PhotoBook.Presentation.ViewModels
         /// Shows what is about to be sent. Costs the site nothing: the summary and the groups are
         /// answers the previous screens already have.
         /// </summary>
-        public void Prepare(SiteSession session, SubmissionSummary summary, IReadOnlyList<UploadGroup> groups)
+        /// <param name="session">The session the run will write with.</param>
+        /// <param name="summary">The order as the customer reviews it.</param>
+        /// <param name="groups">The groups to send, one book each.</param>
+        /// <param name="problems">
+        /// Books the order page left out, and why. Any entry keeps the button off: a run that
+        /// silently skipped a book would leave a project the customer never asked for.
+        /// </param>
+        public void Prepare(
+            SiteSession session,
+            SubmissionSummary summary,
+            IReadOnlyList<UploadGroup> groups,
+            IReadOnlyList<string>? problems = null)
         {
             _session = session ?? throw new ArgumentNullException(nameof(session));
             _summary = summary ?? throw new ArgumentNullException(nameof(summary));
             _groups = groups ?? throw new ArgumentNullException(nameof(groups));
+            _problems = problems ?? Array.Empty<string>();
 
             Step = UploadStep.Ready;
             Uploaded = 0;
@@ -252,7 +289,7 @@ namespace PhotoBook.Presentation.ViewModels
             ResultText = string.Empty;
             ProgressText = Total == 0 ? string.Empty : "Страниц к отправке: " + Total + ".";
 
-            Message = Blockers();
+            Message = Blockers(_problems);
 
             OnPropertyChanged(nameof(Summary));
             OnPropertyChanged(nameof(CanUpload));
@@ -260,9 +297,9 @@ namespace PhotoBook.Presentation.ViewModels
         }
 
         /// <summary>What the screen says instead of a run: everything that blocks the button.</summary>
-        private string Blockers()
+        private string Blockers(IReadOnlyList<string> problems)
         {
-            var lines = new List<string>();
+            var lines = new List<string>(problems);
 
             if (_summary is not null)
                 lines.AddRange(_summary.Blockers);

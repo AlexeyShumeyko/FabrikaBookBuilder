@@ -206,6 +206,7 @@ public partial class App : Avalonia.Application
             sp.GetRequiredService<UniqueFoldersViewModel>(),
             sp.GetRequiredService<CombinedModeViewModel>(),
             sp.GetRequiredService<SiteOrderViewModel>(),
+            sp.GetRequiredService<SiteUploadViewModel>(),
             () => sp.GetRequiredService<ProjectListViewModel>()));
 
         services.AddSingleton(sp => new AvaloniaNavigator(
@@ -213,6 +214,8 @@ public partial class App : Avalonia.Application
             sp.GetRequiredService<UniqueFoldersViewModel>(),
             sp.GetRequiredService<CombinedModeViewModel>(),
             sp.GetRequiredService<SiteOrderViewModel>(),
+            sp.GetRequiredService<SiteUploadViewModel>(),
+            sp.GetRequiredService<Application.Sites.ISiteSessionStore>(),
             () => sp.GetRequiredService<ProjectListViewModel>()));
 
         services.AddSingleton<IShellNavigator>(sp => sp.GetRequiredService<AvaloniaNavigator>());

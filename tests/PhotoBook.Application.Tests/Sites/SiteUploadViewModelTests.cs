@@ -53,6 +53,20 @@ namespace PhotoBook.Application.Tests.Sites
         }
 
         [Fact]
+        public void ABookLeftOutByTheOrderKeepsTheButtonOff()
+        {
+            var screen = Screen(new StubCreation(1001), new StubUpload((session, projectId, pages, _, _, _) =>
+                Task.FromResult(Accepted(projectId, pages.Count))), new StubCheck(true), groups: 1, pages: 3);
+
+            // The order page names every book it could not price; one of those is enough to
+            // stop the run, because a project nobody priced is a project nobody confirmed.
+            screen.Prepare(Session, screen.Summary!, Array.Empty<UploadGroup>(), new[] { "Книга 2: цена не получена." });
+
+            Assert.False(screen.CanUpload);
+            Assert.Contains("цена не получена", screen.Message);
+        }
+
+        [Fact]
         public async Task AnExpiredSessionAsksForThePasswordAndStopsTheRun()
         {
             var upload = new StubUpload((session, projectId, pages, _, _, _) => Task.FromResult(

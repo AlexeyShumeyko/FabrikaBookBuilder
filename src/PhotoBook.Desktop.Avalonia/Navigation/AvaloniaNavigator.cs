@@ -28,9 +28,12 @@ namespace PhotoBook.Shell.Navigation
         private readonly UniqueFoldersViewModel _uniqueFolders;
         private readonly CombinedModeViewModel _combined;
         private readonly SiteOrderViewModel _siteOrder;
+        private readonly SiteUploadViewModel _upload;
+        private readonly Application.Sites.ISiteSessionStore _sessions;
 
         private ContentControl? _host;
         private AppMode _currentMode = AppMode.ProjectList;
+        private AppMode? _previousMode;
         private AppMode? _sessionMode;
 
         /// <summary>Whether a save of the order's choices is already running.</summary>
@@ -42,12 +45,16 @@ namespace PhotoBook.Shell.Navigation
             UniqueFoldersViewModel uniqueFolders,
             CombinedModeViewModel combined,
             SiteOrderViewModel siteOrder,
+            SiteUploadViewModel upload,
+            Application.Sites.ISiteSessionStore sessions,
             Func<ProjectListViewModel> projectListProvider)
         {
             _screens = screens;
             _uniqueFolders = uniqueFolders;
             _combined = combined;
             _siteOrder = siteOrder;
+            _upload = upload;
+            _sessions = sessions;
             ProjectListProvider = projectListProvider;
 
             // The header reads the name off the editor rather than keeping a copy, so that a
@@ -71,6 +78,11 @@ namespace PhotoBook.Shell.Navigation
             _combined.OrderRequested += (_, _) => OpenOrder(AppMode.Combined);
             _siteOrder.BackRequested += (_, _) => CurrentMode = _sessionMode ?? AppMode.ProjectList;
             _siteOrder.ChoiceChanged += (_, _) => SaveChoice();
+
+            // Sending is a screen of its own: the order page hands over a priced plan, and
+            // this one shows what will be written before anything is written.
+            _siteOrder.UploadRequested += (_, _) => OpenUpload();
+            _upload.BackRequested += (_, _) => CurrentMode = AppMode.SiteOrder;
         }
 
         private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -121,6 +133,7 @@ namespace PhotoBook.Shell.Navigation
             set
             {
                 bool changed = _currentMode != value;
+                _previousMode = _currentMode;
                 _currentMode = value;
                 if (changed || _host?.Content is null) Show();
                 ModeChanged?.Invoke(this, value);
@@ -151,6 +164,7 @@ namespace PhotoBook.Shell.Navigation
                 AppMode.UniqueFolders => (object)_uniqueFolders,
                 AppMode.Combined => _combined,
                 AppMode.SiteOrder => _siteOrder,
+                AppMode.SiteUpload => _upload,
                 _ => ProjectListProvider()
             };
 
@@ -164,7 +178,11 @@ namespace PhotoBook.Shell.Navigation
 
             // The page reads the project as it stands the moment it is opened, and the
             // project is delivered above, so the books are already there.
-            if (_currentMode == AppMode.SiteOrder && _sessionMode is { } sessionMode)
+            // Coming back from the upload screen is not opening the order again: the page
+            // still holds the formats, the answers and the total the customer already saw.
+            var returning = _previousMode == AppMode.SiteUpload;
+
+            if (_currentMode == AppMode.SiteOrder && _sessionMode is { } sessionMode && !returning)
             {
                 _siteOrder.Prepare(ProjectOf(sessionMode), NameOf(sessionMode));
 
@@ -212,6 +230,27 @@ namespace PhotoBook.Shell.Navigation
             {
                 _savingChoice = false;
             }
+        }
+
+        /// <summary>Opens the upload screen for the plan the order page has in hand.</summary>
+        /// <remarks>
+        /// The plan is what the page just priced; a session that is gone is the sign-in
+        /// window's business, so the page is told and stays where it is.
+        /// </remarks>
+        private void OpenUpload()
+        {
+            if (_siteOrder.PendingUpload is not { } plan)
+                return;
+
+            var session = _sessions.Load();
+            if (session is null)
+            {
+                _siteOrder.ShowMessage("Отправка требует входа на сайт.");
+                return;
+            }
+
+            _upload.Prepare(session, plan.Summary, plan.Groups, plan.Problems);
+            CurrentMode = AppMode.SiteUpload;
         }
 
         private void OpenOrder(AppMode mode)

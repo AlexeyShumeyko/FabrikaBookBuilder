@@ -1,0 +1,97 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PhotoBook.Shell.Views.SiteUploadView"
+             FontFamily="Inter">
+
+    <!--
+        The upload screen is the only place in the program that writes to the site. It shows
+        what is about to be sent, how far it got, and what the site holds afterwards; the button
+        that starts the run is here and nowhere else.
+    -->
+    <Grid RowDefinitions="Auto,*" Margin="32,16">
+        <Border Grid.Row="0" Classes="card" Padding="20,16" MaxWidth="1200" HorizontalAlignment="Stretch">
+            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock Text="Отправка на сайт" Classes="t20Bold" />
+                    <TextBlock Text="{Binding ProgressText}" Classes="t12"
+                               Foreground="{DynamicResource Slate500}" TextWrapping="Wrap" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Uploaded}" Classes="t14SemiBold" HorizontalAlignment="Center" />
+                    <TextBlock Text="страниц отправлено" Classes="t11"
+                               Foreground="{DynamicResource Slate500}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Classes="outline" Padding="12,10"
+                            IsEnabled="{Binding CanCancel}"
+                            AutomationProperties.Name="Остановить"
+                            Click="OnCancel">
+                        <TextBlock Text="Остановить" VerticalAlignment="Center" />
+                    </Button>
+
+                    <Button Classes="outline" Padding="12,10"
+                            IsEnabled="{Binding !IsBusy}"
+                            AutomationProperties.Name="Вернуться к заказу"
+                            Click="OnBack">
+                        <TextBlock Text="Вернуться к заказу" VerticalAlignment="Center" />
+                    </Button>
+
+                    <!-- One button, and it is the only thing that starts a write. -->
+                    <Button Classes="primary" Padding="16,10"
+                            IsEnabled="{Binding CanUpload}"
+                            AutomationProperties.Name="Загрузить на сайт"
+                            Click="OnUpload">
+                        <TextBlock Text="{Binding ButtonText}" Foreground="White" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" Classes="contentScroll" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled" Margin="0,24,0,0">
+            <StackPanel Spacing="16" MaxWidth="1200" HorizontalAlignment="Stretch">
+                <Border Classes="card" Padding="20,16" IsVisible="{Binding HasMessage}">
+                    <TextBlock Text="{Binding Message}" Classes="t12"
+                               Foreground="{DynamicResource Slate600}" TextWrapping="Wrap" />
+                </Border>
+
+                <Border Classes="card" Padding="20,16" IsVisible="{Binding HasResult}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Итог" Classes="t14SemiBold" />
+                        <TextBlock Text="{Binding ResultText}" Classes="t12" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Url}" Classes="t12"
+                                   Foreground="{DynamicResource Slate500}" TextWrapping="Wrap"
+                                   IsVisible="{Binding HasUrl}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- One line per project the run touched: what exists, how many pages arrived,
+                     and what does not match. -->
+                <Border Classes="card" Padding="20,16" IsVisible="{Binding HasResults}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Проекты" Classes="t14SemiBold" />
+                        <ItemsControl ItemsSource="{Binding Results}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Spacing="2" Margin="0,0,0,12">
+                                        <TextBlock Text="{Binding ProjectText}" Classes="t12"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding PagesText}" Classes="t11"
+                                                   Foreground="{DynamicResource Slate500}" />
+                                        <TextBlock Text="{Binding ProblemsText}" Classes="t11"
+                                                   Foreground="{DynamicResource Slate600}"
+                                                   TextWrapping="Wrap"
+                                                   IsVisible="{Binding HasProblems}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

@@ -59,13 +59,12 @@
                         <TextBlock Text="Рассчитать цену" VerticalAlignment="Center" />
                     </Button>
 
-                    <!--
-                        Sending is the next step. The page says so in words instead of offering a
-                        button that would only look broken.
-                    -->
-                    <Button Classes="primary" Padding="16,10" IsEnabled="False"
+                    <!-- Sending opens the upload screen; nothing is written until that
+                         screen's own button is pressed. -->
+                    <Button Classes="primary" Padding="16,10"
+                            IsEnabled="{Binding CanUpload}"
                             AutomationProperties.Name="Загрузить на сайт"
-                            ToolTip.Tip="Отправка появится на следующем шаге">
+                            Click="OnUpload">
                         <TextBlock Text="Загрузить на сайт" Foreground="White" />
                     </Button>
                 </StackPanel>

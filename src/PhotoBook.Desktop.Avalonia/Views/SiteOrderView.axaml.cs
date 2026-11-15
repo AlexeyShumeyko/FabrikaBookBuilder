@@ -16,6 +16,9 @@ namespace PhotoBook.Shell.Views
         private void OnBack(object? sender, RoutedEventArgs e) =>
             (DataContext as SiteOrderViewModel)?.Back();
 
+        private void OnUpload(object? sender, RoutedEventArgs e) =>
+            (DataContext as SiteOrderViewModel)?.Upload();
+
         private void OnRecalculate(object? sender, RoutedEventArgs e)
         {
             if (DataContext is SiteOrderViewModel page)

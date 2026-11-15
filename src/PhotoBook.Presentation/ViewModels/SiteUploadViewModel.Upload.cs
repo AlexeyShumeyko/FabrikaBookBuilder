@@ -148,6 +148,15 @@ namespace PhotoBook.Presentation.ViewModels
             }
         }
 
+        /// <summary>Leaves the screen for the order behind it, unless a run is writing.</summary>
+        public void Back()
+        {
+            if (IsBusy)
+                return;
+
+            BackRequested?.Invoke(this, EventArgs.Empty);
+        }
+
         /// <summary>Stops the queue between files; what the site already has stays there.</summary>
         public void Cancel() => _cancel?.Cancel();
 

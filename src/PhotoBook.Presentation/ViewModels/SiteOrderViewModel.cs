@@ -172,8 +172,14 @@ namespace PhotoBook.Presentation.ViewModels
             get => _isPricing;
             private set
             {
-                if (SetProperty(ref _isPricing, value))
-                    OnPropertyChanged(nameof(CanPrice));
+                if (!SetProperty(ref _isPricing, value))
+                    return;
+
+                // A price run also settles whether the order may be sent: the plan it builds
+                // is what enables the button, and the button was staying grey because only the
+                // price button was told the run had finished.
+                OnPropertyChanged(nameof(CanPrice));
+                OnPropertyChanged(nameof(CanUpload));
             }
         }
 
