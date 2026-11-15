@@ -123,7 +123,7 @@ namespace PhotoBook.Presentation.ViewModels
                         .CheckAsync(
                             session,
                             result.ProjectId,
-                            new ProjectExpectation(PagesPerBook(result.Number, result.Total)),
+                            new ProjectExpectation(BooksOf(result.Number, result.Total)),
                             cancel.Token)
                         .ConfigureAwait(true);
 
@@ -179,6 +179,7 @@ namespace PhotoBook.Presentation.ViewModels
 
         /// <summary>Stops the queue between files; what the site already has stays there.</summary>
         public void Cancel() => _cancel?.Cancel();
+
 
         /// <summary>One group's books, with the stop reason when there is one.</summary>
         /// <remarks>
@@ -277,24 +278,25 @@ namespace PhotoBook.Presentation.ViewModels
         }
 
         /// <summary>
-        /// How many files each book of a project should have, so the check compares book by book.
+        /// What each book of a project should look like on the site, so the check reads book by book.
         /// </summary>
         /// <remarks>
-        /// The site keeps the books apart inside a project, so a run of three books has to be read
-        /// back as three books: one total would make a project of three short books look like one
-        /// long book and hide a book that lost its cover.
+        /// The site keeps the books apart inside a project, and the cover apart from the spreads,
+        /// so a run of three books has to be read back as three books with their covers counted
+        /// separately: one total would make a project of three short books look like one long book
+        /// and hide a book that lost its cover.
         /// </remarks>
-        private IReadOnlyList<int> PagesPerBook(int number, int total)
+        private IReadOnlyList<ExpectedBook> BooksOf(int number, int total)
         {
             var group = _groups.FirstOrDefault(item => item.Number == number);
             if (group is null || group.Group.Books.Count == 0)
-                return new[] { total };
+                return new[] { new ExpectedBook(false, total) };
 
-            var counts = new List<int>(group.Group.Books.Count);
+            var books = new List<ExpectedBook>(group.Group.Books.Count);
             foreach (var book in group.Group.Books)
-                counts.Add(book.AllFiles.Count);
+                books.Add(new ExpectedBook(book.CoverFile is not null, book.Files?.Count ?? 0));
 
-            return counts;
+            return books;
         }
 
         /// <summary>The groups that can be sent now: at least one book with at least one page.</summary>

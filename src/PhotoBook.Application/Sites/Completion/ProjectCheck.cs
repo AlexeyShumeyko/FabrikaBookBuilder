@@ -3,26 +3,51 @@ using PhotoBook.Application.Sites.Projects;
 
 namespace PhotoBook.Application.Sites.Completion
 {
+    /// <summary>What one book of the order should look like on the site.</summary>
+    /// <param name="HasCover">
+    /// Whether a cover was sent for this book. The site keeps it at position zero, ahead of the
+    /// spreads, so it is counted on its own rather than as one more spread.
+    /// </param>
+    /// <param name="Spreads">Spreads sent, the cover not counted; they sit at positions one and up.</param>
+    public sealed record ExpectedBook(bool HasCover, int Spreads);
+
     /// <summary>What the customer's order asked the site to hold.</summary>
-    /// <param name="PagesPerBook">Spreads in each book, in the order the books were sent.</param>
+    /// <param name="Books">Each book's cover and spreads, in the order the books were sent.</param>
     /// <remarks>
-    /// Page counts are what can be compared without guessing: the site's page entries carry a
+    /// Counts are what can be compared without guessing: the site's page entries carry a
     /// position and a colour space, but not the file name or its pixel size, so a check that
-    /// claimed to recognise a photograph would be inventing a fact. Counting is honest.
+    /// claimed to recognise a photograph would be inventing a fact. Counting is honest, and the
+    /// cover and the spreads are counted apart because the site stores them apart.
     /// </remarks>
-    public sealed record ProjectExpectation(IReadOnlyList<int> PagesPerBook)
+    public sealed record ProjectExpectation(IReadOnlyList<ExpectedBook> Books)
     {
         /// <summary>Books the order puts in this project.</summary>
-        public int BookCount => PagesPerBook.Count;
+        public int BookCount => Books.Count;
 
-        /// <summary>Spreads across those books.</summary>
-        public int PageCount
+        /// <summary>Spreads across those books, the covers not counted.</summary>
+        public int SpreadCount
         {
             get
             {
                 var total = 0;
-                foreach (var pages in PagesPerBook)
-                    total += pages;
+                foreach (var book in Books)
+                    total += book.Spreads;
+
+                return total;
+            }
+        }
+
+        /// <summary>Covers sent, which is at most one per book.</summary>
+        public int CoverCount
+        {
+            get
+            {
+                var total = 0;
+                foreach (var book in Books)
+                {
+                    if (book.HasCover)
+                        total++;
+                }
 
                 return total;
             }

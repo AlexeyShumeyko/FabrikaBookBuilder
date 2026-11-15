@@ -64,18 +64,32 @@ namespace PhotoBook.Application.Sites.Completion
             var books = Math.Min(project.BookCount, expected.BookCount);
 
             for (var index = 0; index < books; index++)
-                differences.AddRange(CompareBook(index + 1, project.Items[index], expected.PagesPerBook[index]));
+                differences.AddRange(CompareBook(index + 1, project.Items[index], expected.Books[index]));
 
             return Result<ProjectCheck>.Ok(new ProjectCheck(project, ProjectLink.Of(session.Region, project), differences));
         }
 
         /// <summary>What one book on the site has to say about itself.</summary>
-        private static IEnumerable<string> CompareBook(int number, SiteProjectItem book, int expectedPages)
+        /// <remarks>
+        /// The cover and the spreads are counted apart: the site keeps the cover at position zero
+        /// and the spreads from one, so a book that lost its cover but kept its spreads would look
+        /// complete to a check that only added the two numbers up.
+        /// </remarks>
+        private static IEnumerable<string> CompareBook(int number, SiteProjectItem book, ExpectedBook expected)
         {
-            if (book.Pages.Count != expectedPages)
+            var coverOnSite = book.Pages.Any(page => page.Position == 0);
+            var spreadsOnSite = book.Pages.Count(page => page.Position > 0);
+
+            if (expected.HasCover && !coverOnSite)
+                yield return "Книга " + number + ": на сайте нет обложки — отправляли её.";
+
+            if (!expected.HasCover && coverOnSite)
+                yield return "Книга " + number + ": на сайте есть обложка, а отправляли книгу без обложки.";
+
+            if (spreadsOnSite != expected.Spreads)
             {
-                yield return "Книга " + number + ": на сайте " + book.Pages.Count +
-                    " страниц, отправляли " + expectedPages + ".";
+                yield return "Книга " + number + ": на сайте " + spreadsOnSite +
+                    " разворотов, отправляли " + expected.Spreads + ".";
             }
 
             // The site orders spreads by the position it holds, so the list itself has to read

@@ -173,7 +173,9 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Equal(new long[] { 65075, 65076 }, upload.ItemIds.ToArray());
 
             // The site is read back book by book, not as one long book of six files.
-            Assert.Equal(new[] { 3, 3 }, Assert.Single(check.Expectations));
+            Assert.Equal(
+                new[] { new ExpectedBook(false, 3), new ExpectedBook(false, 3) },
+                Assert.Single(check.Expectations));
 
             // Both books are listed with their own word, not the project's.
             Assert.Equal(2, screen.BookRows.Count);
@@ -581,7 +583,7 @@ namespace PhotoBook.Application.Tests.Sites
 
             internal StubCheck(bool noDifferences) => _noDifferences = noDifferences;
 
-            internal List<IReadOnlyList<int>> Expectations { get; } = new();
+            internal List<IReadOnlyList<ExpectedBook>> Expectations { get; } = new();
 
             public Task<Result<ProjectCheck>> CheckAsync(
                 SiteSession session,
@@ -589,7 +591,7 @@ namespace PhotoBook.Application.Tests.Sites
                 ProjectExpectation expected,
                 CancellationToken cancellationToken = default)
             {
-                Expectations.Add(expected.PagesPerBook);
+                Expectations.Add(expected.Books);
 
                 var project = new SiteProjectSnapshot(
                     projectId,

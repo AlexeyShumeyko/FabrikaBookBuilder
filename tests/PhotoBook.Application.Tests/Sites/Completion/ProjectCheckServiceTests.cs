@@ -21,7 +21,7 @@ namespace PhotoBook.Application.Tests.Sites.Completion
         [Fact]
         public async Task AProjectThatHoldsEveryPageMatchesAndCarriesItsLink()
         {
-            var check = await Check(Project(pages: 10, books: 2), new ProjectExpectation(new[] { 10, 10 }));
+            var check = await Check(Project(pages: 10, books: 2), Expect(10, 10));
 
             Assert.True(check.Matches);
             Assert.Empty(check.Differences);
@@ -33,7 +33,7 @@ namespace PhotoBook.Application.Tests.Sites.Completion
         [Fact]
         public async Task AProjectTheAccountCannotSeeIsADifference()
         {
-            var check = await Check(Project(pages: 4, visible: false), new ProjectExpectation(new[] { 4 }));
+            var check = await Check(Project(pages: 4, visible: false), Expect(4));
 
             Assert.False(check.Matches);
             Assert.Contains(check.Differences, line => line.Contains("списке проектов аккаунта"));
@@ -42,18 +42,67 @@ namespace PhotoBook.Application.Tests.Sites.Completion
         [Fact]
         public async Task ABookWithAnotherNumberOfPagesIsADifference()
         {
-            var check = await Check(Project(pages: 9), new ProjectExpectation(new[] { 10 }));
+            var check = await Check(Project(pages: 9), Expect(10));
 
             Assert.False(check.Matches);
             Assert.Contains(
                 check.Differences,
-                line => line.Contains("Книга 1") && line.Contains("9") && line.Contains("10"));
+                line => line.Contains("Книга 1") &&
+                    line.Contains("8 разворотов") &&
+                    line.Contains("отправляли 9"));
+        }
+
+        /// <summary>
+        /// The roadmap's criterion: covers and spreads are counted apart, so a book that kept its
+        /// spreads but lost its cover is not called complete.
+        /// </summary>
+        [Fact]
+        public async Task ABookWithoutItsCoverIsADifference()
+        {
+            var project = new SiteProjectSnapshot(
+                527733,
+                4494,
+                string.Empty,
+                "/layflat",
+                true,
+                new[] { new SiteProjectItem(1, null, 1, new[] { Page(1), Page(2), Page(3) }) });
+
+            var check = await Check(project, Expect(4));
+
+            Assert.False(check.Matches);
+            Assert.Contains(check.Differences, line => line.Contains("нет обложки"));
+        }
+
+        [Fact]
+        public async Task MoreSpreadsThanWereSentIsADifference()
+        {
+            var project = new SiteProjectSnapshot(
+                527733,
+                4494,
+                string.Empty,
+                "/layflat",
+                true,
+                new[]
+                {
+                    new SiteProjectItem(
+                        1,
+                        null,
+                        1,
+                        Enumerable.Range(0, 5).Select(position => Page(position)).ToList())
+                });
+
+            var check = await Check(project, Expect(3));
+
+            Assert.False(check.Matches);
+            Assert.Contains(
+                check.Differences,
+                line => line.Contains("4 разворотов") && line.Contains("отправляли 2"));
         }
 
         [Fact]
         public async Task AnotherNumberOfBooksIsADifference()
         {
-            var check = await Check(Project(pages: 4, books: 1), new ProjectExpectation(new[] { 4, 4 }));
+            var check = await Check(Project(pages: 4, books: 1), Expect(4, 4));
 
             Assert.False(check.Matches);
             Assert.Contains(check.Differences, line => line.Contains("1 книг") && line.Contains("2"));
@@ -70,7 +119,7 @@ namespace PhotoBook.Application.Tests.Sites.Completion
                 true,
                 new[] { new SiteProjectItem(1, null, 1, new[] { Page(0), Page(2), Page(1) }) });
 
-            var check = await Check(project, new ProjectExpectation(new[] { 3 }));
+            var check = await Check(project, Expect(3));
 
             Assert.False(check.Matches);
             Assert.Contains(check.Differences, line => line.Contains("не подряд"));
@@ -94,7 +143,7 @@ namespace PhotoBook.Application.Tests.Sites.Completion
                         new[] { Page(0), Page(1, "Изображение меньше рекомендованного"), Page(2) })
                 });
 
-            var check = await Check(project, new ProjectExpectation(new[] { 3 }));
+            var check = await Check(project, Expect(3));
 
             Assert.False(check.Matches);
             Assert.Contains(
@@ -107,7 +156,7 @@ namespace PhotoBook.Application.Tests.Sites.Completion
         {
             var project = new SiteProjectSnapshot(527733, 4494, string.Empty, string.Empty, true, Array.Empty<SiteProjectItem>());
 
-            var check = await Check(project, new ProjectExpectation(Array.Empty<int>()));
+            var check = await Check(project, new ProjectExpectation(Array.Empty<ExpectedBook>()));
 
             Assert.False(check.HasUrl);
             Assert.Equal(string.Empty, check.Url);
@@ -122,11 +171,15 @@ namespace PhotoBook.Application.Tests.Sites.Completion
             };
 
             var result = await new ProjectCheckService(service)
-                .CheckAsync(Session, 527733, new ProjectExpectation(new[] { 4 }));
+                .CheckAsync(Session, 527733, Expect(4));
 
             Assert.False(result.IsSuccess);
             Assert.Equal("Нужно войти заново: сеанс истёк.", result.Error);
         }
+
+        /// <summary>Books as the order sends them: one cover, then the spreads after it.</summary>
+        private static ProjectExpectation Expect(params int[] filesPerBook) =>
+            new(filesPerBook.Select(files => new ExpectedBook(true, files - 1)).ToArray());
 
         private static async Task<ProjectCheck> Check(SiteProjectSnapshot project, ProjectExpectation expected)
         {
