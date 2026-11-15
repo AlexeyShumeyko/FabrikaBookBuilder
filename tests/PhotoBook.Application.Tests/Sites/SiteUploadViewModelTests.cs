@@ -275,6 +275,24 @@ namespace PhotoBook.Application.Tests.Sites
         }
 
         [Fact]
+        public async Task StopsBeforeSendingPagesIntoAProjectWithoutItsParameters()
+        {
+            var upload = new StubUpload();
+            var screen = Screen(
+                new StubCreation(1001) { Error = "Проект создан, но сайт не принял его параметры и цену: отказ." },
+                upload,
+                new StubCheck(true),
+                groups: 1,
+                pages: 2);
+
+            await screen.UploadAsync();
+
+            Assert.Empty(upload.Calls);
+            Assert.Contains("параметры", screen.Message, StringComparison.Ordinal);
+            Assert.NotEqual(UploadStep.Done, screen.Step);
+        }
+
+        [Fact]
         public void APageTooSmallKeepsTheButtonOffAndSaysWhy()
         {
             var screen = Screen(
@@ -435,6 +453,8 @@ namespace PhotoBook.Application.Tests.Sites
 
             internal StubCreation(params long[] ids) => _ids = ids;
 
+            internal string? Error { get; init; }
+
             internal List<IReadOnlyList<GroupRequest>> Asked { get; } = new();
 
             public Task<ProjectCreationPlan> CreateAsync(
@@ -450,7 +470,7 @@ namespace PhotoBook.Application.Tests.Sites
                         group.Group,
                         GroupCreationState.Created,
                         _ids[Math.Min(index, _ids.Length - 1)],
-                        null))
+                        Error))
                     .ToList();
 
                 return Task.FromResult(new ProjectCreationPlan(created));

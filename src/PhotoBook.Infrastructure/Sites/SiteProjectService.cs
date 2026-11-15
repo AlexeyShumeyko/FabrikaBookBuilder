@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
@@ -34,6 +35,7 @@ namespace PhotoBook.Infrastructure.Sites
     internal sealed class SiteProjectService : ISiteProjectService
     {
         private const string CreatePath = "creators/projects/create";
+        private const string ParamsPath = "creators/projects/params";
         private const string EditPath = "creators/projects/edit";
         private const string ListPath = "creators/projects?with_update_price=1";
         private const string Creator = "photo-book-uploader";
@@ -94,6 +96,69 @@ namespace PhotoBook.Infrastructure.Sites
             return Result<SiteProject>.Ok(
                 new SiteProject(id, productId > 0 ? productId : request.ProductId, title));
         }
+
+        public async Task<Result> SetUpAsync(
+            SiteSession session,
+            long projectId,
+            long productId,
+            ProjectParameters parameters,
+            CancellationToken cancellationToken = default)
+        {
+            if (session is null)
+                throw new ArgumentNullException(nameof(session));
+            if (parameters is null)
+                throw new ArgumentNullException(nameof(parameters));
+            if (projectId <= 0)
+                return Result.Fail("У проекта нет номера.");
+            if (productId <= 0)
+                return Result.Fail("У проекта нет продукта.");
+
+            var client = new SiteApiClient(session.Region, _http, _retryDelay);
+
+            var response = await client
+                .PostJsonAsync(ParamsPath, Body(projectId, productId, parameters), session.AccessToken, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!response.IsSuccess || response.Document is null)
+                return Result.Fail(response.Error?.Message ?? "Сайт не принял параметры проекта.");
+
+            using var document = response.Document;
+
+            return document.RootElement.TryGetProperty("data", out _)
+                ? Result.Ok()
+                : Result.Fail("Сайт не подтвердил параметры проекта.");
+        }
+
+        /// <summary>The body the site's own uploader sends, with the price in minor units.</summary>
+        /// <remarks>
+        /// <c>params</c> is written as a dictionary rather than as an anonymous object because the
+        /// name is a C# keyword; the site reads the same JSON either way.
+        /// </remarks>
+        private static Dictionary<string, object?> Body(long projectId, long productId, ProjectParameters parameters) =>
+            new()
+            {
+                ["projectId"] = projectId,
+                ["productId"] = productId,
+                ["title"] = string.Empty,
+                ["price"] = MinorUnits(parameters.Price),
+                ["params"] = new Dictionary<string, object?>
+                {
+                    ["productComponentId"] = parameters.VariantId,
+                    ["quantity"] = parameters.Books,
+                    ["options"] = parameters.Options
+                        .OrderBy(pair => pair.Key)
+                        .Select(pair => new Dictionary<string, object?> { ["id"] = pair.Key, ["value"] = pair.Value })
+                        .ToList(),
+                    ["productPartQuantity"] = parameters.PartQuantities
+                        .OrderBy(pair => pair.Key)
+                        .Select(pair => new Dictionary<string, object?> { ["id"] = pair.Key, ["value"] = pair.Value })
+                        .ToList(),
+                },
+            };
+
+        /// <summary>The price as the site counts money: hundredths, not the decimal the screen shows.</summary>
+        private static long MinorUnits(decimal price) =>
+            (long)Math.Round(price * 100m, MidpointRounding.AwayFromZero);
 
         public async Task<Result<SiteProjectSnapshot>> ReadAsync(
             SiteSession session,

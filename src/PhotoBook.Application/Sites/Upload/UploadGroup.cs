@@ -11,5 +11,6 @@ namespace PhotoBook.Application.Sites.Upload
         int Number,
         Books.OrderGroup Group,
         Projects.CreateProjectRequest Request,
-        IReadOnlyList<Books.PageFile> Pages);
+        IReadOnlyList<Books.PageFile> Pages,
+        decimal Price = 0);
 }

@@ -67,6 +67,18 @@ namespace PhotoBook.Presentation.ViewModels
                     return;
                 }
 
+                // A project the site holds without its parameters and price cannot be produced,
+                // so the run stops before sending pages into it: an order the customer cannot
+                // order is worse than a stopped run, and nothing has been sent yet.
+                var unconfigured = plan.Groups
+                    .FirstOrDefault(group => group.HasProject && !string.IsNullOrWhiteSpace(group.Error));
+
+                if (unconfigured is not null)
+                {
+                    Finish(UploadStep.Stopped, results, unconfigured.Error!);
+                    return;
+                }
+
                 Step = UploadStep.Uploading;
 
                 foreach (var group in _groups)
@@ -218,7 +230,7 @@ namespace PhotoBook.Presentation.ViewModels
         private IReadOnlyList<GroupRequest> Requests() =>
             _groups
                 .Where(group => group.Group.Books.Count == 1 && group.Pages.Count > 0)
-                .Select(group => new GroupRequest(group.Group, group.Request))
+                .Select(group => new GroupRequest(group.Group, group.Request, group.Price))
                 .ToList();
 
         private int PagesOf(int number) =>

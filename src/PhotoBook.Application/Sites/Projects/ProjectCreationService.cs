@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using PhotoBook.Application;
@@ -24,6 +25,13 @@ namespace PhotoBook.Application.Sites.Projects
     /// Each outcome is also written to the journal. A project that was created but not recorded,
     /// or not created at all, is exactly the case a customer reports as "half of my books went
     /// to the site", and the entry names the group and the number of books it held.
+    /// </para>
+    /// <para>
+    /// A project is not finished when it exists: the site keeps its parameters and its price
+    /// only because the client sends them, and a project without them is one the site prices at
+    /// zero. So the same pass names them, and a project the parameters did not reach is
+    /// reported even though it was created - the customer would otherwise find an order on the
+    /// site that cannot be produced.
     /// </para>
     /// </remarks>
     public sealed class ProjectCreationService : IProjectCreationService
@@ -74,12 +82,15 @@ namespace PhotoBook.Application.Sites.Projects
                         Source,
                         $"Группа уже отправлена раньше: проект {known}, книг {group.Group.Books.Count}.");
 
+                    // The parameters are written again for a project found in the record: a run
+                    // that stopped before naming them left exactly such a project behind, and
+                    // naming them twice costs one request and changes nothing.
                     outcomes.Add(new GroupCreation(
                         number,
                         group.Group,
                         GroupCreationState.AlreadyCreated,
                         known,
-                        null));
+                        await SetUpAsync(session, known, group, cancellationToken).ConfigureAwait(false)));
                     continue;
                 }
 
@@ -111,17 +122,74 @@ namespace PhotoBook.Application.Sites.Projects
                     Source,
                     $"Проект {project.Id} создан: книг {group.Group.Books.Count}.");
 
+                var named = await SetUpAsync(session, project.Id, group, cancellationToken).ConfigureAwait(false);
+                var notRecorded = remembered.IsSuccess
+                    ? null
+                    : "Проект создан, но запись об этом не сохранилась — при повторной отправке он может создаться снова.";
+
                 outcomes.Add(new GroupCreation(
                     number,
                     group.Group,
                     GroupCreationState.Created,
                     project.Id,
-                    remembered.IsSuccess
-                        ? null
-                        : "Проект создан, но запись об этом не сохранилась — при повторной отправке он может создаться снова."));
+                    Join(notRecorded, named)));
             }
 
             return new ProjectCreationPlan(outcomes);
+        }
+
+        /// <summary>
+        /// Names the project's parameters and price, or says why the site did not take them.
+        /// </summary>
+        /// <remarks>
+        /// A group the site did not price is left alone: the plan already refuses such books, and
+        /// a project priced at zero would be worse than one the customer sees is unfinished.
+        /// </remarks>
+        private async Task<string?> SetUpAsync(
+            SiteSession session,
+            long projectId,
+            GroupRequest group,
+            CancellationToken cancellationToken)
+        {
+            var parameters = ProjectParameters.For(group.Group.Books[0], group.Group.Books.Count, group.Price);
+            if (parameters is null)
+                return null;
+
+            var named = await _projects
+                .SetUpAsync(session, projectId, group.Request.ProductId, parameters, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (named.IsSuccess)
+            {
+                _journal?.Write(
+                    JournalLevel.Information,
+                    Source,
+                    $"Параметры и цена записаны в проект {projectId}: книг {parameters.Books}, " +
+                    $"цена {parameters.Price.ToString(CultureInfo.InvariantCulture)}.");
+
+                return null;
+            }
+
+            var reason = named.Error ?? "без причины";
+
+            _journal?.Write(
+                JournalLevel.Warning,
+                Source,
+                $"Сайт не принял параметры проекта {projectId}: {reason}");
+
+            return "Проект создан, но сайт не принял его параметры и цену: " + reason;
+        }
+
+        /// <summary>Both things that went wrong, in one sentence the screen can show.</summary>
+        private static string? Join(string? first, string? second)
+        {
+            if (string.IsNullOrWhiteSpace(first))
+                return string.IsNullOrWhiteSpace(second) ? null : second;
+
+            if (string.IsNullOrWhiteSpace(second))
+                return first;
+
+            return first + " " + second;
         }
     }
 }

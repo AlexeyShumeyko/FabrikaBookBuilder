@@ -29,6 +29,21 @@ namespace PhotoBook.Application.Sites.Projects
             CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Names the project's parameters and its price, which the site keeps as given.
+        /// </summary>
+        /// <remarks>
+        /// Without this call the project exists with no parameters and a price of zero, and the
+        /// customer sees an order the site cannot produce. The site does not price a project by
+        /// itself: the amount is the one the calculator named for its books.
+        /// </remarks>
+        Task<Result> SetUpAsync(
+            SiteSession session,
+            long projectId,
+            long productId,
+            ProjectParameters parameters,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// The project as the site holds it now: its books, its pages and whether the account's
         /// list shows it. Used to compare an upload with what arrived.
         /// </summary>

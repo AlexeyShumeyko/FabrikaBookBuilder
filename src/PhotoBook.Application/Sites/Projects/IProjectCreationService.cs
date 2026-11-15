@@ -21,5 +21,6 @@ namespace PhotoBook.Application.Sites.Projects
     /// <summary>A group plus the site's identifiers for the project it becomes.</summary>
     /// <param name="Group">The books that go into one project.</param>
     /// <param name="Request">The product, format and integration the site is asked for.</param>
-    public sealed record GroupRequest(OrderGroup Group, CreateProjectRequest Request);
+    /// <param name="Price">What the site charges for the whole group, as its calculator named it.</param>
+    public sealed record GroupRequest(OrderGroup Group, CreateProjectRequest Request, decimal Price = 0);
 }

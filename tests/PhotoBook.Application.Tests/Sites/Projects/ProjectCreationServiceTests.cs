@@ -33,6 +33,12 @@ namespace PhotoBook.Application.Tests.Sites.Projects
                 new OrderGroup(SiteRegion.Com, books),
                 new CreateProjectRequest(4494, 9255, 37556));
 
+        private static GroupRequest PricedGroup(decimal price, params Book[] books) =>
+            new(
+                new OrderGroup(SiteRegion.Com, books),
+                new CreateProjectRequest(4494, 9255, 37556),
+                price);
+
         private static ProjectCreationService Service(StubProjects projects, MemoryCreated created) =>
             new(projects, created);
 
@@ -116,6 +122,37 @@ namespace PhotoBook.Application.Tests.Sites.Projects
         }
 
         [Fact]
+        public async Task NamesTheParametersAndThePriceRightAfterCreatingTheProject()
+        {
+            var projects = new StubProjects(1001);
+            var book = Book(9255, @"C:.jpg");
+
+            var plan = await new ProjectCreationService(projects, new MemoryCreated())
+                .CreateAsync(Session, new[] { PricedGroup(1024.50m, book) });
+
+            Assert.True(plan.IsComplete);
+            var named = Assert.Single(projects.SetUps);
+            Assert.Equal(1001, named.ProjectId);
+            Assert.Equal(9255, named.Parameters.VariantId);
+            Assert.Equal(1, named.Parameters.Books);
+            Assert.Equal(1024.50m, named.Parameters.Price);
+            Assert.Equal(10, named.Parameters.PartQuantities[94]);
+        }
+
+        [Fact]
+        public async Task SaysWhenTheSiteRefusedTheProjectsParameters()
+        {
+            var projects = new StubProjects(1001) { SetUpFails = true };
+
+            var plan = await new ProjectCreationService(projects, new MemoryCreated())
+                .CreateAsync(Session, new[] { PricedGroup(1024.50m, Book(9255)) });
+
+            var group = Assert.Single(plan.Groups);
+            Assert.True(group.HasProject);
+            Assert.Contains("параметры", group.Error, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public async Task ACreatedProjectIsWrittenDownWithItsNumberAndBooks()
         {
             var journal = new RecordingJournal();
@@ -151,7 +188,25 @@ namespace PhotoBook.Application.Tests.Sites.Projects
 
             internal StubProjects(params long?[] answers) => _answers = new Queue<long?>(answers);
 
+            internal bool SetUpFails { get; init; }
+
             internal List<CreateProjectRequest> Asked { get; } = new();
+
+            public Task<Result> SetUpAsync(
+                SiteSession session,
+                long projectId,
+                long productId,
+                ProjectParameters parameters,
+                CancellationToken cancellationToken = default)
+            {
+                SetUps.Add((projectId, parameters));
+
+                return Task.FromResult(SetUpFails
+                    ? Result.Fail("Сайт не принял параметры.")
+                    : Result.Ok());
+            }
+
+            internal List<(long ProjectId, ProjectParameters Parameters)> SetUps { get; } = new();
 
             public Task<Result<SiteProjectSnapshot>> ReadAsync(
                 SiteSession session,
