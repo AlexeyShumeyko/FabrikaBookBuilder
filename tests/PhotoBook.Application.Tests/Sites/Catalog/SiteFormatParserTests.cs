@@ -101,6 +101,15 @@ namespace PhotoBook.Application.Tests.Sites.Catalog
         }
 
         [Fact]
+        public void KeepsTheUploaderIntegrationTheFormatBelongsTo()
+        {
+            // A project cannot be created without it, and the site only says it here.
+            var product = new SiteFormatParser().Parse(Layflat, 4494, 9255).Value!;
+
+            Assert.Equal(37556, product.IntegrationId);
+        }
+
+        [Fact]
         public void KnowsThePartThePublisherSendsPagesInto()
         {
             var parts = new SiteFormatParser().Parse(Layflat, 4494, 9255).Value!.Variants[0].Parts;

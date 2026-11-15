@@ -10,10 +10,16 @@ namespace PhotoBook.Application.Sites.Catalog
     /// arrive with this document. The slug is the one the caller asked for, because the product
     /// page itself does not repeat it.
     /// </remarks>
+    /// <param name="IntegrationId">
+    /// The uploader integration the format belongs to. The site refuses to create a project
+    /// without it, and it is only in this document, so it travels with the format rather than
+    /// being asked for separately at upload time.
+    /// </param>
     public sealed record SiteProduct(
         long Id,
         string Slug,
         string Title,
         string Kind,
-        IReadOnlyList<ProductVariant> Variants);
+        IReadOnlyList<ProductVariant> Variants,
+        long IntegrationId = 0);
 }

@@ -55,13 +55,21 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
                             variantTitle,
                             Array.Empty<ProductOption>(),
                             parts),
-                    }));
+                    },
+                    ReadIntegrationId(root)));
             }
             catch (JsonException)
             {
                 return Result<SiteProduct>.Fail("Описание формата пришло в неизвестном виде.");
             }
         }
+
+        /// <summary>The uploader's own id for this product, which every new project names.</summary>
+        private static long ReadIntegrationId(JsonElement root) =>
+            root.TryGetProperty("integration", out var integration) &&
+            integration.ValueKind == JsonValueKind.Object
+                ? SiteJson.Number(integration, "id")
+                : 0;
 
         /// <summary>The part ids the integration sends pages into, whoever names them.</summary>
         private static HashSet<long> ReadPagesPartIds(JsonElement root)
