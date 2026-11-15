@@ -50,15 +50,6 @@
                         <TextBlock Text="Вернуться к проекту" VerticalAlignment="Center" />
                     </Button>
 
-                    <!-- The price is asked for on command: one request per book, not one per click
-                         on a dropdown. -->
-                    <Button Classes="outline" Padding="12,10"
-                            IsEnabled="{Binding CanPrice}"
-                            AutomationProperties.Name="Рассчитать цену"
-                            Click="OnRecalculate">
-                        <TextBlock Text="Рассчитать цену" VerticalAlignment="Center" />
-                    </Button>
-
                     <!-- Sending opens the upload screen; nothing is written until that
                          screen's own button is pressed. -->
                     <Button Classes="primary" Padding="16,10"

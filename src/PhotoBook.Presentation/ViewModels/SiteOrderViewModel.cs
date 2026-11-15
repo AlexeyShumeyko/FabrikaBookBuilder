@@ -31,12 +31,14 @@ namespace PhotoBook.Presentation.ViewModels
     /// the order lives, so closing the window must not lose what was picked.
     /// </para>
     /// <para>
-    /// The price is asked for on the customer's command rather than on every keystroke. The
-    /// platform is shared, one book is one request, and a page that repriced itself as the
-    /// choices changed would spend a request per click for a number nobody asked for yet.
+    /// The price is asked for by the page itself, once the answers are complete: the customer
+    /// should not have to press «рассчитать» to learn what the order costs. It is asked once per
+    /// settled set of answers rather than on every keystroke, because the platform is shared and
+    /// one book is one request: a page that called the site while the answers were still being
+    /// filled would spend requests on sets nobody chose.
     /// </para>
     /// </remarks>
-    public sealed class SiteOrderViewModel : ViewModelBase
+    public sealed partial class SiteOrderViewModel : ViewModelBase
     {
         private readonly ISiteCatalogService? _catalog;
         private readonly ISiteSessionStore? _sessions;
@@ -54,7 +56,6 @@ namespace PhotoBook.Presentation.ViewModels
         private string _totalText = string.Empty;
         private bool _isReady;
         private bool _isLoadingFormats;
-        private bool _isPricing;
 
         public SiteOrderViewModel(
             ISiteCatalogService? catalog = null,
@@ -165,29 +166,6 @@ namespace PhotoBook.Presentation.ViewModels
             get => _isLoadingFormats;
             private set => SetProperty(ref _isLoadingFormats, value);
         }
-
-        /// <summary>Whether the site is being asked for a price right now.</summary>
-        public bool IsPricing
-        {
-            get => _isPricing;
-            private set
-            {
-                if (!SetProperty(ref _isPricing, value))
-                    return;
-
-                // A price run also settles whether the order may be sent: the plan it builds
-                // is what enables the button, and the button was staying grey because only the
-                // price button was told the run had finished.
-                OnPropertyChanged(nameof(CanPrice));
-                OnPropertyChanged(nameof(CanUpload));
-            }
-        }
-
-        /// <summary>Whether asking for a price would reach the site with a complete order.</summary>
-        public bool CanPrice =>
-            !_isPricing && _prices is not null && Books.Count > 0 &&
-            Books.All(book => book.SelectedFormat is not null);
-
         /// <summary>The order's total as the site wrote it, empty until it named one.</summary>
         public string TotalText
         {
@@ -301,87 +279,6 @@ namespace PhotoBook.Presentation.ViewModels
             }
         }
 
-        /// <summary>
-        /// Asks the site for the order's price and shows it book by book.
-        /// </summary>
-        /// <remarks>
-        /// The books travel as the order itself, not as the page's own idea of it: the same
-        /// assembly that the upload will use builds the request, so the price shown is the price
-        /// of what would be sent. A book that cannot be assembled is reported by name, and the
-        /// rest of the order is still priced - the total is worth having even when one book
-        /// needs an answer.
-        /// </remarks>
-        public async Task RecalculateAsync()
-        {
-            if (_catalog is null || _sessions is null || _prices is null || _project is null)
-                return;
-
-            var session = _sessions.Load();
-            if (session is null)
-            {
-                Message = "Цена считается после входа на сайт.";
-                return;
-            }
-
-            IsPricing = true;
-            try
-            {
-                var read = await ChosenFormatDocuments
-                    .ReadAsync(_catalog, session.Region, Books.Select(row => row.SelectedFormat))
-                    .ConfigureAwait(true);
-
-                if (!read.IsSuccess || read.Value is null)
-                {
-                    Message = read.Error ?? "Описание формата не открылось.";
-                    return;
-                }
-
-                var formats = read.Value;
-
-                foreach (var row in Books)
-                    row.ForgetPrice();
-
-                TotalText = string.Empty;
-
-                var priced = await _prices
-                    .PriceAsync(session, _project, formats)
-                    .ConfigureAwait(true);
-
-                if (priced.Quote is null)
-                {
-                    Message = string.Join(Environment.NewLine, priced.Problems);
-                    return;
-                }
-
-                for (var index = 0; index < Books.Count && index < priced.Quote.Books.Count; index++)
-                {
-                    var book = priced.Quote.Books[index];
-                    Books[index].ShowPrice(book.IsPriced ? book.Check.Quote!.Formatted : "не названа");
-                }
-
-                if (priced.IsPriced)
-                {
-                    TotalText = priced.TotalText;
-                    Message = string.Empty;
-                }
-                else
-                {
-                    Message = string.Join(Environment.NewLine, priced.Problems);
-                }
-
-                // The plan is built from the answer that was just priced, so the button sends
-                // exactly what the customer saw a total for.
-                SetPlan(UploadPlans.Build(session.Region, priced.Draft, priced.Quote, formats));
-            }
-            catch (Exception ex)
-            {
-                Message = "Цена не получена: " + ex.Message;
-            }
-            finally
-            {
-                IsPricing = false;
-            }
-        }
 
         /// <summary>Says something on the page that came from outside it, such as a failed save.</summary>
         public void ShowMessage(string text) => Message = text ?? string.Empty;
@@ -474,8 +371,10 @@ namespace PhotoBook.Presentation.ViewModels
                 _parameters.IsAnswered;
 
             OnPropertyChanged(nameof(ChosenFormatText));
-            OnPropertyChanged(nameof(CanPrice));
+
+            PriceIfReady();
         }
+
 
     }
 }

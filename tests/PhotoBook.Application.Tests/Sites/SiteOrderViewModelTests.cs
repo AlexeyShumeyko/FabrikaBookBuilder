@@ -164,11 +164,8 @@ namespace PhotoBook.Application.Tests.Sites
             await page.LoadFormatsAsync();
             page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
 
-            // Nothing to send before the price is known: a project created without a total is
-            // one the customer never confirmed.
-            Assert.False(page.CanUpload);
-
-            await page.RecalculateAsync();
+            // The price is not a button: the page asks for it as soon as the answers are complete.
+            await page.Pricing;
 
             var asked = 0;
             page.UploadRequested += (_, _) => asked++;
@@ -201,7 +198,7 @@ namespace PhotoBook.Application.Tests.Sites
             page.Books[0].SelectedFormat = page.Books[0].Formats[0];
             await page.LoadFormatsAsync();
             page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
-            await page.RecalculateAsync();
+            await page.Pricing;
 
             Assert.True(page.CanUpload);
 
@@ -213,7 +210,7 @@ namespace PhotoBook.Application.Tests.Sites
         }
 
         [Fact]
-        public async Task PricesTheOrderOnCommandAndShowsTheSitesTotal()
+        public async Task PricesTheOrderItselfAndShowsTheSitesTotal()
         {
             var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
             var catalog = new StubCatalog(
@@ -221,8 +218,8 @@ namespace PhotoBook.Application.Tests.Sites
             {
                 Format = TestFormats.WithCondition(),
             };
-            var page = new SiteOrderViewModel(
-                catalog, new StubSessionStore(), new StubQuotes(), new StubFiles());
+            var quotes = new StubQuotes();
+            var page = new SiteOrderViewModel(catalog, new StubSessionStore(), quotes, new StubFiles());
             page.Prepare(project, "Проект");
 
             await page.LoadFormatsAsync();
@@ -230,7 +227,11 @@ namespace PhotoBook.Application.Tests.Sites
             await page.LoadFormatsAsync();
             page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
 
-            await page.RecalculateAsync();
+            // Nothing was pressed: the total is there because the answers are complete.
+            await page.Pricing;
+
+            // One settled set of answers costs one request, not one per answer or per repaint.
+            Assert.Equal(1, quotes.Calls);
 
             // The price is the site's own text, and the total is the same number written with
             // the site's currency, so both name the sum and the currency rather than a layout.
@@ -380,14 +381,21 @@ namespace PhotoBook.Application.Tests.Sites
 
     internal sealed class StubQuotes : IGroupQuoteService
     {
+        /// <summary>How many times the page asked the site for a price.</summary>
+        internal int Calls { get; private set; }
+
         public Task<GroupQuote> QuoteAsync(
             SiteSession session,
             IReadOnlyList<PhotoBook.Application.Sites.Books.Book> books,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(new GroupQuote(books
+            CancellationToken cancellationToken = default)
+        {
+            Calls++;
+
+            return Task.FromResult(new GroupQuote(books
                 .Select((book, index) => new BookQuote(index + 1, book,
                     SitePriceCheck.Valid(new SitePriceQuote(1024m, "1 024,00 RUB", "RUB"))))
                 .ToList()));
+        }
     }
 
     /// <summary>The disk, as the order needs it: a file with a length and nothing else.</summary>
