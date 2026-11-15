@@ -75,12 +75,23 @@ public partial class App : Avalonia.Application
 
             var notes = await feed.GetLatestReleaseNotesAsync();
 
-            Dispatcher.UIThread.InvokeAsync(async () =>
+            // Fire and forget on purpose: the check runs at start-up and nothing waits for it.
+            // Written as _ = with its own catch, because an exception thrown out of this task
+            // used to go nowhere at all.
+            _ = Dispatcher.UIThread.InvokeAsync(async () =>
             {
-                var window = new UpdateWindow(new UpdateViewModel(feed, latest, notes));
-                var owner = (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-                if (owner is not null) await window.ShowDialog(owner);
-                else await window.ShowDialog(window);
+                try
+                {
+                    var window = new UpdateWindow(new UpdateViewModel(feed, latest, notes));
+                    var owner = (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+                    if (owner is not null) await window.ShowDialog(owner);
+                    else await window.ShowDialog(window);
+                }
+                catch (Exception ex)
+                {
+                    services.GetRequiredService<IJournal>().Write(
+                        JournalLevel.Warning, "update", "Окно обновления не открылось", ex);
+                }
             });
         }
         catch (Exception ex)

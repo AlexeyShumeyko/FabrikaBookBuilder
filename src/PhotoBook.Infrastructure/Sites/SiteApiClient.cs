@@ -208,7 +208,7 @@ namespace PhotoBook.Infrastructure.Sites
                 {
                     throw;
                 }
-                catch (HttpRequestException exception)
+                catch (HttpRequestException)
                 {
                     lastError = new SiteApiError(
                         SiteApiErrorKind.ConnectionLost,

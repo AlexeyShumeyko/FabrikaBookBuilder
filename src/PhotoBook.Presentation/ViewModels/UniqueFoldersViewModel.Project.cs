@@ -18,7 +18,7 @@ namespace PhotoBook.Presentation.ViewModels
     public partial class UniqueFoldersViewModel : ViewModelBase, IProjectEditor
     {
 
-        public async void SetProject(Project? project, ProjectInfo projectInfo)
+        public void SetProject(Project? project, ProjectInfo projectInfo)
         {
             Books.Clear();
             Project = null;
@@ -221,23 +221,17 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>
         /// Writes the name only: no project file, no change of screen.
         /// </summary>
-        public async System.Threading.Tasks.Task SaveProjectNameOnlyAsync()
+        public System.Threading.Tasks.Task SaveProjectNameOnlyAsync()
         {
             if (CurrentProjectInfo == null || string.IsNullOrEmpty(ProjectName))
             {
-                return;
+                return System.Threading.Tasks.Task.CompletedTask;
             }
 
-            try
-            {
-                CurrentProjectInfo.Name = ProjectName;
-                CurrentProjectInfo.LastModified = DateTime.Now;
+            CurrentProjectInfo.Name = ProjectName;
+            CurrentProjectInfo.LastModified = DateTime.Now;
 
-            }
-            catch (Exception ex)
-            {
-                _loggingService.LogError("Ошибка сохранения названия проекта", ex);
-            }
+            return System.Threading.Tasks.Task.CompletedTask;
         }
 
         private ProjectStatus DetermineProjectStatus(Project project)

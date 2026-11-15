@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Books;
-using PhotoBook.Application.Sites.Books;
 using PhotoBook.Application.Sites.Books.Pricing;
 using PhotoBook.Application.Sites.Catalog;
 using PhotoBook.Application.Sites.Catalog.Layout;
