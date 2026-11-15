@@ -149,6 +149,10 @@ namespace PhotoBook.Application.Tests.Sites
 
             // The site is read back book by book, not as one long book of six files.
             Assert.Equal(new[] { 3, 3 }, Assert.Single(check.Expectations));
+
+            // Both books are listed with their own word, not the project's.
+            Assert.Equal(2, screen.BookRows.Count);
+            Assert.All(screen.BookRows, row => Assert.Equal("Готова", row.StatusText));
         }
 
         [Fact]
@@ -317,8 +321,13 @@ namespace PhotoBook.Application.Tests.Sites
                 size: new PixelSize(800, 600));
 
             Assert.False(screen.CanUpload);
-            Assert.True(screen.HasFileProblems);
-            Assert.Contains(screen.FileLines, line => line.Contains("Страница 1:"));
+
+            // The book carries the word and the reason, and opens itself so the reason is read.
+            var book = Assert.Single(screen.BookRows);
+            Assert.True(book.IsFailed);
+            Assert.True(book.IsExpanded);
+            Assert.Equal("Ошибка в файлах", book.StatusText);
+            Assert.Contains(book.Files, file => file.HasProblem && file.Problem!.Contains("Страница 1:"));
             Assert.Contains("исправьте", screen.FilesText);
         }
 
@@ -356,7 +365,12 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.True(screen.CanUpload);
             Assert.False(screen.NeedsConfirmation);
             Assert.Contains("всё совпадает", screen.FilesText);
-            Assert.Single(screen.FileLines);
+
+            // A clean book says so in one word and stays closed.
+            var book = Assert.Single(screen.BookRows);
+            Assert.Equal("Готова", book.StatusText);
+            Assert.False(book.IsExpanded);
+            Assert.All(book.Files, file => Assert.False(file.HasProblem));
         }
 
         [Fact]
@@ -451,13 +465,19 @@ namespace PhotoBook.Application.Tests.Sites
                     files.Select(file => new PageFileFacts(file.Path, true, _size)).ToList());
         }
 
-        private static Book Book(IReadOnlyList<PageFile>? files = null) =>
-            new(
+        private static Book Book(IReadOnlyList<PageFile>? files = null)
+        {
+            var pages = files ?? new List<PageFile>();
+
+            // The book is as full as the files it has: a fixture that claimed ten spreads and
+            // held two would be a book the screen reports as short of spreads.
+            return new Book(
                 new SiteProduct(4494, "layflat", "Лайфлат", "photo-book", new List<ProductVariant>()),
                 new ProductVariant(9255, "21x30", new List<ProductOption>(), new List<ProductPart>()),
                 PagePartId: 94,
-                new List<SelectedPart> { new(94, new PartSelection(new Dictionary<long, long>(), 10)) },
-                files ?? new List<PageFile>());
+                new List<SelectedPart> { new(94, new PartSelection(new Dictionary<long, long>(), pages.Count)) },
+                pages);
+        }
 
         private sealed class StubCreation : IProjectCreationService
         {

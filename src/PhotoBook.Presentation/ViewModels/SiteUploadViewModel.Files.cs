@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using PhotoBook.Application.Sites.Books;
 using PhotoBook.Application.Sites.Books.Files;
 
 namespace PhotoBook.Presentation.ViewModels
@@ -38,50 +39,97 @@ namespace PhotoBook.Presentation.ViewModels
                     return;
 
                 OnPropertyChanged(nameof(HasFiles));
-                OnPropertyChanged(nameof(FileLines));
-                OnPropertyChanged(nameof(FileProblemsText));
-                OnPropertyChanged(nameof(HasFileProblems));
                 OnPropertyChanged(nameof(NeedsConfirmation));
                 OnPropertyChanged(nameof(CanUpload));
+
+                RefreshBooks();
             }
         }
 
         /// <summary>Whether the files have been read at all.</summary>
         public bool HasFiles => _files is not null;
 
-        /// <summary>One line per problem, then one per book that is clean.</summary>
-        public IReadOnlyList<string> FileLines
+        private IReadOnlyList<UploadBookRow> _books = Array.Empty<UploadBookRow>();
+
+        /// <summary>Every book of the plan with its status and its files, in the order sent.</summary>
+        /// <remarks>
+        /// Rebuilt when the reading of the files starts or ends rather than on every repaint: the
+        /// list holds the state of each expansion, and a list rebuilt under an open book would
+        /// close it again.
+        /// </remarks>
+        public IReadOnlyList<UploadBookRow> BookRows
         {
-            get
+            get => _books;
+            private set
             {
-                if (_files is null)
-                    return Array.Empty<string>();
-
-                var lines = new List<string>();
-
-                foreach (var book in _files.Books)
-                {
-                    if (book.Alerts.Count == 0)
-                    {
-                        lines.Add(book.Name + ": страницы совпадают с тем, что просит сайт.");
-                        continue;
-                    }
-
-                    lines.Add(book.Name + ":");
-                    lines.AddRange(book.Alerts.Select(alert => "  " + alert.Message));
-                }
-
-                lines.AddRange(_files.OrderAlerts.Select(alert => alert.Message));
-
-                return lines;
+                if (SetProperty(ref _books, value))
+                    OnPropertyChanged(nameof(HasBookRows));
             }
         }
 
-        /// <summary>What keeps the order from going, in one paragraph.</summary>
-        public string FileProblemsText => string.Join(Environment.NewLine, FileLines);
+        /// <summary>Whether there are books to list.</summary>
+        public bool HasBookRows => _books.Count > 0;
 
-        /// <summary>Whether there is anything to read about the files.</summary>
-        public bool HasFileProblems => FileLines.Count > 0;
+        /// <summary>What the files as a whole came to, one line each.</summary>
+        public IReadOnlyList<string> OrderAlertLines =>
+            _files is null
+                ? Array.Empty<string>()
+                : _files.OrderAlerts.Select(alert => alert.Message).ToList();
+
+        /// <summary>Whether the order itself has something the books do not.</summary>
+        public bool HasOrderAlerts => OrderAlertLines.Count > 0;
+
+        /// <summary>Rebuilds the books and their statuses from the check in hand.</summary>
+        private void RefreshBooks()
+        {
+            var checkedBooks = new Dictionary<int, CheckedBook>();
+            foreach (var book in _files?.Books ?? Array.Empty<CheckedBook>())
+                checkedBooks[book.Number] = book;
+
+            var rows = new List<UploadBookRow>();
+            var number = 0;
+
+            foreach (var group in _groups)
+            {
+                foreach (var book in group.Group.Books)
+                {
+                    number++;
+                    checkedBooks.TryGetValue(number, out var checkedBook);
+                    rows.Add(Row(number, book, checkedBook));
+                }
+            }
+
+            BookRows = rows;
+            OnPropertyChanged(nameof(OrderAlertLines));
+            OnPropertyChanged(nameof(HasOrderAlerts));
+        }
+
+        /// <summary>One book with its status and the files it would send.</summary>
+        private UploadBookRow Row(int number, Book book, CheckedBook? check)
+        {
+            var status = BookStatus.Of(book, check, IsCheckingFiles);
+            var files = new List<UploadFileRow>();
+
+            if (book.CoverFile is { } cover)
+                files.Add(FileRow("Обложка", null, cover, check));
+
+            var spreads = book.Files ?? (IReadOnlyList<PageFile>)Array.Empty<PageFile>();
+            for (var index = 0; index < spreads.Count; index++)
+                files.Add(FileRow("Разворот " + (index + 1), index + 1, spreads[index], check));
+
+            var name = check?.Name ?? "Книга " + number;
+
+            return new UploadBookRow(number, name, status, files);
+        }
+
+        /// <summary>One file, with the site's own complaint about it when there is one.</summary>
+        private static UploadFileRow FileRow(string title, int? position, PageFile file, CheckedBook? check)
+        {
+            var problem = check?.Alerts
+                .FirstOrDefault(alert => alert.PageNumber == position)?.Message;
+
+            return new UploadFileRow(title, System.IO.Path.GetFileName(file.Path), problem);
+        }
 
         /// <summary>Whether the customer has to accept something before the button comes on.</summary>
         public bool NeedsConfirmation => _files is { ConfirmationCount: > 0 };
@@ -111,11 +159,14 @@ namespace PhotoBook.Presentation.ViewModels
                 OnPropertyChanged(nameof(CanCheckFiles));
                 OnPropertyChanged(nameof(CanUpload));
                 OnPropertyChanged(nameof(ButtonText));
+
+                // A book that was being read turns into «Готова» or a reason it is not.
+                RefreshBooks();
             }
         }
 
-        /// <summary>Whether the check may be started again.</summary>
-        public bool CanCheckFiles => !IsCheckingFiles && !IsBusy && _session is not null && _groups.Count > 0;
+        /// <summary>Whether the files may be read right now.</summary>
+        private bool CanCheckFiles => !IsCheckingFiles && !IsBusy && _session is not null && _groups.Count > 0;
 
         /// <summary>What the screen says while it reads the files.</summary>
         public string FilesText
@@ -229,6 +280,7 @@ namespace PhotoBook.Presentation.ViewModels
             Files = null;
             FilesText = string.Empty;
             ConfirmationsAccepted = false;
+            RefreshBooks();
         }
     }
 }

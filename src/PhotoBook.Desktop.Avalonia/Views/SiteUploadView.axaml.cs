@@ -40,12 +40,6 @@ namespace PhotoBook.Shell.Views
             }
         }
 
-        private void OnCheckFiles(object? sender, RoutedEventArgs e)
-        {
-            if (DataContext is SiteUploadViewModel screen)
-                _ = screen.CheckFilesAsync();
-        }
-
         private void OnCancel(object? sender, RoutedEventArgs e) =>
             (DataContext as SiteUploadViewModel)?.Cancel();
 
