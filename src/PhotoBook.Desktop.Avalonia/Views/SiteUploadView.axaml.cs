@@ -19,6 +19,27 @@ namespace PhotoBook.Shell.Views
                 _ = screen.UploadAsync();
         }
 
+        private void OnOpenSite(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is not SiteUploadViewModel screen || !screen.CanOpenSite)
+                return;
+
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = screen.OnSiteLink,
+                    UseShellExecute = true
+                });
+            }
+            catch (System.Exception)
+            {
+                // The browser is a convenience; the project is already on the site, so the
+                // screen hands the customer the address instead of calling the run failed.
+                screen.ReportLinkFailure();
+            }
+        }
+
         private void OnCheckFiles(object? sender, RoutedEventArgs e)
         {
             if (DataContext is SiteUploadViewModel screen)

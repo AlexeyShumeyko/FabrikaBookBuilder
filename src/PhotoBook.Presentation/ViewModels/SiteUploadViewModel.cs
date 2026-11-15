@@ -205,13 +205,37 @@ namespace PhotoBook.Presentation.ViewModels
             get => _url;
             private set
             {
-                if (SetProperty(ref _url, value ?? string.Empty))
-                    OnPropertyChanged(nameof(HasUrl));
+                if (!SetProperty(ref _url, value ?? string.Empty))
+                    return;
+
+                OnPropertyChanged(nameof(HasUrl));
+                OnPropertyChanged(nameof(CanOpenSite));
+                OnPropertyChanged(nameof(OnSiteLink));
             }
         }
 
         /// <summary>Whether there is a link to offer.</summary>
         public bool HasUrl => _url.Length > 0;
+
+        /// <summary>Whether the screen may offer to open the project on the site.</summary>
+        public bool CanOpenSite => HasUrl;
+
+        /// <summary>
+        /// The address the button opens: the project's own page on the site the session belongs
+        /// to, as the site's read-back named it. Nothing is built here, so a wrong site cannot
+        /// come from this screen.
+        /// </summary>
+        public string OnSiteLink => _url;
+
+        /// <summary>
+        /// Says that the address did not open, without making the upload look failed.
+        /// </summary>
+        /// <remarks>
+        /// The project is on the site either way, so the customer is given the address to open
+        /// by hand rather than a message that the run did not work.
+        /// </remarks>
+        public void ReportLinkFailure() =>
+            Message = "Проект на сайте, но ссылка не открылась. Откройте вручную: " + _url;
 
         /// <summary>What the run ended with, for the customer to keep or act on.</summary>
         public string ResultText

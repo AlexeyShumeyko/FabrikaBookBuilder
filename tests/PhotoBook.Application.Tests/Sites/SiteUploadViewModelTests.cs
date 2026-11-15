@@ -216,6 +216,29 @@ namespace PhotoBook.Application.Tests.Sites
         }
 
         [Fact]
+        public async Task OffersTheProjectOnlyAfterTheSiteNamedIt()
+        {
+            var screen = Screen(
+                new StubCreation(1001),
+                new StubUpload((session, projectId, pages, _, _, _) =>
+                    Task.FromResult(Accepted(projectId, pages.Count))),
+                new StubCheck(true),
+                groups: 1,
+                pages: 2);
+
+            Assert.False(screen.CanOpenSite);
+
+            await screen.UploadAsync();
+
+            Assert.True(screen.CanOpenSite);
+            Assert.Equal(screen.Url, screen.OnSiteLink);
+
+            screen.ReportLinkFailure();
+
+            Assert.Contains(screen.OnSiteLink, screen.Message);
+        }
+
+        [Fact]
         public void APageTooSmallKeepsTheButtonOffAndSaysWhy()
         {
             var screen = Screen(

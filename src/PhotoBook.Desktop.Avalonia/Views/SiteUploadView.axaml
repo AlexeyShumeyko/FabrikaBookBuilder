@@ -32,6 +32,15 @@
                         <TextBlock Text="Остановить" VerticalAlignment="Center" />
                     </Button>
 
+                    <!-- Opens the project the site now holds. The address comes from the site's
+                         own read-back, so the button cannot point at another region. -->
+                    <Button Classes="outline" Padding="12,10"
+                            IsVisible="{Binding CanOpenSite}"
+                            AutomationProperties.Name="Открыть на сайте"
+                            Click="OnOpenSite">
+                        <TextBlock Text="Открыть на сайте" VerticalAlignment="Center" />
+                    </Button>
+
                     <Button Classes="outline" Padding="12,10"
                             IsEnabled="{Binding !IsBusy}"
                             AutomationProperties.Name="Вернуться к заказу"
