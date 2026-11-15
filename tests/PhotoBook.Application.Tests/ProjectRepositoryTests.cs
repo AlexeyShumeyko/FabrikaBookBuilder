@@ -200,6 +200,41 @@ public class ProjectRepositoryTests : IDisposable
         Assert.Contains(Environment.NewLine + "  \"books\"", text);
     }
 
+    [Fact]
+    public async Task KeepsTheSiteFormatOfEachBook()
+    {
+        var project = OneBookProject();
+        var book = project.Books[0];
+        book.SiteProductId = 4494;
+        book.SiteVariantId = 9255;
+        book.SiteProductTitle = "Фотокнига";
+        book.SiteVariantTitle = "21×30, мягкая обложка";
+
+        var path = At("format-on-book.json");
+        await Repository().SaveAsync(project, path);
+
+        var loaded = await Repository().LoadAsync(path);
+
+        Assert.True(loaded!.Books[0].HasSiteFormat);
+        Assert.Equal(4494, loaded.Books[0].SiteProductId);
+        Assert.Equal(9255, loaded.Books[0].SiteVariantId);
+        Assert.Equal("21×30, мягкая обложка", loaded.Books[0].SiteVariantTitle);
+    }
+
+    [Fact]
+    public async Task ABookWrittenBeforeFormatsExistedHasNoFormat()
+    {
+        // The file on other people's disks has no site fields at all, and that is not a
+        // damaged project: it is one nobody has ordered yet.
+        var path = At("old.json");
+        await WriteAsync("old.json", OldProject);
+
+        var loaded = await Repository().LoadAsync(path);
+
+        Assert.NotNull(loaded);
+        Assert.All(loaded!.Books, book => Assert.False(book.HasSiteFormat));
+    }
+
     /// <summary>
     /// Answers a fixed size and remembers what it was asked, so a test can tell "filled in"
     /// from "left alone".

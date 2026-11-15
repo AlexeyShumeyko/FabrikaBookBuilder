@@ -114,7 +114,11 @@ namespace PhotoBook.Infrastructure
                                 FolderPath = bookData.FolderPath,
                                 Name = bookData.Name,
                                 Cover = bookData.Cover,
-                                BookIndex = bookData.BookIndex
+                                BookIndex = bookData.BookIndex,
+                                SiteProductId = bookData.SiteProductId,
+                                SiteVariantId = bookData.SiteVariantId,
+                                SiteProductTitle = bookData.SiteProductTitle,
+                                SiteVariantTitle = bookData.SiteVariantTitle
                             };
 
                             if (bookData.Pages != null && bookData.Pages.Count > 0)
@@ -195,5 +199,12 @@ namespace PhotoBook.Infrastructure
         public Page? Cover { get; set; }
         public int BookIndex { get; set; }
         public List<Page>? Pages { get; set; }
+
+        // The site format chosen for this book. Absent in every file written before the order
+        // page existed, and read back as "no format chosen" - which is exactly what it was.
+        public long? SiteProductId { get; set; }
+        public long? SiteVariantId { get; set; }
+        public string? SiteProductTitle { get; set; }
+        public string? SiteVariantTitle { get; set; }
     }
 }
