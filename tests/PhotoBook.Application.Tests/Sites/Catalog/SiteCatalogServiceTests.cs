@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -70,6 +71,47 @@ namespace PhotoBook.Application.Tests.Sites.Catalog
         }
 
         [Fact]
+        public async Task ListsTheProductsInTheSitesOwnOrderWithTheirFormats()
+        {
+            const string list =
+                "[{\"id\":4494,\"name\":\"Лайфлат \",\"kind\":\"kit\",\"order\":40," +
+                "\"components\":[{\"id\":9255,\"name\":\"21x30\"},{\"id\":9257,\"name\":\"20x20\"}]}," +
+                "{\"id\":5387,\"name\":\"Фотокнига Оптимум\",\"kind\":\"kit\",\"order\":1," +
+                "\"components\":[{\"id\":11421,\"name\":\"21x30\"}]}]";
+
+            var cache = new MemoryCache();
+            var handler = new StubHttpMessageHandler(_ => Json(list));
+            var service = Service(handler, cache);
+
+            var result = await service.GetProductsAsync(SiteRegion.Com);
+
+            Assert.True(result.IsSuccess);
+            var products = result.Value!;
+            Assert.Equal(new[] { "Фотокнига Оптимум", "Лайфлат" }, products.Select(product => product.Name));
+            Assert.Equal(2, products[1].Formats.Count);
+            Assert.Equal(9257, products[1].Formats[1].Id);
+            Assert.Contains("/creators/photo-book-uploader/products", Assert.Single(handler.Urls));
+            Assert.Equal(list, cache.Documents["products-list"]);
+        }
+
+        [Fact]
+        public async Task UsesTheStoredProductListWithoutAskingTheSite()
+        {
+            const string list = "[{\"id\":4494,\"name\":\"Лайфлат\",\"kind\":\"kit\",\"order\":1," +
+                "\"components\":[{\"id\":9255,\"name\":\"21x30\"}]}]";
+            var cache = new MemoryCache();
+            cache.Documents["products-list"] = list;
+            var handler = new StubHttpMessageHandler(_ => Json(list));
+            var service = Service(handler, cache);
+
+            var result = await service.GetProductsAsync(SiteRegion.Com);
+
+            Assert.True(result.IsSuccess);
+            Assert.Single(result.Value!);
+            Assert.Equal(0, handler.Calls);
+        }
+
+        [Fact]
         public async Task ReportsTheSitesRefusalInsteadOfAnEmptyCatalog()
         {
             var cache = new MemoryCache();
@@ -87,7 +129,7 @@ namespace PhotoBook.Application.Tests.Sites.Catalog
         }
 
         private static SiteCatalogService Service(StubHttpMessageHandler handler, MemoryCache cache) =>
-            new(new HttpClient(handler), cache, new SiteProductParser(), TimeSpan.Zero);
+            new(new HttpClient(handler), cache, new SiteProductParser(), new SiteProductsParser(), TimeSpan.Zero);
 
         private static HttpResponseMessage Json(string body) =>
             new(HttpStatusCode.OK) { Content = new StringContent(body) };

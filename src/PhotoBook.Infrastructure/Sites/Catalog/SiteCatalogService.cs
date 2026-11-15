@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,22 +28,65 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
     internal sealed class SiteCatalogService : ISiteCatalogService
     {
         private const string ProductDocument = "page-data";
+        private const string ProductsDocument = "products-list";
+        private const string ProductsPath = "creators/photo-book-uploader/products";
 
         private readonly HttpClient _http;
         private readonly ISiteCatalogCache _cache;
         private readonly ISiteProductParser _parser;
+        private readonly ISiteProductsParser _products;
         private readonly TimeSpan _retryDelay;
 
         public SiteCatalogService(
             HttpClient http,
             ISiteCatalogCache cache,
             ISiteProductParser parser,
+            ISiteProductsParser products,
             TimeSpan? retryDelay = null)
         {
             _http = http ?? throw new ArgumentNullException(nameof(http));
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _parser = parser ?? throw new ArgumentNullException(nameof(parser));
+            _products = products ?? throw new ArgumentNullException(nameof(products));
             _retryDelay = retryDelay ?? TimeSpan.FromMilliseconds(500);
+        }
+
+        public async Task<Result<IReadOnlyList<CatalogProduct>>> GetProductsAsync(
+            SiteRegion region,
+            CancellationToken cancellationToken = default)
+        {
+            if (region is null)
+                throw new ArgumentNullException(nameof(region));
+
+            var stored = _cache.Read(region, ProductsDocument);
+            if (stored is not null)
+            {
+                var cached = _products.Parse(stored.Content);
+                if (cached.IsSuccess)
+                    return cached;
+            }
+
+            var client = new SiteApiClient(region, _http, _retryDelay);
+            var answer = await client
+                .GetAsync(ProductsPath, token: null, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!answer.IsSuccess || answer.Document is null)
+            {
+                var reason = answer.Error?.Message;
+                return Result<IReadOnlyList<CatalogProduct>>.Fail(string.IsNullOrWhiteSpace(reason)
+                    ? "Список продуктов сайта не открылся."
+                    : reason!);
+            }
+
+            var json = answer.Document.RootElement.GetRawText();
+            answer.Document.Dispose();
+
+            var parsed = _products.Parse(json);
+            if (parsed.IsSuccess)
+                _cache.Write(region, ProductsDocument, json);
+
+            return parsed;
         }
 
         public async Task<Result<SiteProduct>> GetProductAsync(

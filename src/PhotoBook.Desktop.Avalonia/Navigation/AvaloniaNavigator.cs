@@ -67,6 +67,7 @@ namespace PhotoBook.Shell.Navigation
             _uniqueFolders.OrderRequested += (_, _) => OpenOrder(AppMode.UniqueFolders);
             _combined.OrderRequested += (_, _) => OpenOrder(AppMode.Combined);
             _siteOrder.BackRequested += (_, _) => CurrentMode = _sessionMode ?? AppMode.ProjectList;
+            _siteOrder.FormatChosen += (_, _) => SaveChoice();
         }
 
         private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -161,7 +162,13 @@ namespace PhotoBook.Shell.Navigation
             // The page reads the project as it stands the moment it is opened, and the
             // project is delivered above, so the books are already there.
             if (_currentMode == AppMode.SiteOrder && _sessionMode is { } sessionMode)
+            {
                 _siteOrder.Prepare(ProjectOf(sessionMode), NameOf(sessionMode));
+
+                // The catalog is read after the page has its books: a slow or missing network
+                // must not keep the order from opening, and the list is one read for the page.
+                _ = _siteOrder.LoadFormatsAsync();
+            }
 
             _host.Content = _screens.CreateScreen(_currentMode, viewModel);
 
@@ -170,6 +177,28 @@ namespace PhotoBook.Shell.Navigation
             // the subscription is made here and nowhere else.
             if (_host.Content is Views.StartScreenView startScreen)
                 startScreen.Chosen += CreateProject;
+        }
+
+        /// <summary>
+        /// Writes the project after a format was chosen. The choice lives in the book, so the
+        /// save is the same one the editor's own button performs - not a second way to store a
+        /// project, and not a reason to end the session.
+        /// </summary>
+        private async void SaveChoice()
+        {
+            if (_sessionMode is not { } mode) return;
+
+            var editor = EditorFor(mode);
+            if (editor is null) return;
+
+            try
+            {
+                await editor.QuickSaveAsync();
+            }
+            catch (Exception ex)
+            {
+                _siteOrder.ShowMessage("Не удалось сохранить проект: " + ex.Message);
+            }
         }
 
         private void OpenOrder(AppMode mode)

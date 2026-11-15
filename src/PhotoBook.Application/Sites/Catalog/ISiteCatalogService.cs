@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,6 +22,18 @@ namespace PhotoBook.Application.Sites.Catalog
     /// </remarks>
     public interface ISiteCatalogService
     {
+        /// <summary>
+        /// The products this site's uploader accepts, with the formats each comes in.
+        /// </summary>
+        /// <remarks>
+        /// The list is the uploader's own, so it says what can actually be ordered rather than
+        /// what the marketing pages show. It is read once and kept: the assortment changes a few
+        /// times a year, not between two visits of the order page.
+        /// </remarks>
+        Task<Result<IReadOnlyList<CatalogProduct>>> GetProductsAsync(
+            SiteRegion region,
+            CancellationToken cancellationToken = default);
+
         /// <summary>
         /// The product with this slug on this site, from the cache or from one request.
         /// </summary>
