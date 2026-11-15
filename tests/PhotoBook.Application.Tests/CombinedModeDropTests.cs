@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -56,7 +57,14 @@ public class CombinedModeDropTests
         Assert.Null(spread.ThumbnailPath);
 
         images.Complete(2457, 3602);
-        Assert.True(SpinWait.SpinUntil(() => spread.HasDimensions, 3000));
+
+        // Waited for on the aspect, not on the size: the size arrives first and the run is
+        // re-shaped after it, so a wait on the size returned while the shape was still the old
+        // one - which is what made this test fail once in a while on a machine that was busy.
+        Assert.True(
+            SpinWait.SpinUntil(() => Math.Abs(spread.FrameAspect - 0.682) < 0.001, 3000),
+            $"the run kept the shape {spread.FrameAspect}");
+
         Assert.Equal(2457, spread.ImageWidth);
         Assert.Equal(3602, spread.ImageHeight);
 

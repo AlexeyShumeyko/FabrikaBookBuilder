@@ -161,14 +161,36 @@ public sealed class ThumbnailTests : IDisposable
         for (int i = 0; i < 12; i++) paths.Add(Jpeg($"batch-{i:D2}.jpg", 1600 + i, 1200));
         foreach (var p in paths) _written.Add(ThumbnailStore.GetPath(p));
 
-        double last = 0;
-        var progress = new Progress<double>(value => last = value);
+        // Reported where it is made, not through Progress<T>: that one posts to a context that
+        // does not exist in a test, so the last report could arrive after the batch was done
+        // and the assertion saw 0,917 instead of 1. The provider reports from several threads,
+        // which is why the recorder keeps the highest value rather than the last one written.
+        var progress = new PeakProgress();
         var provider = new ThumbnailProvider(maxConcurrency: 3);
 
         await provider.EnsureAsync(paths, progress);
 
         Assert.All(paths, p => Assert.True(File.Exists(ThumbnailStore.GetPath(p))));
-        Assert.Equal(1.0, last, 3);
+        Assert.Equal(1.0, progress.Peak, 3);
+    }
+
+    /// <summary>Keeps the highest value it was told, from whichever thread said it.</summary>
+    private sealed class PeakProgress : IProgress<double>
+    {
+        private double _peak;
+
+        public double Peak => Volatile.Read(ref _peak);
+
+        public void Report(double value)
+        {
+            double current;
+            do
+            {
+                current = Volatile.Read(ref _peak);
+                if (value <= current) return;
+            }
+            while (Interlocked.CompareExchange(ref _peak, value, current) != current);
+        }
     }
 
     [Fact]
