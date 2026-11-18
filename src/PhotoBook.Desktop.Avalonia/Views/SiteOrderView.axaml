@@ -104,7 +104,7 @@
 
                         <!-- the group of books -->
                         <Border Grid.Column="0" Name="BooksCard" Classes="card" Padding="0"
-                                HorizontalAlignment="Stretch" VerticalAlignment="Top">
+                                HorizontalAlignment="Stretch">
                             <Grid RowDefinitions="Auto,Auto,*,Auto">
                                 <StackPanel Grid.Row="0" Spacing="3" Margin="20,16,20,12">
                                     <TextBlock Text="Группа книг 1" Classes="t14SemiBold" />
@@ -246,13 +246,14 @@
 
                         <!--
                             The format belongs to the group, so it is chosen here once and the
-                            questions appear under it. The card is exactly as tall as the books
-                            beside it: content that grows the page rather than the card made two
-                            panels of different heights on the same row.
+                            questions appear under it. The two cards are one row, and neither is
+                            given the other's height: the row is as tall as the taller card and
+                            both fill it. Tying the questions to the list made a two-book order
+                            squeeze them into two hundred pixels, and the answers a customer has
+                            to give are not a footnote to the row count.
                         -->
                         <Border Grid.Column="2" Classes="card" Padding="20,16"
-                                HorizontalAlignment="Stretch" VerticalAlignment="Top"
-                                Height="{Binding #BooksCard.Bounds.Height}">
+                                HorizontalAlignment="Stretch">
                             <Grid RowDefinitions="Auto,Auto,*">
                                 <TextBlock Grid.Row="0" Text="Формат и параметры" Classes="t14SemiBold" />
 
