@@ -178,15 +178,7 @@ namespace PhotoBook.Presentation.ViewModels
                 {
                     // SetProject is async and may be handed a project from a continuation, so
                     // this can arrive off the UI thread - where a command cannot be re-asked.
-                    RunOnUi(() =>
-                    {
-                        OnPropertyChanged(nameof(CanExport));
-                        OnPropertyChanged(nameof(BooksSummary));
-                        if (ExportCommand is AsyncRelayCommand exportCmd)
-                            exportCmd.NotifyCanExecuteChanged();
-                        if (ExportWithFolderCommand is AsyncRelayCommand exportFolderCmd)
-                            exportFolderCmd.NotifyCanExecuteChanged();
-                    });
+                    RunOnUi(RefreshExportState);
                 }
                 if (e.PropertyName == nameof(CurrentProjectInfo))
                 {
@@ -197,6 +189,38 @@ namespace PhotoBook.Presentation.ViewModels
                     });
                 }
             };
+        }
+
+        /// <summary>
+        /// Publishes everything that depends on the project being complete.
+        /// </summary>
+        /// <remarks>
+        /// The site button and the export buttons are enabled by the same answer, and a project
+        /// finished in this session used to leave all three grey: validity was only published
+        /// when a project was opened, so the buttons woke up only after leaving and returning.
+        /// </remarks>
+        private void RefreshExportState()
+        {
+            OnPropertyChanged(nameof(CanExport));
+            OnPropertyChanged(nameof(BooksSummary));
+
+            if (ExportCommand is AsyncRelayCommand exportCmd)
+                exportCmd.NotifyCanExecuteChanged();
+
+            if (ExportWithFolderCommand is AsyncRelayCommand exportFolderCmd)
+                exportFolderCmd.NotifyCanExecuteChanged();
+
+            if (OrderOnSiteCommand is IRelayCommand orderCmd)
+                orderCmd.NotifyCanExecuteChanged();
+        }
+
+        /// <summary>Watches the project itself, not the field: validity changes as photos go in.</summary>
+        private void Project_ValidityChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(Project.IsValid))
+                return;
+
+            RunOnUi(RefreshExportState);
         }
 
         /// <summary>

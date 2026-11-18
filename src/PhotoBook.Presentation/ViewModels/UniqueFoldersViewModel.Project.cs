@@ -281,9 +281,17 @@ namespace PhotoBook.Presentation.ViewModels
             get => _project;
             set
             {
+                if (_project is not null)
+                    _project.PropertyChanged -= Project_ValidityChanged;
+
                 SetProperty(ref _project, value);
+
                 if (value != null)
                 {
+                    // A project assembled here becomes valid long after it was opened, and the
+                    // buttons that depend on that are only as fresh as their last notification.
+                    value.PropertyChanged += Project_ValidityChanged;
+
                     Books.Clear();
                     foreach (var book in value.Books)
                     {

@@ -248,6 +248,16 @@ namespace PhotoBook.Presentation.ViewModels
 
         private void UpdateExportCommands()
         {
+            // The buttons that carry CanExport read the property, not the commands: a project
+            // finished in this session left «Экспортировать» and «Загрузить на сайт» grey until
+            // the project was reopened, because only the commands were re-asked.
+            OnPropertyChanged(nameof(CanExport));
+
+            if (OrderOnSiteCommand is IRelayCommand orderCommand)
+            {
+                orderCommand.NotifyCanExecuteChanged();
+            }
+
             if (ExportCommand is AsyncRelayCommand asyncCommand)
             {
                 asyncCommand.NotifyCanExecuteChanged();
