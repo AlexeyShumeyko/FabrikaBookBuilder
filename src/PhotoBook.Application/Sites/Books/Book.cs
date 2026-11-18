@@ -44,6 +44,30 @@ namespace PhotoBook.Application.Sites.Books
         /// <summary>Whether the format asks for a cover file at all.</summary>
         public bool NeedsCover => CoverPartId > 0;
 
+        /// <summary>
+        /// The element chosen for every option of the book, whichever part asked the question.
+        /// </summary>
+        /// <remarks>
+        /// The site reads options for the whole book, not per part: the cover's size row is
+        /// chosen by the interlayer question, which belongs to the spreads part. Looking only at
+        /// the cover's own answers would leave that question unanswered and the size unknown.
+        /// </remarks>
+        public IReadOnlyDictionary<long, long> OptionElements
+        {
+            get
+            {
+                var chosen = new Dictionary<long, long>();
+
+                foreach (var part in Parts ?? (IReadOnlyList<SelectedPart>)Array.Empty<SelectedPart>())
+                {
+                    foreach (var pair in part.Selection.Elements)
+                        chosen[pair.Key] = pair.Value;
+                }
+
+                return chosen;
+            }
+        }
+
         /// <summary>Whether the cover file is there to be sent.</summary>
         public bool HasCover => CoverFile is not null;
 

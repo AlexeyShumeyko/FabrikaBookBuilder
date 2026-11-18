@@ -146,9 +146,10 @@ namespace PhotoBook.Application.Sites.Books.Files
                 return Refused(number, name, ": сайт не назвал размер страницы, проверить файлы нечем.");
 
             var page = layout.Value.Part(book.PagePartId);
+            var elements = book.OptionElements;
             var required = page is null
                 ? null
-                : layout.Value.RequiredPixels(book.PagePartId, book.PageSlots, book.PagePart?.Selection.Elements);
+                : layout.Value.RequiredPixels(book.PagePartId, book.PageSlots, elements);
 
             if (page is null || required is null)
                 return Refused(number, name, ": сайт не описал страницу этого формата, проверить файлы нечем.");
@@ -183,8 +184,10 @@ namespace PhotoBook.Application.Sites.Books.Files
         /// one: the site's attribute 26 depends on <c>part_quantity</c> of part 94, and the
         /// document holds six rows for a layflat (428 mm at eight spreads up to 438 mm at
         /// eighteen). So the book's spread count travels with the lookup, and asking for the
-        /// cover with quantity one alone finds no row - which is what made the window say the
-        /// site had not described the cover at all.
+        /// cover with quantity one alone finds no row. The option that names the row is the
+        /// interlayer, which belongs to the spreads part, so the answers come from the whole
+        /// book rather than from the cover's own questions. Between them these were what made
+        /// the window say the site had not described the cover at all.
         /// </para>
         /// </remarks>
         private async System.Threading.Tasks.Task<IReadOnlyList<FileAlert>> CheckCoverAsync(
@@ -205,7 +208,7 @@ namespace PhotoBook.Application.Sites.Books.Files
             var coverPart = layout.Part(book.CoverPartId);
             var required = coverPart is null
                 ? null
-                : layout.RequiredPixels(book.CoverPartId, 1, book.CoverPart?.Selection.Elements, quantities);
+                : layout.RequiredPixels(book.CoverPartId, 1, book.OptionElements, quantities);
 
             if (required is null)
             {

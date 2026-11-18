@@ -324,18 +324,21 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
         private static UploadGroup GroupWithCover(params PageFile[] pages) =>
             GroupWithCover(null, pages);
 
+        /// <summary>
+        /// A book whose cover size is named by a question asked on the spreads part, which is how
+        /// the site asks it: the interlayer of the spreads decides how wide the cover is, and the
+        /// cover part itself only answers about its lamination.
+        /// </summary>
         private static UploadGroup GroupWithCover(
-            IReadOnlyDictionary<long, long>? coverElements,
+            IReadOnlyDictionary<long, long>? pageOptions,
             params PageFile[] pages)
         {
             var cover = PageFile("cover.jpg");
             var parts = new List<SelectedPart>
             {
-                new(PagePart, new PartSelection(new Dictionary<long, long>(), 10)),
+                new(PagePart, new PartSelection(pageOptions ?? new Dictionary<long, long>(), 10)),
+                new(CoverPart, new PartSelection(new Dictionary<long, long> { [65075] = 417892 }, 1)),
             };
-
-            if (coverElements is not null)
-                parts.Add(new SelectedPart(CoverPart, new PartSelection(coverElements, 1)));
 
             var book = new Book(
                 new SiteProduct(Product, "layflat", "Лайфлат", "photo-book", new List<ProductVariant>()),
