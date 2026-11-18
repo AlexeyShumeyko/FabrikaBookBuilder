@@ -75,6 +75,36 @@ namespace PhotoBook.Application.Tests.Sites
         }
 
         [Fact]
+        public async Task TheSecondBookContinuesTheCountInsteadOfStartingOver()
+        {
+            var upload = new StubUpload((session, projectId, pages, _, progress, _) =>
+            {
+                for (var sent = 1; sent <= pages.Count; sent++)
+                    progress?.Report(new UploadProgress(pages.Count, sent, string.Empty));
+
+                return Task.FromResult(Accepted(projectId, pages.Count));
+            });
+
+            var screen = Screen(
+                new StubCreation(1001),
+                upload,
+                new StubCheck(true),
+                groups: 1,
+                pages: 3,
+                booksPerGroup: 2);
+
+            Assert.Equal(6, screen.Total);
+
+            await screen.UploadAsync();
+
+            // Each book counts its own files from zero, and the group adds them up once: the
+            // bar used to stand at two thirds of the order with a caption past its end.
+            Assert.Equal(6, screen.Uploaded);
+            Assert.Equal("Отправлено 6 из 6 файлов", screen.UploadedText);
+            Assert.Equal(100, screen.ProgressValue);
+        }
+
+        [Fact]
         public async Task AnExpiredSessionAsksForThePasswordAndStopsTheRun()
         {
             var upload = new StubUpload((session, projectId, pages, _, _, _) => Task.FromResult(

@@ -204,17 +204,15 @@ namespace PhotoBook.Presentation.ViewModels
                     continue;
 
                 var itemId = index < bookIds.Count ? bookIds[index] : 0;
+
+                // Files of the group before this book. The count reported by the book is its
+                // own, from zero, so it is added to this offset and to nothing else: the offset
+                // used to be advanced inside the same loop, and the second book of an order
+                // started from twice the files already sent - the bar filled at two thirds and
+                // the caption counted past the order itself.
                 var offset = _completedBeforeGroup + sentBeforeBook;
 
-                var progress = new Progress<UploadProgress>(report =>
-                {
-                    Uploaded = offset + report.FilesUploaded;
-                    ProgressValue = Total == 0 ? 0 : Math.Min(100, 100.0 * Uploaded / Total);
-                    ProgressText = string.IsNullOrEmpty(report.CurrentFile)
-                        ? "Отправлено " + Uploaded + " из " + Total + "."
-                        : "Отправляем " + System.IO.Path.GetFileName(report.CurrentFile) + " — " +
-                            Uploaded + " из " + Total + ".";
-                });
+                var progress = new Progress<UploadProgress>(report => Show(offset + report.FilesUploaded, report.CurrentFile));
 
                 var sent = await _upload
                     .UploadAsync(
@@ -230,8 +228,7 @@ namespace PhotoBook.Presentation.ViewModels
                 // it here first: a screen that only trusted callbacks would show zero after a
                 // silent run.
                 sentBeforeBook += sent.Session.FilesUploaded;
-                Uploaded = _completedBeforeGroup + sentBeforeBook;
-                _completedBeforeGroup = Uploaded;
+                Show(_completedBeforeGroup + sentBeforeBook, null);
 
                 if (sent.IsComplete)
                     continue;
@@ -246,6 +243,8 @@ namespace PhotoBook.Presentation.ViewModels
                 return (failed, StopOf(sent));
             }
 
+            _completedBeforeGroup += sentBeforeBook;
+
             var result = new UploadGroupResult(
                 group.Number,
                 projectId,
@@ -254,6 +253,33 @@ namespace PhotoBook.Presentation.ViewModels
                 Array.Empty<string>());
 
             return (result, null);
+        }
+
+        /// <summary>
+        /// Shows how far the run is, never going back and never past the order.
+        /// </summary>
+        /// <remarks>
+        /// Reports arrive on the window's thread in the order they were made, but a report from
+        /// a book that has just finished can still land after the next book's: the count only
+        /// moves forward, and the order's own number of files is the ceiling.
+        /// </remarks>
+        private void Show(int files, string? currentFile)
+        {
+            var capped = Total > 0 ? Math.Min(Total, files) : files;
+
+            if (capped > _uploaded)
+                Uploaded = capped;
+
+            ProgressValue = Total == 0 ? 0 : Math.Min(100, 100.0 * _uploaded / Total);
+
+            if (string.IsNullOrEmpty(currentFile))
+            {
+                ProgressText = "Отправлено " + _uploaded + " из " + Total + ".";
+                return;
+            }
+
+            ProgressText = "Отправляем " + System.IO.Path.GetFileName(currentFile) + " — " +
+                _uploaded + " из " + Total + ".";
         }
 
         /// <summary>Why a book of the group stopped, in terms of the screen.</summary>
