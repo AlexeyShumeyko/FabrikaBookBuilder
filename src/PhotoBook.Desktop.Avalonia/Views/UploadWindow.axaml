@@ -1,0 +1,208 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PhotoBook.Shell.Views.UploadWindow"
+        Title="Отправка на сайт"
+        Width="560"
+        SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="Transparent"
+        SystemDecorations="None"
+        FontFamily="Inter">
+
+    <!--
+        The same card as every other window: white, sixteen round the corners, one hairline,
+        the subtle shadow, with the margin the shadow falls into.
+
+        Three states in one window, because they are one action: the question, the run, and
+        what became of it. The question comes first - nothing is written until «Отправить» is
+        pressed - and the run has a bar and its own stop, so the customer sees it move rather
+        than waiting on a button that never changes.
+    -->
+    <Border Classes="card" Margin="18" ClipToBounds="True">
+        <StackPanel>
+
+            <!-- ============================= header ============================= -->
+            <Border Background="{DynamicResource Slate50}"
+                    BorderBrush="{DynamicResource Slate200}"
+                    BorderThickness="0,0,0,1"
+                    Padding="20,16">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Border Width="40" Height="40" CornerRadius="12"
+                            Background="{DynamicResource Brand50}"
+                            VerticalAlignment="Center">
+                        <Path Width="19" Height="19" Stretch="Uniform"
+                              Stroke="{DynamicResource Brand600}" StrokeThickness="1.8"
+                              StrokeLineCap="Round" StrokeJoin="Round"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="13,0,0,0" Spacing="2"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="{Binding HeaderText}" Classes="t16Bold" />
+                        <TextBlock Text="{Binding ProgressText}" Classes="t12"
+                                   Foreground="{DynamicResource Slate500}" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <Button Grid.Column="2" Classes="icon" Padding="6" Margin="4,0,0,0"
+                            AutomationProperties.Name="Закрыть"
+                            IsVisible="{Binding !IsRunning}"
+                            VerticalAlignment="Center"
+                            Click="OnCloseClick">
+                        <Path Width="12" Height="12" Stretch="Uniform"
+                              Stroke="{DynamicResource Slate500}" StrokeThickness="1.9"
+                              StrokeLineCap="Round"
+                              Data="M 6.5 6.5 L 17.5 17.5 M 17.5 6.5 L 6.5 17.5" />
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- ============================== body ============================== -->
+            <StackPanel Margin="20,18,20,0" Spacing="18">
+
+                <!-- what is about to be sent, before anything is written -->
+                <Grid ColumnDefinitions="*,10,*,10,*,10,*" IsVisible="{Binding IsConfirming}">
+                    <Border Grid.Column="0" Background="{DynamicResource Slate50}"
+                            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                            CornerRadius="12" Padding="14,11">
+                        <StackPanel>
+                            <TextBlock Text="Проектов" Classes="t10"
+                                       Foreground="{DynamicResource Slate500}" />
+                            <TextBlock Text="{Binding ProjectCount}" Classes="t20Bold" Margin="0,3,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Background="{DynamicResource Slate50}"
+                            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                            CornerRadius="12" Padding="14,11">
+                        <StackPanel>
+                            <TextBlock Text="Книг" Classes="t10"
+                                       Foreground="{DynamicResource Slate500}" />
+                            <TextBlock Text="{Binding BookCount}" Classes="t20Bold" Margin="0,3,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="4" Background="{DynamicResource Slate50}"
+                            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                            CornerRadius="12" Padding="14,11">
+                        <StackPanel>
+                            <TextBlock Text="Разворотов" Classes="t10"
+                                       Foreground="{DynamicResource Slate500}" />
+                            <TextBlock Text="{Binding Total}" Classes="t20Bold" Margin="0,3,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="6" Background="{DynamicResource Slate50}"
+                            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                            CornerRadius="12" Padding="14,11">
+                        <StackPanel>
+                            <TextBlock Text="Итого" Classes="t10"
+                                       Foreground="{DynamicResource Slate500}" />
+                            <TextBlock Text="{Binding ConfirmTotalText}" Classes="t16Bold"
+                                       Margin="0,3,0,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border IsVisible="{Binding HasMessage}" Background="{DynamicResource Slate50}"
+                        CornerRadius="12" Padding="14,11">
+                    <TextBlock Text="{Binding Message}" Classes="t12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource Slate600}" />
+                </Border>
+
+                <!-- the run, visible while it happens -->
+                <StackPanel Spacing="10" IsVisible="{Binding IsRunning}">
+                    <ProgressBar Minimum="0" Maximum="100" Height="8"
+                                 Value="{Binding ProgressValue}"
+                                 Foreground="{DynamicResource Brand600}" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{Binding ButtonText}" Classes="t12"
+                                   Foreground="{DynamicResource Slate600}" />
+                        <TextBlock Grid.Column="1" Classes="t12"
+                                   Foreground="{DynamicResource Slate500}"
+                                   Text="{Binding Uploaded, StringFormat='{}{0} страниц отправлено'}" />
+                    </Grid>
+                </StackPanel>
+
+                <!-- what became of it -->
+                <StackPanel Spacing="12" IsVisible="{Binding IsFinished}">
+                    <TextBlock Text="{Binding ResultText}" Classes="t12" TextWrapping="Wrap" />
+
+                    <TextBlock Text="{Binding Url}" Classes="t11"
+                               Foreground="{DynamicResource Slate500}" TextWrapping="Wrap"
+                               IsVisible="{Binding HasUrl}" />
+
+                    <Border IsVisible="{Binding HasResults}" Background="{DynamicResource Slate50}"
+                            CornerRadius="12" Padding="14,11" MaxHeight="220">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Results}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Spacing="2" Margin="0,0,0,10">
+                                            <TextBlock Text="{Binding ProjectText}" Classes="t12"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding PagesText}" Classes="t11"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                            <TextBlock Text="{Binding ProblemsText}" Classes="t11"
+                                                       Foreground="{DynamicResource Red600}"
+                                                       TextWrapping="Wrap"
+                                                       IsVisible="{Binding HasProblems}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ============================= footer ============================= -->
+            <Border BorderBrush="{DynamicResource Slate200}" BorderThickness="0,1,0,0"
+                    Margin="0,18,0,0" Padding="20,14">
+                <Grid ColumnDefinitions="*,Auto,Auto">
+
+                    <!-- Where the customer is after a finished run: the order is on the site,
+                         so the projects list is the way on; before it, leaving is a cancel. -->
+                    <Button Grid.Column="1" Classes="outline" Padding="12,10" Margin="0,0,8,0"
+                            IsVisible="{Binding IsConfirming}"
+                            AutomationProperties.Name="Отмена"
+                            Click="OnCloseClick">
+                        <TextBlock Text="Отмена" VerticalAlignment="Center" />
+                    </Button>
+
+                    <Button Grid.Column="1" Classes="outline" Padding="12,10" Margin="0,0,8,0"
+                            IsVisible="{Binding IsRunning}"
+                            IsEnabled="{Binding CanCancel}"
+                            AutomationProperties.Name="Остановить"
+                            Click="OnCancelClick">
+                        <TextBlock Text="Остановить" VerticalAlignment="Center" />
+                    </Button>
+
+                    <Button Grid.Column="1" Classes="outline" Padding="12,10" Margin="0,0,8,0"
+                            IsVisible="{Binding CanOpenSite}"
+                            AutomationProperties.Name="Открыть на сайте"
+                            Click="OnOpenSiteClick">
+                        <TextBlock Text="Открыть на сайте" VerticalAlignment="Center" />
+                    </Button>
+
+                    <Button Grid.Column="2" Classes="primary" Padding="16,10"
+                            IsVisible="{Binding IsConfirming}"
+                            IsEnabled="{Binding CanUpload}"
+                            AutomationProperties.Name="Отправить на сайт"
+                            Click="OnSendClick">
+                        <TextBlock Text="Отправить на сайт" Foreground="White" />
+                    </Button>
+
+                    <Button Grid.Column="2" Classes="primary" Padding="16,10"
+                            IsVisible="{Binding IsFinished}"
+                            AutomationProperties.Name="Вернуться к проектам"
+                            Click="OnProjectsClick">
+                        <TextBlock Text="Вернуться к проектам" Foreground="White" />
+                    </Button>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </Border>
+</Window>

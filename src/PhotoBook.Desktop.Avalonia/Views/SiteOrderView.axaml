@@ -94,7 +94,7 @@
                             </StackPanel>
 
                             <!-- the column headings, once -->
-                            <Grid Grid.Row="1" ColumnDefinitions="56,*,240,100,110,130,140"
+                            <Grid Grid.Row="1" ColumnDefinitions="56,*,240,100,110,130,140,24"
                                   Margin="20,0,20,12">
                                 <TextBlock Grid.Column="0" Text="№" Classes="t11" Foreground="{DynamicResource Slate500}" />
                                 <TextBlock Grid.Column="1" Text="Книга" Classes="t11" Foreground="{DynamicResource Slate500}" />
@@ -111,35 +111,119 @@
                             <ItemsControl Grid.Row="2" ItemsSource="{Binding Books}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid ColumnDefinitions="56,*,240,100,110,130,140" Margin="20,12">
-                                            <TextBlock Grid.Column="0" Text="{Binding Number}" Classes="t12"
-                                                       Foreground="{DynamicResource Slate500}" />
-                                            <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="t12"
-                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                            <!-- The formats are the site's, in the site's order; the book
-                                                 remembers what was picked, so the choice survives the page. -->
-                                            <ComboBox Grid.Column="2" Margin="0,0,12,0"
-                                                      HorizontalAlignment="Stretch"
-                                                      AutomationProperties.Name="Формат книги"
-                                                      ItemsSource="{Binding Formats}"
-                                                      SelectedItem="{Binding SelectedFormat, Mode=TwoWay}"
-                                                      DisplayMemberBinding="{Binding DisplayText}"
-                                                      PlaceholderText="Выберите формат" />
-                                            <TextBlock Grid.Column="3" Text="{Binding Spreads}" Classes="t12"
-                                                       VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="4" Text="{Binding Photos}" Classes="t12"
-                                                       VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="5" Text="{Binding ConditionText}" Classes="t12"
-                                                       VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="6" Text="{Binding PriceText}" Classes="t12"
-                                                       VerticalAlignment="Center" />
-                                            <Border Grid.ColumnSpan="7" Height="1"
-                                                    Background="{DynamicResource Slate100}"
-                                                    VerticalAlignment="Bottom" />
-                                        </Grid>
+                                        <StackPanel>
+                                            <!-- One book as a row of the table. The chevron opens what
+                                                 the check found: the cover, the spreads, and the file
+                                                 the site refused. A book with a problem opens itself. -->
+                                            <Grid ColumnDefinitions="56,*,240,100,110,130,140,24" Margin="20,12">
+                                                <TextBlock Grid.Column="0" Text="{Binding Number}" Classes="t12"
+                                                           Foreground="{DynamicResource Slate500}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="t12"
+                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                <!-- The formats are the site's, in the site's order; the book
+                                                     remembers what was picked, so the choice survives the page. -->
+                                                <ComboBox Grid.Column="2" Margin="0,0,12,0"
+                                                          HorizontalAlignment="Stretch"
+                                                          AutomationProperties.Name="Формат книги"
+                                                          ItemsSource="{Binding Formats}"
+                                                          SelectedItem="{Binding SelectedFormat, Mode=TwoWay}"
+                                                          DisplayMemberBinding="{Binding DisplayText}"
+                                                          PlaceholderText="Выберите формат" />
+                                                <TextBlock Grid.Column="3" Text="{Binding Spreads}" Classes="t12"
+                                                           VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="4" Text="{Binding Photos}" Classes="t12"
+                                                           VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="5" Text="{Binding ConditionText}" Classes="t12"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource Red600}"
+                                                           IsVisible="{Binding IsFailed}" />
+                                                <TextBlock Grid.Column="5" Text="{Binding ConditionText}" Classes="t12"
+                                                           VerticalAlignment="Center"
+                                                           IsVisible="{Binding !IsFailed}" />
+                                                <TextBlock Grid.Column="6" Text="{Binding PriceText}" Classes="t12"
+                                                           VerticalAlignment="Center" />
+                                                <Button Grid.Column="7" Classes="ghostClear" Padding="2"
+                                                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                        AutomationProperties.Name="Файлы книги"
+                                                        IsVisible="{Binding !IsExpanded}"
+                                                        Click="OnToggleBook">
+                                                    <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="10"
+                                                               Foreground="{DynamicResource Slate500}" />
+                                                </Button>
+                                                <Button Grid.Column="7" Classes="ghostClear" Padding="2"
+                                                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                        AutomationProperties.Name="Свернуть книгу"
+                                                        IsVisible="{Binding IsExpanded}"
+                                                        Click="OnToggleBook">
+                                                    <TextBlock Text="&#xE70E;" FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="10"
+                                                               Foreground="{DynamicResource Slate500}" />
+                                                </Button>
+                                            </Grid>
+
+                                            <StackPanel Spacing="6" Margin="76,0,24,12"
+                                                        IsVisible="{Binding IsExpanded}">
+                                                <TextBlock Text="{Binding ReasonsText}" Classes="t11"
+                                                           Foreground="{DynamicResource Red700}"
+                                                           TextWrapping="Wrap"
+                                                           IsVisible="{Binding HasReasons}" />
+
+                                                <ItemsControl ItemsSource="{Binding FileRows}"
+                                                              IsVisible="{Binding HasFileRows}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid ColumnDefinitions="140,*,Auto" Margin="0,0,0,2">
+                                                                <TextBlock Grid.Column="0" Text="{Binding Title}"
+                                                                           Classes="t11"
+                                                                           Foreground="{DynamicResource Slate500}" />
+                                                                <TextBlock Grid.Column="1" Text="{Binding FileName}"
+                                                                           Classes="t11"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock Grid.Column="2" Text="{Binding Problem}"
+                                                                           Classes="t11" Margin="12,0,0,0"
+                                                                           Foreground="{DynamicResource Red600}"
+                                                                           TextWrapping="Wrap"
+                                                                           IsVisible="{Binding IsBlocking}" />
+                                                                <TextBlock Grid.Column="2" Text="{Binding Problem}"
+                                                                           Classes="t11" Margin="12,0,0,0"
+                                                                           Foreground="{DynamicResource Slate500}"
+                                                                           TextWrapping="Wrap"
+                                                                           IsVisible="{Binding IsRemark}" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+
+                                            <Border Height="1" Background="{DynamicResource Slate100}" />
+                                        </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <!-- What belongs to the order rather than to one book, and the one
+                                 answer the customer has to give before sending. -->
+                            <Border Grid.Row="3" Padding="20,12" IsVisible="{Binding HasFileLines}">
+                                <StackPanel Spacing="8">
+                                    <ItemsControl ItemsSource="{Binding FileLines}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}" Classes="t11"
+                                                           Foreground="{DynamicResource Red600}"
+                                                           TextWrapping="Wrap" Margin="0,0,0,4" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <CheckBox IsVisible="{Binding NeedsConfirmation}"
+                                              IsChecked="{Binding ConfirmationsAccepted, Mode=TwoWay}"
+                                              AutomationProperties.Name="Подтвердить файлы">
+                                        <TextBlock Text="Да, отправить эти файлы — край сайт может обрезать."
+                                                   Classes="t12" TextWrapping="Wrap" />
+                                    </CheckBox>
+                                </StackPanel>
+                            </Border>
                         </Grid>
                     </Border>
 
@@ -164,18 +248,13 @@
                                                            VerticalAlignment="Center" />
                                             </StackPanel>
 
-                                            <!-- A row, not a wrapping panel: a format asks at most a few
-                                                 questions, and a wrapping panel inside a scrolling card kept
-                                                 the window re-measuring itself. -->
+                                            <!-- One question under another: this panel is three tenths
+                                                 of the page, and two pickers side by side left the
+                                                 second one hanging over the card's edge. -->
                                             <ItemsControl ItemsSource="{Binding Parameters}">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <StackPanel Orientation="Horizontal" />
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <StackPanel Spacing="4" Width="240" Margin="0,0,16,8">
+                                                        <StackPanel Spacing="4" Margin="0,0,0,8">
                                                             <TextBlock Text="{Binding Title}" Classes="t11"
                                                                        Foreground="{DynamicResource Slate500}" />
                                                             <ComboBox HorizontalAlignment="Stretch"

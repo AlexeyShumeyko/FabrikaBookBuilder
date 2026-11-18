@@ -3,6 +3,7 @@ using System.Linq;
 using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Books;
 using PhotoBook.Application.Sites.Books.Pricing;
+using PhotoBook.Application.Sites.Books.Files;
 using PhotoBook.Application.Sites.Catalog;
 using PhotoBook.Application.Sites.Catalog.Layout;
 using PhotoBook.Application.Sites.Pricing;
@@ -146,6 +147,127 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.True(page.IsReady);
         }
 
+        /// <summary>
+        /// The list opens onto the file that would be refused: the customer's next question is
+        /// which file, and a book that hid it behind a click would make them ask it for every one.
+        /// </summary>
+        [Fact]
+        public async Task OpensABookWhoseFilesTheSiteWouldRefuse()
+        {
+            var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
+            var catalog = new StubCatalog(
+                new CatalogProduct(4494, "Лайфлат", "kit", 1, new[] { new CatalogFormat(9255, "21x30") }))
+            {
+                Format = TestFormats.WithCondition(37556),
+            };
+            var page = new SiteOrderViewModel(
+                catalog,
+                new StubSessionStore(),
+                new StubQuotes(),
+                new StubFiles(),
+                Files(new PixelSize(800, 600)));
+
+            page.Prepare(project, "Проект");
+
+            await page.LoadFormatsAsync();
+            page.Books[0].SelectedFormat = page.Books[0].Formats[0];
+            await page.LoadFormatsAsync();
+            page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
+
+            await page.Pricing;
+            await page.FileCheck;
+
+            Assert.False(page.CanUpload);
+
+            var book = page.Books[0];
+            Assert.True(book.IsFailed);
+            Assert.True(book.IsExpanded);
+            Assert.Equal("Ошибка в файлах", book.ConditionText);
+            Assert.Contains(book.FileRows, file => file.HasProblem);
+            Assert.Contains("исправьте", page.FilesText);
+        }
+
+        /// <summary>A file check over a layout whose pages are what the site asks for.</summary>
+        /// <param name="size">What the disk says a page is; null for the size the site asks.</param>
+        private static OrderFileCheckService Files(PixelSize? size = null)
+        {
+            var layout = new SiteLayout(
+                4494,
+                9255,
+                300,
+                new[]
+                {
+                    new PartLayout(
+                        93,
+                        "Обложка",
+                        Array.Empty<PageSizeRange>(),
+                        new PageSize(410, 290),
+                        PrintMargins.None,
+                        Array.Empty<SizeIndexCondition>(),
+                        PrintMargins.None,
+                        0),
+                    new PartLayout(
+                        94,
+                        "Разворот",
+                        Array.Empty<PageSizeRange>(),
+                        new PageSize(410, 290),
+                        PrintMargins.None,
+                        Array.Empty<SizeIndexCondition>(),
+                        PrintMargins.None,
+                        0)
+                },
+                37556);
+
+            return new OrderFileCheckService(
+                new FileCatalog(layout),
+                new FileInspector(size ?? layout.RequiredPixels(94, 10, null)!));
+        }
+
+        private sealed class FileCatalog : ISiteCatalogService
+        {
+            private readonly SiteLayout _layout;
+
+            internal FileCatalog(SiteLayout layout) => _layout = layout;
+
+            public Task<Result<SiteLayout>> GetLayoutAsync(
+                SiteRegion region,
+                long productId,
+                long componentId,
+                CancellationToken cancellationToken = default) =>
+                Task.FromResult(Result<SiteLayout>.Ok(_layout));
+
+            public Task<Result<IReadOnlyList<CatalogProduct>>> GetProductsAsync(
+                SiteRegion region,
+                CancellationToken cancellationToken = default) =>
+                throw new NotSupportedException();
+
+            public Task<Result<SiteProduct>> GetFormatAsync(
+                SiteRegion region,
+                long productId,
+                long componentId,
+                CancellationToken cancellationToken = default) =>
+                throw new NotSupportedException();
+
+            public Task<Result<SiteProduct>> GetProductAsync(
+                SiteRegion region,
+                string slug,
+                CancellationToken cancellationToken = default) =>
+                throw new NotSupportedException();
+        }
+
+        private sealed class FileInspector : IBookFileInspector
+        {
+            private readonly PixelSize _size;
+
+            internal FileInspector(PixelSize size) => _size = size;
+
+            public Task<IReadOnlyList<PageFileFacts>> InspectAsync(
+                IReadOnlyList<PageFile> files,
+                CancellationToken cancellationToken = default) =>
+                Task.FromResult<IReadOnlyList<PageFileFacts>>(
+                    files.Select(file => new PageFileFacts(file.Path, true, _size)).ToList());
+        }
+
         [Fact]
         public async Task HandsThePricedOrderToTheUploadOnlyWhenAsked()
         {
@@ -156,7 +278,7 @@ namespace PhotoBook.Application.Tests.Sites
                 Format = TestFormats.WithCondition(37556),
             };
             var page = new SiteOrderViewModel(
-                catalog, new StubSessionStore(), new StubQuotes(), new StubFiles());
+                catalog, new StubSessionStore(), new StubQuotes(), new StubFiles(), Files());
             page.Prepare(project, "Проект");
 
             await page.LoadFormatsAsync();
@@ -167,10 +289,17 @@ namespace PhotoBook.Application.Tests.Sites
             // The price is not a button: the page asks for it as soon as the answers are complete.
             await page.Pricing;
 
+            // So are the files: the plan is what the check reads, and the button waits for both.
+            await page.FileCheck;
+
             var asked = 0;
             page.UploadRequested += (_, _) => asked++;
 
             Assert.True(page.CanUpload);
+
+            // A book whose files fit says so in one word and stays closed.
+            Assert.Equal("Готова", page.Books[0].ConditionText);
+            Assert.False(page.Books[0].IsExpanded);
 
             page.Upload();
 
@@ -191,7 +320,7 @@ namespace PhotoBook.Application.Tests.Sites
                 Format = TestFormats.WithCondition(37556),
             };
             var page = new SiteOrderViewModel(
-                catalog, new StubSessionStore(), new StubQuotes(), new StubFiles());
+                catalog, new StubSessionStore(), new StubQuotes(), new StubFiles(), Files());
             page.Prepare(project, "Проект");
 
             await page.LoadFormatsAsync();
@@ -199,6 +328,7 @@ namespace PhotoBook.Application.Tests.Sites
             await page.LoadFormatsAsync();
             page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
             await page.Pricing;
+            await page.FileCheck;
 
             Assert.True(page.CanUpload);
 

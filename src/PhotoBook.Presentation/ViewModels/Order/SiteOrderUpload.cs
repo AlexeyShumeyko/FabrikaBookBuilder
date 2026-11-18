@@ -26,6 +26,15 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>The plan the upload screen is to send, once the customer has asked for it.</summary>
         public UploadPlan? Pending { get; private set; }
 
+        /// <summary>
+        /// The plan the page is offering right now, asked for or not.
+        /// </summary>
+        /// <remarks>
+        /// The file check reads this one: it is about the order as it stands, and a check that
+        /// waited for the customer to press send would leave the list wordless until then.
+        /// </remarks>
+        public UploadPlan? Offered { get; private set; }
+
         /// <summary>Whether there is a complete plan to send right now.</summary>
         public bool CanUpload => _plan is { IsComplete: true };
 
@@ -33,6 +42,7 @@ namespace PhotoBook.Presentation.ViewModels
         public void Offer(UploadPlan? plan)
         {
             _plan = plan;
+            Offered = plan;
             Pending = null;
 
             _changed();

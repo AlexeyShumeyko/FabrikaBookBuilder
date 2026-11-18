@@ -28,20 +28,17 @@ namespace PhotoBook.Shell.Navigation
         private readonly UniqueFoldersViewModel _uniqueFolders;
         private readonly CombinedModeViewModel _combined;
         private readonly SiteOrderViewModel _siteOrder;
-        private readonly SiteUploadViewModel _upload;
         private readonly Func<ProjectListViewModel> _newProjectsViewModel;
 
         public AvaloniaScreenViewFactory(
             UniqueFoldersViewModel uniqueFolders,
             CombinedModeViewModel combined,
             SiteOrderViewModel siteOrder,
-            SiteUploadViewModel upload,
             Func<ProjectListViewModel> newProjectsViewModel)
         {
             _uniqueFolders = uniqueFolders;
             _combined = combined;
             _siteOrder = siteOrder;
-            _upload = upload;
             _newProjectsViewModel = newProjectsViewModel;
         }
 
@@ -64,11 +61,6 @@ namespace PhotoBook.Shell.Navigation
             AppMode.SiteOrder => new SiteOrderView
             {
                 DataContext = viewModel as SiteOrderViewModel ?? _siteOrder
-            },
-
-            AppMode.SiteUpload => new SiteUploadView
-            {
-                DataContext = viewModel as SiteUploadViewModel ?? _upload
             },
 
             _ => throw new ArgumentOutOfRangeException(

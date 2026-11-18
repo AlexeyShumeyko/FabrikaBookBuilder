@@ -18,5 +18,12 @@ namespace PhotoBook.Shell.Views
 
         private void OnUpload(object? sender, RoutedEventArgs e) =>
             (DataContext as SiteOrderViewModel)?.Upload();
+
+        /// <summary>Opens or closes one book's files, from the chevron on its row.</summary>
+        private void OnToggleBook(object? sender, RoutedEventArgs e)
+        {
+            if ((sender as Control)?.DataContext is OrderBookRow row)
+                row.IsExpanded = !row.IsExpanded;
+        }
     }
 }

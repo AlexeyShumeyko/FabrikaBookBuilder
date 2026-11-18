@@ -6,10 +6,19 @@ using PhotoBook.Application.Sites.Books.Files;
 namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>One file of a book as the list shows it: what it is, its name, and its problem.</summary>
-    public sealed record UploadFileRow(string Title, string FileName, string? Problem)
+    public sealed record UploadFileRow(string Title, string FileName, string? Problem, bool Blocking = false)
     {
-        /// <summary>Whether this file is the one the site refused.</summary>
+        /// <summary>Whether the site said something about this file.</summary>
         public bool HasProblem => !string.IsNullOrEmpty(Problem);
+
+        /// <summary>
+        /// Whether what it said is a refusal. A page inside the site's own tolerance is a remark,
+        /// not a failure, and painting both red would make a fit book look broken.
+        /// </summary>
+        public bool IsBlocking => Blocking && HasProblem;
+
+        /// <summary>Whether the site only remarked on the file.</summary>
+        public bool IsRemark => HasProblem && !Blocking;
     }
 
     /// <summary>One book on the upload screen: its word, its files, and whether it is open.</summary>

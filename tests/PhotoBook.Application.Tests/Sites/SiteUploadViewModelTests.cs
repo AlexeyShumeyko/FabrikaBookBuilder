@@ -157,27 +157,6 @@ namespace PhotoBook.Application.Tests.Sites
         }
 
         [Fact]
-        public void EachProjectIsShownWithItsFormatAndItsPrice()
-        {
-            var screen = Screen(
-                new StubCreation(1001),
-                new StubUpload(),
-                new StubCheck(true),
-                groups: 1,
-                pages: 2,
-                booksPerGroup: 2);
-
-            var project = Assert.Single(screen.GroupRows);
-
-            Assert.Equal("Проект 1", project.NumberText);
-            Assert.Equal("Лайфлат 21x30", project.FormatText);
-            Assert.Equal("2 книг", project.BooksText);
-            Assert.Equal("Разворотов: 4", project.SpreadsText);
-            Assert.Contains("084,00 RUB", project.PriceText, StringComparison.Ordinal);
-            Assert.Equal(2, project.Books.Count);
-        }
-
-        [Fact]
         public async Task AProjectWithSeveralBooksSendsEveryBookInIt()
         {
             var creation = new StubCreation(1001) { Items = new long[] { 65075, 65076 } };
@@ -199,10 +178,6 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Equal(
                 new[] { new ExpectedBook(false, 3), new ExpectedBook(false, 3) },
                 Assert.Single(check.Expectations));
-
-            // Both books are listed with their own word, not the project's.
-            Assert.Equal(2, screen.BookRows.Count);
-            Assert.All(screen.BookRows, row => Assert.Equal("Готова", row.StatusText));
         }
 
         [Fact]
@@ -251,10 +226,9 @@ namespace PhotoBook.Application.Tests.Sites
             StubCheck check,
             int groups,
             int pages,
-            int booksPerGroup = 1,
-            PixelSize? size = null)
+            int booksPerGroup = 1)
         {
-            var screen = new SiteUploadViewModel(creation, upload, check, Files(size));
+            var screen = new SiteUploadViewModel(creation, upload, check);
             var pagesOfGroup = Enumerable.Range(0, groups)
                 .Select(index => Enumerable.Range(0, pages)
                     .Select(page => new PageFile($@"C:\p{index}-{page}.jpg", 1024))
@@ -287,7 +261,6 @@ namespace PhotoBook.Application.Tests.Sites
                 .ToList();
 
             screen.Prepare(Session, summary, groupsToSend);
-            screen.CheckFilesAsync().GetAwaiter().GetResult();
             return screen;
         }
 
@@ -358,163 +331,6 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Empty(upload.Calls);
             Assert.Contains("параметры", screen.Message, StringComparison.Ordinal);
             Assert.NotEqual(UploadStep.Done, screen.Step);
-        }
-
-        [Fact]
-        public void APageTooSmallKeepsTheButtonOffAndSaysWhy()
-        {
-            var screen = Screen(
-                new StubCreation(1001),
-                new StubUpload((session, projectId, pages, _, _, _) =>
-                    Task.FromResult(Accepted(projectId, pages.Count))),
-                new StubCheck(true),
-                groups: 1,
-                pages: 2,
-                size: new PixelSize(800, 600));
-
-            Assert.False(screen.CanUpload);
-
-            // The book carries the word and the reason, and opens itself so the reason is read.
-            var book = Assert.Single(screen.BookRows);
-            Assert.True(book.IsFailed);
-            Assert.True(book.IsExpanded);
-            Assert.Equal("Ошибка в файлах", book.StatusText);
-            Assert.Contains(book.Files, file => file.HasProblem && file.Problem!.Contains("Страница 1:"));
-            Assert.Contains("исправьте", screen.FilesText);
-        }
-
-        [Fact]
-        public void AWiderPageAsksAndTheButtonWaitsForTheAnswer()
-        {
-            var screen = Screen(
-                new StubCreation(1001),
-                new StubUpload((session, projectId, pages, _, _, _) =>
-                    Task.FromResult(Accepted(projectId, pages.Count))),
-                new StubCheck(true),
-                groups: 1,
-                pages: 1,
-                size: new PixelSize(5000, 3500));
-
-            Assert.True(screen.NeedsConfirmation);
-            Assert.False(screen.CanUpload);
-
-            screen.ConfirmationsAccepted = true;
-
-            Assert.True(screen.CanUpload);
-        }
-
-        [Fact]
-        public void ReadFilesThatFitSaySoAndTheButtonComesOn()
-        {
-            var screen = Screen(
-                new StubCreation(1001),
-                new StubUpload((session, projectId, pages, _, _, _) =>
-                    Task.FromResult(Accepted(projectId, pages.Count))),
-                new StubCheck(true),
-                groups: 1,
-                pages: 2);
-
-            Assert.True(screen.CanUpload);
-            Assert.False(screen.NeedsConfirmation);
-            Assert.Contains("всё совпадает", screen.FilesText);
-
-            // A clean book says so in one word and stays closed.
-            var book = Assert.Single(screen.BookRows);
-            Assert.Equal("Готова", book.StatusText);
-            Assert.False(book.IsExpanded);
-            Assert.All(book.Files, file => Assert.False(file.HasProblem));
-        }
-
-        [Fact]
-        public async Task TheCheckForgetsTheOldYesWhenTheFilesAreReadAgain()
-        {
-            var screen = Screen(
-                new StubCreation(1001),
-                new StubUpload((session, projectId, pages, _, _, _) =>
-                    Task.FromResult(Accepted(projectId, pages.Count))),
-                new StubCheck(true),
-                groups: 1,
-                pages: 1,
-                size: new PixelSize(5000, 3500));
-
-            screen.ConfirmationsAccepted = true;
-            await screen.CheckFilesAsync();
-
-            Assert.False(screen.ConfirmationsAccepted);
-            Assert.False(screen.CanUpload);
-        }
-
-        /// <summary>The file check over a page of the given pixel size.</summary>
-        private static OrderFileCheckService Files(PixelSize? size = null)
-        {
-            var layout = new SiteLayout(
-                4494,
-                9255,
-                300,
-                new[]
-                {
-                    new PartLayout(
-                        94,
-                        "Разворот",
-                        Array.Empty<PageSizeRange>(),
-                        new PageSize(410, 290),
-                        PrintMargins.None,
-                        Array.Empty<SizeIndexCondition>(),
-                        PrintMargins.None,
-                        0)
-                },
-                37556);
-
-            var required = layout.RequiredPixels(94, 10, null)!;
-
-            return new OrderFileCheckService(
-                new FileCatalog(layout),
-                new FileInspector(size ?? required));
-        }
-
-        private sealed class FileCatalog : ISiteCatalogService
-        {
-            private readonly SiteLayout _layout;
-
-            internal FileCatalog(SiteLayout layout) => _layout = layout;
-
-            public Task<Result<SiteLayout>> GetLayoutAsync(
-                SiteRegion region,
-                long productId,
-                long componentId,
-                CancellationToken cancellationToken = default) =>
-                Task.FromResult(Result<SiteLayout>.Ok(_layout));
-
-            public Task<Result<IReadOnlyList<CatalogProduct>>> GetProductsAsync(
-                SiteRegion region,
-                CancellationToken cancellationToken = default) =>
-                throw new NotSupportedException();
-
-            public Task<Result<SiteProduct>> GetFormatAsync(
-                SiteRegion region,
-                long productId,
-                long componentId,
-                CancellationToken cancellationToken = default) =>
-                throw new NotSupportedException();
-
-            public Task<Result<SiteProduct>> GetProductAsync(
-                SiteRegion region,
-                string slug,
-                CancellationToken cancellationToken = default) =>
-                throw new NotSupportedException();
-        }
-
-        private sealed class FileInspector : IBookFileInspector
-        {
-            private readonly PixelSize _size;
-
-            internal FileInspector(PixelSize size) => _size = size;
-
-            public Task<IReadOnlyList<PageFileFacts>> InspectAsync(
-                IReadOnlyList<PageFile> files,
-                CancellationToken cancellationToken = default) =>
-                Task.FromResult<IReadOnlyList<PageFileFacts>>(
-                    files.Select(file => new PageFileFacts(file.Path, true, _size)).ToList());
         }
 
         private static Book Book(IReadOnlyList<PageFile>? files = null)

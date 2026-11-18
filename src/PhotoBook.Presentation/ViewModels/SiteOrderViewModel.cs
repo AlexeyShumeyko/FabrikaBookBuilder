@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using PhotoBook.Application;
 using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Books;
+using PhotoBook.Application.Sites.Books.Files;
 using PhotoBook.Application.Sites.Books.Order;
 using PhotoBook.Application.Sites.Books.Pricing;
 using PhotoBook.Application.Sites.Catalog;
@@ -44,6 +45,7 @@ namespace PhotoBook.Presentation.ViewModels
         private readonly ISiteSessionStore? _sessions;
         private readonly OrderPriceService? _prices;
         private readonly SiteOrderParameters _parameters;
+        private readonly OrderFileCheckService? _fileCheck;
 
         private IReadOnlyList<OrderBookRow> _books = Array.Empty<OrderBookRow>();
         private IReadOnlyList<FormatChoice> _formats = Array.Empty<FormatChoice>();
@@ -61,10 +63,12 @@ namespace PhotoBook.Presentation.ViewModels
             ISiteCatalogService? catalog = null,
             ISiteSessionStore? sessions = null,
             IGroupQuoteService? quotes = null,
-            IFileService? files = null)
+            IFileService? files = null,
+            OrderFileCheckService? fileCheck = null)
         {
             _catalog = catalog;
             _sessions = sessions;
+            _fileCheck = fileCheck;
 
             // The price is the order service's job; the page only carries its answer. The two
             // ports are given together because one without the other can price nothing.
@@ -184,7 +188,7 @@ namespace PhotoBook.Presentation.ViewModels
         /// Whether the order can be sent: priced, complete and with every book's integration
         /// known. Sending is a write, so nothing but a finished order reaches the button.
         /// </summary>
-        public bool CanUpload => !_isPricing && _upload.CanUpload;
+        public bool CanUpload => !_isPricing && _upload.CanUpload && FilesAllow;
 
         /// <summary>How many books still need a format, in words.</summary>
         public string ChosenFormatText
@@ -217,6 +221,7 @@ namespace PhotoBook.Presentation.ViewModels
                 IsReady = false;
                 TotalText = string.Empty;
                 Message = "Проект не открыт.";
+                ForgetFiles();
                 return;
             }
 
@@ -293,7 +298,24 @@ namespace PhotoBook.Presentation.ViewModels
         public void Upload() => _upload.Request();
 
         /// <summary>Keeps the button and the plan in step with what the page knows.</summary>
-        private void SetPlan(UploadPlan? plan) => _upload.Offer(plan);
+        /// <remarks>
+        /// A new plan is a new set of files to send, so the files are read again for it: the
+        /// formats and their answers decide what the site asks of a page, and a check made for
+        /// the answers before this one would be about a different order.
+        /// </remarks>
+        private void SetPlan(UploadPlan? plan)
+        {
+            _upload.Offer(plan);
+
+            if (plan is null)
+            {
+                ForgetFiles();
+                return;
+            }
+
+            ForgetFiles();
+            _filesRun = CheckFilesAsync();
+        }
 
         private void ApplyFormats(IReadOnlyList<CatalogProduct> products)
         {

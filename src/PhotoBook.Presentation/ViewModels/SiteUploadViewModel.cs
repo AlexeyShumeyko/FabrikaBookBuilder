@@ -121,13 +121,11 @@ namespace PhotoBook.Presentation.ViewModels
             IProjectCreationService creation,
             IBookUploadService upload,
             IProjectCheckService check,
-            OrderFileCheckService? fileCheck = null,
             IUiThread? ui = null)
         {
             _creation = creation ?? throw new ArgumentNullException(nameof(creation));
             _upload = upload ?? throw new ArgumentNullException(nameof(upload));
             _check = check ?? throw new ArgumentNullException(nameof(check));
-            _fileCheck = fileCheck;
 
             if (ui is not null)
                 Ui = ui;
@@ -158,6 +156,10 @@ namespace PhotoBook.Presentation.ViewModels
                 OnPropertyChanged(nameof(CanCancel));
                 OnPropertyChanged(nameof(ButtonText));
                 OnPropertyChanged(nameof(IsDone));
+                OnPropertyChanged(nameof(IsConfirming));
+                OnPropertyChanged(nameof(IsRunning));
+                OnPropertyChanged(nameof(IsFinished));
+                OnPropertyChanged(nameof(HeaderText));
             }
         }
 
@@ -272,6 +274,33 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Whether the run finished and the result is on the screen.</summary>
         public bool IsDone => Step == UploadStep.Done;
 
+        /// <summary>Whether the window is still asking whether to send.</summary>
+        public bool IsConfirming => Step == UploadStep.Ready;
+
+        /// <summary>Whether the site is being written to right now.</summary>
+        public bool IsRunning => Step is UploadStep.Creating or UploadStep.Uploading or UploadStep.Checking;
+
+        /// <summary>Whether the run has ended, one way or another.</summary>
+        public bool IsFinished => Step is UploadStep.Done or UploadStep.Stopped;
+
+        /// <summary>Projects the order will create, as the confirmation says it.</summary>
+        public int ProjectCount => Summary?.ProjectCount ?? 0;
+
+        /// <summary>Books going in those projects.</summary>
+        public int BookCount => Summary?.BookCount ?? 0;
+
+        /// <summary>The order's total as the site wrote it.</summary>
+        public string ConfirmTotalText => Summary?.TotalText ?? string.Empty;
+
+        /// <summary>What the window calls the moment it is in.</summary>
+        public string HeaderText => Step switch
+        {
+            UploadStep.Ready => "Отправить заказ на сайт?",
+            UploadStep.Done => "Заказ на сайте",
+            UploadStep.Stopped => "Загрузка остановлена",
+            _ => "Отправляем на сайт"
+        };
+
         /// <summary>Leaves a finished run for the projects list.</summary>
         public void GoToProjects() => ProjectsRequested?.Invoke(this, EventArgs.Empty);
 
@@ -293,10 +322,9 @@ namespace PhotoBook.Presentation.ViewModels
         /// Whether the button may be pressed: the order may go, and the files have been read and
         /// found sendable, with every question answered by the customer.
         /// </summary>
-        public bool CanUpload => !IsBusy && !IsCheckingFiles && _session is not null &&
-            _summary is { CanUpload: true } &&
-            _groups.Count > 0 && _groups.All(group => group.Pages.Count > 0) &&
-            _files is { CanSend: true } && (!NeedsConfirmation || _confirmationsAccepted);
+        public bool CanUpload => !IsBusy && _session is not null &&
+            _summary is { CanUpload: true } && _problems.Count == 0 &&
+            _groups.Count > 0 && _groups.All(group => group.Pages.Count > 0);
 
         /// <summary>Whether the customer may stop the run.</summary>
         public bool CanCancel => IsBusy;
@@ -326,7 +354,6 @@ namespace PhotoBook.Presentation.ViewModels
             _problems = problems ?? Array.Empty<string>();
 
             Step = UploadStep.Ready;
-            ForgetFiles();
             Uploaded = 0;
             _completedBeforeGroup = 0;
             Total = _groups.Sum(group => group.Pages.Count);
@@ -341,6 +368,9 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(Summary));
             OnPropertyChanged(nameof(CanUpload));
             OnPropertyChanged(nameof(ButtonText));
+            OnPropertyChanged(nameof(ProjectCount));
+            OnPropertyChanged(nameof(BookCount));
+            OnPropertyChanged(nameof(ConfirmTotalText));
         }
 
         /// <summary>
@@ -357,7 +387,6 @@ namespace PhotoBook.Presentation.ViewModels
             _session = session ?? throw new ArgumentNullException(nameof(session));
 
             OnPropertyChanged(nameof(CanUpload));
-            OnPropertyChanged(nameof(CanCheckFiles));
         }
 
         /// <summary>What the screen says instead of a run: everything that blocks the button.</summary>

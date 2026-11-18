@@ -183,7 +183,6 @@ namespace PhotoBook.Shell.Navigation
                 AppMode.UniqueFolders => (object)_uniqueFolders,
                 AppMode.Combined => _combined,
                 AppMode.SiteOrder => _siteOrder,
-                AppMode.SiteUpload => _upload,
                 _ => ProjectListProvider()
             };
 
@@ -197,11 +196,7 @@ namespace PhotoBook.Shell.Navigation
 
             // The page reads the project as it stands the moment it is opened, and the
             // project is delivered above, so the books are already there.
-            // Coming back from the upload screen is not opening the order again: the page
-            // still holds the formats, the answers and the total the customer already saw.
-            var returning = _previousMode == AppMode.SiteUpload;
-
-            if (_currentMode == AppMode.SiteOrder && _sessionMode is { } sessionMode && !returning)
+            if (_currentMode == AppMode.SiteOrder && _sessionMode is { } sessionMode)
             {
                 _siteOrder.Prepare(ProjectOf(sessionMode), NameOf(sessionMode));
 
@@ -269,10 +264,6 @@ namespace PhotoBook.Shell.Navigation
             }
 
             _upload.Prepare(session, plan.Summary, plan.Groups, plan.Problems, plan.Notes);
-
-            // The files are read as the screen opens, before the button can be pressed: the
-            // check is what the button waits for, so it must not wait for a second click.
-            _ = _upload.CheckFilesAsync();
 
             UploadWindowRequested?.Invoke(this, EventArgs.Empty);
         }

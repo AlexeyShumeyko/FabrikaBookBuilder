@@ -14,7 +14,12 @@ namespace PhotoBook.Application.Tests.Sites
     /// </summary>
     public class SiteLoginViewModelTests
     {
-        private static readonly DateTimeOffset Now = new(2026, 11, 10, 12, 0, 0, TimeSpan.Zero);
+        /// <summary>
+        /// The moment the test pretends it is. It used to be a pinned date, and seven days later
+        /// the sessions it made were already expired - the form refused them, and the tests that
+        /// said it kept a session started failing on the calendar rather than on the code.
+        /// </summary>
+        private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
 
         private static SiteSession Session(string email = "customer@example.com") =>
             new(SiteRegion.Com, "token-value", Now.AddDays(7), email);

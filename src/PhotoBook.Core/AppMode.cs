@@ -9,9 +9,6 @@ namespace PhotoBook.Core
         Combined,
 
         /// <summary>The order page: what will go to the site, opened from the project.</summary>
-        SiteOrder,
-
-        /// <summary>The upload screen: the only place that writes to the site.</summary>
-        SiteUpload
+        SiteOrder
     }
 }
