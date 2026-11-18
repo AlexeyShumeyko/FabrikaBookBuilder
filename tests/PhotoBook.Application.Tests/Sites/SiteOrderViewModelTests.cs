@@ -43,6 +43,40 @@ namespace PhotoBook.Application.Tests.Sites
         }
 
         [Fact]
+        public void SaysWhyTheButtonIsOffWhenNoFormatIsChosen()
+        {
+            var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
+
+            var page = new SiteOrderViewModel();
+            page.Prepare(project, "Проект");
+
+            // The project is complete and the site is known, so the only thing missing is the
+            // choice of the group - and a grey button with nothing beside it does not say so.
+            Assert.False(page.CanUpload);
+            Assert.True(page.HasBlockingText);
+            Assert.Contains("формат", page.BlockingText, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void KeepsTheProjectsOwnLinesWhenARunSaysSomething()
+        {
+            var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
+            project.AvailableFiles.Add("/left-behind.jpg");
+
+            var page = new SiteOrderViewModel();
+            page.Prepare(project);
+
+            Assert.Contains("Фотографий вне книги: 1", page.Message, StringComparison.Ordinal);
+
+            // What the site said replaces the previous answer of the site, never the project's
+            // own lines: the card used to appear on the way in and vanish with the price.
+            page.ShowMessage("Цена не получена: сайт не ответил.");
+
+            Assert.Contains("Фотографий вне книги: 1", page.Message, StringComparison.Ordinal);
+            Assert.Contains("Цена не получена", page.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
         public void ShowsAHalfFilledBookAndWhyItCannotGo()
         {
             var project = TestProject.Combined(

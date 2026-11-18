@@ -31,6 +31,8 @@ namespace PhotoBook.Presentation.ViewModels
                 // is what enables the button, and the button was staying grey because only the
                 // price button was told the run had finished.
                 OnPropertyChanged(nameof(CanUpload));
+                OnPropertyChanged(nameof(BlockingText));
+                OnPropertyChanged(nameof(HasBlockingText));
             }
         }
 
@@ -57,7 +59,7 @@ namespace PhotoBook.Presentation.ViewModels
             var session = _sessions.Load();
             if (session is null)
             {
-                Message = "Цена считается после входа на сайт.";
+                Note("Цена считается после входа на сайт.");
                 return;
             }
 
@@ -70,7 +72,7 @@ namespace PhotoBook.Presentation.ViewModels
 
                 if (!read.IsSuccess || read.Value is null)
                 {
-                    Message = read.Error ?? "Описание формата не открылось.";
+                    Note(read.Error ?? "Описание формата не открылось.");
                     return;
                 }
 
@@ -87,7 +89,7 @@ namespace PhotoBook.Presentation.ViewModels
 
                 if (priced.Quote is null)
                 {
-                    Message = string.Join(Environment.NewLine, priced.Problems);
+                    Note(string.Join(Environment.NewLine, priced.Problems));
                     return;
                 }
 
@@ -100,11 +102,11 @@ namespace PhotoBook.Presentation.ViewModels
                 if (priced.IsPriced)
                 {
                     TotalText = priced.TotalText;
-                    Message = string.Empty;
+                    Note(string.Empty);
                 }
                 else
                 {
-                    Message = string.Join(Environment.NewLine, priced.Problems);
+                    Note(string.Join(Environment.NewLine, priced.Problems));
                 }
 
                 // The plan is built from the answer that was just priced, so the button sends
@@ -113,7 +115,7 @@ namespace PhotoBook.Presentation.ViewModels
             }
             catch (Exception ex)
             {
-                Message = "Цена не получена: " + ex.Message;
+                Note("Цена не получена: " + ex.Message);
             }
             finally
             {

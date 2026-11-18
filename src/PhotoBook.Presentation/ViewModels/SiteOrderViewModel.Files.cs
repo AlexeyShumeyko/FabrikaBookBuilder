@@ -53,6 +53,8 @@ namespace PhotoBook.Presentation.ViewModels
                 OnPropertyChanged(nameof(HasFiles));
                 OnPropertyChanged(nameof(NeedsConfirmation));
                 OnPropertyChanged(nameof(CanUpload));
+                OnPropertyChanged(nameof(BlockingText));
+                OnPropertyChanged(nameof(HasBlockingText));
                 OnPropertyChanged(nameof(FileLines));
                 OnPropertyChanged(nameof(HasFileLines));
 
@@ -85,6 +87,8 @@ namespace PhotoBook.Presentation.ViewModels
                     return;
 
                 OnPropertyChanged(nameof(CanUpload));
+                OnPropertyChanged(nameof(BlockingText));
+                OnPropertyChanged(nameof(HasBlockingText));
             }
         }
 
@@ -99,6 +103,8 @@ namespace PhotoBook.Presentation.ViewModels
 
                 OnPropertyChanged(nameof(CanUpload));
                 OnPropertyChanged(nameof(CheckingText));
+                OnPropertyChanged(nameof(BlockingText));
+                OnPropertyChanged(nameof(HasBlockingText));
 
                 // A book that was being read turns into «Готова» or a reason it is not.
                 ApplyCheck();
@@ -149,7 +155,7 @@ namespace PhotoBook.Presentation.ViewModels
             if (session is null)
             {
                 // Nothing to check against: the catalogue's sizes come with the session.
-                Message = "Файлы будут проверены после входа на сайт.";
+                Note("Файлы будут проверены после входа на сайт.");
                 return;
             }
 

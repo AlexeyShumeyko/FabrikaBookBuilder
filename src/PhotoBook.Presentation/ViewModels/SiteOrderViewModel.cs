@@ -57,7 +57,6 @@ namespace PhotoBook.Presentation.ViewModels
         private CoreProject? _project;
         private string _projectName = string.Empty;
         private int _spreadCount;
-        private string _message = string.Empty;
         private string _totalText = string.Empty;
         private bool _isReady;
         private bool _isLoadingFormats;
@@ -180,20 +179,6 @@ namespace PhotoBook.Presentation.ViewModels
             private set => SetProperty(ref _spreadCount, value);
         }
 
-        /// <summary>What the customer has to know before going on.</summary>
-        public string Message
-        {
-            get => _message;
-            private set
-            {
-                if (SetProperty(ref _message, value ?? string.Empty))
-                    OnPropertyChanged(nameof(HasMessage));
-            }
-        }
-
-        /// <summary>Whether there is anything to say.</summary>
-        public bool HasMessage => _message.Length > 0;
-
         /// <summary>Whether every book is full, has a format and its parameters answered.</summary>
         public bool IsReady
         {
@@ -205,7 +190,11 @@ namespace PhotoBook.Presentation.ViewModels
         public bool IsLoadingFormats
         {
             get => _isLoadingFormats;
-            private set => SetProperty(ref _isLoadingFormats, value);
+            private set
+            {
+                if (SetProperty(ref _isLoadingFormats, value))
+                    OnPropertyChanged(nameof(BlockingText));
+            }
         }
         /// <summary>The order's total as the site wrote it, empty until it named one.</summary>
         public string TotalText
@@ -255,7 +244,7 @@ namespace PhotoBook.Presentation.ViewModels
                 SpreadCount = 0;
                 IsReady = false;
                 TotalText = string.Empty;
-                Message = "Проект не открыт.";
+                SetProjectMessage("Проект не открыт.");
                 ForgetFiles();
                 return;
             }
@@ -269,7 +258,7 @@ namespace PhotoBook.Presentation.ViewModels
             ProjectName = string.IsNullOrWhiteSpace(projectName) ? "Проект" : projectName!.Trim();
             SpreadCount = inventory.Books.Sum(book => book.Spreads);
             TotalText = string.Empty;
-            Message = ProjectProblems.Of(inventory);
+            SetProjectMessage(ProjectProblems.Of(inventory));
 
             RefreshReadiness();
         }
@@ -291,7 +280,7 @@ namespace PhotoBook.Presentation.ViewModels
             var session = _sessions.Load();
             if (session is null)
             {
-                Message = "Выбор формата появится после входа на сайт.";
+                Note("Выбор формата появится после входа на сайт.");
                 return;
             }
 
@@ -302,7 +291,7 @@ namespace PhotoBook.Presentation.ViewModels
 
                 if (!result.IsSuccess || result.Value is null)
                 {
-                    Message = result.Error ?? "Каталог сайта не открылся.";
+                    Note(result.Error ?? "Каталог сайта не открылся.");
                     return;
                 }
 
@@ -311,7 +300,7 @@ namespace PhotoBook.Presentation.ViewModels
             }
             catch (Exception ex)
             {
-                Message = "Каталог сайта не открылся: " + ex.Message;
+                Note("Каталог сайта не открылся: " + ex.Message);
             }
             finally
             {
@@ -321,7 +310,7 @@ namespace PhotoBook.Presentation.ViewModels
 
 
         /// <summary>Says something on the page that came from outside it, such as a failed save.</summary>
-        public void ShowMessage(string text) => Message = text ?? string.Empty;
+        public void ShowMessage(string text) => Note(text);
 
         /// <summary>Goes back to the project the page was opened from.</summary>
         public void Back() => BackRequested?.Invoke(this, EventArgs.Empty);
@@ -370,8 +359,7 @@ namespace PhotoBook.Presentation.ViewModels
             if (_selectedFormat is not null)
                 ApplyFormatToBooks(_selectedFormat);
 
-            if (_formats.Count == 0)
-                Message = "Сайт не предложил ни одного формата.";
+            Note(_formats.Count == 0 ? "Сайт не предложил ни одного формата." : string.Empty);
 
             OnPropertyChanged(nameof(Formats));
             OnPropertyChanged(nameof(HasFormats));
@@ -386,8 +374,7 @@ namespace PhotoBook.Presentation.ViewModels
 
             await _parameters.LoadAsync(Books).ConfigureAwait(true);
 
-            if (_parameters.Problem is { Length: > 0 } problem)
-                Message = problem;
+            Note(_parameters.Problem);
 
             _parametersLoaded = true;
 
@@ -449,7 +436,7 @@ namespace PhotoBook.Presentation.ViewModels
             }
             catch (Exception ex)
             {
-                Message = "Параметры формата не открылись: " + ex.Message;
+                Note("Параметры формата не открылись: " + ex.Message);
             }
         }
 
@@ -472,6 +459,8 @@ namespace PhotoBook.Presentation.ViewModels
                 _parameters.IsAnswered;
 
             OnPropertyChanged(nameof(ChosenFormatText));
+            OnPropertyChanged(nameof(BlockingText));
+            OnPropertyChanged(nameof(HasBlockingText));
 
             PriceIfReady();
         }
