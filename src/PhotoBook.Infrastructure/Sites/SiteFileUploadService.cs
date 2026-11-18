@@ -41,6 +41,8 @@ namespace PhotoBook.Infrastructure.Sites
             long projectItemId,
             int position,
             string filePath,
+            int width = 0,
+            int height = 0,
             CancellationToken cancellationToken = default)
         {
             if (session is null)
@@ -65,6 +67,20 @@ namespace PhotoBook.Infrastructure.Sites
             // a project of three books would end up holding one.
             if (projectItemId > 0)
                 fields["projectItemId"] = projectItemId.ToString(CultureInfo.InvariantCulture);
+
+            // What the site's own uploader says about the picture. The platform keeps these on
+            // the page it stores, and its editor reads the page back by them; a page sent with
+            // nothing but the file arrived without a name or a size, which is not how the site
+            // describes a page it uploaded itself.
+            var fileName = System.IO.Path.GetFileName(filePath);
+            fields["params[fileName]"] = fileName;
+            fields["params[checksum]"] = string.Empty;
+
+            if (width > 0)
+                fields["params[fileWidth]"] = width.ToString(CultureInfo.InvariantCulture);
+
+            if (height > 0)
+                fields["params[fileHeight]"] = height.ToString(CultureInfo.InvariantCulture);
 
             var response = await client
                 .PostMultipartAsync(UploadPath, fields, filePath, session.AccessToken, cancellationToken)

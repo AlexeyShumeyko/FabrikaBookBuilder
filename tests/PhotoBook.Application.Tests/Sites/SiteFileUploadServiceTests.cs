@@ -37,6 +37,43 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Contains("creators/photo-book-uploader/files/upload", handler.Url);
         }
 
+        /// <summary>
+        /// The site's own uploader names the picture it sends, and the platform keeps those
+        /// fields on the page: a page sent without them arrived with no name and no size.
+        /// </summary>
+        [Fact]
+        public async Task NamesThePictureAndItsSizeAsTheSitesOwnUploaderDoes()
+        {
+            using var page = new TempPage();
+            var handler = new CapturingHandler();
+
+            var sent = await Service(handler).UploadAsync(Session, 527733, 0, 2, page.Path, 4913, 3496);
+
+            Assert.True(sent.IsAccepted);
+            // A bracketed field name is written as a quoted-string by the transport, which is
+            // the same name to the site's parser; the quotes are the wire format, not the key.
+            Assert.Contains("name=\"params[fileName]\"", handler.Body);
+            Assert.Contains(System.IO.Path.GetFileName(page.Path), handler.Body);
+            Assert.Contains("name=\"params[fileWidth]\"", handler.Body);
+            Assert.Contains("4913", handler.Body);
+            Assert.Contains("name=\"params[fileHeight]\"", handler.Body);
+            Assert.Contains("3496", handler.Body);
+            Assert.Contains("name=\"params[checksum]\"", handler.Body);
+        }
+
+        [Fact]
+        public async Task LeavesOutASizeThatWasNeverRead()
+        {
+            using var page = new TempPage();
+            var handler = new CapturingHandler();
+
+            await Service(handler).UploadAsync(Session, 527733, 0, 2, page.Path);
+
+            // Zero is "not known", not "nothing": the site must not be told a picture is 0×0.
+            Assert.DoesNotContain("params[fileWidth]", handler.Body);
+            Assert.DoesNotContain("params[fileHeight]", handler.Body);
+        }
+
         [Fact]
         public async Task NamesTheBookTheFileBelongsTo()
         {

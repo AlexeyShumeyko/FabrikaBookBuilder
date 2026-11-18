@@ -323,6 +323,8 @@ namespace PhotoBook.Application.Tests.Sites.Upload
                 long projectItemId,
                 int position,
                 string filePath,
+                int width = 0,
+                int height = 0,
                 CancellationToken cancellationToken = default)
             {
                 Positions.Add(position);

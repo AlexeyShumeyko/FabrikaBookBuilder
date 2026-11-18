@@ -100,7 +100,15 @@ namespace PhotoBook.Application.Sites.Upload
                 progress?.Report(new UploadProgress(files.Count, uploaded, file.Path));
 
                 var page = await _upload
-                    .UploadAsync(session, projectId, projectItemId, position, file.Path, cancellationToken)
+                    .UploadAsync(
+                        session,
+                        projectId,
+                        projectItemId,
+                        position,
+                        file.Path,
+                        file.Width,
+                        file.Height,
+                        cancellationToken)
                     .ConfigureAwait(false);
 
                 if (!page.IsAccepted)

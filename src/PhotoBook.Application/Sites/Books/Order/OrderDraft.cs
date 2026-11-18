@@ -138,7 +138,9 @@ namespace PhotoBook.Application.Sites.Books.Order
                     return null;
                 }
 
-                coverFile = new PageFile(cover.SourcePath!, coverLength);
+                // The site's uploader names the picture's own size with every page it sends, so
+                // the size the project already holds travels with the file.
+                coverFile = new PageFile(cover.SourcePath!, coverLength, cover.ImageWidth, cover.ImageHeight);
             }
 
             var fileList = new List<PageFile>(pages.Count);
@@ -151,7 +153,7 @@ namespace PhotoBook.Application.Sites.Books.Order
                     return null;
                 }
 
-                fileList.Add(new PageFile(page.SourcePath!, length));
+                fileList.Add(new PageFile(page.SourcePath!, length, page.ImageWidth, page.ImageHeight));
             }
 
             return new Book(product, variant, pagePart.Id, parts, fileList, coverPart?.Id ?? 0, coverFile);
