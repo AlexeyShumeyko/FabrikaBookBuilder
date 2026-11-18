@@ -29,9 +29,9 @@ namespace PhotoBook.Application.Tests.Sites
             var page = new SiteOrderViewModel();
             page.Prepare(project, "Лето 2026");
 
-            // Assembled books are not a finished order: each one still needs a format.
+            // Assembled books are not a finished order: the group still needs a format.
             Assert.False(page.IsReady);
-            Assert.Equal("без формата: 2", page.ChosenFormatText);
+            Assert.Equal("не выбран", page.ChosenFormatText);
             Assert.Equal(new[] { "не выбран", "не выбран" }, page.Books.Select(book => book.FormatText));
             Assert.Equal("Лето 2026", page.ProjectName);
             Assert.Equal(2, page.Books.Count);
@@ -86,9 +86,11 @@ namespace PhotoBook.Application.Tests.Sites
         }
 
         [Fact]
-        public async Task ChoosingTheSitesFormatWritesItIntoTheBookAndCompletesTheOrder()
+        public async Task ChoosingTheSitesFormatWritesItIntoEveryBookOfTheGroup()
         {
-            var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
+            var project = TestProject.Combined(
+                TestProject.Book(1, "/c1.jpg", "/p1.jpg"),
+                TestProject.Book(2, "/c2.jpg", "/p2.jpg"));
             var catalog = new StubCatalog(
                 new CatalogProduct(4494, "Лайфлат", "kit", 1, new[]
                 {
@@ -103,20 +105,28 @@ namespace PhotoBook.Application.Tests.Sites
 
             await page.LoadFormatsAsync();
 
-            Assert.Equal(2, page.Books[0].Formats.Count);
-            Assert.Equal("Лайфлат 21x30", page.Books[0].Formats[0].DisplayText);
+            Assert.Equal(2, page.Formats.Count);
+            Assert.Equal("Лайфлат 21x30", page.Formats[0].DisplayText);
             Assert.False(page.IsReady);
 
-            page.Books[0].SelectedFormat = page.Books[0].Formats[1];
+            // One choice for the group, not one per row: a group is one project on the site.
+            page.SelectedFormat = page.Formats[1];
+
+            // A new format is new questions, so the order is ready only once they are read.
+            await page.LoadFormatsAsync();
 
             Assert.Equal(1, saves);
-            Assert.Equal(4494, project.Books[0].SiteProductId);
-            Assert.Equal(9257, project.Books[0].SiteVariantId);
-            Assert.Equal("Лайфлат", project.Books[0].SiteProductTitle);
-            Assert.Equal("20x20", project.Books[0].SiteVariantTitle);
+            Assert.All(project.Books, book =>
+            {
+                Assert.Equal(4494, book.SiteProductId);
+                Assert.Equal(9257, book.SiteVariantId);
+                Assert.Equal("Лайфлат", book.SiteProductTitle);
+                Assert.Equal("20x20", book.SiteVariantTitle);
+            });
             Assert.True(page.IsReady);
-            Assert.Equal("Лайфлат 20x20", page.Books[0].FormatText);
-            Assert.Equal("у всех книг выбран формат", page.ChosenFormatText);
+            Assert.Equal(new[] { "Лайфлат 20x20", "Лайфлат 20x20" },
+                page.Books.Select(book => book.FormatText));
+            Assert.Equal("Лайфлат 20x20", page.ChosenFormatText);
         }
 
         [Fact]
@@ -132,7 +142,7 @@ namespace PhotoBook.Application.Tests.Sites
             page.Prepare(project, "Проект");
 
             await page.LoadFormatsAsync();
-            page.Books[0].SelectedFormat = page.Books[0].Formats[0];
+            page.SelectedFormat = page.Formats[0];
             await page.LoadFormatsAsync();
 
             var block = Assert.Single(page.Parameters);
@@ -170,7 +180,7 @@ namespace PhotoBook.Application.Tests.Sites
             page.Prepare(project, "Проект");
 
             await page.LoadFormatsAsync();
-            page.Books[0].SelectedFormat = page.Books[0].Formats[0];
+            page.SelectedFormat = page.Formats[0];
             await page.LoadFormatsAsync();
             page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
 
@@ -185,6 +195,48 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Equal("Ошибка в файлах", book.ConditionText);
             Assert.Contains(book.FileRows, file => file.HasProblem);
             Assert.Contains("исправьте", page.FilesText);
+        }
+
+        /// <summary>
+        /// A file the site would only trim is a question, not a failure: the book stays ready and
+        /// opens itself so the customer can see which file the question is about. The book's own
+        /// reasons stay empty - the sentence about the file is in the file's row, once.
+        /// </summary>
+        [Fact]
+        public async Task OpensABookWithAQuestionAndKeepsTheSentenceInTheFilesRow()
+        {
+            var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
+            var catalog = new StubCatalog(
+                new CatalogProduct(4494, "Лайфлат", "kit", 1, new[] { new CatalogFormat(9255, "21x30") }))
+            {
+                Format = TestFormats.WithCondition(37556),
+            };
+            var page = new SiteOrderViewModel(
+                catalog,
+                new StubSessionStore(),
+                new StubQuotes(),
+                new StubFiles(),
+                Files(new PixelSize(9000, 9000)));
+
+            page.Prepare(project, "Проект");
+            await page.LoadFormatsAsync();
+            page.SelectedFormat = page.Formats[0];
+            await page.LoadFormatsAsync();
+            page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
+
+            await page.Pricing;
+            await page.FileCheck;
+
+            var book = page.Books[0];
+            Assert.True(page.NeedsConfirmation);
+            Assert.False(book.IsFailed);
+            Assert.True(book.IsExpanded);
+            Assert.Equal(string.Empty, book.ReasonsText);
+
+            var file = Assert.Single(book.FileRows, row => row.Title == "Разворот 1");
+            Assert.True(file.IsProblem);
+            Assert.False(file.IsRemark);
+            Assert.Contains("Разворот 1", file.Problem, StringComparison.Ordinal);
         }
 
         /// <summary>A file check over a layout whose pages are what the site asks for.</summary>
@@ -282,7 +334,7 @@ namespace PhotoBook.Application.Tests.Sites
             page.Prepare(project, "Проект");
 
             await page.LoadFormatsAsync();
-            page.Books[0].SelectedFormat = page.Books[0].Formats[0];
+            page.SelectedFormat = page.Formats[0];
             await page.LoadFormatsAsync();
             page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
 
@@ -324,7 +376,7 @@ namespace PhotoBook.Application.Tests.Sites
             page.Prepare(project, "Проект");
 
             await page.LoadFormatsAsync();
-            page.Books[0].SelectedFormat = page.Books[0].Formats[0];
+            page.SelectedFormat = page.Formats[0];
             await page.LoadFormatsAsync();
             page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
             await page.Pricing;
@@ -353,7 +405,7 @@ namespace PhotoBook.Application.Tests.Sites
             page.Prepare(project, "Проект");
 
             await page.LoadFormatsAsync();
-            page.Books[0].SelectedFormat = page.Books[0].Formats[0];
+            page.SelectedFormat = page.Formats[0];
             await page.LoadFormatsAsync();
             page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
 
@@ -386,15 +438,26 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Equal("Сайт не ответил.", page.Message);
         }
 
+        /// <summary>
+        /// Nothing is wrong with a whole project that has no format yet: the format is the next
+        /// thing the customer picks, in the panel that asks for it. The page used to print a
+        /// sentence asking for it, which appeared with the catalog and vanished with the price.
+        /// </summary>
         [Fact]
-        public void SaysAFormatMustBeChosenBeforeAnAssembledBookCanGo()
+        public async Task SaysNothingWhenTheOnlyThingMissingIsTheFormat()
         {
-            var page = new SiteOrderViewModel();
+            var catalog = new StubCatalog(
+                new CatalogProduct(4494, "Лайфлат", "kit", 1, new[] { new CatalogFormat(9255, "21x30") }));
+            var page = new SiteOrderViewModel(catalog, new StubSessionStore());
             page.Prepare(TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg")), "Проект");
 
+            await page.LoadFormatsAsync();
+
             Assert.False(page.IsReady);
-            Assert.True(page.HasMessage);
-            Assert.Contains("Выберите формат", page.Message, StringComparison.Ordinal);
+            Assert.False(page.HasMessage);
+            Assert.True(page.HasFormats);
+            Assert.Null(page.SelectedFormat);
+            Assert.Equal("не выбран", page.ChosenFormatText);
         }
 
         [Fact]

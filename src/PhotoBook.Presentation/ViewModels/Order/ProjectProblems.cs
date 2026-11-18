@@ -38,11 +38,10 @@ namespace PhotoBook.Presentation.ViewModels
                     " — они не попадут на сайт.");
             }
 
-            if (lines.Count == 0)
-            {
-                lines.Add("Выберите формат для каждой книги — цена считается по нему.");
-            }
-
+            // A project that is whole has nothing to report. The line that used to stand here
+            // asked the customer to choose a format for every book, which is no longer a per-book
+            // question: the format is picked once for the group, in the panel that holds it, so
+            // the message card only ever carried a sentence that appeared and vanished by itself.
             return string.Join(Environment.NewLine, lines);
         }
     }

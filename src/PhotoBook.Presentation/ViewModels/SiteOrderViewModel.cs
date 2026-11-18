@@ -49,6 +49,9 @@ namespace PhotoBook.Presentation.ViewModels
 
         private IReadOnlyList<OrderBookRow> _books = Array.Empty<OrderBookRow>();
         private IReadOnlyList<FormatChoice> _formats = Array.Empty<FormatChoice>();
+        private FormatChoice? _selectedFormat;
+        private bool _applyingFormat;
+        private bool _parametersLoaded;
         private readonly SiteOrderUpload _upload;
 
         private CoreProject? _project;
@@ -112,6 +115,40 @@ namespace PhotoBook.Presentation.ViewModels
                     OnPropertyChanged(nameof(BookCountText));
                     OnPropertyChanged(nameof(ChosenFormatText));
                 }
+            }
+        }
+
+        /// <summary>The formats the site sells, in the site's order.</summary>
+        public IReadOnlyList<FormatChoice> Formats => _formats;
+
+        /// <summary>Whether the site named any format at all.</summary>
+        public bool HasFormats => _formats.Count > 0;
+
+        /// <summary>
+        /// The format of the group: one choice for every book in it.
+        /// </summary>
+        /// <remarks>
+        /// A group is one project on the site, and a project holds books of one format and one
+        /// set of parameters. The choice therefore belongs to the page rather than to each row:
+        /// ten rows with ten pickers invited ten answers the site would price separately, and
+        /// the order page has no way to send a project with two formats in it anyway. Picking
+        /// once writes the format into every book of the group.
+        /// </remarks>
+        public FormatChoice? SelectedFormat
+        {
+            get => _selectedFormat ?? Books.Select(row => row.SelectedFormat)
+                .FirstOrDefault(choice => choice is not null);
+            set
+            {
+                if (Equals(SelectedFormat, value))
+                    return;
+
+                _selectedFormat = value;
+                OnPropertyChanged(nameof(SelectedFormat));
+                OnPropertyChanged(nameof(ChosenFormatText));
+
+                ApplyFormatToBooks(value);
+                AfterFormatChosen();
             }
         }
 
@@ -190,18 +227,8 @@ namespace PhotoBook.Presentation.ViewModels
         /// </summary>
         public bool CanUpload => !_isPricing && _upload.CanUpload && FilesAllow;
 
-        /// <summary>How many books still need a format, in words.</summary>
-        public string ChosenFormatText
-        {
-            get
-            {
-                if (Books.Count == 0) return "нет книг";
-
-                var missing = Books.Count(book => book.SelectedFormat is null);
-
-                return missing == 0 ? "у всех книг выбран формат" : "без формата: " + missing;
-            }
-        }
+        /// <summary>The group's format, as the control panel shows it.</summary>
+        public string ChosenFormatText => SelectedFormat?.DisplayText ?? "не выбран";
 
         /// <summary>
         /// Reads the project into the page. A project that is not assembled comes back with the
@@ -210,6 +237,14 @@ namespace PhotoBook.Presentation.ViewModels
         public void Prepare(CoreProject? project, string? projectName = null)
         {
             _project = project;
+            _selectedFormat = null;
+
+            // The questions have not been read yet, and an empty list of questions is not the
+            // same thing as a format that asks none: without this a price was asked for before
+            // the questions arrived, and the page showed a total and an enabled button over
+            // three unanswered questions.
+            _parametersLoaded = false;
+            OnPropertyChanged(nameof(SelectedFormat));
 
             if (project is null)
             {
@@ -326,25 +361,35 @@ namespace PhotoBook.Presentation.ViewModels
             foreach (var book in Books)
                 book.RefreshFormats();
 
-            if (_formats.Count == 0)
-            {
-                Message = "Сайт не предложил ни одного формата.";
-            }
-            else if (!HasMessage)
-            {
-                Message = "Выберите формат для каждой книги — цена считается по нему.";
-            }
+            // A project whose books already carry a format keeps it, and the whole group follows
+            // the first one: the page no longer offers a per-book choice, so two formats left in
+            // one project would be a group the site cannot be asked to make.
+            _selectedFormat = Books.Select(row => row.SelectedFormat)
+                .FirstOrDefault(choice => choice is not null);
 
+            if (_selectedFormat is not null)
+                ApplyFormatToBooks(_selectedFormat);
+
+            if (_formats.Count == 0)
+                Message = "Сайт не предложил ни одного формата.";
+
+            OnPropertyChanged(nameof(Formats));
+            OnPropertyChanged(nameof(HasFormats));
+            OnPropertyChanged(nameof(SelectedFormat));
             OnPropertyChanged(nameof(ChosenFormatText));
             RefreshReadiness();
         }
 
         private async Task LoadParametersAsync()
         {
+            _parametersLoaded = false;
+
             await _parameters.LoadAsync(Books).ConfigureAwait(true);
 
             if (_parameters.Problem is { Length: > 0 } problem)
                 Message = problem;
+
+            _parametersLoaded = true;
 
             OnPropertyChanged(nameof(HasParameters));
             RefreshReadiness();
@@ -352,6 +397,39 @@ namespace PhotoBook.Presentation.ViewModels
 
         private void OnFormatChosen(OrderBookRow row)
         {
+            // A row written by the page itself is the group's choice being spread over the
+            // books, not a new answer: it must not start a second price run per book.
+            if (_applyingFormat)
+                return;
+
+            _selectedFormat = row.SelectedFormat;
+            OnPropertyChanged(nameof(SelectedFormat));
+            OnPropertyChanged(nameof(ChosenFormatText));
+
+            ApplyFormatToBooks(_selectedFormat);
+            AfterFormatChosen();
+        }
+
+        /// <summary>Writes the group's format into every book, without asking again.</summary>
+        private void ApplyFormatToBooks(FormatChoice? choice)
+        {
+            _applyingFormat = true;
+            try
+            {
+                foreach (var row in Books)
+                    row.SelectedFormat = choice;
+            }
+            finally
+            {
+                _applyingFormat = false;
+            }
+        }
+
+        /// <summary>What a new format means for the order: no price, no plan, new questions.</summary>
+        private void AfterFormatChosen()
+        {
+            // A new format asks new questions, so the order is not ready until they are read.
+            _parametersLoaded = false;
             RefreshReadiness();
             TotalText = string.Empty;
             SetPlan(null);
@@ -390,6 +468,7 @@ namespace PhotoBook.Presentation.ViewModels
         {
             IsReady = Books.Count > 0 &&
                 Books.All(book => book.IsReady && book.SelectedFormat is not null) &&
+                _parametersLoaded &&
                 _parameters.IsAnswered;
 
             OnPropertyChanged(nameof(ChosenFormatText));
