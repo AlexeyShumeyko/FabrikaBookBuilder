@@ -45,6 +45,12 @@ namespace PhotoBook.Application.Tests.Sites
 
             Assert.Equal(UploadStep.Done, screen.Step);
             Assert.Equal(6, screen.Uploaded);
+
+            // The bar is scaled to a hundred, the same scale it is read on: a fraction written
+            // into a bar of a hundred moved it by one percent at the end of a finished run.
+            Assert.Equal(100, screen.ProgressValue);
+            Assert.Equal("100%", screen.PercentText);
+            Assert.Equal("Отправлено 6 из 6 файлов", screen.UploadedText);
             Assert.Equal(2, screen.Results.Count);
             Assert.All(screen.Results, result => Assert.True(result.IsComplete));
             Assert.True(screen.HasUrl);

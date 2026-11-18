@@ -184,26 +184,55 @@ namespace PhotoBook.Presentation.ViewModels
             private set => SetProperty(ref _progressText, value ?? string.Empty);
         }
 
-        /// <summary>Pages sent so far against the pages the run has.</summary>
+        /// <summary>Files sent so far against the files the run has.</summary>
         public int Uploaded
         {
             get => _uploaded;
-            private set => SetProperty(ref _uploaded, value);
+            private set
+            {
+                if (!SetProperty(ref _uploaded, value))
+                    return;
+
+                OnPropertyChanged(nameof(UploadedText));
+            }
         }
 
-        /// <summary>Pages the run has in total.</summary>
+        /// <summary>Files the run has in total, the covers counted.</summary>
         public int Total
         {
             get => _total;
-            private set => SetProperty(ref _total, value);
+            private set
+            {
+                if (!SetProperty(ref _total, value))
+                    return;
+
+                OnPropertyChanged(nameof(UploadedText));
+            }
         }
 
-        /// <summary>How far the bar is, from zero to one.</summary>
+        /// <summary>How far the bar is, from zero to a hundred.</summary>
+        /// <remarks>
+        /// The bar's own scale, not a quotient: the view used to bind this to a bar scaled to a
+        /// hundred while the page wrote a fraction, so a finished run moved it by one percent.
+        /// </remarks>
         public double ProgressValue
         {
             get => _progressValue;
-            private set => SetProperty(ref _progressValue, value);
+            private set
+            {
+                if (!SetProperty(ref _progressValue, value))
+                    return;
+
+                OnPropertyChanged(nameof(PercentText));
+            }
         }
+
+        /// <summary>How far the run is, in percent, as the window prints it.</summary>
+        public string PercentText =>
+            Math.Round(ProgressValue).ToString("0", System.Globalization.CultureInfo.CurrentCulture) + "%";
+
+        /// <summary>How many files are sent, in the words the window shows under the bar.</summary>
+        public string UploadedText => "Отправлено " + Uploaded + " из " + Total + " файлов";
 
         /// <summary>The project's address on the site, or an empty string when unknown.</summary>
         public string Url
@@ -361,7 +390,7 @@ namespace PhotoBook.Presentation.ViewModels
             Results = Array.Empty<UploadGroupResult>();
             Url = string.Empty;
             ResultText = string.Empty;
-            ProgressText = Total == 0 ? string.Empty : "Страниц к отправке: " + Total + ".";
+            ProgressText = Total == 0 ? string.Empty : "Файлов к отправке: " + Total + ".";
 
             Message = Blockers(_problems, notes ?? Array.Empty<string>());
 

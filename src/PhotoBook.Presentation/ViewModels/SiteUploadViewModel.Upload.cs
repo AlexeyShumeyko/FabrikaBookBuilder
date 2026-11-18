@@ -209,7 +209,7 @@ namespace PhotoBook.Presentation.ViewModels
                 var progress = new Progress<UploadProgress>(report =>
                 {
                     Uploaded = offset + report.FilesUploaded;
-                    ProgressValue = Total == 0 ? 0 : Math.Min(1, (double)Uploaded / Total);
+                    ProgressValue = Total == 0 ? 0 : Math.Min(100, 100.0 * Uploaded / Total);
                     ProgressText = string.IsNullOrEmpty(report.CurrentFile)
                         ? "Отправлено " + Uploaded + " из " + Total + "."
                         : "Отправляем " + System.IO.Path.GetFileName(report.CurrentFile) + " — " +
@@ -315,7 +315,7 @@ namespace PhotoBook.Presentation.ViewModels
             Step = step;
             Message = message;
             ProgressText = string.Empty;
-            ProgressValue = Total == 0 ? 0 : Math.Min(1, (double)_uploaded / Total);
+            ProgressValue = Total == 0 ? 0 : Math.Min(100, 100.0 * _uploaded / Total);
 
             if (step == UploadStep.Done)
                 ResultText = "Проект на сайте" + (HasUrl ? ": " + Url : " создан, ссылку сайт не назвал.") + ".";

@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="PhotoBook.Shell.Views.UploadWindow"
         Title="Отправка на сайт"
-        Width="560"
+        Width="640"
         SizeToContent="Height"
         CanResize="False"
         ShowInTaskbar="False"
@@ -17,9 +17,24 @@
 
         Three states in one window, because they are one action: the question, the run, and
         what became of it. The question comes first - nothing is written until «Отправить» is
-        pressed - and the run has a bar and its own stop, so the customer sees it move rather
-        than waiting on a button that never changes.
+        pressed - and the run has a bar, a percentage and its own stop, so the customer watches
+        the order go instead of waiting on a button that never changes.
     -->
+    <Window.Styles>
+        <!--
+            The bar is the one moving thing on the screen, so it gets the product's own violet
+            on a slate track rather than the theme's default grey. Ten pixels with a five-pixel
+            radius: heavy enough to read across the window, still a line rather than a block.
+        -->
+        <Style Selector="ProgressBar">
+            <Setter Property="Height" Value="10" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Background" Value="{DynamicResource Slate100}" />
+            <Setter Property="Foreground" Value="{DynamicResource Brand500}" />
+            <Setter Property="MinWidth" Value="0" />
+        </Style>
+    </Window.Styles>
+
     <Border Classes="card" Margin="18" ClipToBounds="True">
         <StackPanel>
 
@@ -27,26 +42,27 @@
             <Border Background="{DynamicResource Slate50}"
                     BorderBrush="{DynamicResource Slate200}"
                     BorderThickness="0,0,0,1"
-                    Padding="20,16">
+                    Padding="22,18">
                 <Grid ColumnDefinitions="Auto,*,Auto">
-                    <Border Width="40" Height="40" CornerRadius="12"
+                    <Border Width="44" Height="44" CornerRadius="12"
                             Background="{DynamicResource Brand50}"
                             VerticalAlignment="Center">
-                        <Path Width="19" Height="19" Stretch="Uniform"
+                        <Path Width="20" Height="20" Stretch="Uniform"
                               Stroke="{DynamicResource Brand600}" StrokeThickness="1.8"
                               StrokeLineCap="Round" StrokeJoin="Round"
                               HorizontalAlignment="Center" VerticalAlignment="Center"
                               Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
                     </Border>
 
-                    <StackPanel Grid.Column="1" Margin="13,0,0,0" Spacing="2"
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" Spacing="2"
                                 VerticalAlignment="Center">
-                        <TextBlock Text="{Binding HeaderText}" Classes="t16Bold" />
+                        <TextBlock Text="{Binding HeaderText}" Classes="t18Bold" />
                         <TextBlock Text="{Binding ProgressText}" Classes="t12"
-                                   Foreground="{DynamicResource Slate500}" TextWrapping="Wrap" />
+                                   Foreground="{DynamicResource Slate500}" TextWrapping="Wrap"
+                                   MaxLines="2" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
 
-                    <Button Grid.Column="2" Classes="icon" Padding="6" Margin="4,0,0,0"
+                    <Button Grid.Column="2" Classes="icon" Padding="6" Margin="8,0,0,0"
                             AutomationProperties.Name="Закрыть"
                             IsVisible="{Binding !IsRunning}"
                             VerticalAlignment="Center"
@@ -60,82 +76,129 @@
             </Border>
 
             <!-- ============================== body ============================== -->
-            <StackPanel Margin="20,18,20,0" Spacing="18">
+            <StackPanel Margin="22,20,22,0" Spacing="16">
 
                 <!-- what is about to be sent, before anything is written -->
-                <Grid ColumnDefinitions="*,10,*,10,*,10,*" IsVisible="{Binding IsConfirming}">
-                    <Border Grid.Column="0" Background="{DynamicResource Slate50}"
-                            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
-                            CornerRadius="12" Padding="14,11">
-                        <StackPanel>
-                            <TextBlock Text="Проектов" Classes="t10"
-                                       Foreground="{DynamicResource Slate500}" />
-                            <TextBlock Text="{Binding ProjectCount}" Classes="t20Bold" Margin="0,3,0,0" />
-                        </StackPanel>
-                    </Border>
+                <StackPanel Spacing="12" IsVisible="{Binding IsConfirming}">
+                    <Grid ColumnDefinitions="*,10,*,10,*">
+                        <Border Grid.Column="0" Background="{DynamicResource Slate50}"
+                                BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                                CornerRadius="12" Padding="14,12">
+                            <StackPanel>
+                                <TextBlock Text="Проектов" Classes="t10"
+                                           Foreground="{DynamicResource Slate500}" />
+                                <TextBlock Text="{Binding ProjectCount}" Classes="t20Bold" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
 
-                    <Border Grid.Column="2" Background="{DynamicResource Slate50}"
-                            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
-                            CornerRadius="12" Padding="14,11">
-                        <StackPanel>
-                            <TextBlock Text="Книг" Classes="t10"
-                                       Foreground="{DynamicResource Slate500}" />
-                            <TextBlock Text="{Binding BookCount}" Classes="t20Bold" Margin="0,3,0,0" />
-                        </StackPanel>
-                    </Border>
+                        <Border Grid.Column="2" Background="{DynamicResource Slate50}"
+                                BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                                CornerRadius="12" Padding="14,12">
+                            <StackPanel>
+                                <TextBlock Text="Книг" Classes="t10"
+                                           Foreground="{DynamicResource Slate500}" />
+                                <TextBlock Text="{Binding BookCount}" Classes="t20Bold" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
 
-                    <Border Grid.Column="4" Background="{DynamicResource Slate50}"
-                            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
-                            CornerRadius="12" Padding="14,11">
-                        <StackPanel>
-                            <TextBlock Text="Разворотов" Classes="t10"
-                                       Foreground="{DynamicResource Slate500}" />
-                            <TextBlock Text="{Binding Total}" Classes="t20Bold" Margin="0,3,0,0" />
-                        </StackPanel>
-                    </Border>
+                        <Border Grid.Column="4" Background="{DynamicResource Slate50}"
+                                BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                                CornerRadius="12" Padding="14,12">
+                            <StackPanel>
+                                <TextBlock Text="Файлов" Classes="t10"
+                                           Foreground="{DynamicResource Slate500}" />
+                                <TextBlock Text="{Binding Total}" Classes="t20Bold" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
 
-                    <Border Grid.Column="6" Background="{DynamicResource Slate50}"
-                            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
-                            CornerRadius="12" Padding="14,11">
-                        <StackPanel>
-                            <TextBlock Text="Итого" Classes="t10"
-                                       Foreground="{DynamicResource Slate500}" />
-                            <TextBlock Text="{Binding ConfirmTotalText}" Classes="t16Bold"
-                                       Margin="0,3,0,0" TextWrapping="Wrap" />
-                        </StackPanel>
+                    <Border Background="{DynamicResource Brand50}"
+                            BorderBrush="{DynamicResource Brand100}" BorderThickness="1"
+                            CornerRadius="12" Padding="16,13">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Итого по заказу" Classes="t11"
+                                           Foreground="{DynamicResource Brand700}" />
+                                <TextBlock Text="Сумма сайта, в корзину ничего не добавляется."
+                                           Classes="t11" Foreground="{DynamicResource Slate500}"
+                                           Margin="0,3,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="{Binding ConfirmTotalText}"
+                                       Classes="t20Bold" Foreground="{DynamicResource Brand700}"
+                                       VerticalAlignment="Center" Margin="16,0,0,0"
+                                       TextWrapping="Wrap" />
+                        </Grid>
                     </Border>
-                </Grid>
+                </StackPanel>
 
                 <Border IsVisible="{Binding HasMessage}" Background="{DynamicResource Slate50}"
-                        CornerRadius="12" Padding="14,11">
+                        BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                        CornerRadius="12" Padding="14,12">
                     <TextBlock Text="{Binding Message}" Classes="t12" TextWrapping="Wrap"
                                Foreground="{DynamicResource Slate600}" />
                 </Border>
 
                 <!-- the run, visible while it happens -->
-                <StackPanel Spacing="10" IsVisible="{Binding IsRunning}">
-                    <ProgressBar Minimum="0" Maximum="100" Height="8"
-                                 Value="{Binding ProgressValue}"
-                                 Foreground="{DynamicResource Brand600}" />
+                <StackPanel Spacing="12" IsVisible="{Binding IsRunning}">
                     <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Text="{Binding ButtonText}" Classes="t12"
-                                   Foreground="{DynamicResource Slate600}" />
-                        <TextBlock Grid.Column="1" Classes="t12"
-                                   Foreground="{DynamicResource Slate500}"
-                                   Text="{Binding Uploaded, StringFormat='{}{0} страниц отправлено'}" />
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{Binding PercentText}" Classes="t24Bold"
+                                       Foreground="{DynamicResource Brand600}" />
+                            <TextBlock Text="{Binding UploadedText}" Classes="t12"
+                                       Foreground="{DynamicResource Slate600}" />
+                        </StackPanel>
+
+                        <Border Grid.Column="1" Background="{DynamicResource Slate100}"
+                                CornerRadius="8" Padding="10,6" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding ButtonText}" Classes="t11"
+                                       Foreground="{DynamicResource Slate600}" />
+                        </Border>
                     </Grid>
+
+                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressValue}" />
+
+                    <TextBlock Text="Загрузку можно оставить идущей: окно не мешает работе с программой."
+                               Classes="t11" Foreground="{DynamicResource Slate400}"
+                               TextWrapping="Wrap" />
                 </StackPanel>
 
                 <!-- what became of it -->
                 <StackPanel Spacing="12" IsVisible="{Binding IsFinished}">
-                    <TextBlock Text="{Binding ResultText}" Classes="t12" TextWrapping="Wrap" />
+                    <Border Background="{DynamicResource Emerald50}"
+                            BorderBrush="{DynamicResource Emerald100}" BorderThickness="1"
+                            CornerRadius="12" Padding="16,13"
+                            IsVisible="{Binding IsDone}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Border Width="32" Height="32" CornerRadius="16"
+                                    Background="{DynamicResource Emerald100}">
+                                <Path Width="14" Height="14" Stretch="Uniform"
+                                      Stroke="{DynamicResource Emerald700}" StrokeThickness="2.2"
+                                      StrokeLineCap="Round" StrokeJoin="Round"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Data="M 5 12.5 L 10 17.5 L 19 6.5" />
+                            </Border>
+                            <TextBlock Grid.Column="1" Text="{Binding ResultText}" Classes="t12"
+                                       Foreground="{DynamicResource Emerald700}"
+                                       VerticalAlignment="Center" Margin="12,0,0,0"
+                                       TextWrapping="Wrap" />
+                        </Grid>
+                    </Border>
+
+                    <Border Background="{DynamicResource Amber50}"
+                            BorderBrush="{DynamicResource Amber100}" BorderThickness="1"
+                            CornerRadius="12" Padding="16,13"
+                            IsVisible="{Binding !IsDone}">
+                        <TextBlock Text="{Binding ResultText}" Classes="t12"
+                                   Foreground="{DynamicResource Amber700}" TextWrapping="Wrap" />
+                    </Border>
 
                     <TextBlock Text="{Binding Url}" Classes="t11"
                                Foreground="{DynamicResource Slate500}" TextWrapping="Wrap"
                                IsVisible="{Binding HasUrl}" />
 
                     <Border IsVisible="{Binding HasResults}" Background="{DynamicResource Slate50}"
-                            CornerRadius="12" Padding="14,11" MaxHeight="220">
+                            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
+                            CornerRadius="12" Padding="14,12" MaxHeight="220">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <ItemsControl ItemsSource="{Binding Results}">
                                 <ItemsControl.ItemTemplate>
@@ -160,7 +223,7 @@
 
             <!-- ============================= footer ============================= -->
             <Border BorderBrush="{DynamicResource Slate200}" BorderThickness="0,1,0,0"
-                    Margin="0,18,0,0" Padding="20,14">
+                    Margin="0,20,0,0" Padding="22,14">
                 <Grid ColumnDefinitions="*,Auto,Auto">
 
                     <!-- Where the customer is after a finished run: the order is on the site,
