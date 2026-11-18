@@ -33,8 +33,14 @@ namespace PhotoBook.Application.Sites.Books.Files
     /// </para>
     /// <para>
     /// A file the site may trim is not a failure: the customer says yes to it on the screen, and
-    /// the book stays «Готова» with the question listed among its reasons. Only a file the site
-    /// would refuse stops the book.
+    /// the book stays «Готова». Only a file the site would refuse stops the book.
+    /// </para>
+    /// <para>
+    /// What the site said about one file is not repeated here. The expansion under the book
+    /// already lists every file with its own complaint, and a second copy above that list - all
+    /// of it in red, naming pages the customer reads as spreads - was the same text twice. The
+    /// reasons here are the ones about the book itself: no cover, or fewer spreads than its part
+    /// takes.
     /// </para>
     /// </remarks>
     public sealed record BookStatus(BookStatusKind Kind, string Text, IReadOnlyList<string> Reasons)
@@ -72,23 +78,19 @@ namespace PhotoBook.Application.Sites.Books.Files
             }
 
             var alerts = check?.Alerts ?? Array.Empty<FileAlert>();
-            var blocking = alerts.Where(alert => alert.Level == FileAlertLevel.Blocking).ToList();
 
-            if (blocking.Count > 0)
+            if (alerts.Any(alert => alert.Level == FileAlertLevel.Blocking))
             {
                 return new BookStatus(
                     BookStatusKind.FilesFailed,
                     "Ошибка в файлах",
-                    blocking.Select(alert => alert.Message).ToList());
+                    Array.Empty<string>());
             }
 
             if (check is null || isChecking)
                 return new BookStatus(BookStatusKind.Checking, "Проверяется", Array.Empty<string>());
 
-            return new BookStatus(
-                BookStatusKind.Ready,
-                "Готова",
-                alerts.Select(alert => alert.Message).ToList());
+            return new BookStatus(BookStatusKind.Ready, "Готова", Array.Empty<string>());
         }
 
         /// <summary>Whether the chosen format asks for a cover at all.</summary>

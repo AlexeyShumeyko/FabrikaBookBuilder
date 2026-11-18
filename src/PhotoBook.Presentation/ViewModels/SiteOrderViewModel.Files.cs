@@ -259,7 +259,7 @@ namespace PhotoBook.Presentation.ViewModels
                 title,
                 System.IO.Path.GetFileName(file.Path),
                 alert?.Message,
-                alert?.Level == FileAlertLevel.Blocking);
+                alert?.Level);
         }
 
         /// <summary>The one line under the books once the files are read.</summary>

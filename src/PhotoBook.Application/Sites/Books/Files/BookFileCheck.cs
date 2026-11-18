@@ -26,10 +26,15 @@ namespace PhotoBook.Application.Sites.Books.Files
         /// What to call the files when they are not pages, such as «Обложка»: the cover is one
         /// file with its own size, and calling it «Страница 1» would misname it to the customer.
         /// </param>
+        /// <param name="pageWord">
+        /// What the product calls one page, «Страница» by default. A layflat counts spreads, and
+        /// a message that called them pages would name a thing the customer never assembled.
+        /// </param>
         public static IReadOnlyList<FileAlert> Check(
             IReadOnlyList<PageFileFacts> pages,
             PageImageRule rule,
-            string? title = null)
+            string? title = null,
+            string pageWord = "Страница")
         {
             if (pages is null)
                 throw new ArgumentNullException(nameof(pages));
@@ -44,7 +49,7 @@ namespace PhotoBook.Application.Sites.Books.Files
                 if (page is null)
                     continue;
 
-                var alert = Describe(page, index + 1, rule, title);
+                var alert = Describe(page, index + 1, rule, title, pageWord);
                 if (alert is not null)
                     alerts.Add(alert);
             }
@@ -56,10 +61,11 @@ namespace PhotoBook.Application.Sites.Books.Files
             PageFileFacts page,
             int pageNumber,
             PageImageRule rule,
-            string? title)
+            string? title,
+            string pageWord)
         {
             var name = System.IO.Path.GetFileName(page.Path);
-            var where = title ?? "Страница " + pageNumber;
+            var where = title ?? pageWord + " " + pageNumber;
             var number = title is null ? pageNumber : (int?)null;
 
             if (!page.Exists)

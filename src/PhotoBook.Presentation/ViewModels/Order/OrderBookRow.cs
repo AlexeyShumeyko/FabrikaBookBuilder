@@ -118,7 +118,11 @@ namespace PhotoBook.Presentation.ViewModels
             _isFailed = check.IsFailed;
             _reasonsText = check.ReasonsText;
             _fileRows = check.Files;
-            _isExpanded = check.IsFailed;
+
+            // The row opens when the book needs an answer, which is more than a failure: a file
+            // the site would trim keeps the book «Готова» and still has to be seen, and a row
+            // that stayed closed left the customer with a disabled button and nothing to read.
+            _isExpanded = check.IsExpanded;
 
             OnPropertyChanged(nameof(ConditionText));
             OnPropertyChanged(nameof(IsFailed));

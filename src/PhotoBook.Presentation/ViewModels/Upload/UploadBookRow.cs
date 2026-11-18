@@ -1,24 +1,32 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using PhotoBook.Application.Sites.Books.Files;
 
 namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>One file of a book as the list shows it: what it is, its name, and its problem.</summary>
-    public sealed record UploadFileRow(string Title, string FileName, string? Problem, bool Blocking = false)
+    /// <remarks>
+    /// The level decides the colour, not the presence of the text. A file the site refuses and a
+    /// file it would trim are both problems the customer has to look at, and both are red; a file
+    /// inside the site's own tolerance is a remark and stays grey. Painting every line red made a
+    /// saveable book look broken, and painting a real problem grey hid it.
+    /// </remarks>
+    public sealed record UploadFileRow(
+        string Title,
+        string FileName,
+        string? Problem,
+        FileAlertLevel? Level = null)
     {
         /// <summary>Whether the site said something about this file.</summary>
         public bool HasProblem => !string.IsNullOrEmpty(Problem);
 
-        /// <summary>
-        /// Whether what it said is a refusal. A page inside the site's own tolerance is a remark,
-        /// not a failure, and painting both red would make a fit book look broken.
-        /// </summary>
-        public bool IsBlocking => Blocking && HasProblem;
+        /// <summary>Whether the site's words are a problem rather than a remark.</summary>
+        public bool IsProblem => HasProblem && Level is FileAlertLevel.Blocking or FileAlertLevel.NeedsConfirmation;
 
         /// <summary>Whether the site only remarked on the file.</summary>
-        public bool IsRemark => HasProblem && !Blocking;
+        public bool IsRemark => HasProblem && Level == FileAlertLevel.Information;
     }
 
     /// <summary>One book on the upload screen: its word, its files, and whether it is open.</summary>
@@ -38,7 +46,10 @@ namespace PhotoBook.Presentation.ViewModels
             Status = status ?? throw new ArgumentNullException(nameof(status));
             Files = files ?? Array.Empty<UploadFileRow>();
 
-            _isExpanded = status.HasProblem;
+            // A book opens when it needs an answer: a refusal, a file the site would trim, or a
+            // book that is short. It stays closed when the site only remarked on a file - six
+            // books each with one tolerance note is a wall of rows nobody asked to see.
+            _isExpanded = status.HasProblem || Files.Any(file => file.IsProblem);
         }
 
         public int Number { get; }

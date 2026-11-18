@@ -39,35 +39,41 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
             Assert.Contains(status.Reasons, reason => reason.Contains("3 из 8"));
         }
 
+        /// <summary>
+        /// What the site said about one file belongs to that file's row, not to the book's own
+        /// reasons: the expansion under the book lists every file with its complaint, and a
+        /// second copy above it was the same text twice, all of it red.
+        /// </summary>
         [Fact]
-        public void AFileTheSiteWouldRefuseIsAFailureWithTheSitesOwnWords()
+        public void AFileTheSiteWouldRefuseStopsTheBookWithoutRepeatingItsSentence()
         {
             var book = Book(files: 2);
-            var check = Checked(book, new FileAlert(FileAlertLevel.Blocking, 1, "Страница 1: 800×600 меньше 410×290 мм."));
+            var check = Checked(book, new FileAlert(FileAlertLevel.Blocking, 1, "Разворот 1: 800×600 меньше 410×290 мм."));
 
             var status = BookStatus.Of(book, check, isChecking: false);
 
             Assert.Equal(BookStatusKind.FilesFailed, status.Kind);
             Assert.Equal("Ошибка в файлах", status.Text);
-            Assert.Equal(new[] { "Страница 1: 800×600 меньше 410×290 мм." }, status.Reasons);
+            Assert.True(status.HasProblem);
+            Assert.Empty(status.Reasons);
         }
 
         /// <summary>
         /// A file the site may trim is not a refusal: the customer answers it on the screen, and
-        /// the book is ready with the question kept among its reasons.
+        /// the book stays ready. The question is in the file's own row.
         /// </summary>
         [Fact]
-        public void AFileTheSiteMayTrimIsReadyWithTheQuestionKept()
+        public void AFileTheSiteMayTrimIsStillReady()
         {
             var book = Book(files: 2);
-            var check = Checked(book, new FileAlert(FileAlertLevel.NeedsConfirmation, 1, "Страница 1: край обрежется."));
+            var check = Checked(book, new FileAlert(FileAlertLevel.NeedsConfirmation, 1, "Разворот 1: край обрежется."));
 
             var status = BookStatus.Of(book, check, isChecking: false);
 
             Assert.Equal(BookStatusKind.Ready, status.Kind);
             Assert.True(status.IsReady);
             Assert.False(status.HasProblem);
-            Assert.Single(status.Reasons);
+            Assert.Empty(status.Reasons);
         }
 
         [Fact]

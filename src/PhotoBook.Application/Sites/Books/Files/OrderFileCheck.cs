@@ -167,7 +167,9 @@ namespace PhotoBook.Application.Sites.Books.Files
                 .InspectAsync(spreadFiles, cancellationToken)
                 .ConfigureAwait(false);
 
-            alerts.AddRange(BookFileCheck.Check(facts, rule));
+            // The book counts spreads, and the site's own part is «Разворот»: a message that
+            // called them pages would disagree with the column the customer is reading.
+            alerts.AddRange(BookFileCheck.Check(facts, rule, pageWord: page.Title ?? "Разворот"));
 
             return new CheckedBook(number, name, rule, alerts);
         }
