@@ -164,6 +164,26 @@ namespace PhotoBook.Application.Tests.Sites.Catalog
         }
 
         [Fact]
+        public void KeysTheCoverByTheSpreadCountTheSiteNames()
+        {
+            var layout = ParseLayflat();
+            var cover = layout.Part(93)!;
+
+            // Attribute 26 depends on part 94's quantity, so the cover row follows the spreads
+            // and not the cover's own one file. Losing the part id here was what made a real
+            // project look like a format the site had not described.
+            Assert.All(cover.SizeIndexes, condition =>
+                Assert.All(condition.Rules, rule => Assert.Equal(94, rule.PartId)));
+
+            var elements = new Dictionary<long, long> { [65740] = 420271 };
+
+            Assert.Null(layout.RequiredPixels(93, 1, elements));
+            Assert.Equal(
+                PageGeometry.Required(new PageSize(430, 296), new PrintMargins(18, 17, 18, 17), 300),
+                layout.RequiredPixels(93, 1, elements, new Dictionary<long, int> { [94] = 10 }));
+        }
+
+        [Fact]
         public void WidensTheCoverWhenTheIndexGrows()
         {
             // Eighteen spreads without an interlayer put the cover at index 16: 436 mm, which
@@ -191,7 +211,7 @@ namespace PhotoBook.Application.Tests.Sites.Catalog
             // so there is no size to check a file against and the answer is "not said".
             Assert.Null(layout.RequiredPixels(93, 18, "65740", "420272"));
             Assert.Null(layout.RequiredPixels(93, 2, "65740", "999999"));
-            Assert.Null(layout.RequiredPixels(93, 2, null, null));
+            Assert.Null(layout.RequiredPixels(93, 2, optionId: null, elementId: null));
             Assert.Null(layout.RequiredPixels(95, 2, "65740", "420271"));
         }
 

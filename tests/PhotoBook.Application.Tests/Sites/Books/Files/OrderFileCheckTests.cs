@@ -177,6 +177,56 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
             Assert.False(check.CanSend);
         }
 
+        [Fact]
+        public async Task SizesTheCoverByTheNumberOfSpreadsAsTheSiteDoes()
+        {
+            var layout = IndexedCoverLayout();
+            var elements = new Dictionary<long, long> { [26] = 4 };
+            var cover = layout.RequiredPixels(
+                CoverPart,
+                1,
+                elements,
+                new Dictionary<long, int> { [PagePart] = 10, [CoverPart] = 1 })!;
+            var spread = layout.RequiredPixels(PagePart, 10, null)!;
+
+            var check = await new OrderFileCheckService(
+                    new StubCatalog(layout),
+                    new StubInspector(spread, new Dictionary<string, PixelSize>
+                    {
+                        ["cover.jpg"] = cover,
+                        ["1.jpg"] = spread,
+                    }))
+                .CheckAsync(new[] { GroupWithCover(elements, PageFile("1.jpg")) });
+
+            Assert.True(check.CanSend);
+            Assert.Empty(Assert.Single(check.Books).Alerts);
+        }
+
+        /// <summary>
+        /// The site sizes some option combinations and not others. The cover is the only file
+        /// allowed to go unchecked by size: the upload is the site's own check, and refusing the
+        /// whole order over a remark would hide the books that are ready.
+        /// </summary>
+        [Fact]
+        public async Task WarnsButLetsTheOrderGoWhenTheSiteDoesNotSizeTheCover()
+        {
+            var layout = IndexedCoverLayout();
+            var spread = layout.RequiredPixels(PagePart, 10, null)!;
+
+            var check = await new OrderFileCheckService(new StubCatalog(layout), new StubInspector(spread))
+                .CheckAsync(new[]
+                {
+                    GroupWithCover(new Dictionary<long, long> { [26] = 99 }, PageFile("1.jpg")),
+                });
+
+            var alert = Assert.Single(check.Books[0].Alerts);
+            Assert.Equal(FileAlertLevel.Information, alert.Level);
+            Assert.StartsWith("Книга 1", alert.Message, StringComparison.Ordinal);
+            Assert.Contains("размер обложки", alert.Message, StringComparison.Ordinal);
+            Assert.Equal(0, check.BlockingCount);
+            Assert.True(check.CanSend);
+        }
+
         private static OrderFileCheckService Service(SiteLayout layout, PixelSize size) =>
             new(new StubCatalog(layout), new StubInspector(size));
 
@@ -230,14 +280,68 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
                 },
                 37556);
 
-        private static UploadGroup GroupWithCover(params PageFile[] pages)
+        /// <summary>A cover part whose size row is chosen by the spread count, as the site sends it.</summary>
+        private static SiteLayout IndexedCoverLayout()
+        {
+            var bleeds = new PrintMargins(18, 17, 18, 17);
+            var cover = new PartLayout(
+                CoverPart,
+                "Обложка",
+                new[]
+                {
+                    new PageSizeRange(8, new PageSize(428, 296), bleeds),
+                    new PageSizeRange(10, new PageSize(430, 296), bleeds),
+                },
+                null,
+                bleeds,
+                new[]
+                {
+                    new SizeIndexCondition("26", "4", new[] { new SizeIndexRule(8, 10, 10, PagePart) }),
+                },
+                PrintMargins.None,
+                5);
+
+            return new SiteLayout(
+                Product,
+                Layflat,
+                300,
+                new[]
+                {
+                    cover,
+                    new PartLayout(
+                        PagePart,
+                        "Разворот",
+                        Array.Empty<PageSizeRange>(),
+                        new PageSize(410, 290),
+                        PrintMargins.None,
+                        Array.Empty<SizeIndexCondition>(),
+                        PrintMargins.None,
+                        0),
+                },
+                37556);
+        }
+
+        private static UploadGroup GroupWithCover(params PageFile[] pages) =>
+            GroupWithCover(null, pages);
+
+        private static UploadGroup GroupWithCover(
+            IReadOnlyDictionary<long, long>? coverElements,
+            params PageFile[] pages)
         {
             var cover = PageFile("cover.jpg");
+            var parts = new List<SelectedPart>
+            {
+                new(PagePart, new PartSelection(new Dictionary<long, long>(), 10)),
+            };
+
+            if (coverElements is not null)
+                parts.Add(new SelectedPart(CoverPart, new PartSelection(coverElements, 1)));
+
             var book = new Book(
                 new SiteProduct(Product, "layflat", "Лайфлат", "photo-book", new List<ProductVariant>()),
                 new ProductVariant(Layflat, "21x30", new List<ProductOption>(), new List<ProductPart>()),
                 PagePartId: PagePart,
-                new List<SelectedPart> { new(PagePart, new PartSelection(new Dictionary<long, long>(), 10)) },
+                parts,
                 pages,
                 CoverPartId: CoverPart,
                 CoverFile: cover);

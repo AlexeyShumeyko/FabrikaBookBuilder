@@ -50,7 +50,7 @@ namespace PhotoBook.Application.Sites.Catalog.Layout
         /// <summary>
         /// The index the cover size is looked up by, for a quantity and one choice of option.
         /// </summary>
-        public int? IndexFor(int spreads, string? optionId, string? elementId)
+        public int? IndexFor(int quantity, string? optionId, string? elementId)
         {
             if (optionId is null || elementId is null)
                 return null;
@@ -59,7 +59,7 @@ namespace PhotoBook.Application.Sites.Catalog.Layout
             {
                 var condition = SizeIndexes[index];
                 if (condition.Describes(optionId, elementId))
-                    return condition.IndexFor(spreads);
+                    return condition.IndexFor(quantity);
             }
 
             return null;

@@ -263,7 +263,9 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
                         continue;
                     }
 
-                    rules.Add(new SizeIndexRule(from, to, value));
+                    // The dependency names the part whose quantity is counted: the cover's
+                    // index counts the spreads (part 94), not the cover's own one file.
+                    rules.Add(new SizeIndexRule(from, to, value, SiteJson.Integer(dependency, "partId") ?? 0));
                 }
             }
 

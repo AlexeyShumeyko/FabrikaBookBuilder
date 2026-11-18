@@ -35,6 +35,28 @@ namespace PhotoBook.Application.Tests.Sites.Catalog.Layout
         }
 
         [Fact]
+        public void SizesTheCoverByTheSpreadCountTheSiteCounts()
+        {
+            var layout = Layout();
+            var elements = new Dictionary<long, long> { [26] = 4 };
+
+            // The cover is one file, and the site still keys its row by the spread count: a
+            // ten-spread book needs the 430 mm cover, not the 428 mm one. Asking with the
+            // cover's own quantity of one alone finds no row at all.
+            Assert.Null(layout.RequiredPixels(93, 1, elements));
+
+            var size = layout.RequiredPixels(
+                93,
+                1,
+                elements,
+                new Dictionary<long, int> { [94] = 10 });
+
+            Assert.Equal(
+                PageGeometry.Required(new PageSize(430, 296), new PrintMargins(18, 17, 18, 17), 300),
+                size);
+        }
+
+        [Fact]
         public void FallsBackToTheSingleSizeWhenNoChoiceSizesThePart()
         {
             var layout = Layout();
@@ -63,8 +85,8 @@ namespace PhotoBook.Application.Tests.Sites.Catalog.Layout
                 bleeds,
                 new[]
                 {
-                    new SizeIndexCondition("26", "4", new[] { new SizeIndexRule(8, 10, 10) }),
-                    new SizeIndexCondition("26", "5", new[] { new SizeIndexRule(8, 10, 12) })
+                    new SizeIndexCondition("26", "4", new[] { new SizeIndexRule(8, 10, 10, 94) }),
+                    new SizeIndexCondition("26", "5", new[] { new SizeIndexRule(8, 10, 12, 94) })
                 },
                 safety,
                 5);

@@ -173,9 +173,19 @@ namespace PhotoBook.Application.Sites.Books.Files
 
         /// <summary>The cover's own size, checked against the cover part and not the spread.</summary>
         /// <remarks>
+        /// <para>
         /// The two are different files of different sizes, and the site says so itself: the cover
         /// is two spreads plus the spine, and a cover checked against a spread's pixels would be
         /// refused for being right.
+        /// </para>
+        /// <para>
+        /// The cover's size row is chosen by the spread count, not by the cover's own quantity of
+        /// one: the site's attribute 26 depends on <c>part_quantity</c> of part 94, and the
+        /// document holds six rows for a layflat (428 mm at eight spreads up to 438 mm at
+        /// eighteen). So the book's spread count travels with the lookup, and asking for the
+        /// cover with quantity one alone finds no row - which is what made the window say the
+        /// site had not described the cover at all.
+        /// </para>
         /// </remarks>
         private async System.Threading.Tasks.Task<IReadOnlyList<FileAlert>> CheckCoverAsync(
             Books.Book book,
@@ -186,19 +196,28 @@ namespace PhotoBook.Application.Sites.Books.Files
             if (!book.NeedsCover || book.CoverFile is not { } cover)
                 return Array.Empty<FileAlert>();
 
+            var quantities = new Dictionary<long, int>
+            {
+                [book.PagePartId] = book.PageSlots,
+                [book.CoverPartId] = 1,
+            };
+
             var coverPart = layout.Part(book.CoverPartId);
             var required = coverPart is null
                 ? null
-                : layout.RequiredPixels(book.CoverPartId, 1, book.CoverPart?.Selection.Elements);
+                : layout.RequiredPixels(book.CoverPartId, 1, book.CoverPart?.Selection.Elements, quantities);
 
             if (required is null)
             {
+                // The site sizes some combinations and not others, and this is the cover only:
+                // the upload itself is the site's own check, so an unsized cover is worth a
+                // remark rather than a refusal of the whole order.
                 return new[]
                 {
                     new FileAlert(
-                        FileAlertLevel.Blocking,
+                        FileAlertLevel.Information,
                         null,
-                        name + ": сайт не описал обложку этого формата, проверить её размер нечем."),
+                        name + ": сайт не назвал размер обложки для этого формата, сверить его нечем."),
                 };
             }
 

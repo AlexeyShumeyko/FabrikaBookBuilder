@@ -19,12 +19,26 @@ namespace PhotoBook.Application.Sites.Catalog.Layout
             string.Equals(OptionId, optionId, System.StringComparison.Ordinal) &&
             string.Equals(ElementId, elementId, System.StringComparison.Ordinal);
 
-        public int? IndexFor(int spreads)
+        /// <summary>
+        /// The index for a quantity, counted in the part the site's own rule names.
+        /// </summary>
+        /// <param name="quantity">The quantity of the part being sized.</param>
+        /// <param name="partQuantities">
+        /// The quantity of every part of the book, when the rule counts another one - the
+        /// cover grows with the spread count. Without it a rule counts the part's own quantity.
+        /// </param>
+        public int? IndexFor(int quantity, IReadOnlyDictionary<long, int>? partQuantities = null)
         {
             for (var index = 0; index < Rules.Count; index++)
             {
-                if (Rules[index].Covers(spreads))
-                    return Rules[index].Index;
+                var rule = Rules[index];
+                var counted = rule.PartId > 0 && partQuantities is not null &&
+                              partQuantities.TryGetValue(rule.PartId, out var other)
+                    ? other
+                    : quantity;
+
+                if (rule.Covers(counted))
+                    return rule.Index;
             }
 
             return null;

@@ -38,17 +38,25 @@ namespace PhotoBook.Application.Sites.Catalog.Layout
         /// keeps the rule in the site's document: the program does not know which option sizes a
         /// page, and does not have to.
         /// </remarks>
+        /// <param name="partId">The part whose file is being sized.</param>
+        /// <param name="quantity">The quantity of that part in the book.</param>
+        /// <param name="elements">The choice the book made, by option id.</param>
+        /// <param name="partQuantities">
+        /// The quantity of every part of the book. The site keys some sizes by another part -
+        /// the cover's row is chosen by the spread count - and its rule names that part.
+        /// </param>
         public PixelSize? RequiredPixels(
             long partId,
             int quantity,
-            IReadOnlyDictionary<long, long>? elements)
+            IReadOnlyDictionary<long, long>? elements,
+            IReadOnlyDictionary<long, int>? partQuantities = null)
         {
             var part = Part(partId);
             if (part is null)
                 return null;
 
             if (part.FixedSize is not null || elements is null)
-                return RequiredPixels(partId, quantity, null, null);
+                return RequiredPixels(partId, quantity, optionId: null, elementId: null);
 
             foreach (var condition in part.SizeIndexes)
             {
@@ -59,13 +67,13 @@ namespace PhotoBook.Application.Sites.Catalog.Layout
                             chosen.Value.ToString(CultureInfo.InvariantCulture)))
                         continue;
 
-                    var entry = part.EntryFor(condition.IndexFor(quantity));
+                    var entry = part.EntryFor(condition.IndexFor(quantity, partQuantities));
                     if (entry is not null)
                         return PageGeometry.Required(entry.Size, entry.Bleeds, ResolutionDpi);
                 }
             }
 
-            return RequiredPixels(partId, quantity, null, null);
+            return RequiredPixels(partId, quantity, optionId: null, elementId: null);
         }
 
         /// <summary>
