@@ -138,18 +138,23 @@ namespace PhotoBook.Application.Sites.Books.Order
             }
 
             var pagePart = pageParts[0];
-            var quantity = pagePart.Quantity;
-            var range = quantity?.RangeFor(source.SiteOptions);
-            if (range is not null && !range.Allows(pages.Count))
-            {
-                problems.Add(OutOfRange(name, quantity!, range, pages.Count));
-                return null;
-            }
 
             var parts = PartsOf(source, variant, pagePart.Id, pages.Count, out var unanswered);
             if (parts is null)
             {
                 problems.Add(name + ": " + unanswered);
+                return null;
+            }
+
+            // The range is read from the answers the format still asks for, not from everything
+            // the book keeps: an answer to a parameter that stopped applying - the paper
+            // interlayer after cardboard was chosen - would otherwise keep its old range and
+            // refuse the book for the parameters the customer has just left.
+            var quantity = pagePart.Quantity;
+            var range = quantity?.RangeFor(SelectionOf(parts, pagePart.Id));
+            if (range is not null && !range.Allows(pages.Count))
+            {
+                problems.Add(OutOfRange(name, quantity!, range, pages.Count));
                 return null;
             }
 
@@ -229,6 +234,20 @@ namespace PhotoBook.Application.Sites.Books.Order
             QuantityUnit.Pages => "страниц",
             _ => "файлов",
         };
+
+        /// <summary>The answers the assembled order sends for one part.</summary>
+        private static IReadOnlyDictionary<long, long> SelectionOf(
+            IReadOnlyList<SelectedPart> parts,
+            long partId)
+        {
+            for (var index = 0; index < parts.Count; index++)
+            {
+                if (parts[index].PartId == partId)
+                    return parts[index].Selection.Elements;
+            }
+
+            return new Dictionary<long, long>();
+        }
 
         /// <summary>
         /// The part that holds the single cover file, or null when the format has no such part.

@@ -275,6 +275,12 @@ namespace PhotoBook.Application.Tests.Sites.Books.Order
                 "Разворот",
                 new List<ProductOption>
                 {
+                    new(65075, "Плотность разворотов", true, null, Array.Empty<string>(), null,
+                        Array.Empty<string>(), new[]
+                        {
+                            new OptionElement(417892, "Картон"),
+                            new OptionElement(417891, "Бумага"),
+                        }),
                     new(65739, "Прослойка разворотов", true, "65075", new[] { "417891" }, "65075",
                         new[] { "417892" }, new[] { new OptionElement(420270, "Без прослойки") }),
                 },
@@ -287,6 +293,7 @@ namespace PhotoBook.Application.Tests.Sites.Books.Order
                 true);
 
             var book = Book(Page(1));
+            book.SetSiteOption(65075, 417891);
             book.SetSiteOption(65739, 420270);
 
             var draft = OrderDraft.From(ProjectWith(book), new[] { Catalog(part: paper) }, _files);
@@ -296,6 +303,51 @@ namespace PhotoBook.Application.Tests.Sites.Books.Order
                 problem.Contains("нужно от 10 до 30 разворотов") &&
                 problem.Contains("а в книге 1") &&
                 problem.Contains("Отредактируйте книгу или выберите другие параметры формата"));
+        }
+
+        [Fact]
+        public void ReadsTheRangeFromTheAnswersTheFormatStillAsksFor()
+        {
+            // A book that moved from paper to cardboard keeps the paper interlayer it was given:
+            // the format stops asking it, but the answer is still in the book. Its old range must
+            // not decide whether the cardboard book may go.
+            var part = new ProductPart(
+                SpreadPart,
+                "Разворот",
+                new List<ProductOption>
+                {
+                    new(65075, "Плотность разворотов", true, null, Array.Empty<string>(), null,
+                        Array.Empty<string>(), new[]
+                        {
+                            new OptionElement(417892, "Картон"),
+                            new OptionElement(417891, "Бумага"),
+                        }),
+                    new(65739, "Прослойка разворотов", true, "65075", new[] { "417891" }, "65075",
+                        new[] { "417892" }, new[] { new OptionElement(420270, "Без прослойки") }),
+                    new(65740, "Прослойка разворотов", true, "65075", new[] { "417892" }, "65075",
+                        new[] { "417891" }, new[] { new OptionElement(420271, "Без прослойки") }),
+                },
+                new ProductQuantitySettings(
+                    "Количество разворотов",
+                    QuantityUnit.Spreads,
+                    null,
+                    false,
+                    new[]
+                    {
+                        new QuantityRule("65739", new[] { "420270" }, new QuantityRange(10, 30, 1)),
+                        new QuantityRule("65740", new[] { "420271" }, new QuantityRange(2, 20, 1)),
+                    }),
+                true);
+
+            var book = Book(Page(1));
+            book.SetSiteOption(65075, 417892);
+            book.SetSiteOption(65739, 420270);
+            book.SetSiteOption(65740, 420271);
+
+            var draft = OrderDraft.From(ProjectWith(book), new[] { Catalog(part: part) }, _files);
+
+            Assert.Empty(draft.Books);
+            Assert.Contains(draft.Problems, problem => problem.Contains("нужно от 2 до 20 разворотов"));
         }
 
         [Fact]
