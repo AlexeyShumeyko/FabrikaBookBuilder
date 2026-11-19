@@ -118,6 +118,32 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             Assert.Equal(60, plan.Summary.BookCount);
         }
 
+        /// <summary>
+        /// The site also names a gigabyte for one project. Thirty books of full-size spreads
+        /// reached it, and the site answered 5xx halfway through - which reads as “temporarily
+        /// unavailable” rather than as a project that is too large.
+        /// </summary>
+        [Fact]
+        public void SplitsAGroupThatWouldBeTooLargeEvenWithFewFiles()
+        {
+            const long halfGigabyte = 600L * 1024 * 1024;
+            var books = new[]
+            {
+                Book(Layflat, "21x30", 2, halfGigabyte),
+                Book(Layflat, "21x30", 2, halfGigabyte),
+            };
+
+            var plan = UploadPlans.Build(
+                SiteRegion.Com,
+                new OrderDraft(books, Array.Empty<string>()),
+                Quote(books),
+                Formats());
+
+            Assert.True(plan.IsComplete);
+            Assert.Equal(2, plan.Groups.Count);
+            Assert.Contains(plan.Notes!, note => note.Contains("ГиБ", StringComparison.Ordinal));
+        }
+
         [Fact]
         public void SendsTheCoverBeforeTheSpreads()
         {
@@ -183,7 +209,7 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             Assert.Single(plan.Problems);
         }
 
-        private static Book Book(long variantId, string title, int spreads = 1) =>
+        private static Book Book(long variantId, string title, int spreads = 1, long bytes = 1024) =>
             new(
                 new SiteProduct(Product, "layflat", "Лайфлат", "photo-book", new List<ProductVariant>()),
                 new ProductVariant(variantId, title, new List<ProductOption>(), new List<ProductPart>()),
@@ -193,7 +219,7 @@ namespace PhotoBook.Application.Tests.Sites.Upload
                     new(94, new PartSelection(new Dictionary<long, long>(), 10))
                 },
                 Enumerable.Range(1, spreads)
-                    .Select(number => new PageFile("/photos/" + number + ".jpg", 1024))
+                    .Select(number => new PageFile("/photos/" + number + ".jpg", bytes))
                     .ToList());
 
         private static GroupQuote Quote(params Book[] books) =>

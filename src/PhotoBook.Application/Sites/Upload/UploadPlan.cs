@@ -52,6 +52,13 @@ namespace PhotoBook.Application.Sites.Upload
         /// <summary>Files one project on the site takes; the site refuses the rest.</summary>
         public const int MaxFilesPerProject = 500;
 
+        /// <summary>
+        /// Bytes one project on the site takes. The uploader's own settings name 1 GiB, and a
+        /// run that reaches it starts answering 5xx halfway through a book - which reads as
+        /// "the site is unavailable" but is really a project that is too large.
+        /// </summary>
+        public const long MaxBytesPerProject = 1024L * 1024 * 1024;
+
         /// <summary>The plan for an order, with every book that cannot go reported by number.</summary>
         public static UploadPlan Build(
             SiteRegion region,
@@ -119,8 +126,8 @@ namespace PhotoBook.Application.Sites.Upload
                 if (parts.Count > 1)
                 {
                     notes.Add(
-                        "Группа «" + first.Variant.Title + "»: " + books.Count + " книг — это больше " +
-                        MaxFilesPerProject + " файлов, больше одного проекта сайт не примет. " +
+                        "Группа «" + first.Variant.Title + "»: " + books.Count + " книг — это " +
+                        TooLargeForOneProject(books) + ", больше одного проекта сайт не примет. " +
                         "Отправляем " + parts.Count + " проекта.");
                 }
 
@@ -214,26 +221,45 @@ namespace PhotoBook.Application.Sites.Upload
             var parts = new List<List<Book>>();
             var current = new List<Book>();
             var files = 0;
+            var bytes = 0L;
 
             foreach (var book in books)
             {
                 var count = book.AllFiles.Count;
+                var size = book.AllFiles.Sum(file => file.LengthBytes);
 
-                if (current.Count > 0 && files + count > MaxFilesPerProject)
+                // Both limits belong to one project: the site stops taking files after five
+                // hundred, and its uploader's settings name a gigabyte. A book is never split,
+                // so a single book over the limit travels alone.
+                if (current.Count > 0 &&
+                    (files + count > MaxFilesPerProject || bytes + size > MaxBytesPerProject))
                 {
                     parts.Add(current);
                     current = new List<Book>();
                     files = 0;
+                    bytes = 0;
                 }
 
                 current.Add(book);
                 files += count;
+                bytes += size;
             }
 
             if (current.Count > 0)
                 parts.Add(current);
 
             return parts;
+        }
+
+        /// <summary>Which of the site's two limits the group passes, in the note's own words.</summary>
+        private static string TooLargeForOneProject(IReadOnlyList<Book> books)
+        {
+            var files = books.Sum(book => book.AllFiles.Count);
+            if (files > MaxFilesPerProject)
+                return "больше " + MaxFilesPerProject + " файлов";
+
+            var bytes = books.Sum(book => book.AllFiles.Sum(file => file.LengthBytes));
+            return "больше " + (bytes / (1024L * 1024 * 1024)) + " ГиБ";
         }
 
         /// <summary>The uploader integration of the book's format, or zero when it is not known.</summary>
