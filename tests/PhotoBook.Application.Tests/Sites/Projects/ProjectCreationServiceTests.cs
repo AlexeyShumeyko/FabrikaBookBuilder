@@ -60,6 +60,36 @@ namespace PhotoBook.Application.Tests.Sites.Projects
         }
 
         [Fact]
+        public async Task RefusesAGroupThatBelongsToAnotherSite()
+        {
+            var projects = new StubProjects(1001);
+            var elsewhere = new GroupRequest(
+                new OrderGroup(
+                    SiteRegion.By,
+                    new[]
+                    {
+                        new Book(
+                            new SiteProduct(4494, "layflat", "Лайфлат", "photo-book", new List<ProductVariant>()),
+                            new ProductVariant(9255, "21x30", new List<ProductOption>(), new List<ProductPart>()),
+                            PagePartId: 94,
+                            new List<SelectedPart> { new(94, new PartSelection(new Dictionary<long, long>(), 10)) },
+                            new List<PageFile> { new(@"C:\1.jpg", 1024) },
+                            CoverPartId: 93,
+                            CoverFile: new PageFile("cover.jpg", 1024))
+                    }),
+                new CreateProjectRequest(4494, 9255, 37556),
+                2048m);
+
+            var plan = await Service(projects, new MemoryCreated()).CreateAsync(Session, new[] { elsewhere });
+
+            Assert.False(plan.IsComplete);
+            var outcome = Assert.Single(plan.Groups);
+            Assert.Equal(GroupCreationState.Failed, outcome.State);
+            Assert.Empty(projects.Asked);
+            Assert.Contains("действие адресовано", outcome.Error, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
         public async Task NamesTheCreatedProjectWithTheProgramPrefix()
         {
             var projects = new StubProjects(1001);

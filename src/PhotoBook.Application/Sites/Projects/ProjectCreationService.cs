@@ -74,6 +74,26 @@ namespace PhotoBook.Application.Sites.Projects
                     "The order holds a group that is not there.",
                     nameof(groups));
 
+                // A group carries the site it was assembled for. Writing it to another site's
+                // account would make a real order on the wrong site, so the guard stops it here,
+                // before the first write, rather than letting the address decide.
+                var sameSite = SiteRegionGuard.EnsureSameRegion(session.Region, group.Group.Region);
+                if (!sameSite.IsSuccess)
+                {
+                    _journal?.Write(
+                        JournalLevel.Warning,
+                        Source,
+                        $"Группа не отправлена: книг {group.Group.Books.Count}, {sameSite.Error}");
+
+                    outcomes.Add(new GroupCreation(
+                        number,
+                        group.Group,
+                        GroupCreationState.Failed,
+                        0,
+                        sameSite.Error));
+                    continue;
+                }
+
                 var key = GroupKey.For(session.Region, group.Group.Books);
 
                 if (_created.Find(key) is { } known)
