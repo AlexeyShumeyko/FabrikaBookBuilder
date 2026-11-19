@@ -60,6 +60,28 @@ namespace PhotoBook.Application.Tests.Sites.Projects
         }
 
         [Fact]
+        public async Task NamesTheCreatedProjectWithTheProgramPrefix()
+        {
+            var projects = new StubProjects(1001);
+            var named = new GroupRequest(
+                new OrderGroup(SiteRegion.Com, new[] { Book(9255) }),
+                new CreateProjectRequest(4494, 9255, 37556, "Лето 2026"),
+                2048m);
+
+            await Service(projects, new MemoryCreated()).CreateAsync(Session, new[] { named });
+
+            Assert.Equal(new[] { "FFStudio: Лето 2026" }, projects.Titles);
+        }
+
+        [Fact]
+        public void PrefixesEveryNameAndFallsBackWhenThereIsNone()
+        {
+            Assert.Equal("FFStudio: Лето", SiteProjectTitle.For("  Лето  "));
+            Assert.Equal("FFStudio: Проект", SiteProjectTitle.For("   "));
+            Assert.Equal("FFStudio: Проект", SiteProjectTitle.For(null));
+        }
+
+        [Fact]
         public async Task DoesNotCreateTheSameGroupTwice()
         {
             var projects = new StubProjects(1001, 1002);
@@ -297,9 +319,11 @@ namespace PhotoBook.Application.Tests.Sites.Projects
                 long projectId,
                 long productId,
                 ProjectParameters parameters,
+                string title,
                 CancellationToken cancellationToken = default)
             {
                 SetUps.Add((projectId, parameters));
+                Titles.Add(title);
 
                 return Task.FromResult(SetUpFails
                     ? Result.Fail("Сайт не принял параметры.")
@@ -307,6 +331,8 @@ namespace PhotoBook.Application.Tests.Sites.Projects
             }
 
             internal List<(long ProjectId, ProjectParameters Parameters)> SetUps { get; } = new();
+
+            internal List<string> Titles { get; } = new();
 
             public Task<Result<SiteProjectSnapshot>> ReadAsync(
                 SiteSession session,

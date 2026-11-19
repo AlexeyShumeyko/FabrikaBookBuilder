@@ -1,11 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using PhotoBook.Application.Sites;
+using PhotoBook.Application.Sites.Projects;
 using PhotoBook.Infrastructure.Sites;
 
 namespace PhotoBook.Application.Tests.Sites
@@ -28,6 +31,29 @@ namespace PhotoBook.Application.Tests.Sites
 
         private static readonly string List =
             "{\"data\":[{\"id\":527733,\"product_id\":4494,\"product_url\":\"/layflat\",\"alerts\":[],\"quantity\":1}]}";
+
+        [Fact]
+        public async Task WritesTheProjectNameIntoTheParametersItSends()
+        {
+            string? body = null;
+            var handler = new StubHttpMessageHandler(request =>
+            {
+                body = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                return Json("{\"data\":{\"id\":527733}}");
+            });
+
+            var parameters = new ProjectParameters(
+                9255, 2, new Dictionary<long, long> { [70519] = 450642 }, new Dictionary<long, int> { [93] = 1 }, 2048m);
+
+            var named = await new SiteProjectService(new HttpClient(handler), TimeSpan.Zero)
+                .SetUpAsync(Session, 527733, 4494, parameters, "FFStudio: Лето 2026");
+
+            Assert.True(named.IsSuccess);
+            Assert.Contains("projects/params", handler.Urls.Single());
+
+            using var sent = JsonDocument.Parse(body!);
+            Assert.Equal("FFStudio: Лето 2026", sent.RootElement.GetProperty("title").GetString());
+        }
 
         [Fact]
         public async Task ReadsTheBooksThePagesAndTheAccountsViewOfThem()

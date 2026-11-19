@@ -125,7 +125,7 @@ namespace PhotoBook.Presentation.ViewModels
                     ShowTotal(0, string.Empty, string.Empty);
                 }
 
-                SetPlan(UploadPlans.Build(session.Region, priced.Draft, priced.Quote, formats));
+                SetPlan(UploadPlans.Build(session.Region, priced.Draft, priced.Quote, formats, _projectName));
                 NotifyProblem();
             }
             catch (Exception ex)

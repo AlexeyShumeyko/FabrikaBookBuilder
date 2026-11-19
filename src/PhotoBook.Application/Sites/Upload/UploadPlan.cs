@@ -60,11 +60,13 @@ namespace PhotoBook.Application.Sites.Upload
         public const long MaxBytesPerProject = 1024L * 1024 * 1024;
 
         /// <summary>The plan for an order, with every book that cannot go reported by number.</summary>
+        /// <param name="projectName">The name the customer gave the project; the site names each created project with it.</param>
         public static UploadPlan Build(
             SiteRegion region,
             OrderDraft? draft,
             GroupQuote? quote,
-            IReadOnlyList<SiteProduct>? formats)
+            IReadOnlyList<SiteProduct>? formats,
+            string? projectName = null)
         {
             if (region is null)
                 throw new ArgumentNullException(nameof(region));
@@ -141,7 +143,7 @@ namespace PhotoBook.Application.Sites.Upload
                     groups.Add(new UploadGroup(
                         number,
                         partGroup,
-                        new CreateProjectRequest(first.Product.Id, first.Variant.Id, integration),
+                        new CreateProjectRequest(first.Product.Id, first.Variant.Id, integration, projectName ?? string.Empty),
                         part.SelectMany(book => book.AllFiles).ToList(),
                         partQuote.Total,
                         partQuote.Currency));

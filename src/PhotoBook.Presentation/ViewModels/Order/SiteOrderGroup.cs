@@ -49,6 +49,7 @@ namespace PhotoBook.Presentation.ViewModels
         private readonly Action _changed;
         private readonly Action _choiceChanged;
         private readonly List<OrderBookRow> _books;
+        private readonly string _projectName;
 
         private IReadOnlyList<FormatChoice> _choices = Array.Empty<FormatChoice>();
         private FormatChoice? _selected;
@@ -85,9 +86,11 @@ namespace PhotoBook.Presentation.ViewModels
             OrderFileCheckService? fileCheck,
             Action changed,
             Action choiceChanged,
-            IUploadedProjectStore? uploaded = null)
+            IUploadedProjectStore? uploaded = null,
+            string? projectName = null)
         {
             _uploaded = uploaded;
+            _projectName = projectName ?? string.Empty;
             Number = number;
             _books = books is null ? new List<OrderBookRow>() : new List<OrderBookRow>(books);
             _catalog = catalog;

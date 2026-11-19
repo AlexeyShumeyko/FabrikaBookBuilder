@@ -258,6 +258,10 @@ namespace PhotoBook.Presentation.ViewModels
 
             var byBook = rows.ToDictionary(row => row.Book, row => row);
 
+            // The project's own name travels into every project the run creates, so the account
+            // shows the name the customer knows rather than an empty title.
+            var name = string.IsNullOrWhiteSpace(projectName) ? "Проект" : projectName!.Trim();
+
             var groups = new List<SiteOrderGroup>();
             foreach (var set in BookSplitting.Split(project.Books))
             {
@@ -277,11 +281,12 @@ namespace PhotoBook.Presentation.ViewModels
                     _fileCheck,
                     OnGroupChanged,
                     OnChoiceChanged,
-                    _uploaded));
+                    _uploaded,
+                    name));
             }
 
             Groups = groups;
-            ProjectName = string.IsNullOrWhiteSpace(projectName) ? "Проект" : projectName!.Trim();
+            ProjectName = name;
             SpreadCount = inventory.Books.Sum(book => book.Spreads);
 
             // The project's own sentences are no longer collected here: a book that is not

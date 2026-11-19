@@ -230,6 +230,7 @@ namespace PhotoBook.Application.Tests.Sites.Completion
                 long projectId,
                 long productId,
                 ProjectParameters parameters,
+                string title,
                 CancellationToken cancellationToken = default) =>
                 throw new NotSupportedException("The check never names parameters.");
 

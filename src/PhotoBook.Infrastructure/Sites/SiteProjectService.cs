@@ -143,6 +143,7 @@ namespace PhotoBook.Infrastructure.Sites
             long projectId,
             long productId,
             ProjectParameters parameters,
+            string title,
             CancellationToken cancellationToken = default)
         {
             if (session is null)
@@ -159,7 +160,7 @@ namespace PhotoBook.Infrastructure.Sites
             // Naming the parameters of an existing project can be repeated safely, unlike
             // creating one: the same body written twice leaves the project as it was.
             var response = await client
-                .PostJsonAsync(ParamsPath, Body(projectId, productId, parameters), session.AccessToken, cancellationToken, retry: true)
+                .PostJsonAsync(ParamsPath, Body(projectId, productId, parameters, title), session.AccessToken, cancellationToken, retry: true)
                 .ConfigureAwait(false);
 
             if (!response.IsSuccess || response.Document is null)
@@ -177,12 +178,19 @@ namespace PhotoBook.Infrastructure.Sites
         /// <c>params</c> is written as a dictionary rather than as an anonymous object because the
         /// name is a C# keyword; the site reads the same JSON either way.
         /// </remarks>
-        private static Dictionary<string, object?> Body(long projectId, long productId, ProjectParameters parameters) =>
+        private static Dictionary<string, object?> Body(
+            long projectId,
+            long productId,
+            ProjectParameters parameters,
+            string title) =>
             new()
             {
                 ["projectId"] = projectId,
                 ["productId"] = productId,
-                ["title"] = string.Empty,
+
+                // The site ignores the title at creation and keeps it from this body: a project
+                // created without it stays unnamed in the account's list.
+                ["title"] = title,
                 ["price"] = MinorUnits(parameters.Price),
                 ["params"] = new Dictionary<string, object?>
                 {

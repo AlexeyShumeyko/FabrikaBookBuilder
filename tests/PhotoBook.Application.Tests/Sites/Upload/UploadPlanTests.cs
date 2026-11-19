@@ -53,6 +53,21 @@ namespace PhotoBook.Application.Tests.Sites.Upload
         }
 
         [Fact]
+        public void GivesEveryProjectTheNameTheCustomerChose()
+        {
+            var first = Book(Layflat, "21x30");
+
+            var plan = UploadPlans.Build(
+                SiteRegion.Com,
+                new OrderDraft(new[] { first }, Array.Empty<string>()),
+                Quote(first),
+                Formats(),
+                "Лето 2026");
+
+            Assert.Equal("Лето 2026", plan.Groups[0].Request.Name);
+        }
+
+        [Fact]
         public void KeepsBooksOfOneFormatInOneProjectAndAddsUpTheirPrices()
         {
             var first = Book(Layflat, "21x30");

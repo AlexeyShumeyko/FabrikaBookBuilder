@@ -7,12 +7,19 @@ namespace PhotoBook.Application.Sites.Projects
     /// <param name="ProductId">The product on the site.</param>
     /// <param name="ProductComponentId">The format of that product.</param>
     /// <param name="IntegrationId">The uploader integration the project belongs to.</param>
+    /// <param name="Name">
+    /// The name the customer gave the project, written to the site with the project's parameters.
+    /// </param>
     /// <remarks>
     /// The integration is the site's own id for "the photo book uploader on this product"; the
     /// endpoint answers 404 without it. It comes from the uploader's document rather than from
     /// a constant here, because it differs between products and formats.
     /// </remarks>
-    public sealed record CreateProjectRequest(long ProductId, long ProductComponentId, long IntegrationId);
+    public sealed record CreateProjectRequest(
+        long ProductId,
+        long ProductComponentId,
+        long IntegrationId,
+        string Name = "");
 
     /// <summary>Creates one project on the site, reads it back, and reports what came back.</summary>
     /// <remarks>
@@ -43,18 +50,21 @@ namespace PhotoBook.Application.Sites.Projects
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Names the project's parameters and its price, which the site keeps as given.
+        /// Names the project, its parameters and its price, which the site keeps as given.
         /// </summary>
         /// <remarks>
         /// Without this call the project exists with no parameters and a price of zero, and the
         /// customer sees an order the site cannot produce. The site does not price a project by
-        /// itself: the amount is the one the calculator named for its books.
+        /// itself: the amount is the one the calculator named for its books. The title is written
+        /// in the same request because the site ignores it at creation and takes it here.
         /// </remarks>
+        /// <param name="title">The project's name on the site, prefix included.</param>
         Task<Result> SetUpAsync(
             SiteSession session,
             long projectId,
             long productId,
             ProjectParameters parameters,
+            string title,
             CancellationToken cancellationToken = default);
 
         /// <summary>

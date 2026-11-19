@@ -255,7 +255,13 @@ namespace PhotoBook.Application.Sites.Projects
                 return null;
 
             var named = await _projects
-                .SetUpAsync(session, projectId, group.Request.ProductId, parameters, cancellationToken)
+                .SetUpAsync(
+                    session,
+                    projectId,
+                    group.Request.ProductId,
+                    parameters,
+                    SiteProjectTitle.For(group.Request.Name),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             if (named.IsSuccess)
