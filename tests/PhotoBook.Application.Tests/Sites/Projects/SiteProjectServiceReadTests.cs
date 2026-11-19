@@ -35,12 +35,7 @@ namespace PhotoBook.Application.Tests.Sites
         [Fact]
         public async Task WritesTheProjectNameIntoTheParametersItSends()
         {
-            string? body = null;
-            var handler = new StubHttpMessageHandler(request =>
-            {
-                body = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
-                return Json("{\"data\":{\"id\":527733}}");
-            });
+            var handler = new CapturingHandler("{\"data\":{\"id\":527733}}");
 
             var parameters = new ProjectParameters(
                 9255, 2, new Dictionary<long, long> { [70519] = 450642 }, new Dictionary<long, int> { [93] = 1 }, 2048m);
@@ -51,7 +46,7 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.True(named.IsSuccess);
             Assert.Contains("projects/params", handler.Urls.Single());
 
-            using var sent = JsonDocument.Parse(body!);
+            using var sent = JsonDocument.Parse(handler.Body);
             Assert.Equal("FFStudio: Лето 2026", sent.RootElement.GetProperty("title").GetString());
         }
 
@@ -138,5 +133,30 @@ namespace PhotoBook.Application.Tests.Sites
 
         private static HttpResponseMessage Json(string body) =>
             new(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
+
+        /// <summary>Reads the request body where waiting is allowed: inside an async send.</summary>
+        private sealed class CapturingHandler : HttpMessageHandler
+        {
+            private readonly string _answer;
+
+            internal CapturingHandler(string answer)
+            {
+                _answer = answer;
+            }
+
+            internal string Body { get; private set; } = string.Empty;
+
+            internal List<string> Urls { get; } = new();
+
+            protected override async Task<HttpResponseMessage> SendAsync(
+                HttpRequestMessage request,
+                CancellationToken cancellationToken)
+            {
+                Urls.Add(request.RequestUri?.ToString() ?? string.Empty);
+                Body = await request.Content!.ReadAsStringAsync(cancellationToken);
+
+                return Json(_answer);
+            }
+        }
     }
 }
