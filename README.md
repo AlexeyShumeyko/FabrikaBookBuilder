@@ -10,9 +10,9 @@
 ![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=sharp&logoColor=white)
 ![Avalonia](https://img.shields.io/badge/Avalonia-11.2-8B44AC?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-125%20passing-3FB950?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-492%20passing-3FB950?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-proprietary-6E7681?style=for-the-badge)
-![Version](https://img.shields.io/badge/version-2.0.0-4F46E5?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.1.0-4F46E5?style=for-the-badge)
 
 </div>
 
@@ -35,6 +35,24 @@
   всех книг, `KKK-FF.jpg` — там, где книга переопределяет разворот.
 - Уникальные папки раскладываются по подпапкам, по одной на книгу.
 - Проект сохраняется перед выгрузкой.
+
+### Загрузка на сайт
+
+- Вход в собственный аккаунт `fabrika-fotoknigi.com` или `fabrika-fotoknigi.by`; регион берётся
+  из аккаунта и не переключается по ошибке.
+- Страница заказа: форматы, параметры и цены приходят с сайта, по ним считается каждый
+  проект до отправки.
+- Отправка собирает на сайте проект, добавляет в него книги и шлёт обложку и развороты.
+  Число книг в проекте и размер проверяются заранее; тираж больше принимаемого одним
+  проектом делится на несколько без ручной работы.
+- Имя проекта на сайте — имя проекта в программе с префиксом `FFStudio`: проекты,
+  созданные программой, видны в аккаунте сразу.
+- Повторяющийся разворот копируется на сайте вместо повторной отправки файла.
+- После отправки программа сверяет проект с сайтом и показывает, что дошло, а что нет;
+  ссылка «Открыть на сайте» ведёт в проект на сайте.
+
+Принимаются только JPEG (`.jpg`, `.jpeg`) — то же требование, что у загрузчика сайта;
+посторонние расширения называются до начала отправки.
 
 ### Проекты
 

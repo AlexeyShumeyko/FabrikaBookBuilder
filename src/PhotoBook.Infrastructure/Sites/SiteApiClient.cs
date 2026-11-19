@@ -388,7 +388,7 @@ namespace PhotoBook.Infrastructure.Sites
                 .GetName().Version;
 
             var number = version is null
-                ? "2.0.0"
+                ? "2.1.0"
                 : $"{version.Major}.{version.Minor}.{version.Build}";
 
             return $"{UserAgentProduct}/{number} (Windows; +https://github.com/AlexeyShumeyko/FabrikaBookBuilder)";
