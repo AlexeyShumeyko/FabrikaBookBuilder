@@ -151,6 +151,7 @@ namespace PhotoBook.Presentation.ViewModels
                     // record still protects a run that stopped halfway, where the same press
                     // is a retry.
                     ForgetCreatedProjects(session);
+                    RememberFinishedGroups(session, checkedResults);
 
                     Finish(
                         UploadStep.Done,
@@ -340,6 +341,34 @@ namespace PhotoBook.Presentation.ViewModels
 
             foreach (var group in _groups)
                 _created.Forget(GroupKey.For(session.Region, group.Group.Books));
+        }
+
+        /// <summary>
+        /// Writes down which project each finished group went to, for the order page to show.
+        /// </summary>
+        /// <remarks>
+        /// This is not the created-project record: that one is deliberately dropped on success so
+        /// the next press makes a new project. This one only says «these books were uploaded
+        /// already, project N», which is what the customer needs to see before sending again.
+        /// </remarks>
+        private void RememberFinishedGroups(
+            SiteSession session,
+            IReadOnlyList<UploadGroupResult> results)
+        {
+            if (_uploadedProjects is null)
+                return;
+
+            foreach (var group in _groups)
+            {
+                var finished = results.FirstOrDefault(item =>
+                    item.Number == group.Number && item.ProjectId > 0);
+
+                if (finished is null)
+                    continue;
+
+                _uploadedProjects.RememberUploaded(
+                    GroupKey.For(session.Region, group.Group.Books), finished.ProjectId);
+            }
         }
 
         /// <summary>The groups that can be sent now: at least one book with at least one page.</summary>

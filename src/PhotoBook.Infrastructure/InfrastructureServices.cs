@@ -83,6 +83,11 @@ namespace PhotoBook.Infrastructure
             services.AddSingleton<ISiteProjectService, SiteProjectService>();
             services.AddSingleton<ICreatedProjectStore>(sp => new FileCreatedProjectStore(sp.GetRequiredService<IJournal>()));
 
+            // Which project a finished group went to outlives the created-project record: the
+            // order page uses it to say «эта группа уже загружена» and to leave it out of the
+            // next run by default, while still letting the customer send it again.
+            services.AddSingleton<IUploadedProjectStore>(sp => new FileUploadedProjectStore(sp.GetRequiredService<IJournal>()));
+
             // Files go up one page at a time through the same uploader endpoint the site's own
             // page uses; the answer's body decides success, not the status code.
             services.AddSingleton<ISiteFileUploadService, SiteFileUploadService>();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using PhotoBook.Application;
 using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Books;
 using PhotoBook.Application.Sites.Books.Files;
@@ -58,6 +59,29 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Single(creation.Asked);
             Assert.Equal(2, creation.Asked[0].Count);
             Assert.Equal(2, upload.Calls.Count);
+        }
+
+        /// <summary>
+        /// A finished run writes down which project each group went to, so the order page can
+        /// tell the customer the books are already on the site before they send them again.
+        /// </summary>
+        [Fact]
+        public async Task RemembersWhichProjectEachFinishedGroupWentTo()
+        {
+            var store = new StubUploadedProjects();
+            var screen = Screen(
+                new StubCreation(1001, 1002),
+                new StubUpload((session, projectId, pages, _, _, _) =>
+                    Task.FromResult(Accepted(projectId, pages.Count))),
+                new StubCheck(true),
+                groups: 2,
+                pages: 3,
+                uploaded: store);
+
+            await screen.UploadAsync();
+
+            Assert.Equal(UploadStep.Done, screen.Step);
+            Assert.Equal(new long[] { 1001, 1002 }, store.Saved);
         }
 
         [Fact]
@@ -262,9 +286,10 @@ namespace PhotoBook.Application.Tests.Sites
             StubCheck check,
             int groups,
             int pages,
-            int booksPerGroup = 1)
+            int booksPerGroup = 1,
+            IUploadedProjectStore? uploaded = null)
         {
-            var screen = new SiteUploadViewModel(creation, upload, check);
+            var screen = new SiteUploadViewModel(creation, upload, check, uploaded: uploaded);
             var pagesOfGroup = Enumerable.Range(0, groups)
                 .Select(index => Enumerable.Range(0, pages)
                     .Select(page => new PageFile($@"C:\p{index}-{page}.jpg", 1024))
@@ -381,6 +406,19 @@ namespace PhotoBook.Application.Tests.Sites
                 PagePartId: 94,
                 new List<SelectedPart> { new(94, new PartSelection(new Dictionary<long, long>(), pages.Count)) },
                 pages);
+        }
+
+        private sealed class StubUploadedProjects : IUploadedProjectStore
+        {
+            internal List<long> Saved { get; } = new();
+
+            public long? FindUploaded(string key) => null;
+
+            public Result RememberUploaded(string key, long projectId)
+            {
+                Saved.Add(projectId);
+                return Result.Ok();
+            }
         }
 
         private sealed class StubCreation : IProjectCreationService

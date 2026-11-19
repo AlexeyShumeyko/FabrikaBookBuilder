@@ -96,6 +96,7 @@ namespace PhotoBook.Presentation.ViewModels
         private readonly IBookUploadService _upload;
         private readonly IProjectCheckService _check;
         private readonly ICreatedProjectStore? _created;
+        private readonly IUploadedProjectStore? _uploadedProjects;
         private readonly OrderFileCheckService? _fileCheck;
         private CancellationTokenSource? _cancelFiles;
 
@@ -123,12 +124,14 @@ namespace PhotoBook.Presentation.ViewModels
             IBookUploadService upload,
             IProjectCheckService check,
             IUiThread? ui = null,
-            ICreatedProjectStore? created = null)
+            ICreatedProjectStore? created = null,
+            IUploadedProjectStore? uploaded = null)
         {
             _creation = creation ?? throw new ArgumentNullException(nameof(creation));
             _upload = upload ?? throw new ArgumentNullException(nameof(upload));
             _check = check ?? throw new ArgumentNullException(nameof(check));
             _created = created;
+            _uploadedProjects = uploaded;
 
             if (ui is not null)
                 Ui = ui;
