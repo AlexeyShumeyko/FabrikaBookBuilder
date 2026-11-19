@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 
 namespace PhotoBook.Application.Sites.Upload
 {
-    /// <summary>Sends a book's pages to a project, one after another.</summary>
+    /// <summary>Sends a book's pages to a project, a couple of them at a time.</summary>
     /// <remarks>
-    /// The order is the book's order and it is not parallelised: the site numbers the pages by
-    /// the position in the request, and two requests in flight would decide the page order by
-    /// whichever finished first.
+    /// The order is the book's order because every request names its own position: the site
+    /// places the page where it is told, so two files in flight cannot decide the order by
+    /// whichever finished first. The window is small on purpose - the platform is shared, and
+    /// two files in flight already stop the run from paying the site's own work on one page
+    /// before it starts the next.
     /// </remarks>
     public interface IBookUploadService
     {

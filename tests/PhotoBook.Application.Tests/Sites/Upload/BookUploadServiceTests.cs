@@ -97,7 +97,9 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             Assert.Equal("Сайт не принял файл: страница 4.", result.Error);
             Assert.Equal(UploadFailureKind.File, result.Kind);
             Assert.False(result.CanResume);
-            Assert.Equal(new[] { 0, 1, 2, 3 }, upload.Positions);
+            // The window had one page in flight when the refusal came back, so four positions
+            // went out in all; nothing after that one was started.
+            Assert.Equal(new[] { 0, 1, 2, 3, 4 }, upload.Positions);
 
             // The record holds what the site took, so the next run starts at the failed page.
             Assert.Equal(3, record.Written[record.Written.Count - 1]);
@@ -124,6 +126,45 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             Assert.Contains(reports, report => report.CurrentFile.EndsWith("2.jpg"));
             Assert.Equal(3, reports[reports.Count - 1].FilesUploaded);
             Assert.Equal(string.Empty, reports[reports.Count - 1].CurrentFile);
+        }
+
+        /// <summary>
+        /// Two pages travel at once: the site orders them by the position each request names, and
+        /// waiting for one store before starting the next only made the run as slow as the site.
+        /// </summary>
+        [Fact]
+        public async Task KeepsASecondPageInFlightWithoutLosingTheOrder()
+        {
+            var upload = new SlowUpload(TimeSpan.FromMilliseconds(15));
+
+            var result = await new BookUploadService(upload)
+                .UploadAsync(Session, 527733, Pages(6));
+
+            Assert.True(result.IsComplete);
+            Assert.Equal(2, upload.Peak);
+            Assert.Equal(new[] { 0, 1, 2, 3, 4, 5 }, upload.Positions);
+        }
+
+        /// <summary>
+        /// A refusal is reported with the resume point before it, and a page that arrived while
+        /// the refused one was in flight does not move that point past the gap.
+        /// </summary>
+        [Fact]
+        public async Task ARefusalLeavesTheResumePointAtTheGap()
+        {
+            var upload = new GatedUpload(failAt: 1);
+            var record = new StubAccepted();
+
+            var result = await new BookUploadService(upload, record)
+                .UploadAsync(Session, 527733, Pages(6));
+
+            Assert.Equal(UploadState.Failed, result.State);
+
+            // The page after the refused one had already gone out, so the card may not read
+            // "two pages on the site" when the second is the one that failed.
+            Assert.Equal(new[] { 0, 1, 2 }, upload.Positions.Take(3));
+            Assert.Equal(1, result.Session.FilesUploaded);
+            Assert.Equal(1, record.Written[record.Written.Count - 1]);
         }
 
         [Fact]
@@ -289,6 +330,102 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             {
                 Forgotten++;
                 return Result.Ok();
+            }
+        }
+
+        /// <summary>An uploader slow enough for two sends to overlap, counting how many do.</summary>
+        private sealed class SlowUpload : ISiteFileUploadService
+        {
+            private readonly object _gate = new();
+            private readonly TimeSpan _delay;
+            private readonly int _failAt;
+            private int _inFlight;
+
+            internal SlowUpload(TimeSpan delay, int failAt = -1)
+            {
+                _delay = delay;
+                _failAt = failAt;
+            }
+
+            internal List<int> Positions { get; } = new();
+
+            internal int Peak { get; private set; }
+
+            public async Task<PageUpload> UploadAsync(
+                SiteSession session,
+                long projectId,
+                long projectItemId,
+                int position,
+                string filePath,
+                int width = 0,
+                int height = 0,
+                CancellationToken cancellationToken = default)
+            {
+                lock (_gate)
+                {
+                    Positions.Add(position);
+                    _inFlight++;
+                    if (_inFlight > Peak)
+                        Peak = _inFlight;
+                }
+
+                await Task.Delay(_delay, cancellationToken);
+
+                lock (_gate)
+                    _inFlight--;
+
+                return position == _failAt
+                    ? PageUpload.Refused(UploadFailureKind.File, "Сайт не принял файл: страница " + (position + 1) + ".")
+                    : PageUpload.Accepted;
+            }
+        }
+
+        /// <summary>An uploader whose refused page waits until the page after it has started.</summary>
+        private sealed class GatedUpload : ISiteFileUploadService
+        {
+            private readonly TaskCompletionSource<bool> _nextStarted =
+                new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            private readonly object _gate = new();
+            private readonly int _failAt;
+
+            internal GatedUpload(int failAt)
+            {
+                _failAt = failAt;
+            }
+
+            internal List<int> Positions { get; } = new();
+
+            public async Task<PageUpload> UploadAsync(
+                SiteSession session,
+                long projectId,
+                long projectItemId,
+                int position,
+                string filePath,
+                int width = 0,
+                int height = 0,
+                CancellationToken cancellationToken = default)
+            {
+                int started;
+                lock (_gate)
+                {
+                    Positions.Add(position);
+                    started = Positions.Count;
+                }
+
+                if (position == _failAt)
+                {
+                    await _nextStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+                    return PageUpload.Refused(
+                        UploadFailureKind.File,
+                        "Сайт не принял файл: страница " + (position + 1) + ".");
+                }
+
+                if (started >= _failAt + 2)
+                    _nextStarted.TrySetResult(true);
+
+                return PageUpload.Accepted;
             }
         }
 

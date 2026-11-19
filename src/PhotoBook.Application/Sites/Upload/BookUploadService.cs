@@ -11,6 +11,11 @@ namespace PhotoBook.Application.Sites.Upload
     /// <summary>Sends a book page by page, keeping count of what the site accepted.</summary>
     /// <remarks>
     /// <para>
+    /// The pages go out through a small window rather than one after another: the site orders
+    /// them by the position each request names, so two files in flight keep the book's order and
+    /// the run no longer waits for the site to store a page before starting the next.
+    /// </para>
+    /// <para>
     /// A failure stops the queue instead of pushing on: the next page would arrive out of order
     /// or against a project the site has already rejected, and the customer would get a book
     /// with a hole in the middle. What was sent stays sent, and the session says where a retry
@@ -71,68 +76,81 @@ namespace PhotoBook.Application.Sites.Upload
                 ?? _accepted?.Accepted(session.Region, projectId, projectItemId, files.Count)
                 ?? 0;
             var uploaded = Math.Clamp(start, 0, files.Count);
+            var taken = new bool[files.Count];
             string? notice = null;
 
-            for (var position = uploaded; position < files.Count; position++)
+            // Only a gap-free run may be written down: a page that arrived while the one before
+            // it was refused cannot be resumed past, because the next run must start at the gap.
+            int Prefix(bool[] taken, int from)
             {
-                var file = files[position];
-                if (file is null)
-                    continue;
+                var count = from;
+                while (count < taken.Length && taken[count])
+                    count++;
 
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    _journal?.Write(
-                        JournalLevel.Information,
-                        Source,
-                        $"Отправка отменена: проект {projectId}, отправлено {uploaded} из {files.Count}.");
+                return count;
+            }
 
-                    return Ended(
-                        UploadState.Cancelled,
-                        session,
-                        projectId,
-                        files.Count,
-                        uploaded,
-                        UploadFailureKind.None,
-                        "Загрузка отменена.",
-                        notice);
-                }
+            void Started(int position) =>
+                progress?.Report(new UploadProgress(files.Count, uploaded, files[position]?.Path ?? string.Empty));
 
-                progress?.Report(new UploadProgress(files.Count, uploaded, file.Path));
-
-                var page = await _upload
-                    .UploadAsync(
-                        session,
-                        projectId,
-                        projectItemId,
-                        position,
-                        file.Path,
-                        file.Width,
-                        file.Height,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (!page.IsAccepted)
-                {
-                    _journal?.Write(
-                        JournalLevel.Warning,
-                        Source,
-                        $"Книга не отправлена: проект {projectId}, файл {position + 1} из {files.Count} «{Path.GetFileName(file.Path)}»: {page.Error ?? "Сайт не принял файл."}");
-
-                    return Ended(
-                        UploadState.Failed,
-                        session,
-                        projectId,
-                        files.Count,
-                        uploaded,
-                        page.Kind,
-                        page.Error ?? "Сайт не принял файл.",
-                        notice);
-                }
-
-                uploaded = position + 1;
+            void Accepted(int position)
+            {
+                taken[position] = true;
+                uploaded = Prefix(taken, uploaded);
                 notice = Remember(session.Region, projectId, projectItemId, files.Count, uploaded) ?? notice;
 
                 progress?.Report(new UploadProgress(files.Count, uploaded, string.Empty));
+            }
+
+            var window = await PageWindow
+                .RunAsync(
+                    uploaded,
+                    files.Count,
+                    position => SendAsync(session, projectId, projectItemId, files[position], position, cancellationToken),
+                    Started,
+                    Accepted,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (window.Refusal is { } refusal)
+            {
+                var failed = window.FailedPosition;
+                var failedFile = failed >= 0 && failed < files.Count ? files[failed] : null;
+
+                _journal?.Write(
+                    JournalLevel.Warning,
+                    Source,
+                    $"Книга не отправлена: проект {projectId}, файл {failed + 1} из {files.Count} " +
+                    $"«{Path.GetFileName(failedFile?.Path ?? string.Empty)}»: " +
+                    (refusal.Error ?? "Сайт не принял файл."));
+
+                return Ended(
+                    UploadState.Failed,
+                    session,
+                    projectId,
+                    files.Count,
+                    uploaded,
+                    refusal.Kind,
+                    refusal.Error ?? "Сайт не принял файл.",
+                    notice);
+            }
+
+            if (window.Cancelled)
+            {
+                _journal?.Write(
+                    JournalLevel.Information,
+                    Source,
+                    $"Отправка отменена: проект {projectId}, отправлено {uploaded} из {files.Count}.");
+
+                return Ended(
+                    UploadState.Cancelled,
+                    session,
+                    projectId,
+                    files.Count,
+                    uploaded,
+                    UploadFailureKind.None,
+                    "Загрузка отменена.",
+                    notice);
             }
 
             if (uploaded >= files.Count && _accepted is not null &&
@@ -156,6 +174,26 @@ namespace PhotoBook.Application.Sites.Upload
                 null,
                 notice);
         }
+
+        /// <summary>Sends one page, or takes an empty list entry as one already there.</summary>
+        private Task<PageUpload> SendAsync(
+            SiteSession session,
+            long projectId,
+            long projectItemId,
+            PageFile? file,
+            int position,
+            CancellationToken cancellationToken) =>
+            file is null
+                ? Task.FromResult(PageUpload.Accepted)
+                : _upload.UploadAsync(
+                    session,
+                    projectId,
+                    projectItemId,
+                    position,
+                    file.Path,
+                    file.Width,
+                    file.Height,
+                    cancellationToken);
 
         /// <summary>Writes down how far the book got, or says why it could not.</summary>
         private string? Remember(SiteRegion region, long projectId, long itemId, int total, int uploaded)

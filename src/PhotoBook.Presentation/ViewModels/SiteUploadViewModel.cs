@@ -24,7 +24,7 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Projects are being created on the site.</summary>
         Creating,
 
-        /// <summary>Pages are going up, one file at a time.</summary>
+        /// <summary>Pages are going up, a couple of files at a time.</summary>
         Uploading,
 
         /// <summary>The site is being read back to see what actually arrived.</summary>
