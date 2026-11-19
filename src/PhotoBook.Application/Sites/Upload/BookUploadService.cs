@@ -12,8 +12,8 @@ namespace PhotoBook.Application.Sites.Upload
     /// <remarks>
     /// <para>
     /// The pages go out through a small window rather than one after another: the site orders
-    /// them by the position each request names, so two files in flight keep the book's order and
-    /// the run no longer waits for the site to store a page before starting the next.
+    /// them by the position each request names, so several files in flight keep the book's order
+    /// and the run no longer waits for the site to store a page before starting the next.
     /// </para>
     /// <para>
     /// A failure stops the queue instead of pushing on: the next page would arrive out of order

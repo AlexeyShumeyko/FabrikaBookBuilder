@@ -17,19 +17,18 @@ namespace PhotoBook.Application.Sites.Upload
         int FailedPosition,
         bool Cancelled);
 
-    /// <summary>Sends the pages of one book with a couple of them in flight at once.</summary>
+    /// <summary>Sends the pages of one book with several of them in flight at once.</summary>
     /// <remarks>
     /// <para>
     /// The position travels with every request, so the site orders the pages by what it is told
-    /// rather than by whichever request arrives first. That is what makes a window possible: two
-    /// files in flight land at their own positions, and the book keeps its order.
+    /// rather than by whichever request arrives first. That is what makes a window possible:
+    /// several files in flight land at their own positions, and the book keeps its order.
     /// </para>
     /// <para>
-    /// The window is deliberately small. The platform is shared by the two sites and the site's
-    /// own uploader keeps five files in flight; two is enough to stop waiting for the site to
-    /// store one page before sending the next, and stays inside what the program promised the
-    /// platform. It is also what makes the difference: one file per round trip pays the site's
-    /// own processing of every page end to end, while two pay it twice over.
+    /// The window is deliberately below what the platform allows. The site's own uploader keeps
+    /// five files in flight; four stays under that and still removes most of the wait for the
+    /// site's own processing of each page. One file per round trip paid that processing end to
+    /// end, and the old window of two paid it only two pages over.
     /// </para>
     /// <para>
     /// A refusal stops the window rather than the run: the pages already in flight are awaited
@@ -41,7 +40,7 @@ namespace PhotoBook.Application.Sites.Upload
     internal static class PageWindow
     {
         /// <summary>Files sent at once; the site's own uploader keeps five.</summary>
-        public const int MaxInFlight = 2;
+        public const int MaxInFlight = 4;
 
         /// <summary>
         /// Sends the pages from <paramref name="first"/> on, calling back as each one starts and

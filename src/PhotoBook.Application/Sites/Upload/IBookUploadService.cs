@@ -9,10 +9,10 @@ namespace PhotoBook.Application.Sites.Upload
     /// <summary>Sends a book's pages to a project, a couple of them at a time.</summary>
     /// <remarks>
     /// The order is the book's order because every request names its own position: the site
-    /// places the page where it is told, so two files in flight cannot decide the order by
-    /// whichever finished first. The window is small on purpose - the platform is shared, and
-    /// two files in flight already stop the run from paying the site's own work on one page
-    /// before it starts the next.
+    /// places the page where it is told, so several files in flight cannot decide the order by
+    /// whichever finished first. The window is small on purpose - the platform is shared, the
+    /// site's own uploader keeps five files in flight, and four stays under it while removing
+    /// most of the wait for the site's work on one page before the next begins.
     /// </remarks>
     public interface IBookUploadService
     {

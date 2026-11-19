@@ -97,9 +97,10 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             Assert.Equal("Сайт не принял файл: страница 4.", result.Error);
             Assert.Equal(UploadFailureKind.File, result.Kind);
             Assert.False(result.CanResume);
-            // The window had one page in flight when the refusal came back, so four positions
-            // went out in all; nothing after that one was started.
-            Assert.Equal(new[] { 0, 1, 2, 3, 4 }, upload.Positions);
+            // The four pages of the window go out together, so the refused one is discovered
+            // only after its neighbours have been answered; the positions still leave in order.
+            Assert.Equal(new[] { 0, 1, 2, 3 }, upload.Positions.Take(4));
+            Assert.Equal(upload.Positions.OrderBy(position => position), upload.Positions);
 
             // The record holds what the site took, so the next run starts at the failed page.
             Assert.Equal(3, record.Written[record.Written.Count - 1]);
@@ -129,11 +130,12 @@ namespace PhotoBook.Application.Tests.Sites.Upload
         }
 
         /// <summary>
-        /// Two pages travel at once: the site orders them by the position each request names, and
-        /// waiting for one store before starting the next only made the run as slow as the site.
+        /// Four pages travel at once: the site orders them by the position each request names, and
+        /// waiting for one store before starting the next only made the run as slow as the site
+        /// while its own uploader kept five files in flight.
         /// </summary>
         [Fact]
-        public async Task KeepsASecondPageInFlightWithoutLosingTheOrder()
+        public async Task KeepsFourPagesInFlightWithoutLosingTheOrder()
         {
             var upload = new SlowUpload(TimeSpan.FromMilliseconds(15));
 
@@ -141,7 +143,7 @@ namespace PhotoBook.Application.Tests.Sites.Upload
                 .UploadAsync(Session, 527733, Pages(6));
 
             Assert.True(result.IsComplete);
-            Assert.Equal(2, upload.Peak);
+            Assert.Equal(4, upload.Peak);
             Assert.Equal(new[] { 0, 1, 2, 3, 4, 5 }, upload.Positions);
         }
 
