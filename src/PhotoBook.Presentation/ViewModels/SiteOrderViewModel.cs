@@ -125,11 +125,7 @@ namespace PhotoBook.Presentation.ViewModels
             private set
             {
                 if (SetProperty(ref _groups, value))
-                {
                     OnPropertyChanged(nameof(HasGroups));
-                    OnPropertyChanged(nameof(BlockingText));
-                    OnPropertyChanged(nameof(HasBlockingText));
-                }
             }
         }
 
@@ -175,8 +171,6 @@ namespace PhotoBook.Presentation.ViewModels
                 if (!SetProperty(ref _isLoadingFormats, value))
                     return;
 
-                OnPropertyChanged(nameof(BlockingText));
-                OnPropertyChanged(nameof(HasBlockingText));
                 OnPropertyChanged(nameof(CanUpload));
             }
         }
@@ -414,13 +408,15 @@ namespace PhotoBook.Presentation.ViewModels
                 .Select(group => group.TotalCurrency)
                 .FirstOrDefault(currency => currency.Length > 0) ?? string.Empty;
 
-            // Only a send that goes leaves something behind: with every group stuck, the reason
-            // beside the button already says what is missing.
+            // A group's card says whether its books stay behind, and says it as a warning only
+            // when something else is going: with every group stuck, a line about books left
+            // behind would describe a send that cannot happen.
+            foreach (var group in Groups)
+                group.MarkStaying(going.Count > 0 && left.Contains(group));
+
             var notes = going.Count > 0
                 ? left.Select(SkippedLine).ToList()
                 : new List<string>();
-
-            _warning = string.Join(Environment.NewLine, notes);
 
             var plan = going.Count == 0
                 ? null
@@ -430,10 +426,6 @@ namespace PhotoBook.Presentation.ViewModels
 
             OnPropertyChanged(nameof(TotalText));
             OnPropertyChanged(nameof(HasTotal));
-            OnPropertyChanged(nameof(WarningText));
-            OnPropertyChanged(nameof(HasWarningText));
-            OnPropertyChanged(nameof(BlockingText));
-            OnPropertyChanged(nameof(HasBlockingText));
             OnPropertyChanged(nameof(CanUpload));
         }
 
@@ -459,8 +451,6 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(CanUpload));
             OnPropertyChanged(nameof(TotalText));
             OnPropertyChanged(nameof(HasTotal));
-            OnPropertyChanged(nameof(BlockingText));
-            OnPropertyChanged(nameof(HasBlockingText));
 
             RebuildPlan();
         }

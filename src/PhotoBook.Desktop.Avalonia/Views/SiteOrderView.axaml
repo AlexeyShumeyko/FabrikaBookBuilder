@@ -45,21 +45,8 @@
                 <StackPanel Grid.Column="1" Margin="16,0,24,0" VerticalAlignment="Center" Spacing="3">
                     <TextBlock Text="Загрузка на сайт" Classes="t20Bold" />
 
-                    <!-- Why the button is grey, said where the page is named: the order can be
-                         complete and still not priced, and a disabled button without a reason is
-                         a puzzle. The line sits here rather than under the buttons, where it made
-                         the panel jump every time it changed length. -->
-                    <TextBlock Text="{Binding BlockingText}" Classes="t12"
-                               Foreground="{DynamicResource Slate500}"
-                               TextWrapping="Wrap" MaxWidth="640"
-                               IsVisible="{Binding HasBlockingText}" />
-
-                    <!-- What would stay behind if the button is pressed now: sending the ready
-                         groups while others are broken is allowed, but never quietly. -->
-                    <TextBlock Text="{Binding WarningText}" Classes="t12"
-                               Foreground="{DynamicResource Amber700}"
-                               TextWrapping="Wrap" MaxWidth="640"
-                               IsVisible="{Binding HasWarningText}" />
+                    <!-- Nothing else is said here: every sentence about a group - why it cannot
+                         go, or that its books stay behind - belongs to that group's own card. -->
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
@@ -125,6 +112,19 @@
                                                            Foreground="{DynamicResource Slate500}" TextWrapping="Wrap"
                                                            Margin="0,4,0,0"
                                                            IsVisible="{Binding HasFilesText}" />
+
+                                                <!-- Why this group cannot go, or what stays behind if
+                                                     the button is pressed now. The sentence is about
+                                                     this group alone, so it is written here rather
+                                                     than in the page's own panel. -->
+                                                <TextBlock Text="{Binding NoteText}" Classes="t12"
+                                                           Foreground="{DynamicResource Slate600}" TextWrapping="Wrap"
+                                                           Margin="0,4,0,0"
+                                                           IsVisible="{Binding NoteIsProblem}" />
+                                                <TextBlock Text="{Binding NoteText}" Classes="t12"
+                                                           Foreground="{DynamicResource Amber700}" TextWrapping="Wrap"
+                                                           Margin="0,4,0,0"
+                                                           IsVisible="{Binding NoteIsWarning}" />
                                             </StackPanel>
 
                                             <!-- the column headings, once -->

@@ -53,8 +53,11 @@ namespace PhotoBook.Application.Tests.Sites
             // The project is complete and the site is known, so the only thing missing is the
             // choice of the group - and a grey button with nothing beside it does not say so.
             Assert.False(page.CanUpload);
-            Assert.True(page.HasBlockingText);
-            Assert.Contains("формат", page.BlockingText, StringComparison.OrdinalIgnoreCase);
+
+            // The reason belongs to the group, so it is written on the group's card.
+            Assert.True(page.Groups[0].HasNote);
+            Assert.True(page.Groups[0].NoteIsProblem);
+            Assert.Contains("формат", page.Groups[0].NoteText, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
@@ -380,7 +383,7 @@ namespace PhotoBook.Application.Tests.Sites
 
             Assert.All(page.Groups, group => Assert.True(group.CanGo));
             Assert.True(page.CanUpload);
-            Assert.False(page.HasWarningText);
+            Assert.All(page.Groups, group => Assert.False(group.HasNote));
 
             page.Upload();
 
@@ -407,9 +410,12 @@ namespace PhotoBook.Application.Tests.Sites
 
             // The send is allowed, and the page says what it leaves behind.
             Assert.True(page.CanUpload);
-            Assert.True(page.HasWarningText);
-            Assert.Contains("Группа 2", page.WarningText, StringComparison.Ordinal);
-            Assert.Contains("не будут", page.WarningText, StringComparison.Ordinal);
+
+            // The broken group's own card carries the warning; the ready one says nothing.
+            Assert.False(page.Groups[0].HasNote);
+            Assert.True(page.Groups[1].HasNote);
+            Assert.True(page.Groups[1].NoteIsWarning);
+            Assert.Contains("не будут", page.Groups[1].NoteText, StringComparison.Ordinal);
 
             page.Upload();
 

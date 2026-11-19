@@ -132,7 +132,7 @@ namespace PhotoBook.Presentation.ViewModels
 
             OnPropertyChanged(nameof(Plan));
             OnPropertyChanged(nameof(CanGo));
-            OnPropertyChanged(nameof(ProblemText));
+            NotifyProblem();
 
             if (plan is { Problems.Count: > 0 })
                 Note(string.Join(Environment.NewLine, plan.Problems));

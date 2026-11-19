@@ -51,6 +51,7 @@ namespace PhotoBook.Presentation.ViewModels
         private bool _applyingFormat;
         private bool _parametersLoaded;
         private bool _isReady;
+        private bool _staysBehind;
         private bool _isPricing;
         private string _totalText = string.Empty;
         private Task _priceRun = Task.CompletedTask;
@@ -148,7 +149,7 @@ namespace PhotoBook.Presentation.ViewModels
             private set
             {
                 if (SetProperty(ref _isReady, value))
-                    OnPropertyChanged(nameof(ProblemText));
+                    NotifyProblem();
             }
         }
 
@@ -163,7 +164,7 @@ namespace PhotoBook.Presentation.ViewModels
 
                 OnPropertyChanged(nameof(IsBusy));
                 OnPropertyChanged(nameof(CanGo));
-                OnPropertyChanged(nameof(ProblemText));
+                NotifyProblem();
                 _changed();
             }
         }
@@ -214,6 +215,51 @@ namespace PhotoBook.Presentation.ViewModels
             !_checkingFiles &&
             _files is { CanSend: true } &&
             (!NeedsConfirmation || _confirmationsAccepted);
+
+        /// <summary>
+        /// What the group says about itself on its own card: why it cannot go, and whether its
+        /// books stay behind while the rest of the order goes.
+        /// </summary>
+        /// <remarks>
+        /// The line lives on the group rather than beside the send button because every sentence
+        /// in it is about this group alone - its format, its answers, its files. A page-level
+        /// summary of several groups repeated the numbers and left the customer to find the card.
+        /// </remarks>
+        public string NoteText
+        {
+            get
+            {
+                var problem = ProblemText.Trim();
+                if (problem.Length == 0)
+                    return string.Empty;
+
+                return _staysBehind
+                    ? problem + " Книги этой группы загружены не будут."
+                    : problem;
+            }
+        }
+
+        /// <summary>Whether the group has anything to say on its card.</summary>
+        public bool HasNote => NoteText.Length > 0;
+
+        /// <summary>Whether the line is a warning about books left behind rather than a reason.</summary>
+        public bool NoteIsWarning => _staysBehind && HasNote;
+
+        /// <summary>Whether the line is the group's own reason for not being ready.</summary>
+        public bool NoteIsProblem => HasNote && !_staysBehind;
+
+        /// <summary>
+        /// Says whether this group is one the coming run leaves out, so its card reads as a
+        /// warning rather than as a reason beside a button.
+        /// </summary>
+        public void MarkStaying(bool stays)
+        {
+            if (_staysBehind == stays)
+                return;
+
+            _staysBehind = stays;
+            NotifyProblem();
+        }
 
         /// <summary>Why the group cannot go, in the customer's words; empty when it can.</summary>
         /// <remarks>
@@ -277,7 +323,7 @@ namespace PhotoBook.Presentation.ViewModels
                 OnPropertyChanged(nameof(HasFiles));
                 OnPropertyChanged(nameof(NeedsConfirmation));
                 OnPropertyChanged(nameof(CanGo));
-                OnPropertyChanged(nameof(ProblemText));
+                NotifyProblem();
                 OnPropertyChanged(nameof(FileLines));
                 OnPropertyChanged(nameof(HasFileLines));
 
@@ -311,7 +357,7 @@ namespace PhotoBook.Presentation.ViewModels
                     return;
 
                 OnPropertyChanged(nameof(CanGo));
-                OnPropertyChanged(nameof(ProblemText));
+                NotifyProblem();
                 _changed();
             }
         }
@@ -328,7 +374,7 @@ namespace PhotoBook.Presentation.ViewModels
                 OnPropertyChanged(nameof(IsBusy));
                 OnPropertyChanged(nameof(CanGo));
                 OnPropertyChanged(nameof(CheckingText));
-                OnPropertyChanged(nameof(ProblemText));
+                NotifyProblem();
 
                 ApplyCheck();
                 _changed();
@@ -506,6 +552,16 @@ namespace PhotoBook.Presentation.ViewModels
             ConfirmationsAccepted = false;
 
             ApplyCheck();
+        }
+
+        /// <summary>Says the group's own words again: why it cannot go, and what that means.</summary>
+        private void NotifyProblem()
+        {
+            OnPropertyChanged(nameof(ProblemText));
+            OnPropertyChanged(nameof(NoteText));
+            OnPropertyChanged(nameof(HasNote));
+            OnPropertyChanged(nameof(NoteIsWarning));
+            OnPropertyChanged(nameof(NoteIsProblem));
         }
 
         /// <summary>Says something on the page that the group's own step produced.</summary>
