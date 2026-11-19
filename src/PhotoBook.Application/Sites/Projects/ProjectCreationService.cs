@@ -81,7 +81,7 @@ namespace PhotoBook.Application.Sites.Projects
                     _journal?.Write(
                         JournalLevel.Information,
                         Source,
-                        $"Группа уже отправлена раньше: проект {known}, книг {group.Group.Books.Count}.");
+                        $"Группа найдена в записи: проект {known}, книг {group.Group.Books.Count}.");
 
                     // The parameters are written again for a project found in the record: a run
                     // that stopped before naming them left exactly such a project behind, and
@@ -89,18 +89,30 @@ namespace PhotoBook.Application.Sites.Projects
                     var knownBooks = await BookIdsAsync(session, known, group.Group.Books.Count, null, cancellationToken)
                         .ConfigureAwait(false);
 
-                    var knownNamed = knownBooks.Error is null
-                        ? await SetUpAsync(session, known, group, cancellationToken).ConfigureAwait(false)
-                        : null;
+                    if (!knownBooks.Unreadable)
+                    {
+                        var knownNamed = knownBooks.Error is null
+                            ? await SetUpAsync(session, known, group, cancellationToken).ConfigureAwait(false)
+                            : null;
 
-                    outcomes.Add(new GroupCreation(
-                        number,
-                        group.Group,
-                        GroupCreationState.AlreadyCreated,
-                        known,
-                        Join(knownBooks.Error, knownNamed),
-                        knownBooks.Items));
-                    continue;
+                        outcomes.Add(new GroupCreation(
+                            number,
+                            group.Group,
+                            GroupCreationState.AlreadyCreated,
+                            known,
+                            Join(knownBooks.Error, knownNamed),
+                            knownBooks.Items));
+                        continue;
+                    }
+
+                    // The record names a project the site will not describe - deleted by hand,
+                    // or a record from another account. The customer asked for these books to
+                    // be uploaded, so a new project is made rather than the run stopped with an
+                    // answer nobody can act on.
+                    _journal?.Write(
+                        JournalLevel.Warning,
+                        Source,
+                        $"Проект {known} записан, но его книги не прочитались: {knownBooks.Error} Создаём новый проект.");
                 }
 
                 var created = await _projects
@@ -163,7 +175,7 @@ namespace PhotoBook.Application.Sites.Projects
         /// arrive is reported rather than skipped: a project with fewer books would be priced
         /// for a group it does not hold.
         /// </remarks>
-        private async Task<(IReadOnlyList<long> Items, string? Error)> BookIdsAsync(
+        private async Task<(IReadOnlyList<long> Items, string? Error, bool Unreadable)> BookIdsAsync(
             SiteSession session,
             long projectId,
             int books,
@@ -184,7 +196,7 @@ namespace PhotoBook.Application.Sites.Projects
                 if (!read.IsSuccess || read.Value is null)
                 {
                     return (ids, "Проект уже был создан, но сайт не отдал его книги: " +
-                        (read.Error ?? "без причины") + ". Отправка остановлена.");
+                        (read.Error ?? "без причины") + ".", true);
                 }
 
                 ids.AddRange(read.Value.Items.Where(item => item.Id > 0).Select(item => item.Id));
@@ -205,7 +217,7 @@ namespace PhotoBook.Application.Sites.Projects
                         (added.Error ?? "сайт не назвал книгу"));
 
                     return (ids, $"В проект не удалось добавить книгу {position} из {books}: " +
-                        (added.Error ?? "сайт не назвал книгу") + ".");
+                        (added.Error ?? "сайт не назвал книгу") + ".", false);
                 }
 
                 ids.Add(added.Value);
@@ -219,10 +231,10 @@ namespace PhotoBook.Application.Sites.Projects
             if (ids.Count > books)
             {
                 return (ids.Take(books).ToList(),
-                    $"В проекте на сайте больше книг, чем в группе: {ids.Count} вместо {books}. Отправка остановлена.");
+                    $"В проекте на сайте больше книг, чем в группе: {ids.Count} вместо {books}. Отправка остановлена.", false);
             }
 
-            return (ids, null);
+            return (ids, null, false);
         }
 
         /// <summary>

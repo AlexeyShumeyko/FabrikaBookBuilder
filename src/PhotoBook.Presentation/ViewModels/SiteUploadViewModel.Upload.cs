@@ -145,6 +145,13 @@ namespace PhotoBook.Presentation.ViewModels
                 if (checkedResults.All(result => result.IsComplete))
                 {
                     Url = link ?? string.Empty;
+
+                    // A finished run forgets what it created, so pressing «Загрузить на сайт»
+                    // again makes a new project rather than stopping on the old one. The
+                    // record still protects a run that stopped halfway, where the same press
+                    // is a retry.
+                    ForgetCreatedProjects(session);
+
                     Finish(
                         UploadStep.Done,
                         checkedResults,
@@ -323,6 +330,16 @@ namespace PhotoBook.Presentation.ViewModels
                 books.Add(new ExpectedBook(book.CoverFile is not null, book.Files?.Count ?? 0));
 
             return books;
+        }
+
+        /// <summary>Forgets the record of the groups a finished run sent.</summary>
+        private void ForgetCreatedProjects(SiteSession session)
+        {
+            if (_created is null)
+                return;
+
+            foreach (var group in _groups)
+                _created.Forget(GroupKey.For(session.Region, group.Group.Books));
         }
 
         /// <summary>The groups that can be sent now: at least one book with at least one page.</summary>

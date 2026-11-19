@@ -14,5 +14,16 @@ namespace PhotoBook.Application.Sites.Projects
 
         /// <summary>Remembers a created project; fails when it could not be written down.</summary>
         Result Remember(string key, long projectId);
+
+        /// <summary>
+        /// Forgets a key, so a later run creates the same books as a new project.
+        /// </summary>
+        /// <remarks>
+        /// The record exists to survive a dropped connection inside one run, not to forbid a
+        /// second copy. Once a run finished, sending the same group again is a deliberate act -
+        /// a corrected page, or simply a second copy for the same customer - and the site is
+        /// where the customer decides which projects to order.
+        /// </remarks>
+        void Forget(string key);
     }
 }

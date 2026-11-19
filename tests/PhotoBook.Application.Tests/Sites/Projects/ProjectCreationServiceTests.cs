@@ -75,6 +75,28 @@ namespace PhotoBook.Application.Tests.Sites.Projects
             Assert.True(second.IsComplete);
         }
 
+        /// <summary>
+        /// A record that no longer answers must not stop the upload: the site may hold the project
+        /// under another account, or the customer deleted it by hand. The books are sent as a new
+        /// project instead of the run ending on a sentence nobody can act on.
+        /// </summary>
+        [Fact]
+        public async Task CreatesANewProjectWhenTheRememberedOneCannotBeRead()
+        {
+            var projects = new StubProjects(1002) { ReadFails = true };
+            var created = new MemoryCreated();
+            var group = Group(Book(9255));
+            created.Remember(GroupKey.For(SiteRegion.Com, group.Group.Books), 1001);
+
+            var plan = await new ProjectCreationService(projects, created)
+                .CreateAsync(Session, new[] { group });
+
+            var sent = Assert.Single(plan.Groups);
+            Assert.Equal(GroupCreationState.Created, sent.State);
+            Assert.Equal(1002, sent.ProjectId);
+            Assert.Single(projects.Asked);
+        }
+
         [Fact]
         public async Task ReportsPartialSuccessAndKeepsGoing()
         {
@@ -268,6 +290,8 @@ namespace PhotoBook.Application.Tests.Sites.Projects
 
             internal long ItemsInExistingProject { get; init; } = 1;
 
+            internal bool ReadFails { get; init; }
+
             public Task<Result> SetUpAsync(
                 SiteSession session,
                 long projectId,
@@ -289,6 +313,12 @@ namespace PhotoBook.Application.Tests.Sites.Projects
                 long projectId,
                 CancellationToken cancellationToken = default)
             {
+                if (ReadFails)
+                {
+                    return Task.FromResult(Result<SiteProjectSnapshot>.Fail(
+                        "Сайт не отдал проект."));
+                }
+
                 var items = Enumerable.Range(1, (int)ItemsInExistingProject)
                     .Select(index => new SiteProjectItem(9000 + index, null, 1, Array.Empty<SiteProjectPage>()))
                     .ToList();
@@ -331,6 +361,8 @@ namespace PhotoBook.Application.Tests.Sites.Projects
                 _stored[key] = projectId;
                 return Result.Ok();
             }
+
+            public void Forget(string key) => _stored.Remove(key);
         }
     }
 }

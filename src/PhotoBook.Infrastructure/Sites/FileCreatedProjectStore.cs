@@ -77,30 +77,52 @@ namespace PhotoBook.Infrastructure.Sites
                 var stored = Read();
                 stored[key] = projectId;
 
-                try
-                {
-                    var directory = Path.GetDirectoryName(_path);
-                    if (!string.IsNullOrEmpty(directory))
-                        Directory.CreateDirectory(directory);
+                return Save(stored);
+            }
+        }
 
-                    var temporary = _path + ".tmp";
-                    File.WriteAllText(temporary, JsonSerializer.Serialize(stored, Options));
-                    File.Move(temporary, _path, overwrite: true);
+        public void Forget(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                return;
 
-                    return Result.Ok();
-                }
-                catch (Exception error) when (
-                    error is IOException or UnauthorizedAccessException or NotSupportedException)
-                {
-                    _journal.Write(
-                        JournalLevel.Warning,
-                        Source,
-                        "Не удалось сохранить список созданных проектов.",
-                        error);
+            lock (_gate)
+            {
+                var stored = Read();
+                if (!stored.Remove(key))
+                    return;
 
-                    return Result.Fail(
-                        "Не удалось сохранить запись о созданном проекте: " + error.Message);
-                }
+                // The write itself reports a failure to the journal; a run that could not
+                // rewrite the record will simply reuse the project on the next attempt.
+                Save(stored);
+            }
+        }
+
+        private Result Save(Dictionary<string, long> stored)
+        {
+            try
+            {
+                var directory = Path.GetDirectoryName(_path);
+                if (!string.IsNullOrEmpty(directory))
+                    Directory.CreateDirectory(directory);
+
+                var temporary = _path + ".tmp";
+                File.WriteAllText(temporary, JsonSerializer.Serialize(stored, Options));
+                File.Move(temporary, _path, overwrite: true);
+
+                return Result.Ok();
+            }
+            catch (Exception error) when (
+                error is IOException or UnauthorizedAccessException or NotSupportedException)
+            {
+                _journal.Write(
+                    JournalLevel.Warning,
+                    Source,
+                    "Не удалось сохранить список созданных проектов.",
+                    error);
+
+                return Result.Fail(
+                    "Не удалось сохранить запись о созданном проекте: " + error.Message);
             }
         }
 
