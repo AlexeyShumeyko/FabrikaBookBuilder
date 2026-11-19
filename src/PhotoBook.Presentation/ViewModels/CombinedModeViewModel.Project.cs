@@ -415,6 +415,10 @@ namespace PhotoBook.Presentation.ViewModels
                 }
                 catch (Exception ex)
                 {
+                    // The screen goes back either way - an empty project left in the list is
+                    // the customer's to remove, and failing to remove it is not a reason to
+                    // keep them on a screen with nothing in it.
+                    _loggingService.LogError("Не удалось убрать пустой проект из списка", ex);
                 }
             }
 

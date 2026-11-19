@@ -24,7 +24,17 @@ internal static class TestProject
     /// A book whose cover is <paramref name="coverPath"/> and whose spreads are
     /// <paramref name="spreadPaths"/>. An empty spread list gives a book with a cover only.
     /// </summary>
-    public static Book Book(int bookIndex, string coverPath, params string[] spreadPaths)
+    public static Book Book(int bookIndex, string coverPath, params string[] spreadPaths) =>
+        Book(bookIndex, null, coverPath, spreadPaths);
+
+    /// <summary>
+    /// The same book, with the pixel size its spreads were exported at.
+    /// </summary>
+    /// <remarks>
+    /// The size is what tells two formats of one project apart: a project assembled from two
+    /// folders carries one stored format on both books, while the page sizes cannot agree.
+    /// </remarks>
+    public static Book Book(int bookIndex, (int Width, int Height)? pageSize, string coverPath, params string[] spreadPaths)
     {
         var book = new Book
         {
@@ -36,7 +46,15 @@ internal static class TestProject
 
         for (int i = 0; i < spreadPaths.Length; i++)
         {
-            book.Pages.Add(Page(spreadPaths[i], i + 1));
+            var page = Page(spreadPaths[i], i + 1);
+
+            if (pageSize is { } size)
+            {
+                page.ImageWidth = size.Width;
+                page.ImageHeight = size.Height;
+            }
+
+            book.Pages.Add(page);
         }
 
         return book;

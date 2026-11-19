@@ -19,8 +19,6 @@ namespace PhotoBook.Infrastructure
     /// </summary>
     internal class FileService : IFileService
     {
-        private static readonly string[] JpegExtensions = { ".jpg", ".jpeg", ".JPG", ".JPEG" };
-
         public Task<List<string>> GetJpegFilesAsync(string folderPath)
         {
             return Task.Run(() =>
@@ -146,11 +144,7 @@ namespace PhotoBook.Infrastructure
             });
         }
 
-        public bool IsJpegFile(string filePath)
-        {
-            var ext = System.IO.Path.GetExtension(filePath);
-            return JpegExtensions.Contains(ext);
-        }
+        public bool IsJpegFile(string filePath) => JpegFiles.Is(filePath);
 
         /// <summary>
         /// Asked by the application layer to tell a finished run from one whose output folder
@@ -176,6 +170,23 @@ namespace PhotoBook.Infrastructure
         {
             if (string.IsNullOrEmpty(path)) return false;
             return System.IO.File.Exists(path);
+        }
+
+        public long FileLength(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return 0;
+
+            try
+            {
+                var info = new System.IO.FileInfo(path);
+                return info.Exists ? info.Length : 0;
+            }
+            catch (System.IO.IOException)
+            {
+                // A file that cannot be measured is reported as having nothing to send, and the
+                // check that reads the book says the page is missing rather than sending it.
+                return 0;
+            }
         }
 
         /// <summary>

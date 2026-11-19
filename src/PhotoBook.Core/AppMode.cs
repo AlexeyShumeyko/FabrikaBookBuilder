@@ -6,6 +6,9 @@ namespace PhotoBook.Core
         StartScreen,
         ProjectList,
         UniqueFolders,
-        Combined
+        Combined,
+
+        /// <summary>The order page: what will go to the site, opened from the project.</summary>
+        SiteOrder
     }
 }

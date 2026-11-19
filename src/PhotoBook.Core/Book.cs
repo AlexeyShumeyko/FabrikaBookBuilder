@@ -8,6 +8,11 @@ namespace PhotoBook.Core
 {
     public class Book : ObservableObject
     {
+        private long? _siteProductId;
+        private long? _siteVariantId;
+        private string? _siteProductTitle;
+        private string? _siteVariantTitle;
+        private Dictionary<long, long> _siteOptions = new();
         private string? _folderPath;
         private string? _name;
         private Page? _cover;
@@ -272,6 +277,89 @@ namespace PhotoBook.Core
         public ObservableCollection<Page> Pages { get; }
 
         /// <summary>
+        /// The site format this book is ordered in, once the customer has chosen one.
+        /// </summary>
+        /// <remarks>
+        /// Stored on the book rather than on the run: one run can hold books of different
+        /// formats, and the site prices each of them by its own product and variant. A book
+        /// without a format is a book nobody has picked a format for yet - it cannot be priced,
+        /// and it cannot be sent.
+        /// </remarks>
+        public long? SiteProductId
+        {
+            get => _siteProductId;
+            set => SetProperty(ref _siteProductId, value);
+        }
+
+        /// <summary>The variant of <see cref="SiteProductId"/>: the size and the cover.</summary>
+        public long? SiteVariantId
+        {
+            get => _siteVariantId;
+            set => SetProperty(ref _siteVariantId, value);
+        }
+
+        /// <summary>The product's title, kept so a card can say the format without the catalog.</summary>
+        public string? SiteProductTitle
+        {
+            get => _siteProductTitle;
+            set => SetProperty(ref _siteProductTitle, value);
+        }
+
+        /// <summary>The variant's title as the site writes it, e.g. «21×30, мягкая обложка».</summary>
+        public string? SiteVariantTitle
+        {
+            get => _siteVariantTitle;
+            set => SetProperty(ref _siteVariantTitle, value);
+        }
+
+        /// <summary>Whether a site format has been chosen for this book.</summary>
+        public bool HasSiteFormat => SiteProductId is > 0 && SiteVariantId is > 0;
+
+        /// <summary>
+        /// What the customer chose for the format's parameters: option id to element id.
+        /// </summary>
+        /// <remarks>
+        /// The site prices and produces by these choices, so they belong to the book and are
+        /// saved with the project - a format whose parameters are not chosen has no price at
+        /// all, and asking again after a restart would make the customer repeat work they had
+        /// already done. The ids are the site's own; nothing here is interpreted.
+        /// </remarks>
+        public IReadOnlyDictionary<long, long> SiteOptions => _siteOptions;
+
+        /// <summary>Records one parameter of the format, or replaces the choice already made.</summary>
+        public void SetSiteOption(long optionId, long elementId)
+        {
+            if (optionId <= 0 || elementId <= 0)
+                throw new ArgumentOutOfRangeException(nameof(optionId), "Параметр и его значение — идентификаторы сайта.");
+
+            if (_siteOptions.TryGetValue(optionId, out var current) && current == elementId)
+                return;
+
+            _siteOptions[optionId] = elementId;
+            OnPropertyChanged(nameof(SiteOptions));
+        }
+
+        /// <summary>Drops one parameter's answer, for when the site stops offering it.</summary>
+        public void RemoveSiteOption(long optionId)
+        {
+            if (_siteOptions.Remove(optionId))
+                OnPropertyChanged(nameof(SiteOptions));
+        }
+
+        /// <summary>
+        /// Forgets the parameter choices, which is what happens when the format changes: the
+        /// choices belong to the format that was chosen before.
+        /// </summary>
+        public void ClearSiteOptions()
+        {
+            if (_siteOptions.Count == 0)
+                return;
+
+            _siteOptions.Clear();
+            OnPropertyChanged(nameof(SiteOptions));
+        }
+
+        /// <summary>
         /// Width / height of this book's card frames. Same value on every page of the
         /// book - see <see cref="UpdateFrameAspect"/> for why it is per book and how it is
         /// clamped.
@@ -354,8 +442,15 @@ namespace PhotoBook.Core
                 FolderPath = FolderPath,
                 Name = Name,
                 BookIndex = BookIndex,
-                Cover = Cover?.Clone()
+                Cover = Cover?.Clone(),
+                SiteProductId = SiteProductId,
+                SiteVariantId = SiteVariantId,
+                SiteProductTitle = SiteProductTitle,
+                SiteVariantTitle = SiteVariantTitle
             };
+
+            foreach (var option in SiteOptions)
+                clone.SetSiteOption(option.Key, option.Value);
 
             foreach (var page in Pages)
             {

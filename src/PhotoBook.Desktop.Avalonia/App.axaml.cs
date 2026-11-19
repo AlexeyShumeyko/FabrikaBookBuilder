@@ -75,12 +75,23 @@ public partial class App : Avalonia.Application
 
             var notes = await feed.GetLatestReleaseNotesAsync();
 
-            Dispatcher.UIThread.InvokeAsync(async () =>
+            // Fire and forget on purpose: the check runs at start-up and nothing waits for it.
+            // Written as _ = with its own catch, because an exception thrown out of this task
+            // used to go nowhere at all.
+            _ = Dispatcher.UIThread.InvokeAsync(async () =>
             {
-                var window = new UpdateWindow(new UpdateViewModel(feed, latest, notes));
-                var owner = (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-                if (owner is not null) await window.ShowDialog(owner);
-                else await window.ShowDialog(window);
+                try
+                {
+                    var window = new UpdateWindow(new UpdateViewModel(feed, latest, notes));
+                    var owner = (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+                    if (owner is not null) await window.ShowDialog(owner);
+                    else await window.ShowDialog(window);
+                }
+                catch (Exception ex)
+                {
+                    services.GetRequiredService<IJournal>().Write(
+                        JournalLevel.Warning, "update", "Окно обновления не открылось", ex);
+                }
             });
         }
         catch (Exception ex)
@@ -121,7 +132,9 @@ public partial class App : Avalonia.Application
                 _services.GetRequiredService<IJournal>());
 
             var navigator = _services.GetRequiredService<AvaloniaNavigator>();
-            var window = new MainWindow(_services.GetRequiredService<ShellHeaderViewModel>());
+            var window = new MainWindow(
+                _services.GetRequiredService<ShellHeaderViewModel>(),
+                _services.GetRequiredService<SiteLoginViewModel>());
 
             // The screen to open is decided before the window exists, which is what makes it
             // reliable. Done from a command it would be an asynchronous call whose
@@ -144,6 +157,27 @@ public partial class App : Avalonia.Application
             // means, so the window only has to hold what it is given. Attaching is also what
             // puts the current screen up.
             navigator.Attach(window.ScreenHost);
+
+            // A run that meets an expired token asks for the password where passwords are
+            // asked, and then carries on with the session that came back: the screens stay
+            // where they were, so what the site already holds is not thrown away.
+            navigator.SignInRequested += async (_, _) =>
+            {
+                await window.SignInAsync();
+                navigator.ResumeAfterSignIn();
+            };
+
+            // Sending is a window over the order page rather than a page of its own: the order
+            // stays behind it, so a stopped run does not cost the customer the plan they built.
+            // A closed window with "вернуться к проектам" ends the session the way an export
+            // does, because the order it belonged to is finished.
+            navigator.UploadWindowRequested += async (_, _) =>
+            {
+                var upload = new UploadWindow(navigator.UploadScreen);
+
+                if (await upload.ShowDialog<bool>(window))
+                    navigator.EndSession();
+            };
 
             desktop.MainWindow = window;
 
@@ -203,12 +237,16 @@ public partial class App : Avalonia.Application
         services.AddSingleton<IScreenViewFactory>(sp => new AvaloniaScreenViewFactory(
             sp.GetRequiredService<UniqueFoldersViewModel>(),
             sp.GetRequiredService<CombinedModeViewModel>(),
+            sp.GetRequiredService<SiteOrderViewModel>(),
             () => sp.GetRequiredService<ProjectListViewModel>()));
 
         services.AddSingleton(sp => new AvaloniaNavigator(
             sp.GetRequiredService<IScreenViewFactory>(),
             sp.GetRequiredService<UniqueFoldersViewModel>(),
             sp.GetRequiredService<CombinedModeViewModel>(),
+            sp.GetRequiredService<SiteOrderViewModel>(),
+            sp.GetRequiredService<SiteUploadViewModel>(),
+            sp.GetRequiredService<Application.Sites.ISiteSessionStore>(),
             () => sp.GetRequiredService<ProjectListViewModel>()));
 
         services.AddSingleton<IShellNavigator>(sp => sp.GetRequiredService<AvaloniaNavigator>());
@@ -216,6 +254,10 @@ public partial class App : Avalonia.Application
         // The header asks the navigator where the shell is rather than holding a copy of it,
         // so a tab can never disagree with the screen behind it.
         services.AddSingleton<ShellHeaderViewModel>();
+
+        // One sign-in for the whole shell: the window it opens, the header label and the
+        // session it restores are the same object, so they cannot disagree.
+        services.AddSingleton<SiteLoginViewModel>();
 
         // The projects list is not a singleton: it is built per visit, because it exists to
         // show the projects as they are at the moment it is opened. The navigator creates it.

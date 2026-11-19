@@ -258,8 +258,6 @@ namespace PhotoBook.Presentation.ViewModels
             set => SetProperty(ref _isStructureConfirmed, value);
         }
 
-        private System.Threading.Timer? _generateTimer;
-
         /// <summary>Set while a field is handing its number over, so the box keeps the text.</summary>
         private bool _typingRunNumber;
 
@@ -466,5 +464,8 @@ namespace PhotoBook.Presentation.ViewModels
         /// project list.
         /// </summary>
         public event EventHandler? ProjectExported;
+
+        /// <summary>Raised when the customer asks to send the project to the site.</summary>
+        public event EventHandler? OrderRequested;
     }
 }

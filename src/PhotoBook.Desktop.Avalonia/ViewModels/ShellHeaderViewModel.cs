@@ -68,11 +68,18 @@ namespace PhotoBook.Shell.ViewModels
 
         public bool CanOpenCombinedTab => IsReachable(AppMode.Combined);
 
-        /// <summary>What the header says after "Проект:".</summary>
+        /// <summary>What the header says after «Проект:».</summary>
+        /// <remarks>
+        /// The order page is a page of the open project, not a place of its own: it is reached
+        /// from the project's panel and goes back to it. So it carries the name of the session's
+        /// project - the mode it was opened from - rather than the "not chosen" of a screen that
+        /// belongs to nobody, which is what the header read while the order was assembled.
+        /// </remarks>
         public string ProjectTitle => CurrentMode switch
         {
             AppMode.UniqueFolders => NameOf(AppMode.UniqueFolders),
             AppMode.Combined => NameOf(AppMode.Combined),
+            AppMode.SiteOrder when _navigator.SessionMode is { } session => NameOf(session),
             _ => "Не выбран"
         };
 

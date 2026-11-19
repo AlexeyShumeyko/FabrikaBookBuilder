@@ -1,4 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
+using PhotoBook.Application.Sites.Books.Files;
+using PhotoBook.Application.Sites.Books.Order;
+using PhotoBook.Application.Sites.Books.Pricing;
+using PhotoBook.Application.Sites.Completion;
+using PhotoBook.Application.Sites.Projects;
+using PhotoBook.Application.Sites.Upload;
 
 namespace PhotoBook.Application
 {
@@ -27,6 +33,13 @@ namespace PhotoBook.Application
             services.AddSingleton<IProjectBuilder, ProjectBuilder>();
             services.AddSingleton<IEditHistory, EditHistory>();
             services.AddSingleton<IProjectListService, ProjectListService>();
+            services.AddSingleton<IBookFileInspector, BookFileInspector>();
+            services.AddSingleton<OrderFileCheckService>();
+            services.AddSingleton<IGroupQuoteService, GroupQuoteService>();
+            services.AddSingleton<OrderPriceService>();
+            services.AddSingleton<IProjectCreationService, ProjectCreationService>();
+            services.AddSingleton<IBookUploadService, BookUploadService>();
+            services.AddSingleton<IProjectCheckService, ProjectCheckService>();
 
             return services;
         }

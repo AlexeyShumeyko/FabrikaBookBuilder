@@ -2,9 +2,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using PhotoBook.Presentation.ViewModels;
 using PhotoBook.Shell.ViewModels;
 using PhotoBook.Shell.Views;
 
@@ -20,10 +22,31 @@ namespace PhotoBook.Shell;
 /// </remarks>
 public partial class MainWindow : Window
 {
-    public MainWindow(ShellHeaderViewModel header)
+    private readonly SiteLoginViewModel _login;
+
+    private bool _signInOpen;
+
+    public MainWindow(ShellHeaderViewModel header, SiteLoginViewModel login)
     {
         InitializeComponent();
         DataContext = header;
+
+        _login = login;
+
+        // Bound rather than assigned once: the name arrives from the site after the window is
+        // already open, and signing out has to put the invitation back.
+        AccountLabel.Bind(TextBlock.TextProperty, new Binding(nameof(SiteLoginViewModel.AccountText))
+        {
+            Source = login
+        });
+
+        // The stored session knows the address but not the name. It is asked once, and a failure
+        // leaves the address in place.
+        Loaded += async (_, _) => await _login.RefreshProfileAsync();
+
+        // A refused token opens the same window a fresh start would, once: the profile read and
+        // the header button can both find the session gone in the same moment.
+        _login.SessionExpired += async (_, _) => await SignInAsync();
     }
 
     /// <summary>
@@ -65,6 +88,44 @@ public partial class MainWindow : Window
     /// </remarks>
     private async void OnHelpClick(object? sender, RoutedEventArgs e)
         => await new HelpWindow().ShowDialog(this);
+
+    /// <summary>
+    /// Opens the account when somebody is signed in, and the sign-in form when nobody is.
+    /// </summary>
+    /// <remarks>
+    /// One place in the header for both states, so the customer does not have to find a menu to
+    /// leave an account. The label follows the session by binding; nothing is copied back here.
+    /// </remarks>
+    private async void OnAccountClick(object? sender, RoutedEventArgs e)
+    {
+        if (_login.IsSignedIn)
+            await new AccountWindow(_login).ShowDialog(this);
+        else
+            await SignInAsync();
+    }
+
+    /// <summary>
+    /// Shows the sign-in window once, whoever asked for it.
+    /// </summary>
+    /// <remarks>
+    /// Two events can arrive together - the header pressed and the profile refused - and two
+    /// sign-in windows on top of each other would ask for the same password twice.
+    /// </remarks>
+    public async Task SignInAsync()
+    {
+        if (_signInOpen)
+            return;
+
+        _signInOpen = true;
+        try
+        {
+            await new LoginWindow(_login).ShowDialog(this);
+        }
+        finally
+        {
+            _signInOpen = false;
+        }
+    }
 
     /// <summary>
     /// Puts a panel over the page, dims the page, and waits for the panel's answer.

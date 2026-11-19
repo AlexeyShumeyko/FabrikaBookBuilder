@@ -1,0 +1,396 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PhotoBook.Shell.Views.SiteOrderView"
+             FontFamily="Inter">
+
+    <!--
+        The order page is reached from the project's own panel, beside export, and it is the
+        page the order is assembled and sent from: there is no second page behind it. Sending
+        opens a small window of its own, because a run has to be watched and can be stopped.
+
+        A group is one project on the site, so the page holds as many groups as the project has
+        formats - by default one, and two when a project was assembled from books of two page
+        sizes. Each group is a card of books with its own format panel beside it: the format is
+        chosen once for the group, its parameters are the group's, and its files are read against
+        that format. The page's own panel carries the page's name, what keeps the button off, and
+        what would stay behind; the project's name is the header's business and is not repeated
+        here.
+
+        Rules are the other screens': container max 1600 with a 32 margin, a control panel with
+        20 of padding and 58 of content, blocks 24 apart, cards with a 1px slate-200 edge and 16
+        radius. The page scroll hangs in the window's own margin, as it does in the unique-folder
+        mode, so the bar never rides over the parameter card.
+    -->
+    <Grid RowDefinitions="Auto,*" MaxWidth="1600" Margin="32,24" HorizontalAlignment="Stretch">
+        <!-- ============================ control panel ========================== -->
+        <Border Grid.Row="0" Classes="card" Padding="20"
+                HorizontalAlignment="Stretch" VerticalAlignment="Top">
+            <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="58" VerticalAlignment="Center">
+
+                <!-- A mark of the page's own, as every other screen has: the same 48 tile and 12
+                     radius, in the product's colour, with the upload arrow the send window uses.
+                     The panel used to open with the project's name and nothing else, which read
+                     as a heading for the wrong page. -->
+                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="12"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource Brand50}"
+                        BorderBrush="{DynamicResource Brand100}" BorderThickness="1">
+                    <Path Width="20" Height="20" Stretch="Uniform"
+                          Stroke="{DynamicResource Brand600}" StrokeThickness="1.8"
+                          StrokeLineCap="Round" StrokeJoin="Round"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                          Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
+                </Border>
+
+                <StackPanel Grid.Column="1" Margin="16,0,24,0" VerticalAlignment="Center" Spacing="3">
+                    <TextBlock Text="Загрузка на сайт" Classes="t20Bold" />
+
+                    <!-- Nothing else is said here: every sentence about a group - why it cannot
+                         go, or that its books stay behind - belongs to that group's own card. -->
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                            VerticalAlignment="Center">
+                    <Button Classes="outline" Padding="12,10"
+                            AutomationProperties.Name="Вернуться к проекту"
+                            Click="OnBack">
+                        <TextBlock Text="Вернуться к проекту" VerticalAlignment="Center" />
+                    </Button>
+
+                    <!-- The one write in the program: this opens the confirmation window, and
+                         nothing is sent until its own «Отправить» is pressed. -->
+                    <Button Classes="primary" Padding="16,10"
+                            IsEnabled="{Binding CanUpload}"
+                            AutomationProperties.Name="Загрузить на сайт"
+                            Click="OnUpload">
+                        <TextBlock Text="Загрузить на сайт" Foreground="White" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ================================ body ==============================
+             The bar hangs in the window's margin and handed back by the padding, the same way
+             the unique-folder mode does it: nothing is lost, and the scroll no longer lies over
+             the parameter card's own edge. -->
+        <ScrollViewer Grid.Row="1" Classes="contentScroll" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled" Margin="0,24,-20,0">
+            <Border Padding="0,0,20,0">
+                <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+
+                    <Border Classes="card" Padding="20,16" IsVisible="{Binding HasMessage}">
+                        <TextBlock Text="{Binding Message}" Classes="t12"
+                                   Foreground="{DynamicResource Slate600}" TextWrapping="Wrap" />
+                    </Border>
+
+                    <!--
+                        One card per group, one after another down the page. Inside a group the
+                        two panels stand side by side, seven tenths of the width for the books and
+                        three for its format: the books are rows, the format is a handful of
+                        questions, and a question does not need half a screen. The 24 between them
+                        is a column of its own rather than a spacing property, the same way the
+                        start screen does it.
+                    -->
+                    <ItemsControl ItemsSource="{Binding Groups}" HorizontalAlignment="Stretch">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="7*,24,3*" VerticalAlignment="Top"
+                                      Margin="0,0,0,16">
+
+                                    <!-- the group of books -->
+                                    <Border Grid.Column="0" Name="BooksCard" Classes="card" Padding="0"
+                                            HorizontalAlignment="Stretch">
+                                        <Grid RowDefinitions="Auto,Auto,*,Auto">
+                                            <StackPanel Grid.Row="0" Spacing="3" Margin="20,16,20,12">
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{Binding Title}" Classes="t14SemiBold" />
+                                                    <TextBlock Text="{Binding SummaryText}" Classes="t11"
+                                                               Foreground="{DynamicResource Slate500}"
+                                                               VerticalAlignment="Center" />
+
+                                                    <!-- A ready group says so in green, in a badge
+                                                         rather than the grey sentence it used to
+                                                         repeat. A group that cannot go explains
+                                                         itself in the line below. -->
+                                                    <Border Background="{DynamicResource Emerald50}"
+                                                            BorderBrush="{DynamicResource Emerald100}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Padding="8,3" VerticalAlignment="Center"
+                                                            IsVisible="{Binding HasStatus}">
+                                                        <TextBlock Text="{Binding StatusText}" Classes="t11"
+                                                                   Foreground="{DynamicResource Emerald700}" />
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding FilesText}" Classes="t12"
+                                                           Foreground="{DynamicResource Slate500}" TextWrapping="Wrap"
+                                                           Margin="0,4,0,0"
+                                                           IsVisible="{Binding HasFilesText}" />
+
+                                                <!-- A group that was uploaded before is left out of the
+                                                     coming run by default, and the customer can put it
+                                                     back with this tick. Every group has the tick, so
+                                                     excluding one is the same single click. -->
+                                                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0">
+                                                    <CheckBox IsChecked="{Binding IsIncluded, Mode=TwoWay}"
+                                                              AutomationProperties.Name="Участвует в загрузке">
+                                                        <TextBlock Text="Участвует в загрузке" Classes="t11" />
+                                                    </CheckBox>
+                                                    <TextBlock Text="{Binding UploadedProjectText}" Classes="t11"
+                                                               Foreground="{DynamicResource Slate500}"
+                                                               VerticalAlignment="Center" TextWrapping="Wrap"
+                                                               IsVisible="{Binding HasUploadedProject}" />
+                                                </StackPanel>
+
+                                                <!-- Why this group cannot go, or what stays behind if
+                                                     the button is pressed now. The sentence is about
+                                                     this group alone, so it is written here rather
+                                                     than in the page's own panel. -->
+                                                <TextBlock Text="{Binding NoteText}" Classes="t12"
+                                                           Foreground="{DynamicResource Slate600}" TextWrapping="Wrap"
+                                                           Margin="0,4,0,0"
+                                                           IsVisible="{Binding NoteIsProblem}" />
+                                                <TextBlock Text="{Binding NoteText}" Classes="t12"
+                                                           Foreground="{DynamicResource Amber700}" TextWrapping="Wrap"
+                                                           Margin="0,4,0,0"
+                                                           IsVisible="{Binding NoteIsWarning}" />
+                                            </StackPanel>
+
+                                            <!-- the column headings, once -->
+                                            <Grid Grid.Row="1" ColumnDefinitions="56,*,100,110,130,140,24,24"
+                                                  Margin="20,0,20,12">
+                                                <TextBlock Grid.Column="0" Text="№" Classes="t11" Foreground="{DynamicResource Slate500}" />
+                                                <TextBlock Grid.Column="1" Text="Книга" Classes="t11" Foreground="{DynamicResource Slate500}" />
+                                                <TextBlock Grid.Column="2" Text="Развороты" Classes="t11" Foreground="{DynamicResource Slate500}" />
+                                                <TextBlock Grid.Column="3" Text="Фотографии" Classes="t11" Foreground="{DynamicResource Slate500}" />
+                                                <TextBlock Grid.Column="4" Text="Состояние" Classes="t11" Foreground="{DynamicResource Slate500}" />
+                                                <TextBlock Grid.Column="5" Text="Цена" Classes="t11" Foreground="{DynamicResource Slate500}" />
+                                            </Grid>
+
+                                            <Border Grid.Row="1" Height="1" Background="{DynamicResource Slate200}"
+                                                    VerticalAlignment="Bottom" Margin="20,0" />
+
+                                            <ItemsControl Grid.Row="2" ItemsSource="{Binding Books}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel>
+                                                            <!-- One book as a row of the table. The chevron opens what
+                                                                 the check found: the cover, the spreads, and the file
+                                                                 the site refused. A book with a problem opens itself. -->
+                                                            <Grid ColumnDefinitions="56,*,100,110,130,140,24,24" Margin="20,12"
+                                                                  Opacity="{Binding RowOpacity}">
+                                                                <TextBlock Grid.Column="0" Text="{Binding Number}" Classes="t12"
+                                                                           Foreground="{DynamicResource Slate500}" />
+                                                                <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="t12"
+                                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock Grid.Column="2" Text="{Binding Spreads}" Classes="t12"
+                                                                           VerticalAlignment="Center" />
+                                                                <TextBlock Grid.Column="3" Text="{Binding Photos}" Classes="t12"
+                                                                           VerticalAlignment="Center" />
+                                                                <TextBlock Grid.Column="4" Text="{Binding ConditionText}" Classes="t12"
+                                                                           VerticalAlignment="Center"
+                                                                           Foreground="{DynamicResource Red600}"
+                                                                           IsVisible="{Binding IsFailed}" />
+                                                                <TextBlock Grid.Column="4" Text="{Binding ConditionText}" Classes="t12"
+                                                                           VerticalAlignment="Center"
+                                                                           IsVisible="{Binding !IsFailed}" />
+                                                                <TextBlock Grid.Column="5" Text="{Binding PriceText}" Classes="t12"
+                                                                           VerticalAlignment="Center" />
+                                                                <!-- A book can be moved when the page's own
+                                                                     split put it beside books it does not share
+                                                                     parameters with. -->
+                                                                <Button Grid.Column="6" Classes="ghostClear" Padding="2"
+                                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                        AutomationProperties.Name="Переместить книгу"
+                                                                        Click="OnMoveBook">
+                                                                    <TextBlock Text="&#xE712;" FontFamily="Segoe MDL2 Assets"
+                                                                               FontSize="12"
+                                                                               Foreground="{DynamicResource Slate500}" />
+                                                                </Button>
+                                                                <Button Grid.Column="7" Classes="ghostClear" Padding="2"
+                                                                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                                        AutomationProperties.Name="Файлы книги"
+                                                                        IsVisible="{Binding !IsExpanded}"
+                                                                        Click="OnToggleBook">
+                                                                    <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets"
+                                                                               FontSize="10"
+                                                                               Foreground="{DynamicResource Slate500}" />
+                                                                </Button>
+                                                                <Button Grid.Column="7" Classes="ghostClear" Padding="2"
+                                                                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                                        AutomationProperties.Name="Свернуть книгу"
+                                                                        IsVisible="{Binding IsExpanded}"
+                                                                        Click="OnToggleBook">
+                                                                    <TextBlock Text="&#xE70E;" FontFamily="Segoe MDL2 Assets"
+                                                                               FontSize="10"
+                                                                               Foreground="{DynamicResource Slate500}" />
+                                                                </Button>
+                                                            </Grid>
+
+                                                            <StackPanel Spacing="6" Margin="76,0,24,12"
+                                                                        IsVisible="{Binding IsExpanded}">
+                                                                <!-- Only what is about the book itself - no cover, or
+                                                                     too few spreads. What the site said about one
+                                                                     file is in that file's own row below, once. -->
+                                                                <TextBlock Text="{Binding ReasonsText}" Classes="t11"
+                                                                           Foreground="{DynamicResource Red700}"
+                                                                           TextWrapping="Wrap"
+                                                                           IsVisible="{Binding HasReasons}" />
+
+                                                                <ItemsControl ItemsSource="{Binding FileRows}"
+                                                                              IsVisible="{Binding HasFileRows}">
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <Grid ColumnDefinitions="140,*,Auto" Margin="0,0,0,2">
+                                                                                <TextBlock Grid.Column="0" Text="{Binding Title}"
+                                                                                           Classes="t11"
+                                                                                           Foreground="{DynamicResource Slate500}" />
+                                                                                <TextBlock Grid.Column="1" Text="{Binding FileName}"
+                                                                                           Classes="t11"
+                                                                                           TextTrimming="CharacterEllipsis" />
+                                                                                <TextBlock Grid.Column="2" Text="{Binding Problem}"
+                                                                                           Classes="t11" Margin="12,0,0,0"
+                                                                                           Foreground="{DynamicResource Red600}"
+                                                                                           TextWrapping="Wrap"
+                                                                                           IsVisible="{Binding IsProblem}" />
+                                                                                <TextBlock Grid.Column="2" Text="{Binding Problem}"
+                                                                                           Classes="t11" Margin="12,0,0,0"
+                                                                                           Foreground="{DynamicResource Slate500}"
+                                                                                           TextWrapping="Wrap"
+                                                                                           IsVisible="{Binding IsRemark}" />
+                                                                            </Grid>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
+                                                            </StackPanel>
+
+                                                            <Border Height="1" Background="{DynamicResource Slate100}" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <!-- What belongs to the group rather than to one book, and
+                                                 the one answer the customer has to give before sending. -->
+                                            <Border Grid.Row="3" Padding="20,12" IsVisible="{Binding HasFileLines}">
+                                                <StackPanel Spacing="8">
+                                                    <ItemsControl ItemsSource="{Binding FileLines}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding}" Classes="t11"
+                                                                           Foreground="{DynamicResource Red600}"
+                                                                           TextWrapping="Wrap" Margin="0,0,0,4" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+
+                                                    <CheckBox IsVisible="{Binding NeedsConfirmation}"
+                                                              IsChecked="{Binding ConfirmationsAccepted, Mode=TwoWay}"
+                                                              AutomationProperties.Name="Подтвердить файлы">
+                                                        <TextBlock Text="Да, отправить эти файлы — край сайт может обрезать."
+                                                                   Classes="t12" TextWrapping="Wrap" />
+                                                    </CheckBox>
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+
+                                    <!--
+                                        The format belongs to the group, so it is chosen here once and
+                                        the questions appear under it. The two cards are one row, and
+                                        neither is given the other's height: the row is as tall as the
+                                        taller card and both fill it.
+                                    -->
+                                    <Border Grid.Column="2" Classes="card" Padding="20,16"
+                                            HorizontalAlignment="Stretch">
+                                        <Grid RowDefinitions="Auto,Auto,*,Auto">
+                                            <TextBlock Grid.Row="0" Text="Формат и параметры" Classes="t14SemiBold" />
+
+                                            <StackPanel Grid.Row="1" Spacing="6" Margin="0,14,0,0">
+                                                <TextBlock Text="Формат группы" Classes="t11"
+                                                           Foreground="{DynamicResource Slate500}" />
+                                                <ComboBox HorizontalAlignment="Stretch"
+                                                          AutomationProperties.Name="Формат группы"
+                                                          ItemsSource="{Binding Formats}"
+                                                          SelectedItem="{Binding SelectedFormat, Mode=TwoWay}"
+                                                          DisplayMemberBinding="{Binding DisplayText}"
+                                                          PlaceholderText="Выберите формат" />
+                                                <TextBlock Text="Формат и параметры выбираются один раз — для всех книг группы."
+                                                           Classes="t11" Foreground="{DynamicResource Slate400}"
+                                                           TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding FormatNote}" Classes="t11"
+                                                           Foreground="{DynamicResource Red600}"
+                                                           TextWrapping="Wrap"
+                                                           IsVisible="{Binding HasFormatNote}" />
+                                            </StackPanel>
+
+                                            <ScrollViewer Grid.Row="2" Margin="0,16,0,0"
+                                                          VerticalScrollBarVisibility="Auto"
+                                                          HorizontalScrollBarVisibility="Disabled"
+                                                          IsVisible="{Binding HasParameters}">
+                                                <ItemsControl ItemsSource="{Binding Parameters}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <StackPanel Spacing="4" Margin="0,0,0,8">
+                                                                <!-- The block says what is still open, in red:
+                                                                     "не выбрано: 1" left the customer to
+                                                                     look for which one. -->
+                                                                <TextBlock Text="{Binding StateText}" Classes="t11"
+                                                                           Foreground="{DynamicResource Red600}"
+                                                                           TextWrapping="Wrap"
+                                                                           IsVisible="{Binding HasMissing}" />
+                                                                <TextBlock Text="{Binding StateText}" Classes="t11"
+                                                                           Foreground="{DynamicResource Slate500}"
+                                                                           TextWrapping="Wrap"
+                                                                           IsVisible="{Binding !HasMissing}" />
+
+                                                                <ItemsControl ItemsSource="{Binding Parameters}">
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <StackPanel Spacing="4" Margin="0,8,0,0">
+                                                                                <StackPanel Orientation="Horizontal" Spacing="3">
+                                                                                    <TextBlock Text="{Binding Title}" Classes="t11"
+                                                                                               Foreground="{DynamicResource Slate500}" />
+                                                                                    <TextBlock Text="*" Classes="t11"
+                                                                                               Foreground="{DynamicResource Red600}"
+                                                                                               IsVisible="{Binding IsMissing}" />
+                                                                                </StackPanel>
+                                                                                <ComboBox HorizontalAlignment="Stretch"
+                                                                                          AutomationProperties.Name="{Binding Title}"
+                                                                                          ItemsSource="{Binding Elements}"
+                                                                                          SelectedItem="{Binding Selected, Mode=TwoWay}"
+                                                                                          DisplayMemberBinding="{Binding Title}"
+                                                                                          PlaceholderText="Выберите вариант" />
+                                                                            </StackPanel>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
+                                                            </StackPanel>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </ScrollViewer>
+
+                                            <!-- What this group costs. The sum of the whole order is
+                                                 on the send window, which is where it is decided. -->
+                                            <Border Grid.Row="3" Margin="0,12,0,0" Padding="0,10,0,0"
+                                                    BorderBrush="{DynamicResource Slate200}" BorderThickness="0,1,0,0"
+                                                    IsVisible="{Binding HasTotal}">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Text="Итого по группе" Classes="t11"
+                                                               Foreground="{DynamicResource Slate500}"
+                                                               VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding TotalText}"
+                                                               Classes="t14SemiBold" />
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

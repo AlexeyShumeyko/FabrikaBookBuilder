@@ -142,6 +142,54 @@ public sealed class FoldersModeExportTests : IDisposable
 
         // The service answers with false: an export that cannot run is an expected outcome
         // here, not an exception the caller has to catch.
-        AssertFails(await Service().ExportProjectAsync(project, output), "no writable folder");
+        var result = await Service().ExportProjectAsync(project, output);
+        AssertFails(result, "missing source");
+
+        // The reason names the file and what the customer can do, rather than a copy failure
+        // that leaves them guessing which photograph the program means.
+        Assert.Contains("gone.jpg", result.Error);
+        Assert.Contains("создайте проект заново", result.Error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// A copy that fails has to say what to do about it. The dialog used to show the word
+    /// "Не удалось" and nothing else, so the customer had no way to fix it themselves.
+    /// </summary>
+    [Fact]
+    public async Task Names_the_folder_that_refused_a_file_and_the_way_out()
+    {
+        var project = TestProject.Folders(
+            TestProject.Book(1, Source("c.jpg"), Source("s.jpg")));
+
+        var output = OutputFolder("out");
+
+        // A folder where the second file has to go: the copy cannot write over a directory.
+        Directory.CreateDirectory(Path.Combine(output, "001-01.jpg"));
+
+        var result = await Service().ExportProjectAsync(project, output);
+
+        AssertFails(result, "a blocked destination");
+        Assert.Contains("Не удалось выгрузить", result.Error);
+        Assert.Contains(output, result.Error);
+        Assert.Contains("другую папку", result.Error);
+    }
+
+    [Fact]
+    public async Task Names_every_missing_file_before_copying_anything()
+    {
+        var present = Source("present.jpg");
+        var project = TestProject.Folders(TestProject.Book(
+            1,
+            Path.Combine(_root, "gone-cover.jpg"),
+            present,
+            Path.Combine(_root, "gone-page.jpg")));
+
+        var output = OutputFolder("out");
+        var result = await Service().ExportProjectAsync(project, output);
+
+        AssertFails(result, "two missing sources");
+        Assert.Contains("gone-cover.jpg", result.Error);
+        Assert.Contains("gone-page.jpg", result.Error);
+        Assert.Empty(Directory.GetFiles(output));
     }
 }

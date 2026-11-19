@@ -123,7 +123,7 @@ dotnet test --collect:"XPlat Code Coverage"               # с отчётом п
 1. Поднять версию в `src\PhotoBook.Desktop.Avalonia\PhotoBook.Desktop.Avalonia.csproj`:
 
    ```xml
-   <Version>2.0.0</Version>
+   <Version>2.1.0</Version>
    ```
 
    Обязательный шаг. Сборка отказывается выпускать версию, для которой уже есть тег,

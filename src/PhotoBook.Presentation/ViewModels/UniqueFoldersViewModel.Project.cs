@@ -18,7 +18,7 @@ namespace PhotoBook.Presentation.ViewModels
     public partial class UniqueFoldersViewModel : ViewModelBase, IProjectEditor
     {
 
-        public async void SetProject(Project? project, ProjectInfo projectInfo)
+        public void SetProject(Project? project, ProjectInfo projectInfo)
         {
             Books.Clear();
             Project = null;
@@ -37,6 +37,10 @@ namespace PhotoBook.Presentation.ViewModels
             var projectStatus = projectInfo.Status;
             var projectCreatedDate = projectInfo.CreatedDate;
             var projectLastModified = projectInfo.LastModified;
+            // The pictures on the card travel with the record too: the copy below is what the
+            // editor saves back into the index, and a copy that forgets them is a strip erased.
+            var projectPreviews = new List<string>(projectInfo.PreviewPhotos);
+            var projectPhotoCount = projectInfo.TotalPhotoCount;
 
             if (string.IsNullOrEmpty(projectId))
             {
@@ -52,8 +56,11 @@ namespace PhotoBook.Presentation.ViewModels
                 BookCount = projectBookCount,
                 Status = projectStatus,
                 CreatedDate = projectCreatedDate,
-                LastModified = projectLastModified
+                LastModified = projectLastModified,
+                TotalPhotoCount = projectPhotoCount
             };
+
+            foreach (var photo in projectPreviews) projectInfoCopy.PreviewPhotos.Add(photo);
 
             CurrentProjectInfo = projectInfoCopy;
             ProjectName = projectInfoCopy.Name;
@@ -214,23 +221,17 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>
         /// Writes the name only: no project file, no change of screen.
         /// </summary>
-        public async System.Threading.Tasks.Task SaveProjectNameOnlyAsync()
+        public System.Threading.Tasks.Task SaveProjectNameOnlyAsync()
         {
             if (CurrentProjectInfo == null || string.IsNullOrEmpty(ProjectName))
             {
-                return;
+                return System.Threading.Tasks.Task.CompletedTask;
             }
 
-            try
-            {
-                CurrentProjectInfo.Name = ProjectName;
-                CurrentProjectInfo.LastModified = DateTime.Now;
+            CurrentProjectInfo.Name = ProjectName;
+            CurrentProjectInfo.LastModified = DateTime.Now;
 
-            }
-            catch (Exception ex)
-            {
-                _loggingService.LogError("Ошибка сохранения названия проекта", ex);
-            }
+            return System.Threading.Tasks.Task.CompletedTask;
         }
 
         private ProjectStatus DetermineProjectStatus(Project project)
@@ -280,9 +281,17 @@ namespace PhotoBook.Presentation.ViewModels
             get => _project;
             set
             {
+                if (_project is not null)
+                    _project.PropertyChanged -= Project_ValidityChanged;
+
                 SetProperty(ref _project, value);
+
                 if (value != null)
                 {
+                    // A project assembled here becomes valid long after it was opened, and the
+                    // buttons that depend on that are only as fresh as their last notification.
+                    value.PropertyChanged += Project_ValidityChanged;
+
                     Books.Clear();
                     foreach (var book in value.Books)
                     {
@@ -299,6 +308,9 @@ namespace PhotoBook.Presentation.ViewModels
         /// single book does NOT raise it: the project is still being worked on.
         /// </summary>
         public event EventHandler? ProjectExported;
+
+        /// <summary>Raised when the customer asks to send the project to the site.</summary>
+        public event EventHandler? OrderRequested;
 
     }
 }

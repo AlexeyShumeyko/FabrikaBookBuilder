@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using PhotoBook.Application.Sites.Books.Files;
 using PhotoBook.Presentation.ViewModels;
 
 namespace PhotoBook.Presentation
@@ -26,6 +27,17 @@ namespace PhotoBook.Presentation
         {
             services.AddSingleton<UniqueFoldersViewModel>();
             services.AddSingleton<CombinedModeViewModel>();
+
+            // Reading the files is the order page's own work: the words «Готова» and «Ошибка в
+            // файлах» come from this one check, and a second copy of the rule would drift.
+            services.AddSingleton<OrderFileCheckService>();
+
+            // The upload screen keeps the run it started: its progress, its projects and its
+            // result outlive a view swap, and a second copy would start the order again.
+            services.AddSingleton<SiteUploadViewModel>();
+            // The order page reads the open project each time it is opened, so one copy is
+            // enough and a second would only hold a stale project.
+            services.AddSingleton<SiteOrderViewModel>();
 
             return services;
         }

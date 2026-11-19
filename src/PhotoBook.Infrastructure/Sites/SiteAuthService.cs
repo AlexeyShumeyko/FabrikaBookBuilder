@@ -1,0 +1,166 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using PhotoBook.Application;
+using PhotoBook.Application.Sites;
+
+namespace PhotoBook.Infrastructure.Sites
+{
+    /// <summary>
+    /// Signs in on whichever site owns the account.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Both sites are asked at the same time, one request each. Doing it in sequence would make
+    /// a customer wait for the first site to fail before the second was even tried, and would
+    /// double the time a wrong password takes to be reported.
+    /// </para>
+    /// <para>
+    /// When both sites accept the password the account exists in both places. The customer
+    /// orders on one of them, and the program must not pick by chance: it looks at where the
+    /// account has projects. If neither site has any, the first region in the registry wins,
+    /// which is stable across runs.
+    /// </para>
+    /// </remarks>
+    internal sealed class SiteAuthService : ISiteAuthService
+    {
+        private readonly HttpClient _http;
+        private readonly Func<DateTimeOffset> _now;
+        private readonly TimeSpan _retryDelay;
+
+        public SiteAuthService(HttpClient http, Func<DateTimeOffset>? now = null, TimeSpan? retryDelay = null)
+        {
+            _http = http ?? throw new ArgumentNullException(nameof(http));
+            _now = now ?? (() => DateTimeOffset.UtcNow);
+            _retryDelay = retryDelay ?? TimeSpan.FromMilliseconds(500);
+        }
+
+        public async Task<Result<SiteSession>> SignInAsync(
+            string email,
+            string password,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrEmpty(password))
+                return Result<SiteSession>.Fail("Введите почту и пароль.");
+
+            var attempts = await Task
+                .WhenAll(SiteRegion.All.Select(region => TrySignInAsync(region, email, password, cancellationToken)))
+                .ConfigureAwait(false);
+
+            var signedIn = attempts
+                .Where(attempt => attempt.Session is not null)
+                .Select(attempt => attempt.Session!)
+                .ToList();
+
+            if (signedIn.Count == 0)
+                return Result<SiteSession>.Fail(Describe(attempts));
+
+            if (signedIn.Count == 1)
+                return Result<SiteSession>.Ok(signedIn[0]);
+
+            foreach (var session in signedIn)
+            {
+                var hasWork = await HasProjectsAsync(session, cancellationToken).ConfigureAwait(false);
+                if (hasWork.IsSuccess && hasWork.Value)
+                    return Result<SiteSession>.Ok(session);
+            }
+
+            return Result<SiteSession>.Ok(signedIn[0]);
+        }
+
+        private async Task<Attempt> TrySignInAsync(
+            SiteRegion region,
+            string email,
+            string password,
+            CancellationToken cancellationToken)
+        {
+            var client = new SiteApiClient(region, _http, _retryDelay);
+
+            var response = await client.SignInAsync(email, password, cancellationToken).ConfigureAwait(false);
+            if (!response.IsSuccess || response.Document is null)
+                return new Attempt(region, null, response.Error);
+
+            using var document = response.Document;
+
+            if (!document.RootElement.TryGetProperty("access_token", out var tokenElement) ||
+                tokenElement.ValueKind != JsonValueKind.String)
+                return new Attempt(region, null, new SiteApiError(
+                    SiteApiErrorKind.MalformedResponse, "Сайт не выдал токен доступа."));
+
+            var lifetimeSeconds = document.RootElement.TryGetProperty("expires_in", out var expiresElement) &&
+                                  expiresElement.TryGetInt64(out var seconds) &&
+                                  seconds > 0
+                ? seconds
+                : 7 * 24 * 60 * 60;
+
+            var session = new SiteSession(
+                region,
+                tokenElement.GetString()!,
+                _now().AddSeconds(lifetimeSeconds),
+                email.Trim());
+
+            return new Attempt(region, session, null);
+        }
+
+        /// <summary>
+        /// Whether the account holds any work on this site.
+        /// </summary>
+        /// <remarks>
+        /// Only used to break the tie when both sites accept the password. A failure here is not
+        /// a reason to refuse the sign-in: the account simply looks unused, and the caller still
+        /// gets a session.
+        /// </remarks>
+        private async Task<Result<bool>> HasProjectsAsync(SiteSession session, CancellationToken cancellationToken)
+        {
+            var client = new SiteApiClient(session.Region, _http, _retryDelay);
+            var response = await client
+                .GetAsync("creators/projects?with_update_price=1", session.AccessToken, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!response.IsSuccess || response.Document is null)
+                return Result<bool>.Fail(response.Error?.Message ?? "Сайт не ответил списком проектов.");
+
+            using var document = response.Document;
+
+            var hasWork = document.RootElement.TryGetProperty("data", out var data) &&
+                          data.ValueKind == JsonValueKind.Array &&
+                          data.GetArrayLength() > 0;
+
+            return Result<bool>.Ok(hasWork);
+        }
+
+        /// <summary>
+        /// One sentence for the whole attempt, chosen from the first site that said something.
+        /// </summary>
+        /// <remarks>
+        /// A 401 during sign-in means the password or the address is wrong, not that a session
+        /// expired, and the site's own message says neither - so the sentence is written here
+        /// rather than taken from the transport layer, which cannot know what was being asked.
+        /// The live platform answers 422 to a refused password instead, which is its validation
+        /// error rather than the standard one, so both codes are read as the same refusal. Left
+        /// unhandled, 422 reached the customer as "Сайт ответил кодом 422."
+        /// </remarks>
+        private static string Describe(IReadOnlyList<Attempt> attempts)
+        {
+            var first = attempts
+                .Select(attempt => attempt.Error)
+                .FirstOrDefault(error => error is not null);
+
+            if (first is null)
+                return "Не удалось войти. Попробуйте позже.";
+
+            return first.IsSessionExpired || first.StatusCode == UnprocessableEntity
+                ? "Неверная почта или пароль."
+                : first.Message;
+        }
+
+        /// <summary>The platform's answer to a refused password, spelled out where it is read.</summary>
+        private const int UnprocessableEntity = 422;
+
+        private sealed record Attempt(SiteRegion Region, SiteSession? Session, SiteApiError? Error);
+    }
+}

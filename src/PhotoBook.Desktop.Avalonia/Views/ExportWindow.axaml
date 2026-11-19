@@ -176,6 +176,25 @@
                     </StackPanel>
                 </Border>
 
+                <!--
+                    Why the export did not happen. It used to be the single word "Не удалось"
+                    under the bar, which told the customer nothing and sent them to support.
+                    The reason the service returned is a sentence, so it gets a panel that wraps
+                    and stays up until the window is closed or the export is tried again.
+                -->
+                <Border x:Name="ErrorPanel" IsVisible="False"
+                        Background="{DynamicResource Red50}"
+                        BorderBrush="{DynamicResource Red200}" BorderThickness="1"
+                        CornerRadius="12" Padding="14,12">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Экспорт не выполнен" Classes="t12Semi"
+                                   Foreground="{DynamicResource Red700}" />
+                        <TextBlock x:Name="ErrorText" Classes="t12"
+                                   Foreground="{DynamicResource Red700}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
                 <!-- progress, shown only while it is running -->
                 <StackPanel x:Name="ProgressPanel" IsVisible="False" Spacing="8">
                     <Grid ColumnDefinitions="*,Auto">

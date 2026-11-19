@@ -114,8 +114,15 @@ namespace PhotoBook.Infrastructure
                                 FolderPath = bookData.FolderPath,
                                 Name = bookData.Name,
                                 Cover = bookData.Cover,
-                                BookIndex = bookData.BookIndex
+                                BookIndex = bookData.BookIndex,
+                                SiteProductId = bookData.SiteProductId,
+                                SiteVariantId = bookData.SiteVariantId,
+                                SiteProductTitle = bookData.SiteProductTitle,
+                                SiteVariantTitle = bookData.SiteVariantTitle
                             };
+
+                            foreach (var option in bookData.SiteOptions ?? new Dictionary<long, long>())
+                                book.SetSiteOption(option.Key, option.Value);
 
                             if (bookData.Pages != null && bookData.Pages.Count > 0)
                             {
@@ -195,5 +202,16 @@ namespace PhotoBook.Infrastructure
         public Page? Cover { get; set; }
         public int BookIndex { get; set; }
         public List<Page>? Pages { get; set; }
+
+        // The site format chosen for this book. Absent in every file written before the order
+        // page existed, and read back as "no format chosen" - which is exactly what it was.
+        public long? SiteProductId { get; set; }
+        public long? SiteVariantId { get; set; }
+        public string? SiteProductTitle { get; set; }
+        public string? SiteVariantTitle { get; set; }
+
+        // The parameters chosen for the format. Absent in every file written before the order
+        // page could price a book, and read back as "nothing chosen".
+        public Dictionary<long, long>? SiteOptions { get; set; }
     }
 }

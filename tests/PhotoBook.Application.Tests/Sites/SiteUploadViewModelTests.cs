@@ -1,0 +1,527 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using PhotoBook.Application;
+using PhotoBook.Application.Sites;
+using PhotoBook.Application.Sites.Books;
+using PhotoBook.Application.Sites.Books.Files;
+using PhotoBook.Application.Sites.Catalog.Layout;
+using PhotoBook.Application.Sites.Books.Grouping;
+using PhotoBook.Application.Sites.Books.Pricing;
+using PhotoBook.Application.Sites.Books.Submission;
+using PhotoBook.Application.Sites.Catalog;
+using PhotoBook.Application.Sites.Completion;
+using PhotoBook.Application.Sites.Pricing;
+using PhotoBook.Application.Sites.Projects;
+using PhotoBook.Application.Sites.Upload;
+using PhotoBook.Presentation.ViewModels;
+
+namespace PhotoBook.Application.Tests.Sites
+{
+    /// <summary>
+    /// The screen is the only place that starts a write, so what it does with a refusal, a lost
+    /// connection and a difference decides whether the customer's book ends up whole.
+    /// </summary>
+    public class SiteUploadViewModelTests
+    {
+        private static readonly SiteSession Session =
+            new(SiteRegion.Com, "token-value", new DateTimeOffset(2026, 11, 10, 12, 0, 0, TimeSpan.Zero));
+
+        [Fact]
+        public async Task SendsEveryGroupAndShowsWhereTheProjectIs()
+        {
+            var creation = new StubCreation(1001, 1002);
+            var upload = new StubUpload((session, projectId, pages, _, _, _) =>
+                Task.FromResult(Accepted(projectId, pages.Count)));
+            var check = new StubCheck(noDifferences: true);
+
+            var screen = Screen(creation, upload, check, groups: 2, pages: 3);
+
+            Assert.True(screen.CanUpload);
+            Assert.Equal(6, screen.Total);
+
+            await screen.UploadAsync();
+
+            Assert.Equal(UploadStep.Done, screen.Step);
+            Assert.Equal(6, screen.Uploaded);
+
+            // The bar is scaled to a hundred, the same scale it is read on: a fraction written
+            // into a bar of a hundred moved it by one percent at the end of a finished run.
+            Assert.Equal(100, screen.ProgressValue);
+            Assert.Equal("100%", screen.PercentText);
+            Assert.Equal("Отправлено 6 из 6 файлов", screen.UploadedText);
+            Assert.Equal(2, screen.Results.Count);
+            Assert.All(screen.Results, result => Assert.True(result.IsComplete));
+            Assert.True(screen.HasUrl);
+            Assert.Equal("https://fabrika-fotoknigi.com/layflat?projectId=1001", screen.Url);
+            Assert.Single(creation.Asked);
+            Assert.Equal(2, creation.Asked[0].Count);
+            Assert.Equal(2, upload.Calls.Count);
+        }
+
+        /// <summary>
+        /// A finished run writes down which project each group went to, so the order page can
+        /// tell the customer the books are already on the site before they send them again.
+        /// </summary>
+        [Fact]
+        public async Task RemembersWhichProjectEachFinishedGroupWentTo()
+        {
+            var store = new StubUploadedProjects();
+            var screen = Screen(
+                new StubCreation(1001, 1002),
+                new StubUpload((session, projectId, pages, _, _, _) =>
+                    Task.FromResult(Accepted(projectId, pages.Count))),
+                new StubCheck(true),
+                groups: 2,
+                pages: 3,
+                uploaded: store);
+
+            await screen.UploadAsync();
+
+            Assert.Equal(UploadStep.Done, screen.Step);
+            Assert.Equal(new long[] { 1001, 1002 }, store.Saved);
+        }
+
+        [Fact]
+        public void ABookLeftOutByTheOrderKeepsTheButtonOff()
+        {
+            var screen = Screen(new StubCreation(1001), new StubUpload((session, projectId, pages, _, _, _) =>
+                Task.FromResult(Accepted(projectId, pages.Count))), new StubCheck(true), groups: 1, pages: 3);
+
+            // The order page names every book it could not price; one of those is enough to
+            // stop the run, because a project nobody priced is a project nobody confirmed.
+            screen.Prepare(Session, screen.Summary!, Array.Empty<UploadGroup>(), new[] { "Книга 2: цена не получена." });
+
+            Assert.False(screen.CanUpload);
+            Assert.Contains("цена не получена", screen.Message);
+        }
+
+        [Fact]
+        public async Task TheSecondBookContinuesTheCountInsteadOfStartingOver()
+        {
+            var upload = new StubUpload((session, projectId, pages, _, progress, _) =>
+            {
+                for (var sent = 1; sent <= pages.Count; sent++)
+                    progress?.Report(new UploadProgress(pages.Count, sent, string.Empty));
+
+                return Task.FromResult(Accepted(projectId, pages.Count));
+            });
+
+            var screen = Screen(
+                new StubCreation(1001),
+                upload,
+                new StubCheck(true),
+                groups: 1,
+                pages: 3,
+                booksPerGroup: 2);
+
+            Assert.Equal(6, screen.Total);
+
+            await screen.UploadAsync();
+
+            // Each book counts its own files from zero, and the group adds them up once: the
+            // bar used to stand at two thirds of the order with a caption past its end.
+            Assert.Equal(6, screen.Uploaded);
+            Assert.Equal("Отправлено 6 из 6 файлов", screen.UploadedText);
+            Assert.Equal(100, screen.ProgressValue);
+        }
+
+        [Fact]
+        public async Task AnExpiredSessionAsksForThePasswordAndStopsTheRun()
+        {
+            var upload = new StubUpload((session, projectId, pages, _, _, _) => Task.FromResult(
+                new BookUploadResult(
+                    UploadState.Failed,
+                    new UploadSession(SiteRegion.Com, projectId, pages.Count, 0),
+                    "Нужно войти заново: сеанс истёк.",
+                    UploadFailureKind.Unauthorized)));
+
+            var screen = Screen(new StubCreation(1001), upload, new StubCheck(true), groups: 1, pages: 3);
+
+            var asked = false;
+            screen.NeedsSignIn += (_, _) => asked = true;
+
+            await screen.UploadAsync();
+
+            Assert.True(asked);
+            Assert.Equal(UploadStep.Stopped, screen.Step);
+            Assert.False(screen.Results[0].IsComplete);
+            Assert.Contains("войти заново", screen.Message);
+        }
+
+        [Fact]
+        public async Task ALostConnectionLeavesTheButtonAbleToContinue()
+        {
+            var first = true;
+            var upload = new StubUpload((session, projectId, pages, _, _, _) =>
+            {
+                if (!first)
+                    return Task.FromResult(Accepted(projectId, pages.Count));
+
+                first = false;
+
+                return Task.FromResult(new BookUploadResult(
+                    UploadState.Failed,
+                    new UploadSession(SiteRegion.Com, projectId, pages.Count, 1),
+                    "Нет связи с сайтом. Проверьте интернет и попробуйте снова.",
+                    UploadFailureKind.ConnectionLost));
+            });
+
+            var screen = Screen(new StubCreation(1001), upload, new StubCheck(true), groups: 1, pages: 3);
+
+            await screen.UploadAsync();
+
+            Assert.Equal(UploadStep.Stopped, screen.Step);
+            Assert.Equal(1, screen.Uploaded);
+            Assert.True(screen.CanUpload);
+            Assert.Equal(UploadStep.Stopped, screen.Step);
+
+            await screen.UploadAsync();
+
+            Assert.Equal(UploadStep.Done, screen.Step);
+            Assert.Equal(2, upload.Calls.Count);
+        }
+
+        /// <summary>
+        /// A project holds every book of its format, and each book is sent against its own number
+        /// in that project: sent as one long book, the second book's pages would land on the
+        /// first one's.
+        /// </summary>
+        /// <summary>
+        /// The grid shows a project's books on the left and what the site was told about it on
+        /// the right, so a price is never read away from the books it belongs to.
+        /// </summary>
+        /// <summary>
+        /// After a finished run the customer is done with the order: the window closes towards
+        /// the projects list rather than back into a page for a project that is already sent.
+        /// </summary>
+        [Fact]
+        public async Task AFinishedRunOffersTheProjectsList()
+        {
+            var screen = Screen(new StubCreation(1001), new StubUpload(), new StubCheck(true), groups: 1, pages: 2);
+
+            var asked = 0;
+            screen.ProjectsRequested += (_, _) => asked++;
+
+            Assert.False(screen.IsDone);
+
+            await screen.UploadAsync();
+
+            Assert.True(screen.IsDone);
+
+            screen.GoToProjects();
+
+            Assert.Equal(1, asked);
+        }
+
+        [Fact]
+        public async Task AProjectWithSeveralBooksSendsEveryBookInIt()
+        {
+            var creation = new StubCreation(1001) { Items = new long[] { 65075, 65076 } };
+            var upload = new StubUpload();
+            var check = new StubCheck(true);
+
+            var screen = Screen(creation, upload, check, groups: 1, pages: 3, booksPerGroup: 2);
+
+            Assert.True(screen.CanUpload);
+            Assert.Equal(6, screen.Total);
+
+            await screen.UploadAsync();
+
+            Assert.Equal(UploadStep.Done, screen.Step);
+            Assert.Equal(2, upload.Calls.Count);
+            Assert.Equal(new long[] { 65075, 65076 }, upload.ItemIds.ToArray());
+
+            // The site is read back book by book, not as one long book of six files.
+            Assert.Equal(
+                new[] { new ExpectedBook(false, 3), new ExpectedBook(false, 3) },
+                Assert.Single(check.Expectations));
+        }
+
+        [Fact]
+        public async Task WhatTheSiteHoldsDifferentlyIsShownRatherThanCalledSuccess()
+        {
+            var check = new StubCheck(noDifferences: false);
+
+            var screen = Screen(new StubCreation(1001), new StubUpload((s, id, pages, _, _, _) =>
+                Task.FromResult(Accepted(id, pages.Count))), check, groups: 1, pages: 3);
+
+            await screen.UploadAsync();
+
+            Assert.Equal(UploadStep.Stopped, screen.Step);
+            Assert.False(screen.Results[0].IsComplete);
+            Assert.Contains("не всё", screen.Message);
+            Assert.False(string.IsNullOrWhiteSpace(screen.Results[0].Problems[0]));
+        }
+
+        [Fact]
+        public async Task CancellingKeepsWhatTheSiteAlreadyHas()
+        {
+            var upload = new StubUpload((session, projectId, pages, _, _, _) => Task.FromResult(
+                new BookUploadResult(
+                    UploadState.Cancelled,
+                    new UploadSession(SiteRegion.Com, projectId, pages.Count, 1),
+                    "Загрузка отменена.")));
+
+            var screen = Screen(new StubCreation(1001), upload, new StubCheck(true), groups: 1, pages: 3);
+
+            await screen.UploadAsync();
+
+            Assert.Equal(UploadStep.Stopped, screen.Step);
+            Assert.Equal(1, screen.Uploaded);
+            Assert.Contains("остановлена", screen.Message);
+        }
+
+        private static BookUploadResult Accepted(long projectId, int pages) =>
+            new(
+                UploadState.Completed,
+                new UploadSession(SiteRegion.Com, projectId, pages, pages),
+                null);
+
+        private static SiteUploadViewModel Screen(
+            StubCreation creation,
+            StubUpload upload,
+            StubCheck check,
+            int groups,
+            int pages,
+            int booksPerGroup = 1,
+            IUploadedProjectStore? uploaded = null)
+        {
+            var screen = new SiteUploadViewModel(creation, upload, check, uploaded: uploaded);
+            var pagesOfGroup = Enumerable.Range(0, groups)
+                .Select(index => Enumerable.Range(0, pages)
+                    .Select(page => new PageFile($@"C:\p{index}-{page}.jpg", 1024))
+                    .ToList())
+                .ToList();
+
+            var books = pagesOfGroup
+                .Select(groupPages => Enumerable.Range(0, booksPerGroup)
+                    .Select(_ => Book(groupPages))
+                    .ToList())
+                .ToList();
+
+            var layout = BookGrouping.FromManual(SiteRegion.Com, books);
+            var quotes = Enumerable.Range(0, groups)
+                .Select(_ => new GroupQuote(new List<BookQuote>
+                {
+                    new(1, Book(), SitePriceCheck.Valid(new SitePriceQuote(542m, "x", "RUB")))
+                }))
+                .ToList();
+
+            var summary = SubmissionSummary.Build(layout, quotes);
+            var groupsToSend = layout.Groups
+                .Select((group, index) => new UploadGroup(
+                    index + 1,
+                    group,
+                    new CreateProjectRequest(4494, 9255, 37556),
+                    group.Books.SelectMany(book => book.AllFiles).ToList(),
+                    group.Books.Count * 542m,
+                    "RUB"))
+                .ToList();
+
+            screen.Prepare(Session, summary, groupsToSend);
+            return screen;
+        }
+
+        [Fact]
+        public async Task ARunThatMeetsAnExpiredTokenAsksForAPasswordAndCarriesOn()
+        {
+            var creation = new StubCreation(1001);
+            var upload = new StubUpload((session, projectId, pages, _, _, _) =>
+                Task.FromResult(new BookUploadResult(
+                    UploadState.Failed,
+                    new UploadSession(SiteRegion.Com, projectId, pages.Count, 0),
+                    "Нужно войти заново: сеанс истёк.",
+                    UploadFailureKind.Unauthorized)));
+            var screen = Screen(creation, upload, new StubCheck(true), groups: 1, pages: 2);
+
+            var asked = 0;
+            screen.NeedsSignIn += (_, _) => asked++;
+
+            await screen.UploadAsync();
+
+            Assert.Equal(1, asked);
+            Assert.False(screen.CanUpload);
+
+            // What the shell does after the customer signs in: the same screen keeps its plan
+            // and its price, so continuing is one press rather than a new order.
+            screen.RefreshSession(Session);
+
+            Assert.True(screen.CanUpload);
+            Assert.Equal(UploadStep.Stopped, screen.Step);
+        }
+
+        [Fact]
+        public async Task OffersTheProjectOnlyAfterTheSiteNamedIt()
+        {
+            var screen = Screen(
+                new StubCreation(1001),
+                new StubUpload((session, projectId, pages, _, _, _) =>
+                    Task.FromResult(Accepted(projectId, pages.Count))),
+                new StubCheck(true),
+                groups: 1,
+                pages: 2);
+
+            Assert.False(screen.CanOpenSite);
+
+            await screen.UploadAsync();
+
+            Assert.True(screen.CanOpenSite);
+            Assert.Equal(screen.Url, screen.OnSiteLink);
+
+            screen.ReportLinkFailure();
+
+            Assert.Contains(screen.OnSiteLink, screen.Message);
+        }
+
+        [Fact]
+        public async Task StopsBeforeSendingPagesIntoAProjectWithoutItsParameters()
+        {
+            var upload = new StubUpload();
+            var screen = Screen(
+                new StubCreation(1001) { Error = "Проект создан, но сайт не принял его параметры и цену: отказ." },
+                upload,
+                new StubCheck(true),
+                groups: 1,
+                pages: 2);
+
+            await screen.UploadAsync();
+
+            Assert.Empty(upload.Calls);
+            Assert.Contains("параметры", screen.Message, StringComparison.Ordinal);
+            Assert.NotEqual(UploadStep.Done, screen.Step);
+        }
+
+        private static Book Book(IReadOnlyList<PageFile>? files = null)
+        {
+            var pages = files ?? new List<PageFile>();
+
+            // The book is as full as the files it has: a fixture that claimed ten spreads and
+            // held two would be a book the screen reports as short of spreads.
+            return new Book(
+                new SiteProduct(4494, "layflat", "Лайфлат", "photo-book", new List<ProductVariant>()),
+                new ProductVariant(9255, "21x30", new List<ProductOption>(), new List<ProductPart>()),
+                PagePartId: 94,
+                new List<SelectedPart> { new(94, new PartSelection(new Dictionary<long, long>(), pages.Count)) },
+                pages);
+        }
+
+        private sealed class StubUploadedProjects : IUploadedProjectStore
+        {
+            internal List<long> Saved { get; } = new();
+
+            public long? FindUploaded(string key) => null;
+
+            public Result RememberUploaded(string key, long projectId)
+            {
+                Saved.Add(projectId);
+                return Result.Ok();
+            }
+        }
+
+        private sealed class StubCreation : IProjectCreationService
+        {
+            private readonly long[] _ids;
+
+            internal StubCreation(params long[] ids) => _ids = ids;
+
+            internal string? Error { get; init; }
+
+            internal IReadOnlyList<long>? Items { get; init; }
+
+            internal List<IReadOnlyList<GroupRequest>> Asked { get; } = new();
+
+            public Task<ProjectCreationPlan> CreateAsync(
+                SiteSession session,
+                IReadOnlyList<GroupRequest> groups,
+                CancellationToken cancellationToken = default)
+            {
+                Asked.Add(groups);
+
+                var created = groups
+                    .Select((group, index) => new GroupCreation(
+                        index + 1,
+                        group.Group,
+                        GroupCreationState.Created,
+                        _ids[Math.Min(index, _ids.Length - 1)],
+                        Error,
+                        Items ?? Array.Empty<long>()))
+                    .ToList();
+
+                return Task.FromResult(new ProjectCreationPlan(created));
+            }
+        }
+
+        private sealed class StubUpload : IBookUploadService
+        {
+            private readonly Func<SiteSession, long, IReadOnlyList<PageFile>, int?, IProgress<UploadProgress>?, CancellationToken, Task<BookUploadResult>> _answer;
+
+            internal StubUpload()
+                : this((session, projectId, pages, _, _, _) =>
+                    Task.FromResult(new BookUploadResult(
+                        UploadState.Completed,
+                        new UploadSession(SiteRegion.Com, projectId, pages.Count, pages.Count),
+                        null)))
+            {
+            }
+
+            internal StubUpload(
+                Func<SiteSession, long, IReadOnlyList<PageFile>, int?, IProgress<UploadProgress>?, CancellationToken, Task<BookUploadResult>> answer) =>
+                _answer = answer;
+
+            internal List<long> Calls { get; } = new();
+
+            internal List<long> ItemIds { get; } = new();
+
+            public Task<BookUploadResult> UploadAsync(
+                SiteSession session,
+                long projectId,
+                IReadOnlyList<PageFile> files,
+                int? alreadyUploaded = null,
+                IProgress<UploadProgress>? progress = null,
+                long projectItemId = 0,
+                UploadedImages? images = null,
+                CancellationToken cancellationToken = default)
+            {
+                Calls.Add(projectId);
+                ItemIds.Add(projectItemId);
+                return _answer(session, projectId, files, alreadyUploaded, progress, cancellationToken);
+            }
+        }
+
+        private sealed class StubCheck : IProjectCheckService
+        {
+            private readonly bool _noDifferences;
+
+            internal StubCheck(bool noDifferences) => _noDifferences = noDifferences;
+
+            internal List<IReadOnlyList<ExpectedBook>> Expectations { get; } = new();
+
+            public Task<Result<ProjectCheck>> CheckAsync(
+                SiteSession session,
+                long projectId,
+                ProjectExpectation expected,
+                CancellationToken cancellationToken = default)
+            {
+                Expectations.Add(expected.Books);
+
+                var project = new SiteProjectSnapshot(
+                    projectId,
+                    4494,
+                    string.Empty,
+                    "/layflat",
+                    true,
+                    Array.Empty<SiteProjectItem>());
+
+                var differences = _noDifferences
+                    ? Array.Empty<string>()
+                    : new[] { "Книга 1: на сайте 2 страниц, отправляли 3." };
+
+                return Task.FromResult(Result<ProjectCheck>.Ok(
+                    new ProjectCheck(project, "https://fabrika-fotoknigi.com/layflat?projectId=" + projectId, differences)));
+            }
+        }
+    }
+}

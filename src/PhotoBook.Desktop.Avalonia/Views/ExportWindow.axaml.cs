@@ -160,6 +160,8 @@ public partial class ExportWindow : Window
         _running = true;
         Progress.Value = 0;
         ProgressPanel.IsVisible = true;
+        ErrorPanel.IsVisible = false;
+        ErrorText.Text = string.Empty;
         ProgressText.Text = string.Empty;
         ExportButton.IsEnabled = false;
         CancelButton.IsEnabled = false;
@@ -177,13 +179,20 @@ public partial class ExportWindow : Window
             _succeeded = result.IsSuccess;
             _exportedFolder = result.IsSuccess ? _targetFolder : string.Empty;
 
-            if (result.IsSuccess) Close(_targetFolder);
-            else ProgressText.Text = "Не удалось";
+            if (result.IsSuccess)
+            {
+                Close(_targetFolder);
+                return;
+            }
+
+            // The service answers with a sentence naming the file, the folder or the disk; the
+            // window shows it rather than the word "Не удалось" it used to leave behind.
+            ShowError(result.Error ?? "Не удалось выгрузить файлы.");
         }
         catch (Exception ex)
         {
             _succeeded = false;
-            ProgressText.Text = ex.Message;
+            ShowError("Не удалось выгрузить: " + ex.Message);
         }
         finally
         {
@@ -191,6 +200,13 @@ public partial class ExportWindow : Window
             ExportButton.IsEnabled = true;
             CancelButton.IsEnabled = true;
         }
+    }
+
+    private void ShowError(string reason)
+    {
+        ProgressPanel.IsVisible = false;
+        ErrorText.Text = reason;
+        ErrorPanel.IsVisible = true;
     }
 
     private void Report(double value)
