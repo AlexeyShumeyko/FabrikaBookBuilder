@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using PhotoBook.Application.Sites.Books.Order;
 using PhotoBook.Application.Sites.Books.Pricing;
 using PhotoBook.Application.Sites.Pricing;
+using PhotoBook.Application.Sites.Projects;
 using PhotoBook.Application.Sites.Upload;
 
 namespace PhotoBook.Presentation.ViewModels
@@ -49,7 +50,7 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Prices this group's books and shows the answer book by book.</summary>
         public async Task RecalculateAsync()
         {
-            if (_catalog is null || _sessions is null || _prices is null || Books.Count == 0)
+            if (_catalog is null || _sessions is null || _prices is null || IncludedBooks.Count == 0)
                 return;
 
             var session = _sessions.Load();
@@ -63,8 +64,10 @@ namespace PhotoBook.Presentation.ViewModels
             IsPricing = true;
             try
             {
+                var included = IncludedBooks;
+
                 var read = await ChosenFormatDocuments
-                    .ReadAsync(_catalog, session.Region, Books.Select(row => row.SelectedFormat))
+                    .ReadAsync(_catalog, session.Region, included.Select(row => row.SelectedFormat))
                     .ConfigureAwait(true);
 
                 if (!read.IsSuccess || read.Value is null)
@@ -83,7 +86,7 @@ namespace PhotoBook.Presentation.ViewModels
                 SetPlan(null);
 
                 var priced = await _prices
-                    .PriceAsync(session, Books.Select(row => row.Book).ToList(), formats)
+                    .PriceAsync(session, included.Select(row => row.Book).ToList(), formats)
                     .ConfigureAwait(true);
 
                 if (priced.Quote is null)
@@ -136,10 +139,74 @@ namespace PhotoBook.Presentation.ViewModels
             }
         }
 
+        /// <summary>
+        /// Marks the group when its books were uploaded before, and leaves it out of the coming
+        /// run the first time that is noticed.
+        /// </summary>
+        /// <remarks>
+        /// The record is read from the plan, because the plan is what the upload actually sent -
+        /// a group split over two projects is remembered under each part's own key. A choice the
+        /// customer has already made is never overwritten: a group they put back in stays in.
+        /// </remarks>
+        private void RefreshUploaded(UploadPlan? plan)
+        {
+            if (_uploaded is null || _sessions?.Load() is not { } session)
+                return;
+
+            var found = 0L;
+
+            if (plan is not null)
+            {
+                foreach (var part in plan.Groups)
+                {
+                    var projectId = _uploaded.FindUploaded(GroupKey.For(session.Region, part.Group.Books));
+                    if (projectId is { } value && value > 0)
+                    {
+                        found = value;
+                        break;
+                    }
+                }
+            }
+
+            if (found == _uploadedProjectId)
+                return;
+
+            _uploadedProjectId = found;
+
+            if (!_exclusionChosen)
+                IsExcluded = found > 0;
+
+            OnPropertyChanged(nameof(UploadedProjectId));
+            OnPropertyChanged(nameof(HasUploadedProject));
+            OnPropertyChanged(nameof(UploadedProjectText));
+        }
+
+        /// <summary>
+        /// Re-reads the group after a book was taken out of the run or put back in.
+        /// </summary>
+        /// <remarks>
+        /// The price, the plan and the file check all belong to the set of books that goes, so
+        /// all three are asked for again. A book excluded while the site was answering does not
+        /// leak into the plan: the run that describes it is dropped before the next one starts.
+        /// </remarks>
+        public void BookExclusionChanged()
+        {
+            ClearOrderProblems();
+            ForgetPrice();
+            ForgetFiles();
+
+            OnPropertyChanged(nameof(IncludedBooks));
+            OnPropertyChanged(nameof(SummaryText));
+            NotifyProblem();
+
+            RefreshReadiness();
+        }
+
         /// <summary>Keeps the plan, the price and the reading of the files in step with it.</summary>
         private void SetPlan(UploadPlan? plan)
         {
             _plan = plan;
+            RefreshUploaded(plan);
 
             OnPropertyChanged(nameof(Plan));
             OnPropertyChanged(nameof(CanGo));

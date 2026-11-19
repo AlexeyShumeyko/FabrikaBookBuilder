@@ -31,6 +31,12 @@ namespace PhotoBook.Presentation.ViewModels
         {
             get
             {
+                if (IsExcluded)
+                    return HasUploadedProject
+                        ? "Группа не будет загружена снова — она уже на сайте, проект " + UploadedProjectId +
+                          ". Чтобы отправить её ещё раз, отметьте «Участвует в загрузке»."
+                        : "Группа исключена из загрузки — её книги не будут отправлены.";
+
                 var problem = ProblemText.Trim();
                 if (problem.Length == 0)
                     return string.Empty;
@@ -86,10 +92,14 @@ namespace PhotoBook.Presentation.ViewModels
         {
             get
             {
-                if (Books.Count == 0)
-                    return "В группе нет ни одной книги.";
+                var included = IncludedBooks;
 
-                var incomplete = Books
+                if (included.Count == 0)
+                    return Books.Count == 0
+                        ? "В группе нет ни одной книги."
+                        : "Все книги группы исключены из загрузки.";
+
+                var incomplete = included
                     .Where(book => !book.IsReady)
                     .Select(book => "«" + book.Name + "»")
                     .ToList();
@@ -124,7 +134,7 @@ namespace PhotoBook.Presentation.ViewModels
                 if (_draftNote is not null)
                     return _draftNote;
 
-                if (Books.Any(book => book.IsFailed))
+                if (included.Any(book => book.IsFailed))
                     return "Исправьте отмеченные книги: откройте книгу в списке, чтобы увидеть причину.";
 
                 if (_plan is { Problems.Count: > 0 } withProblems)

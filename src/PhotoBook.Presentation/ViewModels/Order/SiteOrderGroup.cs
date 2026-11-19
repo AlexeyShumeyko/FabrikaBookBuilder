@@ -9,6 +9,7 @@ using PhotoBook.Application.Sites.Books;
 using PhotoBook.Application.Sites.Books.Files;
 using PhotoBook.Application.Sites.Books.Order;
 using PhotoBook.Application.Sites.Catalog;
+using PhotoBook.Application.Sites.Projects;
 using PhotoBook.Application.Sites.Upload;
 using CoreBook = PhotoBook.Core.Book;
 
@@ -44,6 +45,7 @@ namespace PhotoBook.Presentation.ViewModels
         private readonly OrderPriceService? _prices;
         private readonly OrderFileCheckService? _fileCheck;
         private readonly SiteOrderParameters _parameters;
+        private readonly IUploadedProjectStore? _uploaded;
         private readonly Action _changed;
         private readonly Action _choiceChanged;
         private readonly List<OrderBookRow> _books;
@@ -63,6 +65,9 @@ namespace PhotoBook.Presentation.ViewModels
         private Task _priceRun = Task.CompletedTask;
         private bool _repriceAfterRun;
         private UploadPlan? _plan;
+        private long _uploadedProjectId;
+        private bool _excluded;
+        private bool _exclusionChosen;
 
         private OrderFileCheck? _files;
         private bool _checkingFiles;
@@ -79,8 +84,10 @@ namespace PhotoBook.Presentation.ViewModels
             OrderPriceService? prices,
             OrderFileCheckService? fileCheck,
             Action changed,
-            Action choiceChanged)
+            Action choiceChanged,
+            IUploadedProjectStore? uploaded = null)
         {
+            _uploaded = uploaded;
             Number = number;
             _books = books is null ? new List<OrderBookRow>() : new List<OrderBookRow>(books);
             _catalog = catalog;
@@ -110,9 +117,57 @@ namespace PhotoBook.Presentation.ViewModels
         /// </remarks>
         public IReadOnlyList<OrderBookRow> Books => _books;
 
+        /// <summary>The books of the group that go in the coming run.</summary>
+        /// <remarks>
+        /// A book the customer excluded stays in the group and keeps its row, its format and its
+        /// price, so the choice can be seen and undone; it is simply not sent, priced or
+        /// checked. A group whose books are all excluded sends nothing.
+        /// </remarks>
+        public IReadOnlyList<OrderBookRow> IncludedBooks =>
+            _books.Where(book => !book.IsExcluded).ToList();
+
+        /// <summary>Whether the customer took this group out of the coming upload.</summary>
+        public bool IsExcluded
+        {
+            get => _excluded;
+            set
+            {
+                if (!SetProperty(ref _excluded, value))
+                    return;
+
+                _exclusionChosen = true;
+
+                OnPropertyChanged(nameof(IsIncluded));
+                OnPropertyChanged(nameof(CanGo));
+                OnPropertyChanged(nameof(StatusText));
+                OnPropertyChanged(nameof(HasStatus));
+
+                NotifyProblem();
+                _changed();
+            }
+        }
+
+        /// <summary>Whether the group goes in the coming run.</summary>
+        public bool IsIncluded
+        {
+            get => !IsExcluded;
+            set => IsExcluded = !value;
+        }
+
+        /// <summary>The project this group was last uploaded to, or zero.</summary>
+        public long UploadedProjectId => _uploadedProjectId;
+
+        /// <summary>Whether the group has already been uploaded once.</summary>
+        public bool HasUploadedProject => _uploadedProjectId > 0;
+
+        /// <summary>What the card says about an earlier upload.</summary>
+        public string UploadedProjectText => _uploadedProjectId > 0
+            ? "Эта группа уже была загружена на сайт — проект " + _uploadedProjectId + "."
+            : string.Empty;
+
         /// <summary>The group in one line: how many books, in what format.</summary>
         public string SummaryText =>
-            (Books.Count == 1 ? "1 книга" : Books.Count + " книги") +
+            (IncludedBooks.Count == 1 ? "1 книга" : IncludedBooks.Count + " книги") +
             " · " + FormatText;
 
         /// <summary>The group's format as the page reads it, or a note that none is chosen.</summary>
@@ -220,6 +275,7 @@ namespace PhotoBook.Presentation.ViewModels
         /// questions answered.
         /// </summary>
         public bool CanGo =>
+            !IsExcluded &&
             _plan is { IsComplete: true } &&
             !_checkingFiles &&
             _files is { CanSend: true } &&
@@ -427,8 +483,10 @@ namespace PhotoBook.Presentation.ViewModels
 
         private void RefreshReadiness()
         {
-            IsReady = Books.Count > 0 &&
-                Books.All(book => book.IsReady && book.SelectedFormat is not null) &&
+            var included = IncludedBooks;
+
+            IsReady = included.Count > 0 &&
+                included.All(book => book.IsReady && book.SelectedFormat is not null) &&
                 _parametersLoaded &&
                 _parameters.IsAnswered;
 

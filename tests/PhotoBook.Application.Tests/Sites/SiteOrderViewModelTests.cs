@@ -7,6 +7,7 @@ using PhotoBook.Application.Sites.Books.Files;
 using PhotoBook.Application.Sites.Catalog;
 using PhotoBook.Application.Sites.Catalog.Layout;
 using PhotoBook.Application.Sites.Pricing;
+using PhotoBook.Application.Sites.Projects;
 using PhotoBook.Core;
 using PhotoBook.Presentation.ViewModels;
 
@@ -301,9 +302,18 @@ namespace PhotoBook.Application.Tests.Sites
             TestProject.Book(2, (4913, 3496), "/c2.jpg", "/p2.jpg"));
 
         /// <summary>That project, on a page where both groups chose a format and answered it.</summary>
-        private static async Task<SiteOrderViewModel> TwoAnsweredGroupsAsync(
+        private static Task<SiteOrderViewModel> TwoAnsweredGroupsAsync(
             Project project,
-            OrderFileCheckService files)
+            OrderFileCheckService files,
+            IUploadedProjectStore? uploaded = null)
+            => AnsweredAsync(project, files, new StubQuotes(), uploaded);
+
+        /// <summary>That project, on a page where every group chose a format and answered it.</summary>
+        private static async Task<SiteOrderViewModel> AnsweredAsync(
+            Project project,
+            OrderFileCheckService files,
+            StubQuotes quotes,
+            IUploadedProjectStore? uploaded = null)
         {
             var catalog = new StubCatalog(
                 new CatalogProduct(4494, "Лайфлат", "kit", 1, new[] { new CatalogFormat(9255, "21x30") }))
@@ -312,7 +322,7 @@ namespace PhotoBook.Application.Tests.Sites
             };
 
             var page = new SiteOrderViewModel(
-                catalog, new StubSessionStore(), new StubQuotes(), new StubFiles(), files);
+                catalog, new StubSessionStore(), quotes, new StubFiles(), files, uploaded);
 
             page.Prepare(project, "Разные проекты");
             await page.LoadFormatsAsync();
@@ -517,6 +527,84 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Contains(
                 page.PendingUpload.Notes!,
                 note => note.Contains("Группа 2", StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// A group the customer unticked leaves the run while the others go, and a group that
+        /// was uploaded before starts unticked with the project named on its card.
+        /// </summary>
+        [Fact]
+        public async Task LeavesAnExcludedGroupOutOfTheRun()
+        {
+            var page = await TwoAnsweredGroupsAsync(TwoPageSizes(), Files());
+
+            page.Groups[1].IsExcluded = true;
+
+            Assert.False(page.Groups[1].CanGo);
+            Assert.True(page.CanUpload);
+            Assert.Contains("исключена", page.Groups[1].NoteText, StringComparison.OrdinalIgnoreCase);
+
+            page.Upload();
+
+            Assert.Single(page.PendingUpload!.Groups);
+            Assert.Equal(1, page.PendingUpload.Summary.ProjectCount);
+        }
+
+        [Fact]
+        public async Task MarksAnAlreadyUploadedGroupAndPutsItBackOnOneClick()
+        {
+            var page = await TwoAnsweredGroupsAsync(TwoPageSizes(), Files(), new StubUploaded(542345));
+
+            Assert.All(page.Groups, group =>
+            {
+                Assert.True(group.HasUploadedProject);
+                Assert.Equal(542345, group.UploadedProjectId);
+                Assert.True(group.IsExcluded);
+            });
+
+            Assert.Contains("542345", page.Groups[0].UploadedProjectText);
+            Assert.False(page.CanUpload);
+
+            // The customer can still send it again; the mark is a reminder, not a lock.
+            page.Groups[0].IsIncluded = true;
+
+            Assert.True(page.Groups[0].CanGo);
+            Assert.True(page.CanUpload);
+
+            page.Upload();
+
+            Assert.Single(page.PendingUpload!.Groups);
+        }
+
+        /// <summary>
+        /// A book the customer excluded stays in its group and keeps its row, but is not priced
+        /// and is not sent: the group is priced for the books that go.
+        /// </summary>
+        [Fact]
+        public async Task PricesAndSendsOnlyTheBooksKeptInTheRun()
+        {
+            var project = TestProject.Combined(
+                TestProject.Book(1, (4724, 2398), "/c1.jpg", "/p1.jpg"),
+                TestProject.Book(2, (4724, 2398), "/c2.jpg", "/p2.jpg"));
+            var quotes = new StubQuotes();
+            var page = await AnsweredAsync(project, Files(), quotes);
+
+            Assert.Single(page.Groups);
+            Assert.Equal(2, quotes.LastBookCount);
+
+            page.Books[1].IsExcluded = true;
+            await page.Pricing;
+            await page.FileCheck;
+
+            Assert.Equal(1, quotes.LastBookCount);
+            Assert.Equal("Исключена из загрузки", page.Books[1].ConditionText);
+            Assert.False(page.Books[1].IsFailed);
+            Assert.Contains(page.Books[1], page.Groups[0].Books);
+
+            page.Upload();
+
+            var group = Assert.Single(page.PendingUpload!.Groups);
+            Assert.Single(group.Group.Books);
         }
 
         /// <summary>A file check over a layout whose pages are what the site asks for.</summary>
@@ -859,6 +947,18 @@ namespace PhotoBook.Application.Tests.Sites
             throw new NotSupportedException();
     }
 
+    /// <summary>The finished-upload record: what the site already holds for a group.</summary>
+    internal sealed class StubUploaded : IUploadedProjectStore
+    {
+        private readonly long? _existing;
+
+        internal StubUploaded(long? existing = null) => _existing = existing;
+
+        public long? FindUploaded(string key) => _existing;
+
+        public Result RememberUploaded(string key, long projectId) => Result.Ok();
+    }
+
     internal sealed class StubSessionStore : ISiteSessionStore
     {
         private SiteSession? _session = new(SiteRegion.Com, "token", DateTimeOffset.UtcNow.AddHours(1));
@@ -875,12 +975,16 @@ namespace PhotoBook.Application.Tests.Sites
         /// <summary>How many times the page asked the site for a price.</summary>
         internal int Calls { get; private set; }
 
+        /// <summary>How many books the last request named, so exclusion can be seen.</summary>
+        internal int LastBookCount { get; private set; }
+
         public Task<GroupQuote> QuoteAsync(
             SiteSession session,
             IReadOnlyList<PhotoBook.Application.Sites.Books.Book> books,
             CancellationToken cancellationToken = default)
         {
             Calls++;
+            LastBookCount = books.Count;
 
             return Task.FromResult(new GroupQuote(books
                 .Select((book, index) => new BookQuote(index + 1, book,

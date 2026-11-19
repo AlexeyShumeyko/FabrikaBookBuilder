@@ -52,7 +52,8 @@ namespace PhotoBook.Presentation.ViewModels
                     _prices,
                     _fileCheck,
                     OnGroupChanged,
-                    OnChoiceChanged);
+                    OnChoiceChanged,
+                    _uploaded);
 
                 groups.Add(target);
             }

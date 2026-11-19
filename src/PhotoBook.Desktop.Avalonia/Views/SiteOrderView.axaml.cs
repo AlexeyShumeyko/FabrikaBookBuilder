@@ -60,6 +60,13 @@ namespace PhotoBook.Shell.Views
                 flyout.Items.Add(new Separator());
 
             flyout.Items.Add(Item("В новую группу", () => page.MoveBook(row, null)));
+
+            // The book stays in the group and keeps its row; it is only taken out of the run.
+            flyout.Items.Add(new Separator());
+            flyout.Items.Add(Item(
+                row.IsExcluded ? "Вернуть книгу в загрузку" : "Исключить книгу из загрузки",
+                row.ToggleExcluded));
+
             flyout.ShowAt(control);
         }
 

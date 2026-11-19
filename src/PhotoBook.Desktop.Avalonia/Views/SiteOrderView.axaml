@@ -126,6 +126,21 @@
                                                            Margin="0,4,0,0"
                                                            IsVisible="{Binding HasFilesText}" />
 
+                                                <!-- A group that was uploaded before is left out of the
+                                                     coming run by default, and the customer can put it
+                                                     back with this tick. Every group has the tick, so
+                                                     excluding one is the same single click. -->
+                                                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0">
+                                                    <CheckBox IsChecked="{Binding IsIncluded, Mode=TwoWay}"
+                                                              AutomationProperties.Name="Участвует в загрузке">
+                                                        <TextBlock Text="Участвует в загрузке" Classes="t11" />
+                                                    </CheckBox>
+                                                    <TextBlock Text="{Binding UploadedProjectText}" Classes="t11"
+                                                               Foreground="{DynamicResource Slate500}"
+                                                               VerticalAlignment="Center" TextWrapping="Wrap"
+                                                               IsVisible="{Binding HasUploadedProject}" />
+                                                </StackPanel>
+
                                                 <!-- Why this group cannot go, or what stays behind if
                                                      the button is pressed now. The sentence is about
                                                      this group alone, so it is written here rather
@@ -161,7 +176,8 @@
                                                             <!-- One book as a row of the table. The chevron opens what
                                                                  the check found: the cover, the spreads, and the file
                                                                  the site refused. A book with a problem opens itself. -->
-                                                            <Grid ColumnDefinitions="56,*,100,110,130,140,24,24" Margin="20,12">
+                                                            <Grid ColumnDefinitions="56,*,100,110,130,140,24,24" Margin="20,12"
+                                                                  Opacity="{Binding RowOpacity}">
                                                                 <TextBlock Grid.Column="0" Text="{Binding Number}" Classes="t12"
                                                                            Foreground="{DynamicResource Slate500}" />
                                                                 <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="t12"

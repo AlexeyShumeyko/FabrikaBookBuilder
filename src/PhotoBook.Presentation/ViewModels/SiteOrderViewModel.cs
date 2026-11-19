@@ -10,6 +10,7 @@ using PhotoBook.Application.Sites.Books.Grouping;
 using PhotoBook.Application.Sites.Books.Order;
 using PhotoBook.Application.Sites.Books.Pricing;
 using PhotoBook.Application.Sites.Catalog;
+using PhotoBook.Application.Sites.Projects;
 using PhotoBook.Application.Sites.Upload;
 using CoreProject = PhotoBook.Core.Project;
 
@@ -45,6 +46,7 @@ namespace PhotoBook.Presentation.ViewModels
         private readonly ISiteSessionStore? _sessions;
         private readonly OrderPriceService? _prices;
         private readonly OrderFileCheckService? _fileCheck;
+        private readonly IUploadedProjectStore? _uploaded;
         private readonly SiteOrderUpload _upload;
 
         private IReadOnlyList<OrderBookRow> _books = Array.Empty<OrderBookRow>();
@@ -61,11 +63,13 @@ namespace PhotoBook.Presentation.ViewModels
             ISiteSessionStore? sessions = null,
             IGroupQuoteService? quotes = null,
             IFileService? files = null,
-            OrderFileCheckService? fileCheck = null)
+            OrderFileCheckService? fileCheck = null,
+            IUploadedProjectStore? uploaded = null)
         {
             _catalog = catalog;
             _sessions = sessions;
             _fileCheck = fileCheck;
+            _uploaded = uploaded;
 
             // The price is the order service's job; the page only carries its answer. The two
             // ports are given together because one without the other can price nothing.
@@ -246,7 +250,8 @@ namespace PhotoBook.Presentation.ViewModels
 
                     // No picker of its own: the format is chosen once for the group and written
                     // into its books, so a row never answers for the group.
-                    _ => { }))
+                    _ => { },
+                    OnBookExclusionChanged))
                 .ToList();
 
             Books = rows;
@@ -271,7 +276,8 @@ namespace PhotoBook.Presentation.ViewModels
                     _prices,
                     _fileCheck,
                     OnGroupChanged,
-                    OnChoiceChanged));
+                    OnChoiceChanged,
+                    _uploaded));
             }
 
             Groups = groups;
@@ -397,7 +403,7 @@ namespace PhotoBook.Presentation.ViewModels
             var going = new List<SiteOrderGroup>();
             var left = new List<SiteOrderGroup>();
 
-            foreach (var group in Groups)
+            foreach (var group in Groups.Where(group => !group.IsExcluded))
                 (group.CanGo ? going : left).Add(group);
 
             // The total covers what the site priced: a group whose price is still being asked for
@@ -457,5 +463,12 @@ namespace PhotoBook.Presentation.ViewModels
         }
 
         private void OnChoiceChanged() => ChoiceChanged?.Invoke(this, EventArgs.Empty);
+
+        /// <summary>Re-reads a group after one of its books was taken out of the run.</summary>
+        private void OnBookExclusionChanged(OrderBookRow row)
+        {
+            GroupOf(row)?.BookExclusionChanged();
+            OnPropertyChanged(nameof(CanUpload));
+        }
     }
 }

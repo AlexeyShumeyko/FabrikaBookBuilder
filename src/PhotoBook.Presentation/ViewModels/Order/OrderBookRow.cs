@@ -19,7 +19,9 @@ namespace PhotoBook.Presentation.ViewModels
         private readonly int _number;
         private readonly Func<IReadOnlyList<FormatChoice>> _formats;
         private readonly Action<OrderBookRow> _chosen;
+        private readonly Action<OrderBookRow>? _exclusionChanged;
 
+        private bool _excluded;
         private FormatChoice? _selected;
         private string _priceText = "—";
         private bool _isExpanded;
@@ -33,12 +35,14 @@ namespace PhotoBook.Presentation.ViewModels
             CoreBook book,
             int number,
             Func<IReadOnlyList<FormatChoice>> formats,
-            Action<OrderBookRow> chosen)
+            Action<OrderBookRow> chosen,
+            Action<OrderBookRow>? exclusionChanged = null)
         {
             _book = book;
             _number = number;
             _formats = formats;
             _chosen = chosen;
+            _exclusionChanged = exclusionChanged;
         }
 
         /// <summary>The book behind the row, so the page can write choices into it.</summary>
@@ -61,6 +65,43 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Whether every slot holds a photograph.</summary>
         public bool IsReady => _book.IsValid;
 
+        /// <summary>
+        /// Whether the customer took this book out of the coming upload.
+        /// </summary>
+        /// <remarks>
+        /// The book stays where it is on the page - in its group, with its format and its price -
+        /// so the choice is visible and reversible. It is simply not sent, and a book that is not
+        /// sent is not a book the site has to accept: an incomplete book that is excluded does
+        /// not hold its group back.
+        /// </remarks>
+        public bool IsExcluded
+        {
+            get => _excluded;
+            set
+            {
+                if (!SetProperty(ref _excluded, value))
+                    return;
+
+                NotifyBook();
+                _exclusionChanged?.Invoke(this);
+            }
+        }
+
+        /// <summary>Whether the book goes in the coming run.</summary>
+        public bool IsActive => !IsExcluded;
+
+        /// <summary>Whether the row reads as left out of the run.</summary>
+        public bool IsLeftOut => IsExcluded;
+
+        /// <summary>How the row is faded when it is not sent.</summary>
+        public double RowOpacity => IsExcluded ? 0.55 : 1.0;
+
+        /// <summary>What the row says instead of a status when it is excluded.</summary>
+        public string ExclusionText => IsExcluded ? "Исключена из загрузки" : string.Empty;
+
+        /// <summary>Takes the book out of the run, or puts it back in.</summary>
+        public void ToggleExcluded() => IsExcluded = !IsExcluded;
+
         /// <summary>What the book still needs before it can go.</summary>
         public BookCondition Condition => IsReady
             ? BookCondition.Ready
@@ -74,18 +115,20 @@ namespace PhotoBook.Presentation.ViewModels
         /// read it is the status the site's requirements give it, which is the word the customer
         /// needs before pressing send.
         /// </remarks>
-        public string ConditionText => _planProblem.Length > 0
-            ? "Не готова"
-            : _statusText.Length > 0
-                ? _statusText
-                : IsReady
-                    ? "Готова"
-                    : _book.FilledSlotCount == 0
-                        ? "Нет фотографий"
-                        : "Не хватает фотографий";
+        public string ConditionText => IsExcluded
+            ? "Исключена из загрузки"
+            : _planProblem.Length > 0
+                ? "Не готова"
+                : _statusText.Length > 0
+                    ? _statusText
+                    : IsReady
+                        ? "Готова"
+                        : _book.FilledSlotCount == 0
+                            ? "Нет фотографий"
+                            : "Не хватает фотографий";
 
         /// <summary>Whether the book needs attention, which the list shows in red.</summary>
-        public bool IsFailed => _checkFailed || _planProblem.Length > 0;
+        public bool IsFailed => !IsExcluded && (_checkFailed || _planProblem.Length > 0);
 
         /// <summary>Whether the book's files are listed under it.</summary>
         /// <remarks>
@@ -191,6 +234,10 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(HasFileRows));
             OnPropertyChanged(nameof(ReasonsText));
             OnPropertyChanged(nameof(HasReasons));
+            OnPropertyChanged(nameof(IsActive));
+            OnPropertyChanged(nameof(IsLeftOut));
+            OnPropertyChanged(nameof(RowOpacity));
+            OnPropertyChanged(nameof(ExclusionText));
         }
 
         private static string Join(params string[] lines) =>
