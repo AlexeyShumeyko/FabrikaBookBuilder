@@ -174,7 +174,7 @@ namespace PhotoBook.Presentation.ViewModels
             _uploadedProjectId = found;
 
             if (!_exclusionChosen)
-                IsExcluded = found > 0;
+                SetExcluded(found > 0);
 
             OnPropertyChanged(nameof(UploadedProjectId));
             OnPropertyChanged(nameof(HasUploadedProject));

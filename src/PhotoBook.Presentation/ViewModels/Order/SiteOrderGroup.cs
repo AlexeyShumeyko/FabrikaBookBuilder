@@ -132,19 +132,31 @@ namespace PhotoBook.Presentation.ViewModels
             get => _excluded;
             set
             {
-                if (!SetProperty(ref _excluded, value))
+                if (_excluded == value)
                     return;
 
+                // A tick is the customer's answer, and it is never overwritten by the record;
+                // a group put back in stays in for the rest of the visit.
                 _exclusionChosen = true;
-
-                OnPropertyChanged(nameof(IsIncluded));
-                OnPropertyChanged(nameof(CanGo));
-                OnPropertyChanged(nameof(StatusText));
-                OnPropertyChanged(nameof(HasStatus));
-
-                NotifyProblem();
-                _changed();
+                SetExcluded(value);
             }
+        }
+
+        /// <summary>Changes the tick without claiming the customer made the choice.</summary>
+        private void SetExcluded(bool value)
+        {
+            if (_excluded == value)
+                return;
+
+            _excluded = value;
+            OnPropertyChanged(nameof(IsExcluded));
+            OnPropertyChanged(nameof(IsIncluded));
+            OnPropertyChanged(nameof(CanGo));
+            OnPropertyChanged(nameof(StatusText));
+            OnPropertyChanged(nameof(HasStatus));
+
+            NotifyProblem();
+            _changed();
         }
 
         /// <summary>Whether the group goes in the coming run.</summary>
