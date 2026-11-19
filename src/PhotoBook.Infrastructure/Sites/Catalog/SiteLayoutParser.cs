@@ -285,10 +285,19 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
         private static string Title(
             IReadOnlyDictionary<long, string> titles,
             JsonElement element,
-            long partId) =>
-            titles.TryGetValue(partId, out var fromParts)
-                ? fromParts
-                : SiteJson.Text(element, "title") ?? partId.ToString(CultureInfo.InvariantCulture);
+            long partId)
+        {
+            // Some products name their parts " " and only the uploader element carries a usable
+            // word («Обложка», «Разворот»). A blank title reached the file messages and left the
+            // customer with a sentence that started with a space.
+            if (titles.TryGetValue(partId, out var fromParts) && !string.IsNullOrWhiteSpace(fromParts))
+                return fromParts;
+
+            var fromElement = SiteJson.Text(element, "title");
+            return string.IsNullOrWhiteSpace(fromElement)
+                ? partId.ToString(CultureInfo.InvariantCulture)
+                : fromElement!;
+        }
 
         private static IReadOnlyDictionary<long, string> ReadTitles(JsonElement root)
         {
@@ -304,7 +313,8 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
             {
                 if (long.TryParse(title.Name, NumberStyles.Integer, CultureInfo.InvariantCulture, out var id) &&
                     title.Value.ValueKind == JsonValueKind.String &&
-                    title.Value.GetString() is { Length: > 0 } text)
+                    title.Value.GetString() is { } text &&
+                    !string.IsNullOrWhiteSpace(text))
                 {
                     titles[id] = text;
                 }

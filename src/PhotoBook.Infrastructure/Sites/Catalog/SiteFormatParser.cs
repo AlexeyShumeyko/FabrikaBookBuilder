@@ -38,7 +38,7 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
                     return Result<SiteProduct>.Fail("Описание формата пришло в неизвестном виде.");
 
                 var titles = ReadTitles(root, "productPartsTitles");
-                var pagesParts = ReadPagesPartIds(root);
+                var pagesParts = ReadPagesPartIds(root, titles);
                 var parts = ReadParts(root, titles, pagesParts);
                 var variantTitle = ReadTitles(root, "productComponentsTitles")
                     .TryGetValue(componentId, out var name) ? name : string.Empty;
@@ -72,9 +72,19 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
                 : 0;
 
         /// <summary>The part ids the integration sends pages into, whoever names them.</summary>
-        private static HashSet<long> ReadPagesPartIds(JsonElement root)
+        /// <remarks>
+        /// Most formats name the part by id (<c>pagesCountPartId</c>). A few - «Планшет» is one -
+        /// describe a part with a single file and no page counter at all: the uploader then names
+        /// the part only by the title of its element («Разворот»). Without that reading the part
+        /// holding the photographs was never recognised and every book of the format was refused.
+        /// The id stays the first choice; the title is the fallback, never a replacement.
+        /// </remarks>
+        private static HashSet<long> ReadPagesPartIds(
+            JsonElement root,
+            Dictionary<long, string> partTitles)
         {
-            var ids = new HashSet<long>();
+            var named = new HashSet<long>();
+            var titled = new HashSet<long>();
 
             if (root.TryGetProperty("integration", out var integration) &&
                 integration.ValueKind == JsonValueKind.Object &&
@@ -90,11 +100,37 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
                     }
 
                     if (SiteJson.Integer(settings, "pagesCountPartId") is { } id and > 0)
-                        ids.Add(id);
+                        named.Add(id);
+
+                    if (SiteJson.Integer(settings, "productPartId") is not { } partId || partId <= 0)
+                        continue;
+
+                    var title = (SiteJson.Text(element, "title") ?? string.Empty).Trim();
+
+                    // The part's own title is often absent for these products (" "), while the
+                    // uploader element carries a usable one.
+                    if (title.Length > 0 &&
+                        (!partTitles.TryGetValue(partId, out var known) || string.IsNullOrWhiteSpace(known)))
+                    {
+                        partTitles[partId] = title;
+                    }
+
+                    if (HoldsPagesByTitle(title))
+                        titled.Add(partId);
                 }
             }
 
-            return ids;
+            return named.Count > 0 ? named : titled;
+        }
+
+        /// <summary>Whether a part's own name says it takes the photographs.</summary>
+        private static bool HoldsPagesByTitle(string title)
+        {
+            if (string.IsNullOrWhiteSpace(title))
+                return false;
+
+            return title.Contains("разворот", StringComparison.OrdinalIgnoreCase) ||
+                   title.Contains("страниц", StringComparison.OrdinalIgnoreCase);
         }
 
         private static List<ProductPart> ReadParts(
@@ -255,7 +291,7 @@ namespace PhotoBook.Infrastructure.Sites.Catalog
             return string.IsNullOrWhiteSpace(text) ? null : text;
         }
 
-        private static IReadOnlyDictionary<long, string> ReadTitles(JsonElement root, string name)
+        private static Dictionary<long, string> ReadTitles(JsonElement root, string name)
         {
             var titles = new Dictionary<long, string>();
 

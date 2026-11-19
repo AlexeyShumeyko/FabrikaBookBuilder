@@ -169,7 +169,10 @@ namespace PhotoBook.Application.Sites.Books.Files
 
             // The book counts spreads, and the site's own part is «Разворот»: a message that
             // called them pages would disagree with the column the customer is reading.
-            alerts.AddRange(BookFileCheck.Check(facts, rule, pageWord: page.Title ?? "Разворот"));
+            alerts.AddRange(BookFileCheck.Check(
+                facts,
+                rule,
+                pageWord: string.IsNullOrWhiteSpace(page.Title) ? "Разворот" : page.Title!));
 
             return new CheckedBook(number, name, rule, alerts);
         }

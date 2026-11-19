@@ -88,6 +88,62 @@ namespace PhotoBook.Application.Tests.Sites.Catalog
         }
         """;
 
+        /// <summary>
+        /// «Планшет» is the case where the uploader names no page counter at all: both parts are
+        /// single-file elements and only their own titles say which one takes the spread. The
+        /// live document for 4446/9379 is the source of this copy.
+        /// </summary>
+        private const string Planshet = """
+        {
+          "productId": 4446,
+          "productComponentId": 9379,
+          "productTitle": "Планшет",
+          "productKind": "kit",
+          "productComponentsTitles": { "9379": "21x30" },
+          "productPartsTitles": { "139": " ", "140": " " },
+          "calculatorParts": [
+            { "productPartId": 139, "type": "hidden", "name": "params[productPartQuantity][139]", "value": "1" },
+            {
+              "optionId": 70518, "title": "Ламинация", "type": "select",
+              "name": "params[options][70518]", "value": null,
+              "elements": [
+                { "value": 450639, "title": "Глянцевая" },
+                { "value": 450640, "title": "Зернистая" }
+              ],
+              "required": 1, "productPartId": 139
+            },
+            { "productPartId": 140, "type": "hidden", "name": "params[productPartQuantity][140]", "value": "1" },
+            {
+              "optionId": 65760, "title": "Плотность разворота", "type": "select",
+              "name": "params[options][65760]", "value": null,
+              "elements": [ { "value": 420323, "title": "Картон" } ],
+              "required": 1, "productPartId": 140
+            }
+          ],
+          "integration": {
+            "id": 37557,
+            "elements": [
+              { "id": 26122, "title": "Обложка", "settings": { "productPartId": "139", "filesCellsCountTo": "1" } },
+              { "id": 26124, "title": "Разворот", "settings": { "productPartId": "140", "filesCellsCountTo": "1" } }
+            ]
+          }
+        }
+        """;
+
+        [Fact]
+        public void KnowsTheSpreadsPartWhenTheUploaderNamesNoPageCount()
+        {
+            var parts = new SiteFormatParser().Parse(Planshet, 4446, 9379).Value!.Variants[0].Parts;
+
+            var cover = parts.Single(part => part.Id == 139);
+            var spread = parts.Single(part => part.Id == 140);
+
+            Assert.Equal("Обложка", cover.Title);
+            Assert.False(cover.HoldsPages);
+            Assert.Equal("Разворот", spread.Title);
+            Assert.True(spread.HoldsPages);
+        }
+
         [Fact]
         public void ReadsTheFormatTheCustomerPicked()
         {
