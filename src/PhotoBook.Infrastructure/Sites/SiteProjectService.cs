@@ -156,8 +156,10 @@ namespace PhotoBook.Infrastructure.Sites
 
             var client = new SiteApiClient(session.Region, _http, _retryDelay);
 
+            // Naming the parameters of an existing project can be repeated safely, unlike
+            // creating one: the same body written twice leaves the project as it was.
             var response = await client
-                .PostJsonAsync(ParamsPath, Body(projectId, productId, parameters), session.AccessToken, cancellationToken)
+                .PostJsonAsync(ParamsPath, Body(projectId, productId, parameters), session.AccessToken, cancellationToken, retry: true)
                 .ConfigureAwait(false);
 
             if (!response.IsSuccess || response.Document is null)

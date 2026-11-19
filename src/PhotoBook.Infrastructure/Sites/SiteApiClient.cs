@@ -95,17 +95,71 @@ namespace PhotoBook.Infrastructure.Sites
                 cancellationToken);
         }
 
-        public Task<SiteApiResult> PostJsonAsync<T>(string path, T body, string? token, CancellationToken cancellationToken)
+        /// <summary>
+        /// A POST with a JSON body, sent once by default.
+        /// </summary>
+        /// <remarks>
+        /// Creating a project, or adding a book to one, is not idempotent: the platform has no
+        /// key for it, so a retry after a 5xx that the server actually processed makes a second
+        /// project or a second book. Only a call whose body names an existing project and can be
+        /// written twice - the parameters and price - asks for <paramref name="retry"/>.
+        /// </remarks>
+        public Task<SiteApiResult> PostJsonAsync<T>(
+            string path,
+            T body,
+            string? token,
+            CancellationToken cancellationToken,
+            bool retry = false)
         {
-            return SendWithRetryAsync(
-                () =>
-                {
-                    var request = NewRequest(HttpMethod.Post, ApiUrl(path), token);
-                    request.Content = JsonContent.Create(body);
-                    return request;
-                },
-                token,
-                cancellationToken);
+            Func<HttpRequestMessage> request = () =>
+            {
+                var message = NewRequest(HttpMethod.Post, ApiUrl(path), token);
+                message.Content = JsonContent.Create(body);
+                return message;
+            };
+
+            return retry
+                ? SendWithRetryAsync(request, token, cancellationToken)
+                : SendOnceAsync(request, cancellationToken);
+        }
+
+        /// <summary>One send, with the same errors as a retried one but no second attempt.</summary>
+        private async Task<SiteApiResult> SendOnceAsync(
+            Func<HttpRequestMessage> requestFactory,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using var request = requestFactory();
+
+            try
+            {
+                using var response = await _http
+                    .SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
+                    .ConfigureAwait(false);
+
+                var text = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+                return response.IsSuccessStatusCode
+                    ? Parse(text)
+                    : SiteApiResult.Fail(DescribeStatus(response.StatusCode));
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (HttpRequestException)
+            {
+                return SiteApiResult.Fail(new SiteApiError(
+                    SiteApiErrorKind.ConnectionLost,
+                    "Нет связи с сайтом. Проверьте интернет и попробуйте снова."));
+            }
+            catch (TaskCanceledException)
+            {
+                return SiteApiResult.Fail(new SiteApiError(
+                    SiteApiErrorKind.Timeout,
+                    "Сайт не ответил вовремя."));
+            }
         }
 
         /// <summary>

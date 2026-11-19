@@ -118,6 +118,39 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Equal(3, handler.Calls);
         }
 
+        /// <summary>
+        /// Creating a project is not idempotent: a 5xx may mean the server made it and could not
+        /// answer. Retrying then makes a second project, which is what a customer sees as an
+        /// order that appeared twice on the site.
+        /// </summary>
+        [Fact]
+        public async Task Does_not_retry_a_project_creation_on_a_broken_server()
+        {
+            var handler = new StubHttpMessageHandler(_ => StubResponses.Json("{}", HttpStatusCode.BadGateway));
+
+            var result = await CreateClient(handler)
+                .PostJsonAsync("creators/projects/create", new { productId = 1 }, "token", default);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(SiteApiErrorKind.ServerUnavailable, result.Error!.Kind);
+            Assert.Equal(1, handler.Calls);
+        }
+
+        [Fact]
+        public async Task Retries_naming_the_parameters_of_an_existing_project()
+        {
+            var calls = 0;
+            var handler = new StubHttpMessageHandler(_ => ++calls == 1
+                ? StubResponses.Json("{}", HttpStatusCode.BadGateway)
+                : StubResponses.Json("{\"data\":{}}"));
+
+            var result = await CreateClient(handler)
+                .PostJsonAsync("creators/projects/params", new { projectId = 1 }, "token", default, retry: true);
+
+            Assert.True(result.IsSuccess, result.Error?.Message);
+            Assert.Equal(2, handler.Calls);
+        }
+
         [Fact]
         public async Task Calls_the_region_prefix_and_sends_the_bearer_token()
         {
