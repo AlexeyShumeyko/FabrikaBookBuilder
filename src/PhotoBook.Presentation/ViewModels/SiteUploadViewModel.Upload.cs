@@ -204,6 +204,12 @@ namespace PhotoBook.Presentation.ViewModels
         {
             var sentBeforeBook = 0;
 
+            // One project holds the books, so a photograph already sent for one book can be
+            // copied for the next instead of being uploaded again: the same file in every book
+            // of a combined order is the usual case, and sending it once is what its own
+            // uploader does.
+            var images = new UploadedImages();
+
             for (var index = 0; index < group.Group.Books.Count; index++)
             {
                 var book = group.Group.Books[index];
@@ -228,8 +234,9 @@ namespace PhotoBook.Presentation.ViewModels
                         projectId,
                         pages,
                         progress: progress,
-                        cancellationToken: cancellationToken,
-                        projectItemId: itemId)
+                        projectItemId: itemId,
+                        images: images,
+                        cancellationToken: cancellationToken)
                     .ConfigureAwait(true);
 
                 // The count the site reports is the truth, whether or not a progress report made

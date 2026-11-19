@@ -246,6 +246,74 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             Assert.Equal(2, result.Session.FilesUploaded);
         }
 
+        /// <summary>
+        /// The same photograph in every book is sent once. The site names the picture it stored,
+        /// and the other books ask for a copy of it - the request the site's own uploader makes,
+        /// and the reason thirty books of ten spreads cost ten uploads rather than three hundred.
+        /// </summary>
+        [Fact]
+        public async Task ARepeatedPhotographIsCopiedInsteadOfSentAgain()
+        {
+            var upload = new StubUpload();
+            var images = new UploadedImages();
+            images.Remember(@"C:\photos\shared.jpg", 900);
+
+            var pages = new List<PageFile>
+            {
+                new(@"C:\photos\shared.jpg", 1024),
+                new(@"C:\photos\own.jpg", 1024),
+                new(@"C:\photos\shared.jpg", 1024)
+            };
+
+            var result = await new BookUploadService(upload)
+                .UploadAsync(Session, 527733, pages, images: images);
+
+            Assert.True(result.IsComplete);
+
+            // Only the picture the project did not hold travelled as a file.
+            Assert.Equal(new[] { 1 }, upload.Positions);
+            Assert.Equal(new[] { 0, 2 }, upload.Copies.Select(copy => copy.Position));
+            Assert.All(upload.Copies, copy => Assert.Equal(900, copy.ImageId));
+        }
+
+        [Fact]
+        public async Task RemembersThePictureTheSiteNamedForTheNextBook()
+        {
+            var upload = new StubUpload { NamedImageId = 18954166 };
+            var images = new UploadedImages();
+
+            await new BookUploadService(upload).UploadAsync(
+                Session, 527733, Pages(2), projectItemId: 65075, images: images);
+
+            Assert.True(images.TryGet(@"C:\photos\1.jpg", out var id));
+            Assert.Equal(18954166, id);
+        }
+
+        /// <summary>
+        /// A copy the site refuses is not a lost page: the file itself goes, and the rest of the
+        /// book stops asking for copies rather than paying a refused request per page.
+        /// </summary>
+        [Fact]
+        public async Task FallsBackToSendingTheFileWhenTheCopyIsRefused()
+        {
+            var upload = new StubUpload { RefuseCopies = true };
+            var images = new UploadedImages();
+            images.Remember(@"C:\photos\shared.jpg", 900);
+
+            var pages = new List<PageFile>
+            {
+                new(@"C:\photos\shared.jpg", 1024),
+                new(@"C:\photos\shared.jpg", 1024)
+            };
+
+            var result = await new BookUploadService(upload)
+                .UploadAsync(Session, 527733, pages, images: images);
+
+            Assert.True(result.IsComplete);
+            Assert.Single(upload.Copies);
+            Assert.Equal(new[] { 0, 1 }, upload.Positions);
+        }
+
         [Fact]
         public async Task ABookWithoutPagesIsAlreadyDone()
         {
@@ -336,6 +404,17 @@ namespace PhotoBook.Application.Tests.Sites.Upload
         /// <summary>An uploader slow enough for two sends to overlap, counting how many do.</summary>
         private sealed class SlowUpload : ISiteFileUploadService
         {
+            public Task<PageUpload> CopyAsync(
+                SiteSession session,
+                long projectId,
+                long projectItemId,
+                int position,
+                long imageId,
+                string fileName,
+                int width = 0,
+                int height = 0,
+                CancellationToken cancellationToken = default) =>
+                Task.FromResult(PageUpload.AcceptedImage(imageId));
             private readonly object _gate = new();
             private readonly TimeSpan _delay;
             private readonly int _failAt;
@@ -383,6 +462,18 @@ namespace PhotoBook.Application.Tests.Sites.Upload
         /// <summary>An uploader whose refused page waits until the page after it has started.</summary>
         private sealed class GatedUpload : ISiteFileUploadService
         {
+            public Task<PageUpload> CopyAsync(
+                SiteSession session,
+                long projectId,
+                long projectItemId,
+                int position,
+                long imageId,
+                string fileName,
+                int width = 0,
+                int height = 0,
+                CancellationToken cancellationToken = default) =>
+                Task.FromResult(PageUpload.AcceptedImage(imageId));
+
             private readonly TaskCompletionSource<bool> _nextStarted =
                 new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -436,6 +527,12 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             private readonly UploadFailureKind _refusal;
             private readonly string _error;
 
+            /// <summary>The number the site names for every accepted picture; zero names none.</summary>
+            internal long NamedImageId { get; init; }
+
+            /// <summary>Whether the site refuses to copy a stored picture.</summary>
+            internal bool RefuseCopies { get; init; }
+
             internal StubUpload(
                 int failAt = -1,
                 CancellationTokenSource? cancelAfter = null,
@@ -453,6 +550,26 @@ namespace PhotoBook.Application.Tests.Sites.Upload
             internal List<string> Paths { get; } = new();
 
             internal List<long> ItemIds { get; } = new();
+
+            internal List<(int Position, long ImageId)> Copies { get; } = new();
+
+            public Task<PageUpload> CopyAsync(
+                SiteSession session,
+                long projectId,
+                long projectItemId,
+                int position,
+                long imageId,
+                string fileName,
+                int width = 0,
+                int height = 0,
+                CancellationToken cancellationToken = default)
+            {
+                Copies.Add((position, imageId));
+
+                return Task.FromResult(RefuseCopies
+                    ? PageUpload.Refused(UploadFailureKind.Parameters, "Сайт не принял параметры запроса.")
+                    : PageUpload.AcceptedImage(imageId));
+            }
 
             public Task<PageUpload> UploadAsync(
                 SiteSession session,
@@ -472,7 +589,10 @@ namespace PhotoBook.Application.Tests.Sites.Upload
                     return Task.FromResult(PageUpload.Refused(_refusal, _error));
 
                 _cancelAfter?.Cancel();
-                return Task.FromResult(PageUpload.Accepted);
+
+                return Task.FromResult(NamedImageId > 0
+                    ? PageUpload.AcceptedImage(NamedImageId)
+                    : PageUpload.Accepted);
             }
         }
     }

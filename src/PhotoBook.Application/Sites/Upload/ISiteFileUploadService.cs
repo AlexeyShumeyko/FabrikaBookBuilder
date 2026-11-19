@@ -35,5 +35,27 @@ namespace PhotoBook.Application.Sites.Upload
             int width = 0,
             int height = 0,
             CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Puts a picture the project already holds on another page, without sending the file.
+        /// </summary>
+        /// <remarks>
+        /// The endpoint takes <c>doublePageId</c> instead of a file: the site copies the stored
+        /// picture to the named book and position, exactly as its own uploader does for a spread
+        /// repeated in every book. Sending the bytes again would upload the same photograph once
+        /// per book, which is the difference between ten requests and two hundred seventy.
+        /// </remarks>
+        /// <param name="imageId">The number the site gave the stored picture.</param>
+        /// <param name="fileName">The picture's name, as the page's params keep it.</param>
+        Task<PageUpload> CopyAsync(
+            SiteSession session,
+            long projectId,
+            long projectItemId,
+            int position,
+            long imageId,
+            string fileName,
+            int width = 0,
+            int height = 0,
+            CancellationToken cancellationToken = default);
     }
 }

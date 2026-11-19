@@ -37,15 +37,25 @@ namespace PhotoBook.Application.Sites.Upload
     /// <param name="IsAccepted">Whether the site took the file.</param>
     /// <param name="Kind">Why not, when it did not.</param>
     /// <param name="Error">The sentence to show, or null on success.</param>
+    /// <param name="ImageId">
+    /// The number the site gave the picture, or zero when its answer did not name one. The site's
+    /// own uploader sends this number back as <c>doublePageId</c> to place the same picture on
+    /// another page without sending the bytes again, which is the only way a run of shared
+    /// spreads costs one upload instead of one per book.
+    /// </param>
     /// <remarks>
     /// The endpoint answers <c>200</c> for a file it cannot read, so the answer is this value
     /// rather than the status code: a caller that trusted the code would count a corrupt page as
     /// uploaded and leave a hole in the book.
     /// </remarks>
-    public sealed record PageUpload(bool IsAccepted, UploadFailureKind Kind, string? Error)
+    public sealed record PageUpload(bool IsAccepted, UploadFailureKind Kind, string? Error, long ImageId = 0)
     {
         /// <summary>The site took the file.</summary>
         public static PageUpload Accepted { get; } = new(true, UploadFailureKind.None, null);
+
+        /// <summary>The site took the file and named the picture it stored.</summary>
+        public static PageUpload AcceptedImage(long imageId) =>
+            new(true, UploadFailureKind.None, null, imageId);
 
         /// <summary>The site did not take the file, for the stated reason.</summary>
         public static PageUpload Refused(UploadFailureKind kind, string error) =>

@@ -87,6 +87,43 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Contains("65075", handler.Body);
         }
 
+        /// <summary>
+        /// The picture the project already holds is placed by its number: no file in the request,
+        /// which is what makes a repeated spread cost one upload instead of one per book.
+        /// </summary>
+        [Fact]
+        public async Task CopiesAStoredPictureWithoutSendingTheFile()
+        {
+            var handler = new CapturingHandler();
+
+            var sent = await Service(handler).CopyAsync(Session, 527733, 65075, 3, 18954166, "shared.jpg", 4913, 3496);
+
+            Assert.True(sent.IsAccepted);
+            Assert.Contains("name=doublePageId", handler.Body);
+            Assert.Contains("18954166", handler.Body);
+            Assert.Contains("name=position", handler.Body);
+            Assert.Contains("name=projectItemId", handler.Body);
+            Assert.Contains("name=\"params[fileName]\"", handler.Body);
+            Assert.DoesNotContain("name=file", handler.Body);
+        }
+
+        /// <summary>
+        /// The answer names the picture, and the number is what the next page copies from; the
+        /// site's own uploader reads it from the same field.
+        /// </summary>
+        [Fact]
+        public async Task ReadsTheNumberOfThePictureTheSiteStored()
+        {
+            using var page = new TempPage();
+            var handler = new CapturingHandler(
+                "{\"double_pages\":[{\"id\":18954166,\"project_item_id\":2832059,\"position\":\"2\"}]}");
+
+            var sent = await Service(handler).UploadAsync(Session, 527733, 65075, 2, page.Path);
+
+            Assert.True(sent.IsAccepted);
+            Assert.Equal(18954166, sent.ImageId);
+        }
+
         [Fact]
         public async Task AFileTheSiteCannotReadIsNotSuccessEvenWithA200()
         {
@@ -177,6 +214,13 @@ namespace PhotoBook.Application.Tests.Sites
         /// <summary>Reads the multipart body where waiting is allowed: inside an async send.</summary>
         private sealed class CapturingHandler : HttpMessageHandler
         {
+            private readonly string _answer;
+
+            internal CapturingHandler(string answer = "{\"double_pages\":[]}")
+            {
+                _answer = answer;
+            }
+
             internal string Body { get; private set; } = string.Empty;
 
             internal string Url { get; private set; } = string.Empty;
@@ -188,7 +232,7 @@ namespace PhotoBook.Application.Tests.Sites
                 Body = await request.Content!.ReadAsStringAsync(cancellationToken);
                 Url = request.RequestUri?.ToString() ?? string.Empty;
 
-                return Json(HttpStatusCode.OK, "{\"double_pages\":[]}");
+                return Json(HttpStatusCode.OK, _answer);
             }
         }
 

@@ -23,6 +23,12 @@ namespace PhotoBook.Infrastructure.Sites
     /// can be repeated safely; a page sent twice at the same position may end up as two pages,
     /// so the customer pressing the button again is a better answer than a silent repeat.
     /// </para>
+    /// <para>
+    /// A page the project already holds is placed by <see cref="CopyAsync"/>, which names the
+    /// stored picture and sends no file - the request the site's own uploader makes for a spread
+    /// repeated in every book. The answer names the picture's number, so a page sent now can be
+    /// copied for the pages after it.
+    /// </para>
     /// </remarks>
     internal sealed class SiteFileUploadService : ISiteFileUploadService
     {
@@ -56,24 +62,8 @@ namespace PhotoBook.Infrastructure.Sites
 
             var client = new SiteApiClient(session.Region, _http);
 
-            var fields = new Dictionary<string, string>
-            {
-                ["projectId"] = projectId.ToString(CultureInfo.InvariantCulture),
-                ["position"] = position.ToString(CultureInfo.InvariantCulture)
-            };
-
-            // Which book of the project the file belongs to. Without it the site puts every
-            // file into the first book and replaces whatever already sits at that position, so
-            // a project of three books would end up holding one.
-            if (projectItemId > 0)
-                fields["projectItemId"] = projectItemId.ToString(CultureInfo.InvariantCulture);
-
-            // What the site's own uploader says about the picture. The platform keeps these on
-            // the page it stores, and its editor reads the page back by them; a page sent with
-            // nothing but the file arrived without a name or a size, which is not how the site
-            // describes a page it uploaded itself.
-            var fileName = System.IO.Path.GetFileName(filePath);
-            fields["params[fileName]"] = fileName;
+            var fields = Fields(projectId, projectItemId, position);
+            fields["params[fileName]"] = System.IO.Path.GetFileName(filePath);
             fields["params[checksum]"] = string.Empty;
 
             if (width > 0)
@@ -86,6 +76,73 @@ namespace PhotoBook.Infrastructure.Sites
                 .PostMultipartAsync(UploadPath, fields, filePath, session.AccessToken, cancellationToken)
                 .ConfigureAwait(false);
 
+            return Read(response);
+        }
+
+        public async Task<PageUpload> CopyAsync(
+            SiteSession session,
+            long projectId,
+            long projectItemId,
+            int position,
+            long imageId,
+            string fileName,
+            int width = 0,
+            int height = 0,
+            CancellationToken cancellationToken = default)
+        {
+            if (session is null)
+                throw new ArgumentNullException(nameof(session));
+            if (projectId <= 0)
+                throw new ArgumentOutOfRangeException(nameof(projectId), "У проекта нет номера.");
+            if (position < 0)
+                throw new ArgumentOutOfRangeException(nameof(position), "Страница не может быть раньше первой.");
+            if (imageId <= 0)
+                return PageUpload.Refused(UploadFailureKind.Parameters, "Не названа страница для копирования.");
+
+            var client = new SiteApiClient(session.Region, _http);
+
+            var fields = Fields(projectId, projectItemId, position);
+            fields["doublePageId"] = imageId.ToString(CultureInfo.InvariantCulture);
+
+            if (!string.IsNullOrWhiteSpace(fileName))
+                fields["params[fileName]"] = fileName;
+
+            fields["params[checksum]"] = string.Empty;
+
+            if (width > 0)
+                fields["params[fileWidth]"] = width.ToString(CultureInfo.InvariantCulture);
+
+            if (height > 0)
+                fields["params[fileHeight]"] = height.ToString(CultureInfo.InvariantCulture);
+
+            var response = await client
+                .PostFieldsAsync(UploadPath, fields, session.AccessToken, cancellationToken)
+                .ConfigureAwait(false);
+
+            return Read(response);
+        }
+
+        /// <summary>The fields every upload of a page names: its project, its book and its place.</summary>
+        private static Dictionary<string, string> Fields(long projectId, long projectItemId, int position)
+        {
+            var fields = new Dictionary<string, string>
+            {
+                ["projectId"] = projectId.ToString(CultureInfo.InvariantCulture),
+                ["position"] = position.ToString(CultureInfo.InvariantCulture)
+            };
+
+            // Which book of the project the file belongs to. Without it the site puts every
+            // file into the first book and replaces whatever already sits at that position, so
+            // a project of three books would end up holding one.
+            if (projectItemId > 0)
+                fields["projectItemId"] = projectItemId.ToString(CultureInfo.InvariantCulture);
+
+            return fields;
+        }
+
+        /// <summary>One answer from the uploader, whichever way the page was placed.</summary>
+        private static PageUpload Read(SiteApiResult response)
+        {
             if (!response.IsSuccess || response.Document is null)
             {
                 return PageUpload.Refused(
@@ -105,7 +162,37 @@ namespace PhotoBook.Infrastructure.Sites
                     ". Проверьте фотографию.");
             }
 
-            return PageUpload.Accepted;
+            var imageId = ImageIdOf(document.RootElement);
+            return imageId > 0 ? PageUpload.AcceptedImage(imageId) : PageUpload.Accepted;
+        }
+
+        /// <summary>
+        /// The number the site gave the stored picture.
+        /// </summary>
+        /// <remarks>
+        /// The answer is <c>{"double_pages":[{"id":18954166,...}]}</c>, and that <c>id</c> is what
+        /// the site's own uploader sends back as <c>doublePageId</c>. It arrives as a number here
+        /// and was a string in the project document, so both are read.
+        /// </remarks>
+        private static long ImageIdOf(JsonElement root)
+        {
+            if (!root.TryGetProperty("double_pages", out var pages) || pages.ValueKind != JsonValueKind.Array)
+                return 0;
+
+            foreach (var page in pages.EnumerateArray())
+            {
+                if (!page.TryGetProperty("id", out var id))
+                    continue;
+
+                if (id.ValueKind == JsonValueKind.Number && id.TryGetInt64(out var number))
+                    return number;
+
+                if (id.ValueKind == JsonValueKind.String &&
+                    long.TryParse(id.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out number))
+                    return number;
+            }
+
+            return 0;
         }
 
         /// <summary>The client's reason, in the words the upload screen switches on.</summary>

@@ -63,6 +63,7 @@ namespace PhotoBook.Application.Sites.Upload
             int? alreadyUploaded = null,
             IProgress<UploadProgress>? progress = null,
             long projectItemId = 0,
+            UploadedImages? images = null,
             CancellationToken cancellationToken = default)
         {
             if (session is null)
@@ -93,6 +94,65 @@ namespace PhotoBook.Application.Sites.Upload
             void Started(int position) =>
                 progress?.Report(new UploadProgress(files.Count, uploaded, files[position]?.Path ?? string.Empty));
 
+            // A picture the project already holds is placed by a copy request, which carries no
+            // file: the site reads doublePageId and puts the stored picture at the named book and
+            // position. This is what its own uploader does, and it is the whole reason a run of
+            // shared spreads costs one upload instead of one per book. The first refusal that is
+            // not worth waiting out switches copies off for the rest of the book and sends the
+            // file itself, so a contract the site no longer honours costs a little speed, never
+            // a page.
+            async Task<PageUpload> SendAt(int position)
+            {
+                var file = files[position];
+                if (file is null)
+                    return PageUpload.Accepted;
+
+                if (images is not null && images.TryGet(file.Path, out var stored))
+                {
+                    var copied = await _upload
+                        .CopyAsync(
+                            session,
+                            projectId,
+                            projectItemId,
+                            position,
+                            stored,
+                            Path.GetFileName(file.Path),
+                            file.Width,
+                            file.Height,
+                            cancellationToken)
+                        .ConfigureAwait(false);
+
+                    if (copied.IsAccepted)
+                    {
+                        images.Remember(file.Path, copied.ImageId);
+                        return copied;
+                    }
+
+                    if (copied.NeedsSignIn || copied.CanResume)
+                        return copied;
+
+                    images = null;
+                    notice ??= "Сайт не принял копирование повторяющегося разворота — такие файлы отправлены как обычно.";
+                }
+
+                var sent = await _upload
+                    .UploadAsync(
+                        session,
+                        projectId,
+                        projectItemId,
+                        position,
+                        file.Path,
+                        file.Width,
+                        file.Height,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (sent.IsAccepted)
+                    images?.Remember(file.Path, sent.ImageId);
+
+                return sent;
+            }
+
             void Accepted(int position)
             {
                 taken[position] = true;
@@ -106,7 +166,7 @@ namespace PhotoBook.Application.Sites.Upload
                 .RunAsync(
                     uploaded,
                     files.Count,
-                    position => SendAsync(session, projectId, projectItemId, files[position], position, cancellationToken),
+                    SendAt,
                     Started,
                     Accepted,
                     cancellationToken)
@@ -174,26 +234,6 @@ namespace PhotoBook.Application.Sites.Upload
                 null,
                 notice);
         }
-
-        /// <summary>Sends one page, or takes an empty list entry as one already there.</summary>
-        private Task<PageUpload> SendAsync(
-            SiteSession session,
-            long projectId,
-            long projectItemId,
-            PageFile? file,
-            int position,
-            CancellationToken cancellationToken) =>
-            file is null
-                ? Task.FromResult(PageUpload.Accepted)
-                : _upload.UploadAsync(
-                    session,
-                    projectId,
-                    projectItemId,
-                    position,
-                    file.Path,
-                    file.Width,
-                    file.Height,
-                    cancellationToken);
 
         /// <summary>Writes down how far the book got, or says why it could not.</summary>
         private string? Remember(SiteRegion region, long projectId, long itemId, int total, int uploaded)

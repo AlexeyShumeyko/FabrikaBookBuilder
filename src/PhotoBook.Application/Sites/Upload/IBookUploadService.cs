@@ -30,6 +30,10 @@ namespace PhotoBook.Application.Sites.Upload
         /// </param>
         /// <param name="progress">Told after each file, for a bar that matches the site.</param>
         /// <param name="projectItemId">The book inside the project; zero for the first one.</param>
+        /// <param name="images">
+        /// The pictures the project already holds, shared by every book of the group. A file
+        /// already in it is copied rather than sent again; null sends every file.
+        /// </param>
         /// <param name="cancellationToken">Stops between files; sent files stay sent.</param>
         Task<BookUploadResult> UploadAsync(
             SiteSession session,
@@ -38,6 +42,7 @@ namespace PhotoBook.Application.Sites.Upload
             int? alreadyUploaded = null,
             IProgress<UploadProgress>? progress = null,
             long projectItemId = 0,
+            UploadedImages? images = null,
             CancellationToken cancellationToken = default);
     }
 }

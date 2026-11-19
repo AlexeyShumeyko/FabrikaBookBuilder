@@ -482,6 +482,7 @@ namespace PhotoBook.Application.Tests.Sites
                 int? alreadyUploaded = null,
                 IProgress<UploadProgress>? progress = null,
                 long projectItemId = 0,
+                UploadedImages? images = null,
                 CancellationToken cancellationToken = default)
             {
                 Calls.Add(projectId);

@@ -186,6 +186,40 @@ namespace PhotoBook.Infrastructure.Sites
 
             request.Content = content;
 
+            return await SendContentAsync(request, cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// One multipart request without a file: the fields alone.
+        /// </summary>
+        /// <remarks>
+        /// The uploader takes a page this way when the picture is already in the project - the
+        /// request names it with <c>doublePageId</c> and the site copies it. There is no file, so
+        /// there is nothing a retry could duplicate beyond the copy itself, and the caller still
+        /// sends it once.
+        /// </remarks>
+        public async Task<SiteApiResult> PostFieldsAsync(
+            string path,
+            IReadOnlyDictionary<string, string> fields,
+            string? token,
+            CancellationToken cancellationToken)
+        {
+            using var request = NewRequest(HttpMethod.Post, ApiUrl(path), token);
+            using var content = new MultipartFormDataContent();
+
+            foreach (var field in fields)
+                content.Add(new StringContent(field.Value), field.Key);
+
+            request.Content = content;
+
+            return await SendContentAsync(request, cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>Sends a prepared request and reads the body, whatever happens on the way.</summary>
+        private async Task<SiteApiResult> SendContentAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
             try
             {
                 using var response = await _http
