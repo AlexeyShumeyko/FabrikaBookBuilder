@@ -249,7 +249,37 @@ namespace PhotoBook.Application.Tests.Sites.Books.Order
             var draft = OrderDraft.From(project, new[] { Catalog() }, _files);
 
             Assert.Empty(draft.Books);
-            Assert.Contains(draft.Problems, problem => problem.Contains("файл не найден"));
+            Assert.Contains(draft.Problems, problem => problem.Contains("не хватает файлов"));
+        }
+
+        /// <summary>
+        /// A book whose photographs were deleted is named once with everything it lacks. The
+        /// check used to stop at the cover, so the customer replaced it and only then heard about
+        /// the first spread - one file per attempt for a folder that is gone.
+        /// </summary>
+        [Fact]
+        public void NamesEveryMissingFileOfABookAtOnce()
+        {
+            var book = Book(Page(1), Page(2), Page(3));
+            GiveCover(book);
+
+            var project = ProjectWith(book);
+            var source = project.Books[0];
+
+            System.IO.File.Delete(source.Cover!.SourcePath!);
+            System.IO.File.Delete(source.Pages[0].SourcePath!);
+            System.IO.File.Delete(source.Pages[2].SourcePath!);
+
+            var draft = OrderDraft.From(project, new[] { CoverCatalog() }, _files);
+
+            Assert.Empty(draft.Books);
+
+            var problem = Assert.Single(draft.Problems);
+            Assert.Contains("обложка", problem);
+            Assert.Contains("разворот 1", problem);
+            Assert.Contains("разворот 3", problem);
+            Assert.DoesNotContain("разворот 2", problem);
+            Assert.Contains("создайте проект заново", problem, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]

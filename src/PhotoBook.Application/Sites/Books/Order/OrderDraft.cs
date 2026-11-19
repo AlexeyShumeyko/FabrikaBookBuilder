@@ -161,39 +161,56 @@ namespace PhotoBook.Application.Sites.Books.Order
             if (!TryCoverPartOf(variant, name, problems, out var coverPart))
                 return null;
 
+            // Every missing file is named at once. The check used to stop at the first one, so a
+            // customer who had deleted the folder learned about the cover, replaced it, and only
+            // then heard about the first spread - one file per attempt, for a book whose whole
+            // source is gone. The book still cannot go, but the sentence lists everything it lacks.
+            var missing = new List<string>();
             var coverFile = default(PageFile);
             if (coverPart is not null)
             {
                 var cover = source.Cover;
                 if (cover is null || cover.IsEmpty || string.IsNullOrWhiteSpace(cover.SourcePath))
                 {
-                    problems.Add(name + ": не загружена обложка — сайт принимает её отдельным файлом.");
-                    return null;
+                    missing.Add("обложка (не назначена)");
                 }
-
-                var coverLength = files.FileLength(cover.SourcePath!);
-                if (coverLength <= 0)
+                else
                 {
-                    problems.Add(name + ": файл обложки не найден — " + cover.FileName + ".");
-                    return null;
+                    var coverLength = files.FileLength(cover.SourcePath!);
+                    if (coverLength <= 0)
+                    {
+                        missing.Add("обложка «" + cover.FileName + "»");
+                    }
+                    else
+                    {
+                        // The site's uploader names the picture's own size with every page it
+                        // sends, so the size the project already holds travels with the file.
+                        coverFile = new PageFile(cover.SourcePath!, coverLength, cover.ImageWidth, cover.ImageHeight);
+                    }
                 }
-
-                // The site's uploader names the picture's own size with every page it sends, so
-                // the size the project already holds travels with the file.
-                coverFile = new PageFile(cover.SourcePath!, coverLength, cover.ImageWidth, cover.ImageHeight);
             }
 
             var fileList = new List<PageFile>(pages.Count);
+            var spread = 0;
             foreach (var page in pages)
             {
+                spread++;
+
                 var length = files.FileLength(page.SourcePath!);
                 if (length <= 0)
                 {
-                    problems.Add(name + ": файл не найден — " + page.FileName + ".");
-                    return null;
+                    missing.Add("разворот " + spread + " «" + page.FileName + "»");
+                    continue;
                 }
 
                 fileList.Add(new PageFile(page.SourcePath!, length, page.ImageWidth, page.ImageHeight));
+            }
+
+            if (missing.Count > 0)
+            {
+                problems.Add(name + ": не хватает файлов — " + string.Join(", ", missing) +
+                    ". Верните файлы на место или создайте проект заново.");
+                return null;
             }
 
             return new Book(
