@@ -46,6 +46,9 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Whether the site refuses to price the book without this answer.</summary>
         public bool IsRequired => Option.IsRequired;
 
+        /// <summary>Whether this answer is still missing, which the panel marks in red.</summary>
+        public bool IsMissing => IsRequired && _selected is null;
+
         /// <summary>The choice, written into every book of this format.</summary>
         public ParameterElement? Selected
         {
@@ -60,6 +63,7 @@ namespace PhotoBook.Presentation.ViewModels
                 _selected = value;
                 OnPropertyChanged(nameof(Selected));
                 OnPropertyChanged(nameof(SelectedText));
+                OnPropertyChanged(nameof(IsMissing));
 
                 // Taking an answer back is a change like any other: the book loses the choice
                 // and the price the page holds was asked for another combination.
@@ -93,6 +97,7 @@ namespace PhotoBook.Presentation.ViewModels
             _selected = selected;
             OnPropertyChanged(nameof(Selected));
             OnPropertyChanged(nameof(SelectedText));
+            OnPropertyChanged(nameof(IsMissing));
         }
 
         private static bool SameElements(
@@ -140,10 +145,18 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Whether every required parameter has an answer.</summary>
         public bool IsAnswered => Parameters.All(row => !row.IsRequired || row.Selected is not null);
 
+        /// <summary>Whether at least one required parameter is still unanswered.</summary>
+        public bool HasMissing => !IsAnswered;
+
+        /// <summary>The unanswered parameters by the site's own names, quoted.</summary>
+        public string MissingText => string.Join(", ", Parameters
+            .Where(row => row.IsMissing)
+            .Select(row => "«" + row.Title + "»"));
+
         /// <summary>How many required parameters are still open, in words.</summary>
         public string StateText => IsAnswered
-            ? "все параметры выбраны"
-            : "не выбрано: " + Parameters.Count(row => row.IsRequired && row.Selected is null);
+            ? "Все параметры выбраны"
+            : "Не выбраны: " + MissingText + ".";
 
         /// <summary>
         /// Brings the block up to date with what the site offers, changing the rows that are
@@ -168,6 +181,8 @@ namespace PhotoBook.Presentation.ViewModels
             }
 
             OnPropertyChanged(nameof(IsAnswered));
+            OnPropertyChanged(nameof(HasMissing));
+            OnPropertyChanged(nameof(MissingText));
             OnPropertyChanged(nameof(StateText));
         }
 
@@ -175,6 +190,8 @@ namespace PhotoBook.Presentation.ViewModels
         public void Refresh()
         {
             OnPropertyChanged(nameof(IsAnswered));
+            OnPropertyChanged(nameof(HasMissing));
+            OnPropertyChanged(nameof(MissingText));
             OnPropertyChanged(nameof(StateText));
         }
     }

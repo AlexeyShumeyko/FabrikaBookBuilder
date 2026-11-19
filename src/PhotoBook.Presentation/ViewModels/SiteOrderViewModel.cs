@@ -263,7 +263,7 @@ namespace PhotoBook.Presentation.ViewModels
                 if (groupRows.Count == 0)
                     continue;
 
-                var group = new SiteOrderGroup(
+                groups.Add(new SiteOrderGroup(
                     groups.Count + 1,
                     groupRows,
                     _catalog,
@@ -271,16 +271,17 @@ namespace PhotoBook.Presentation.ViewModels
                     _prices,
                     _fileCheck,
                     OnGroupChanged,
-                    OnChoiceChanged);
-
-                group.Noted += OnGroupNoted;
-                groups.Add(group);
+                    OnChoiceChanged));
             }
 
             Groups = groups;
             ProjectName = string.IsNullOrWhiteSpace(projectName) ? "Проект" : projectName!.Trim();
             SpreadCount = inventory.Books.Sum(book => book.Spreads);
-            SetProjectMessage(ProjectProblems.Of(inventory));
+
+            // The project's own sentences are no longer collected here: a book that is not
+            // filled says so in its row, and the group names it. A card over the page repeated
+            // them and made the customer look for the book it meant.
+            SetProjectMessage(string.Empty);
 
             RefreshReadiness();
         }
@@ -303,7 +304,7 @@ namespace PhotoBook.Presentation.ViewModels
             var session = _sessions.Load();
             if (session is null)
             {
-                Note("Выбор формата появится после входа на сайт.");
+                SetFormatNote("Выбор формата появится после входа на сайт.");
                 return;
             }
 
@@ -314,7 +315,7 @@ namespace PhotoBook.Presentation.ViewModels
 
                 if (!result.IsSuccess || result.Value is null)
                 {
-                    Note(result.Error ?? "Каталог сайта не открылся.");
+                    SetFormatNote(result.Error ?? "Каталог сайта не открылся.");
                     return;
                 }
 
@@ -327,7 +328,7 @@ namespace PhotoBook.Presentation.ViewModels
             }
             catch (Exception ex)
             {
-                Note("Каталог сайта не открылся: " + ex.Message);
+                SetFormatNote("Каталог сайта не открылся: " + ex.Message);
             }
             finally
             {
@@ -368,7 +369,7 @@ namespace PhotoBook.Presentation.ViewModels
             foreach (var group in Groups)
                 group.ApplyFormats(_formats);
 
-            Note(_formats.Count == 0 ? "Сайт не предложил ни одного формата." : string.Empty);
+            SetFormatNote(_formats.Count == 0 ? "Сайт не предложил ни одного формата." : string.Empty);
             RefreshReadiness();
         }
 
@@ -453,26 +454,6 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(HasTotal));
 
             RebuildPlan();
-        }
-
-        private void OnGroupNoted(object? sender, string text)
-        {
-            var value = (text ?? string.Empty).Trim();
-
-            // A group that has nothing to report clears the page's answer only when it is the
-            // page's only group: with several, one group's clean reading is not news, and a
-            // heading with nothing after it is worse than no line at all.
-            if (value.Length == 0)
-            {
-                if (Groups.Count <= 1)
-                    Note(string.Empty);
-
-                return;
-            }
-
-            Note(sender is SiteOrderGroup group && Groups.Count > 1
-                ? group.Title + ": " + value
-                : value);
         }
 
         private void OnChoiceChanged() => ChoiceChanged?.Invoke(this, EventArgs.Empty);

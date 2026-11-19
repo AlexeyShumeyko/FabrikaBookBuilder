@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using PhotoBook.Application.Sites.Books.Order;
+using PhotoBook.Application.Sites.Books.Pricing;
+using PhotoBook.Application.Sites.Pricing;
 using PhotoBook.Application.Sites.Upload;
 
 namespace PhotoBook.Presentation.ViewModels
@@ -52,7 +55,8 @@ namespace PhotoBook.Presentation.ViewModels
             var session = _sessions.Load();
             if (session is null)
             {
-                Note("Цена считается после входа на сайт.");
+                _priceProblem = "Цена считается после входа на сайт.";
+                NotifyProblem();
                 return;
             }
 
@@ -65,7 +69,9 @@ namespace PhotoBook.Presentation.ViewModels
 
                 if (!read.IsSuccess || read.Value is null)
                 {
-                    Note(read.Error ?? "Описание формата не открылось.");
+                    SetPlan(null);
+                    _priceProblem = read.Error ?? "Описание формата не открылось.";
+                    NotifyProblem();
                     return;
                 }
 
@@ -82,9 +88,16 @@ namespace PhotoBook.Presentation.ViewModels
 
                 if (priced.Quote is null)
                 {
-                    Note(string.Join(Environment.NewLine, priced.Problems));
+                    // The order could not be assembled at all. Each refused book carries its
+                    // own sentence, so the page opens that book instead of repeating the same
+                    // list over every group.
+                    AttachDraft(priced.Draft);
+                    SetPlan(null);
+                    NotifyProblem();
                     return;
                 }
+
+                AttachPrice(priced.Quote);
 
                 // The price comes back per assembled book; the row it belongs to is found by
                 // identity, because the assembly may have left a book out and counting along the
@@ -110,14 +123,12 @@ namespace PhotoBook.Presentation.ViewModels
                 }
 
                 SetPlan(UploadPlans.Build(session.Region, priced.Draft, priced.Quote, formats));
-
-                Note(priced.IsPriced
-                    ? string.Empty
-                    : string.Join(Environment.NewLine, priced.Problems));
+                NotifyProblem();
             }
             catch (Exception ex)
             {
-                Note("Цена не получена: " + ex.Message);
+                _priceProblem = "Цену не удалось получить: " + ex.Message;
+                NotifyProblem();
             }
             finally
             {
@@ -134,15 +145,105 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(CanGo));
             NotifyProblem();
 
-            if (plan is { Problems.Count: > 0 })
-                Note(string.Join(Environment.NewLine, plan.Problems));
-
             _changed();
 
             if (plan is { Groups.Count: > 0 })
                 StartFileCheck(plan);
             else
                 ForgetFiles();
+        }
+
+        /// <summary>Puts every refused book's own reason on its own row.</summary>
+        private void AttachDraft(OrderDraft? draft)
+        {
+            foreach (var row in Books)
+                row.ClearProblem();
+
+            _draftNote = null;
+
+            var placed = draft?.BookProblems;
+            if (placed is null || placed.Count == 0)
+            {
+                if (draft is { Problems.Count: > 0 })
+                    _draftNote = string.Join(" ", draft.Problems);
+
+                return;
+            }
+
+            var lines = new List<string>();
+
+            foreach (var problem in placed)
+            {
+                var row = Books.FirstOrDefault(item => ReferenceEquals(item.Book, problem.Book));
+                if (row is null)
+                {
+                    lines.Add(problem.Message);
+                    continue;
+                }
+
+                row.ShowProblem(WithoutName(problem.Message, row.Name), expand: true);
+            }
+
+            if (lines.Count > 0)
+                _draftNote = string.Join(" ", lines);
+        }
+
+        /// <summary>Explains a price the site refused, per book or once for the whole group.</summary>
+        private void AttachPrice(GroupQuote quote)
+        {
+            foreach (var row in Books)
+                row.ClearProblem();
+
+            _priceProblem = null;
+
+            var missing = quote.Books.Where(book => !book.IsPriced).ToList();
+            if (missing.Count == 0)
+                return;
+
+            // Every book refused means the group's answers are the problem, not a book: one
+            // sentence beside the parameters is worth more than the same line on five rows.
+            if (missing.Count == quote.Books.Count)
+            {
+                var check = missing[0].Check;
+
+                _priceProblem = check.Outcome == SitePriceOutcome.Invalid
+                    ? "Сайт не продаёт выбранное сочетание параметров (цена 0). " +
+                      "Измените параметры формата — проверьте плотность разворотов и прослойку."
+                    : "Сайт не назвал цену: " + (check.Error ?? "сайт не ответил") + ".";
+                return;
+            }
+
+            foreach (var book in missing)
+            {
+                var row = Books.FirstOrDefault(item => ReferenceEquals(item.Book, book.Book.Origin));
+                if (row is not null)
+                    row.ShowProblem(PriceProblemOf(book.Check));
+            }
+
+            _priceProblem = "Сайт не назвал цену для книг: " +
+                string.Join(", ", missing.Select(book => book.Number)) +
+                ". Откройте книгу, чтобы увидеть причину.";
+        }
+
+        private static string PriceProblemOf(SitePriceCheck check) => check.Outcome switch
+        {
+            SitePriceOutcome.Invalid => "Сайт не продаёт это сочетание параметров: цена 0.",
+            SitePriceOutcome.Error => "Цену не удалось получить: " + (check.Error ?? "сайт не ответил") + ".",
+            _ => check.Error ?? "Цена не получена.",
+        };
+
+        /// <summary>The draft's sentence without the book's name, which the row already shows.</summary>
+        private static string WithoutName(string message, string name)
+        {
+            var value = (message ?? string.Empty).Trim();
+            var prefix = name + ": ";
+
+            if (value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                value = value.Substring(prefix.Length);
+
+            return value.Length == 0
+                ? value
+                : char.ToUpperInvariant(value[0]) + value.Substring(1);
         }
     }
 }

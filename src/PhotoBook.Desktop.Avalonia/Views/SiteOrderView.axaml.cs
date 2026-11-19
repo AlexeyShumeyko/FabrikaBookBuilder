@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using PhotoBook.Presentation.ViewModels;
@@ -24,6 +26,48 @@ namespace PhotoBook.Shell.Views
         {
             if ((sender as Control)?.DataContext is OrderBookRow row)
                 row.IsExpanded = !row.IsExpanded;
+        }
+
+        /// <summary>
+        /// Offers the groups this book can move to, and a group of its own.
+        /// </summary>
+        /// <remarks>
+        /// The menu is built from the page's groups at the moment of the click rather than
+        /// bound: the list changes after every move, and a bound menu would show the groups
+        /// the book has already left.
+        /// </remarks>
+        private void OnMoveBook(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not Control control ||
+                control.DataContext is not OrderBookRow row ||
+                DataContext is not SiteOrderViewModel page)
+            {
+                return;
+            }
+
+            var current = page.GroupOf(row);
+            var flyout = new MenuFlyout();
+
+            foreach (var group in page.Groups.Where(group => !ReferenceEquals(group, current)))
+            {
+                var target = group;
+                flyout.Items.Add(Item(
+                    "В группу " + target.Number + " — " + target.SummaryText,
+                    () => page.MoveBook(row, target)));
+            }
+
+            if (flyout.Items.Count > 0)
+                flyout.Items.Add(new Separator());
+
+            flyout.Items.Add(Item("В новую группу", () => page.MoveBook(row, null)));
+            flyout.ShowAt(control);
+        }
+
+        private static MenuItem Item(string header, Action action)
+        {
+            var item = new MenuItem { Header = header };
+            item.Click += (_, _) => action();
+            return item;
         }
     }
 }

@@ -61,22 +61,20 @@ namespace PhotoBook.Application.Tests.Sites
         }
 
         [Fact]
-        public void KeepsTheProjectsOwnLinesWhenARunSaysSomething()
+        public void KeepsThePagesOwnLineForAFailureThatBelongsToThePage()
         {
             var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
-            project.AvailableFiles.Add("/left-behind.jpg");
 
             var page = new SiteOrderViewModel();
             page.Prepare(project);
 
-            Assert.Contains("Фотографий вне книги: 1", page.Message, StringComparison.Ordinal);
+            // A whole project is not a message: the customer sees the books and the groups.
+            Assert.False(page.HasMessage);
 
-            // What the site said replaces the previous answer of the site, never the project's
-            // own lines: the card used to appear on the way in and vanish with the price.
-            page.ShowMessage("Цена не получена: сайт не ответил.");
+            // A save that failed is the page's own news and has nowhere else to go.
+            page.ShowMessage("Не удалось сохранить проект.");
 
-            Assert.Contains("Фотографий вне книги: 1", page.Message, StringComparison.Ordinal);
-            Assert.Contains("Цена не получена", page.Message, StringComparison.Ordinal);
+            Assert.Contains("Не удалось сохранить", page.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -90,9 +88,13 @@ namespace PhotoBook.Application.Tests.Sites
             page.Prepare(project);
 
             Assert.False(page.IsReady);
-            Assert.True(page.HasMessage);
-            Assert.Contains("заполнено 2 из 3 слотов", page.Message, StringComparison.Ordinal);
+            Assert.False(page.HasMessage);
             Assert.Equal("Не хватает фотографий", page.Books[1].ConditionText);
+
+            // The group names the book, so the customer does not have to find it.
+            Assert.Contains("Не заполнены книги", page.Groups[0].NoteText, StringComparison.Ordinal);
+            Assert.Contains("Book 2", page.Groups[0].NoteText, StringComparison.Ordinal);
+
             // A project without a name is still shown as a project rather than as an empty line.
             Assert.Equal("Проект", page.ProjectName);
         }
@@ -106,12 +108,16 @@ namespace PhotoBook.Application.Tests.Sites
             page.Prepare(project);
 
             Assert.False(page.IsReady);
-            Assert.Contains("нет ни одной фотографии", page.Message, StringComparison.Ordinal);
             Assert.Equal(BookCondition.NoPhotos, page.Books[0].Condition);
+            Assert.Contains("Не заполнены книги", page.Groups[0].NoteText, StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// Photographs the project never placed are the customer's own business: the book that
+        /// goes is whole, and a warning about the folder would only make them doubt that.
+        /// </summary>
         [Fact]
-        public void CountsPhotosTheOrderWillNotCarry()
+        public void SaysNothingAboutPhotographsOutsideTheBooks()
         {
             var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
             project.AvailableFiles.Add("/left-behind.jpg");
@@ -119,7 +125,8 @@ namespace PhotoBook.Application.Tests.Sites
             var page = new SiteOrderViewModel();
             page.Prepare(project);
 
-            Assert.Contains("Фотографий вне книги: 1", page.Message, StringComparison.Ordinal);
+            Assert.False(page.HasMessage);
+            Assert.DoesNotContain("Фотографий вне книги", page.Groups[0].NoteText, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -188,6 +195,13 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.True(question.IsRequired);
             Assert.False(page.IsReady);
 
+            // The missing answer is named in the group's own sentence and marked in the panel:
+            // "не выбрано: 1" made the customer look for which question it meant.
+            Assert.True(question.IsMissing);
+            Assert.True(block.HasMissing);
+            Assert.Contains("«Прослойка»", block.MissingText, StringComparison.Ordinal);
+            Assert.Contains("«Прослойка»", page.Groups[0].ProblemText, StringComparison.Ordinal);
+
             question.Selected = question.Elements[0];
 
             Assert.Equal(420268, project.Books[0].SiteOptions[65738]);
@@ -231,7 +245,8 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.True(book.IsExpanded);
             Assert.Equal("Ошибка в файлах", book.ConditionText);
             Assert.Contains(book.FileRows, file => file.HasProblem);
-            Assert.Contains("исправьте", page.Groups[0].FilesText);
+            Assert.Equal(string.Empty, page.Groups[0].FilesText);
+            Assert.Contains("Исправьте отмеченные книги", page.Groups[0].NoteText, StringComparison.Ordinal);
         }
 
         /// <summary>
@@ -347,6 +362,84 @@ namespace PhotoBook.Application.Tests.Sites
 
             // A pixel or two of another program's rounding is one format, not two groups.
             Assert.Single(page.Groups);
+        }
+
+        /// <summary>
+        /// The page's split follows the exported page size, which is right for two folders but
+        /// not for books of different products at one size. The customer moves the book.
+        /// </summary>
+        [Fact]
+        public void MovesABookIntoAnotherGroupWithoutRenumberingIt()
+        {
+            var page = new SiteOrderViewModel();
+            page.Prepare(TwoPageSizes(), "Разные проекты");
+
+            var target = page.Groups[0];
+            var moved = page.Groups[1].Books[0];
+
+            page.MoveBook(moved, target);
+
+            Assert.Single(page.Groups);
+            Assert.Equal(new[] { 1, 2 }, page.Groups[0].Books.Select(book => book.Number));
+
+            // The book keeps the project's number: a move changes the group, not the name.
+            Assert.Equal(2, moved.Number);
+        }
+
+        [Fact]
+        public void MovesABookIntoAGroupOfItsOwn()
+        {
+            var page = new SiteOrderViewModel();
+            page.Prepare(TwoPageSizes(), "Разные проекты");
+
+            var moved = page.Groups[0].Books[0];
+            page.MoveBook(moved, null);
+
+            Assert.Equal(2, page.Groups.Count);
+            Assert.Equal(new[] { "Группа 1", "Группа 2" }, page.Groups.Select(group => group.Title));
+            Assert.Contains(moved, page.Groups[1].Books);
+            Assert.Equal("Группа 2", page.Groups[1].Title);
+        }
+
+        /// <summary>
+        /// A format the site did not describe sends its refusal to the book's own row and opens
+        /// it: a sentence over the page made the customer find the book it was about.
+        /// </summary>
+        [Fact]
+        public async Task ShowsAFormatProblemOnTheBookThatHasIt()
+        {
+            var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
+            var catalog = new StubCatalog(
+                new CatalogProduct(4494, "Лайфлат", "kit", 1, new[] { new CatalogFormat(9255, "21x30") }))
+            {
+                // A format whose document names no part for the spreads at all.
+                Format = new SiteProduct(
+                    4494,
+                    string.Empty,
+                    "Лайфлат",
+                    "kit",
+                    new[]
+                    {
+                        new ProductVariant(9255, "21x30", Array.Empty<ProductOption>(), Array.Empty<ProductPart>()),
+                    },
+                    37556),
+            };
+
+            var page = new SiteOrderViewModel(catalog, new StubSessionStore(), new StubQuotes(), new StubFiles());
+            page.Prepare(project, "Проект");
+
+            await page.LoadFormatsAsync();
+            page.Groups[0].SelectedFormat = page.Formats[0];
+            await page.LoadFormatsAsync();
+            await page.Pricing;
+
+            var book = page.Books[0];
+            Assert.True(book.IsFailed);
+            Assert.True(book.IsExpanded);
+            Assert.Equal("Не готова", book.ConditionText);
+            Assert.Contains("куда отправлять развороты", book.ReasonsText, StringComparison.Ordinal);
+            Assert.Contains("Исправьте отмеченные книги", page.Groups[0].NoteText, StringComparison.Ordinal);
+            Assert.False(page.HasMessage);
         }
 
         [Fact]
@@ -639,7 +732,8 @@ namespace PhotoBook.Application.Tests.Sites
 
             Assert.Single(page.Books);
             Assert.Empty(page.Books[0].Formats);
-            Assert.Equal("Сайт не ответил.", page.Message);
+            Assert.Equal("Сайт не ответил.", page.Groups[0].FormatNote);
+            Assert.False(page.HasMessage);
         }
 
         /// <summary>

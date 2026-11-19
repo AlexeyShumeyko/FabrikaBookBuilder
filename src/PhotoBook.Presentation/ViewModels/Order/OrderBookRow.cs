@@ -24,8 +24,9 @@ namespace PhotoBook.Presentation.ViewModels
         private string _priceText = "—";
         private bool _isExpanded;
         private string _statusText = string.Empty;
-        private bool _isFailed;
-        private string _reasonsText = string.Empty;
+        private bool _checkFailed;
+        private string _checkReasons = string.Empty;
+        private string _planProblem = string.Empty;
         private IReadOnlyList<UploadFileRow> _fileRows = Array.Empty<UploadFileRow>();
 
         public OrderBookRow(
@@ -73,16 +74,18 @@ namespace PhotoBook.Presentation.ViewModels
         /// read it is the status the site's requirements give it, which is the word the customer
         /// needs before pressing send.
         /// </remarks>
-        public string ConditionText => _statusText.Length > 0
-            ? _statusText
-            : IsReady
-                ? "Готова"
-                : _book.FilledSlotCount == 0
-                    ? "Нет фотографий"
-                    : "Не хватает фотографий";
+        public string ConditionText => _planProblem.Length > 0
+            ? "Не готова"
+            : _statusText.Length > 0
+                ? _statusText
+                : IsReady
+                    ? "Готова"
+                    : _book.FilledSlotCount == 0
+                        ? "Нет фотографий"
+                        : "Не хватает фотографий";
 
         /// <summary>Whether the book needs attention, which the list shows in red.</summary>
-        public bool IsFailed => _isFailed;
+        public bool IsFailed => _checkFailed || _planProblem.Length > 0;
 
         /// <summary>Whether the book's files are listed under it.</summary>
         /// <remarks>
@@ -102,11 +105,17 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Whether the book has files to list.</summary>
         public bool HasFileRows => _fileRows.Count > 0;
 
-        /// <summary>What the check said about the book as a whole, one line each.</summary>
-        public string ReasonsText => _reasonsText;
+        /// <summary>What the book as a whole cannot go with, one line each.</summary>
+        /// <remarks>
+        /// Two sources, one place: the order's own reason (the site did not describe where the
+        /// spreads go, the format takes another number of files) and the reading of the files.
+        /// Both are about the book, so both belong in its expansion rather than in a sentence
+        /// over every group.
+        /// </remarks>
+        public string ReasonsText => Join(_planProblem, _checkReasons);
 
         /// <summary>Whether there is anything to read in the book's expansion.</summary>
-        public bool HasReasons => _reasonsText.Length > 0;
+        public bool HasReasons => ReasonsText.Length > 0;
 
         /// <summary>Takes the status and the files the check found, and opens a book that failed.</summary>
         public void ShowCheck(UploadBookRow check)
@@ -115,15 +124,66 @@ namespace PhotoBook.Presentation.ViewModels
                 throw new ArgumentNullException(nameof(check));
 
             _statusText = check.StatusText;
-            _isFailed = check.IsFailed;
-            _reasonsText = check.ReasonsText;
+            _checkFailed = check.IsFailed;
+            _checkReasons = check.ReasonsText;
             _fileRows = check.Files;
 
             // The row opens when the book needs an answer, which is more than a failure: a file
             // the site would trim keeps the book «Готова» and still has to be seen, and a row
             // that stayed closed left the customer with a disabled button and nothing to read.
-            _isExpanded = check.IsExpanded;
+            if (_planProblem.Length > 0 || check.IsExpanded)
+                _isExpanded = true;
 
+            NotifyBook();
+        }
+
+        /// <summary>Goes back to the book's own words, for when the plan no longer includes it.</summary>
+        public void ClearCheck()
+        {
+            _statusText = string.Empty;
+            _checkFailed = false;
+            _checkReasons = string.Empty;
+            _fileRows = Array.Empty<UploadFileRow>();
+
+            NotifyBook();
+        }
+
+        /// <summary>
+        /// Says why the order itself refuses this book, on the book's own row.
+        /// </summary>
+        /// <param name="text">The reason, already without the book's name.</param>
+        /// <param name="expand">Whether to open the row, which a format problem deserves.</param>
+        public void ShowProblem(string text, bool expand = false)
+        {
+            var value = (text ?? string.Empty).Trim();
+
+            if (expand && value.Length > 0)
+                _isExpanded = true;
+
+            if (value == _planProblem)
+            {
+                if (expand && value.Length > 0)
+                    OnPropertyChanged(nameof(IsExpanded));
+
+                return;
+            }
+
+            _planProblem = value;
+            NotifyBook();
+        }
+
+        /// <summary>Forgets the order's reason, for when the order changed and it no longer holds.</summary>
+        public void ClearProblem()
+        {
+            if (_planProblem.Length == 0)
+                return;
+
+            _planProblem = string.Empty;
+            NotifyBook();
+        }
+
+        private void NotifyBook()
+        {
             OnPropertyChanged(nameof(ConditionText));
             OnPropertyChanged(nameof(IsFailed));
             OnPropertyChanged(nameof(IsExpanded));
@@ -133,21 +193,8 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(HasReasons));
         }
 
-        /// <summary>Goes back to the book's own words, for when the plan no longer includes it.</summary>
-        public void ClearCheck()
-        {
-            _statusText = string.Empty;
-            _isFailed = false;
-            _reasonsText = string.Empty;
-            _fileRows = Array.Empty<UploadFileRow>();
-
-            OnPropertyChanged(nameof(ConditionText));
-            OnPropertyChanged(nameof(IsFailed));
-            OnPropertyChanged(nameof(FileRows));
-            OnPropertyChanged(nameof(HasFileRows));
-            OnPropertyChanged(nameof(ReasonsText));
-            OnPropertyChanged(nameof(HasReasons));
-        }
+        private static string Join(params string[] lines) =>
+            string.Join(Environment.NewLine, lines.Where(line => !string.IsNullOrWhiteSpace(line)));
 
         /// <summary>Everything the picker offers.</summary>
         public IReadOnlyList<FormatChoice> Formats => _formats();

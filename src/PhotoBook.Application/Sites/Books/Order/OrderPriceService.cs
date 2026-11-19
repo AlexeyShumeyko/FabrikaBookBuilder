@@ -29,7 +29,12 @@ namespace PhotoBook.Application.Sites.Books.Order
         public string TotalText => Quote?.TotalText ?? string.Empty;
 
         /// <summary>An order that never reached the site's price list, with the reason.</summary>
-        public static PricedOrder Refused(IReadOnlyList<string> problems) => new(null, problems);
+        /// <remarks>
+        /// The draft travels with the refusal: the page needs each refused book's own row to
+        /// show the complaint on the book rather than in a sentence over the whole order.
+        /// </remarks>
+        public static PricedOrder Refused(OrderDraft draft) =>
+            new(null, draft.Problems, draft);
     }
 
     /// <summary>
@@ -87,7 +92,7 @@ namespace PhotoBook.Application.Sites.Books.Order
                 throw new ArgumentNullException(nameof(session));
 
             if (!draft.IsComplete)
-                return PricedOrder.Refused(draft.Problems);
+                return PricedOrder.Refused(draft);
 
             var quote = await _quotes.QuoteAsync(session, draft.Books, cancellationToken).ConfigureAwait(false);
 

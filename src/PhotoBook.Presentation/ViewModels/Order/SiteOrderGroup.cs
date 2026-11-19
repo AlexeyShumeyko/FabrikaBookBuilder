@@ -10,6 +10,7 @@ using PhotoBook.Application.Sites.Books.Files;
 using PhotoBook.Application.Sites.Books.Order;
 using PhotoBook.Application.Sites.Catalog;
 using PhotoBook.Application.Sites.Upload;
+using CoreBook = PhotoBook.Core.Book;
 
 namespace PhotoBook.Presentation.ViewModels
 {
@@ -45,13 +46,18 @@ namespace PhotoBook.Presentation.ViewModels
         private readonly SiteOrderParameters _parameters;
         private readonly Action _changed;
         private readonly Action _choiceChanged;
+        private readonly List<OrderBookRow> _books;
 
         private IReadOnlyList<FormatChoice> _choices = Array.Empty<FormatChoice>();
         private FormatChoice? _selected;
         private bool _applyingFormat;
         private bool _parametersLoaded;
+        private string? _parametersProblem;
+        private string? _priceProblem;
+        private string? _draftNote;
+        private string? _filesProblem;
+        private string _formatNote = string.Empty;
         private bool _isReady;
-        private bool _staysBehind;
         private bool _isPricing;
         private string _totalText = string.Empty;
         private Task _priceRun = Task.CompletedTask;
@@ -76,7 +82,7 @@ namespace PhotoBook.Presentation.ViewModels
             Action choiceChanged)
         {
             Number = number;
-            Books = books ?? Array.Empty<OrderBookRow>();
+            _books = books is null ? new List<OrderBookRow>() : new List<OrderBookRow>(books);
             _catalog = catalog;
             _sessions = sessions;
             _prices = prices;
@@ -89,17 +95,20 @@ namespace PhotoBook.Presentation.ViewModels
             _parameters.Blocks.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasParameters));
         }
 
-        /// <summary>Raised when the group has something to say that the page shows.</summary>
-        public event EventHandler<string>? Noted;
-
         /// <summary>The group's place in the order, starting at one.</summary>
-        public int Number { get; }
+        public int Number { get; private set; }
 
         /// <summary>What the group's card is headed with.</summary>
         public string Title => "Группа " + Number;
 
         /// <summary>The books of this group, in the project's order.</summary>
-        public IReadOnlyList<OrderBookRow> Books { get; }
+        /// <remarks>
+        /// The list is the group's own and can change: the customer may move a book to another
+        /// group when the page's own split put a stray book beside books it does not share
+        /// parameters with. The rows keep the project's numbering, so a move changes the group
+        /// and not the name of the book.
+        /// </remarks>
+        public IReadOnlyList<OrderBookRow> Books => _books;
 
         /// <summary>The group in one line: how many books, in what format.</summary>
         public string SummaryText =>
@@ -216,101 +225,6 @@ namespace PhotoBook.Presentation.ViewModels
             _files is { CanSend: true } &&
             (!NeedsConfirmation || _confirmationsAccepted);
 
-        /// <summary>
-        /// What the group says about itself on its own card: why it cannot go, and whether its
-        /// books stay behind while the rest of the order goes.
-        /// </summary>
-        /// <remarks>
-        /// The line lives on the group rather than beside the send button because every sentence
-        /// in it is about this group alone - its format, its answers, its files. A page-level
-        /// summary of several groups repeated the numbers and left the customer to find the card.
-        /// </remarks>
-        public string NoteText
-        {
-            get
-            {
-                var problem = ProblemText.Trim();
-                if (problem.Length == 0)
-                    return string.Empty;
-
-                return _staysBehind
-                    ? problem + " Книги этой группы загружены не будут."
-                    : problem;
-            }
-        }
-
-        /// <summary>Whether the group has anything to say on its card.</summary>
-        public bool HasNote => NoteText.Length > 0;
-
-        /// <summary>Whether the line is a warning about books left behind rather than a reason.</summary>
-        public bool NoteIsWarning => _staysBehind && HasNote;
-
-        /// <summary>Whether the line is the group's own reason for not being ready.</summary>
-        public bool NoteIsProblem => HasNote && !_staysBehind;
-
-        /// <summary>
-        /// Says whether this group is one the coming run leaves out, so its card reads as a
-        /// warning rather than as a reason beside a button.
-        /// </summary>
-        public void MarkStaying(bool stays)
-        {
-            if (_staysBehind == stays)
-                return;
-
-            _staysBehind = stays;
-            NotifyProblem();
-        }
-
-        /// <summary>Why the group cannot go, in the customer's words; empty when it can.</summary>
-        /// <remarks>
-        /// The line is what the page prints beside the button and in the warning about the groups
-        /// that stay behind. A grey button with no sentence next to it is a puzzle, and this is
-        /// the one place that knows which step of this group is still open.
-        /// </remarks>
-        public string ProblemText
-        {
-            get
-            {
-                if (Books.Count == 0)
-                    return "в группе нет ни одной книги.";
-
-                if (Books.Any(book => !book.IsReady))
-                    return "в группе есть незаполненная книга.";
-
-                if (SelectedFormat is null)
-                    return "выберите формат группы: по нему сайт считает цену.";
-
-                if (!_parametersLoaded)
-                    return "читаем параметры формата…";
-
-                if (!_parameters.IsAnswered)
-                    return "ответьте на параметры формата: без ответов сайт цену не назовёт.";
-
-                if (_isPricing)
-                    return "считаем цену на сайте…";
-
-                if (_checkingFiles)
-                    return "проверяем файлы книги…";
-
-                if (_plan is { Problems.Count: > 0 } withProblems)
-                    return string.Join(" ", withProblems.Problems);
-
-                if (_plan is null)
-                    return "заказ не собран.";
-
-                if (NeedsConfirmation && !_confirmationsAccepted)
-                    return "отметьте, что файлы можно отправлять: край сайт может обрезать.";
-
-                if (_files is null)
-                    return "файлы не проверены.";
-
-                if (_files is { CanSend: false })
-                    return "файлы не готовы к отправке: исправьте отмеченное в списке.";
-
-                return CanGo ? string.Empty : "заказ не готов к отправке.";
-            }
-        }
-
         /// <summary>The files as the check found them; null until it has run.</summary>
         public OrderFileCheck? Files
         {
@@ -401,46 +315,38 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>The reading the group has started, so a reader can wait for the answer.</summary>
         public Task FileCheck => _filesRun;
 
-        /// <summary>Takes the formats the site offers and keeps the one the books carry.</summary>
-        public void ApplyFormats(IReadOnlyList<FormatChoice> formats)
-        {
-            _choices = formats ?? Array.Empty<FormatChoice>();
-
-            foreach (var row in Books)
-                row.RefreshFormats();
-
-            // A group whose books already carry a format keeps it. A project assembled from two
-            // folders keeps one stored format on both books, which is why the page split them by
-            // their own page size and not by this: the first group still has to be told which
-            // format it really is.
-            _selected = Books.Select(row => row.SelectedFormat)
-                .FirstOrDefault(choice => choice is not null);
-
-            if (_selected is not null)
-                ApplyFormatToBooks(_selected);
-
-            OnPropertyChanged(nameof(Formats));
-            OnPropertyChanged(nameof(HasFormats));
-            OnPropertyChanged(nameof(SelectedFormat));
-            OnPropertyChanged(nameof(SummaryText));
-
-            RefreshReadiness();
-        }
-
         /// <summary>Reads the questions of the format the group carries.</summary>
+        /// <remarks>
+        /// A document the site did not open is kept as the group's own sentence: the group stays
+        /// in its "reading" state only while the reading is actually running. Before, a failure
+        /// left the page saying «читаем параметры формата…» for ever, which read as an error the
+        /// customer could do nothing about.
+        /// </remarks>
         public async Task LoadParametersAsync()
         {
             _parametersLoaded = false;
+            _parametersProblem = null;
+            OnPropertyChanged(nameof(ProblemText));
 
-            await _parameters.LoadAsync(Books).ConfigureAwait(true);
+            try
+            {
+                await _parameters.LoadAsync(Books).ConfigureAwait(true);
+            }
+            catch (Exception error)
+            {
+                _parametersProblem = "Параметры формата не открылись: " + error.Message;
+            }
+            finally
+            {
+                if (!string.IsNullOrWhiteSpace(_parameters.Problem))
+                    _parametersProblem = _parameters.Problem;
 
-            if (!string.IsNullOrEmpty(_parameters.Problem))
-                Note(_parameters.Problem!);
+                _parametersLoaded = true;
 
-            _parametersLoaded = true;
-
-            OnPropertyChanged(nameof(HasParameters));
-            RefreshReadiness();
+                OnPropertyChanged(nameof(HasParameters));
+                OnPropertyChanged(nameof(ProblemText));
+                RefreshReadiness();
+            }
         }
 
         /// <summary>Stops the reading of the files; nothing was sent by it.</summary>
@@ -450,6 +356,8 @@ namespace PhotoBook.Presentation.ViewModels
         private void AfterFormatChosen()
         {
             _parametersLoaded = false;
+            _parametersProblem = null;
+            ClearOrderProblems();
             RefreshReadiness();
             ForgetPrice();
             ForgetFiles();
@@ -466,7 +374,8 @@ namespace PhotoBook.Presentation.ViewModels
             }
             catch (Exception ex)
             {
-                Note("Параметры формата не открылись: " + ex.Message);
+                _parametersProblem = "Параметры формата не открылись: " + ex.Message;
+                NotifyProblem();
             }
         }
 
@@ -506,6 +415,9 @@ namespace PhotoBook.Presentation.ViewModels
             foreach (var row in Books)
                 row.ForgetPrice();
 
+            _priceProblem = null;
+            _draftNote = null;
+            ClearOrderProblems();
             ForgetPrice();
             ForgetFiles();
 
@@ -562,9 +474,20 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(HasNote));
             OnPropertyChanged(nameof(NoteIsWarning));
             OnPropertyChanged(nameof(NoteIsProblem));
+            OnPropertyChanged(nameof(StatusText));
+            OnPropertyChanged(nameof(HasStatus));
         }
 
-        /// <summary>Says something on the page that the group's own step produced.</summary>
-        private void Note(string text) => Noted?.Invoke(this, text ?? string.Empty);
+        /// <summary>Forgets the sentences that belonged to the answers that just changed.</summary>
+        private void ClearOrderProblems()
+        {
+            _priceProblem = null;
+            _draftNote = null;
+
+            foreach (var row in Books)
+                row.ClearProblem();
+
+            NotifyProblem();
+        }
     }
 }

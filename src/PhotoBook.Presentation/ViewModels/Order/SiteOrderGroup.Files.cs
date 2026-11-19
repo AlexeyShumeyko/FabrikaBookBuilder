@@ -61,7 +61,9 @@ namespace PhotoBook.Presentation.ViewModels
             if (session is null)
             {
                 // Nothing to check against: the catalogue's sizes come with the session.
-                Note("Файлы будут проверены после входа на сайт.");
+                _filesProblem = "Файлы проверим после входа на сайт.";
+                FilesText = string.Empty;
+                NotifyProblem();
                 return;
             }
 
@@ -71,6 +73,7 @@ namespace PhotoBook.Presentation.ViewModels
 
             // A new reading of the files is a new question, so an old yes no longer answers it.
             ConfirmationsAccepted = false;
+            _filesProblem = null;
             IsCheckingFiles = true;
             FilesText = "Читаем файлы книги.";
 
@@ -91,12 +94,12 @@ namespace PhotoBook.Presentation.ViewModels
                     .ConfigureAwait(true);
 
                 Files = check;
-                FilesText = Describe(check);
+                FilesText = string.Empty;
             }
             catch (OperationCanceledException) when (cancel.IsCancellationRequested)
             {
                 Files = null;
-                FilesText = "Проверка файлов остановлена.";
+                FilesText = string.Empty;
             }
             catch (Exception error)
             {
@@ -107,7 +110,7 @@ namespace PhotoBook.Presentation.ViewModels
                         new FileAlert(FileAlertLevel.Blocking, null, "Файлы не проверены: " + error.Message)
                     });
 
-                FilesText = "Проверка файлов не удалась.";
+                FilesText = string.Empty;
             }
             finally
             {
@@ -176,20 +179,6 @@ namespace PhotoBook.Presentation.ViewModels
                 System.IO.Path.GetFileName(file.Path),
                 alert?.Message,
                 alert?.Level);
-        }
-
-        /// <summary>The one line under the group once the files are read.</summary>
-        private static string Describe(OrderFileCheck check)
-        {
-            var books = check.Books.Count == 1 ? "1 книга" : check.Books.Count + " кн.";
-
-            if (check.BlockingCount > 0)
-                return "Файлы: " + books + ", " + check.BlockingCount + " без отправки — исправьте отмеченное.";
-
-            if (check.ConfirmationCount > 0)
-                return "Файлы: " + books + ", " + check.ConfirmationCount + " вопрос(а) — ответьте ниже.";
-
-            return "Файлы: " + books + ", всё совпадает с тем, что просит сайт.";
         }
 
         /// <summary>Runs the report where it is made, in the order the work happens.</summary>

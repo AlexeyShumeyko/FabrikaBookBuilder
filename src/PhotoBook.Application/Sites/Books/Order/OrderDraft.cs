@@ -7,6 +7,11 @@ using CoreProject = PhotoBook.Core.Project;
 
 namespace PhotoBook.Application.Sites.Books.Order
 {
+    /// <summary>One book the draft refused, and the sentence that says why.</summary>
+    /// <param name="Book">The project's own book, so the page can find its row.</param>
+    /// <param name="Message">The full sentence, starting with the book's name.</param>
+    public sealed record BookDraftProblem(CoreBook Book, string Message);
+
     /// <summary>
     /// The project turned into the books the site prices and receives.
     /// </summary>
@@ -23,7 +28,10 @@ namespace PhotoBook.Application.Sites.Books.Order
     /// wrong part would price one book and deliver another.
     /// </para>
     /// </remarks>
-    public sealed record OrderDraft(IReadOnlyList<Book> Books, IReadOnlyList<string> Problems)
+    public sealed record OrderDraft(
+        IReadOnlyList<Book> Books,
+        IReadOnlyList<string> Problems,
+        IReadOnlyList<BookDraftProblem>? BookProblems = null)
     {
         /// <summary>Whether every book of the project is ready to be priced and sent.</summary>
         public bool IsComplete => Books.Count > 0 && Problems.Count == 0;
@@ -59,17 +67,27 @@ namespace PhotoBook.Application.Sites.Books.Order
             var products = catalog ?? Array.Empty<SiteProduct>();
             var built = new List<Book>();
             var problems = new List<string>();
+            var placed = new List<BookDraftProblem>();
 
             foreach (var source in books)
             {
                 var name = NameOf(source);
+                var before = problems.Count;
                 var book = Build(source, name, products, files, problems);
 
                 if (book is not null)
+                {
                     built.Add(book);
+                    continue;
+                }
+
+                // The page shows a book's own complaint on the book's row, so the draft keeps the
+                // book it belongs to rather than leaving the page to match a name in a sentence.
+                if (problems.Count > before)
+                    placed.Add(new BookDraftProblem(source, problems[problems.Count - 1]));
             }
 
-            return new OrderDraft(built, problems);
+            return new OrderDraft(built, problems, placed);
         }
 
         private static Book? Build(
@@ -113,8 +131,8 @@ namespace PhotoBook.Application.Sites.Books.Order
             if (pageParts.Count != 1)
             {
                 problems.Add(pageParts.Count == 0
-                    ? name + ": у формата не нашлась часть с разворотами."
-                    : name + ": у формата несколько частей с разворотами, какая из них — не ясно.");
+                    ? name + ": сайт не описал, куда отправлять развороты этого формата — выберите другой формат."
+                    : name + ": у формата несколько частей с разворотами — программа не знает, куда отправлять файлы.");
                 return null;
             }
 
@@ -123,7 +141,7 @@ namespace PhotoBook.Application.Sites.Books.Order
             if (range is not null && !range.Allows(pages.Count))
             {
                 problems.Add(name + ": формат принимает от " + range.From + " до " + range.To +
-                    " с шагом " + range.Step + ", а в книге " + pages.Count + ".");
+                    " файлов с шагом " + range.Step + ", а в книге " + pages.Count + ".");
                 return null;
             }
 

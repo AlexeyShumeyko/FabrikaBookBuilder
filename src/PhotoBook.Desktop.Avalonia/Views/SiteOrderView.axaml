@@ -107,6 +107,19 @@
                                                     <TextBlock Text="{Binding SummaryText}" Classes="t11"
                                                                Foreground="{DynamicResource Slate500}"
                                                                VerticalAlignment="Center" />
+
+                                                    <!-- A ready group says so in green, in a badge
+                                                         rather than the grey sentence it used to
+                                                         repeat. A group that cannot go explains
+                                                         itself in the line below. -->
+                                                    <Border Background="{DynamicResource Emerald50}"
+                                                            BorderBrush="{DynamicResource Emerald100}"
+                                                            BorderThickness="1" CornerRadius="8"
+                                                            Padding="8,3" VerticalAlignment="Center"
+                                                            IsVisible="{Binding HasStatus}">
+                                                        <TextBlock Text="{Binding StatusText}" Classes="t11"
+                                                                   Foreground="{DynamicResource Emerald700}" />
+                                                    </Border>
                                                 </StackPanel>
                                                 <TextBlock Text="{Binding FilesText}" Classes="t12"
                                                            Foreground="{DynamicResource Slate500}" TextWrapping="Wrap"
@@ -128,7 +141,7 @@
                                             </StackPanel>
 
                                             <!-- the column headings, once -->
-                                            <Grid Grid.Row="1" ColumnDefinitions="56,*,100,110,130,140,24"
+                                            <Grid Grid.Row="1" ColumnDefinitions="56,*,100,110,130,140,24,24"
                                                   Margin="20,0,20,12">
                                                 <TextBlock Grid.Column="0" Text="№" Classes="t11" Foreground="{DynamicResource Slate500}" />
                                                 <TextBlock Grid.Column="1" Text="Книга" Classes="t11" Foreground="{DynamicResource Slate500}" />
@@ -148,7 +161,7 @@
                                                             <!-- One book as a row of the table. The chevron opens what
                                                                  the check found: the cover, the spreads, and the file
                                                                  the site refused. A book with a problem opens itself. -->
-                                                            <Grid ColumnDefinitions="56,*,100,110,130,140,24" Margin="20,12">
+                                                            <Grid ColumnDefinitions="56,*,100,110,130,140,24,24" Margin="20,12">
                                                                 <TextBlock Grid.Column="0" Text="{Binding Number}" Classes="t12"
                                                                            Foreground="{DynamicResource Slate500}" />
                                                                 <TextBlock Grid.Column="1" Text="{Binding Name}" Classes="t12"
@@ -166,7 +179,18 @@
                                                                            IsVisible="{Binding !IsFailed}" />
                                                                 <TextBlock Grid.Column="5" Text="{Binding PriceText}" Classes="t12"
                                                                            VerticalAlignment="Center" />
+                                                                <!-- A book can be moved when the page's own
+                                                                     split put it beside books it does not share
+                                                                     parameters with. -->
                                                                 <Button Grid.Column="6" Classes="ghostClear" Padding="2"
+                                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                        AutomationProperties.Name="Переместить книгу"
+                                                                        Click="OnMoveBook">
+                                                                    <TextBlock Text="&#xE712;" FontFamily="Segoe MDL2 Assets"
+                                                                               FontSize="12"
+                                                                               Foreground="{DynamicResource Slate500}" />
+                                                                </Button>
+                                                                <Button Grid.Column="7" Classes="ghostClear" Padding="2"
                                                                         HorizontalAlignment="Right" VerticalAlignment="Center"
                                                                         AutomationProperties.Name="Файлы книги"
                                                                         IsVisible="{Binding !IsExpanded}"
@@ -175,7 +199,7 @@
                                                                                FontSize="10"
                                                                                Foreground="{DynamicResource Slate500}" />
                                                                 </Button>
-                                                                <Button Grid.Column="6" Classes="ghostClear" Padding="2"
+                                                                <Button Grid.Column="7" Classes="ghostClear" Padding="2"
                                                                         HorizontalAlignment="Right" VerticalAlignment="Center"
                                                                         AutomationProperties.Name="Свернуть книгу"
                                                                         IsVisible="{Binding IsExpanded}"
@@ -277,6 +301,10 @@
                                                 <TextBlock Text="Формат и параметры выбираются один раз — для всех книг группы."
                                                            Classes="t11" Foreground="{DynamicResource Slate400}"
                                                            TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding FormatNote}" Classes="t11"
+                                                           Foreground="{DynamicResource Red600}"
+                                                           TextWrapping="Wrap"
+                                                           IsVisible="{Binding HasFormatNote}" />
                                             </StackPanel>
 
                                             <ScrollViewer Grid.Row="2" Margin="0,16,0,0"
@@ -287,15 +315,29 @@
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
                                                             <StackPanel Spacing="4" Margin="0,0,0,8">
+                                                                <!-- The block says what is still open, in red:
+                                                                     "не выбрано: 1" left the customer to
+                                                                     look for which one. -->
                                                                 <TextBlock Text="{Binding StateText}" Classes="t11"
-                                                                           Foreground="{DynamicResource Slate500}" />
+                                                                           Foreground="{DynamicResource Red600}"
+                                                                           TextWrapping="Wrap"
+                                                                           IsVisible="{Binding HasMissing}" />
+                                                                <TextBlock Text="{Binding StateText}" Classes="t11"
+                                                                           Foreground="{DynamicResource Slate500}"
+                                                                           TextWrapping="Wrap"
+                                                                           IsVisible="{Binding !HasMissing}" />
 
                                                                 <ItemsControl ItemsSource="{Binding Parameters}">
                                                                     <ItemsControl.ItemTemplate>
                                                                         <DataTemplate>
                                                                             <StackPanel Spacing="4" Margin="0,8,0,0">
-                                                                                <TextBlock Text="{Binding Title}" Classes="t11"
-                                                                                           Foreground="{DynamicResource Slate500}" />
+                                                                                <StackPanel Orientation="Horizontal" Spacing="3">
+                                                                                    <TextBlock Text="{Binding Title}" Classes="t11"
+                                                                                               Foreground="{DynamicResource Slate500}" />
+                                                                                    <TextBlock Text="*" Classes="t11"
+                                                                                               Foreground="{DynamicResource Red600}"
+                                                                                               IsVisible="{Binding IsMissing}" />
+                                                                                </StackPanel>
                                                                                 <ComboBox HorizontalAlignment="Stretch"
                                                                                           AutomationProperties.Name="{Binding Title}"
                                                                                           ItemsSource="{Binding Elements}"

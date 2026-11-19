@@ -55,6 +55,11 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Whether every required parameter of every format has an answer.</summary>
         public bool IsAnswered => Blocks.All(block => block.IsAnswered);
 
+        /// <summary>The unanswered parameters of every format, by the site's own names.</summary>
+        public string MissingText => string.Join(", ", Blocks
+            .Where(block => block.HasMissing)
+            .Select(block => block.MissingText));
+
         /// <summary>The reason the parameters could not be read, if they could not.</summary>
         public string? Problem { get; private set; }
 
@@ -197,6 +202,11 @@ namespace PhotoBook.Presentation.ViewModels
                         book.RemoveSiteOption(row.OptionId);
                 }
             }
+
+            // The section's own line names what is still open, so it is re-read here rather
+            // than only after the next rebuild of the block.
+            foreach (var item in Blocks)
+                item.Refresh();
 
             Answered?.Invoke(this, EventArgs.Empty);
 
