@@ -126,7 +126,9 @@ namespace PhotoBook.Application.Tests.Sites.Books.Submission
 
             Assert.False(summary.CanUpload);
             var blocker = Assert.Single(summary.Blockers);
-            Assert.Equal("Группа 2: Книга 1: Комбинация недоступна.", blocker);
+            Assert.Equal(
+                "Группа 2: Книга 1: Сайт не продаёт книгу с такими параметрами — измените параметры формата.",
+                blocker);
             Assert.Equal("Цена не получена", summary.Groups[1].PriceText);
         }
 

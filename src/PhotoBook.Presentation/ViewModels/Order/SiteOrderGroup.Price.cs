@@ -207,8 +207,8 @@ namespace PhotoBook.Presentation.ViewModels
                 var check = missing[0].Check;
 
                 _priceProblem = check.Outcome == SitePriceOutcome.Invalid
-                    ? "Сайт не продаёт выбранное сочетание параметров (цена 0). " +
-                      "Измените параметры формата — проверьте плотность разворотов и прослойку."
+                    ? "Сайт не продаёт книги с таким сочетанием параметров. " +
+                      "Выберите другие параметры формата."
                     : "Сайт не назвал цену: " + (check.Error ?? "сайт не ответил") + ".";
                 return;
             }
@@ -227,7 +227,8 @@ namespace PhotoBook.Presentation.ViewModels
 
         private static string PriceProblemOf(SitePriceCheck check) => check.Outcome switch
         {
-            SitePriceOutcome.Invalid => "Сайт не продаёт это сочетание параметров: цена 0.",
+            SitePriceOutcome.Invalid => "Сайт не продаёт книгу с такими параметрами. " +
+                "Выберите другие параметры формата.",
             SitePriceOutcome.Error => "Цену не удалось получить: " + (check.Error ?? "сайт не ответил") + ".",
             _ => check.Error ?? "Цена не получена.",
         };

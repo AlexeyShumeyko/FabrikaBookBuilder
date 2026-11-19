@@ -50,7 +50,9 @@ namespace PhotoBook.Application.Tests.Sites.Books.Pricing
 
             Assert.False(quote.IsPriced);
             Assert.Equal(542m, quote.Total);
-            Assert.Equal(new[] { "Книга 2: Комбинация недоступна." }, quote.Problems);
+            Assert.Equal(
+                new[] { "Книга 2: Сайт не продаёт книгу с такими параметрами — измените параметры формата." },
+                quote.Problems);
         }
 
         [Fact]

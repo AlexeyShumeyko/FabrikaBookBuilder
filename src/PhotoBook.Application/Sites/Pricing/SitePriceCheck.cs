@@ -28,8 +28,8 @@ namespace PhotoBook.Application.Sites.Pricing
     /// <para>
     /// The endpoint answers <c>200</c> with <c>price: 0</c> for a combination it will not sell,
     /// so a plain number would put «0 ₽» in front of the customer and make an unsellable set
-    /// look free. Zero is therefore its own outcome, and the window can say «комбинация
-    /// недоступна» instead.
+    /// look free. Zero is therefore its own outcome, and the window says the site will not sell
+    /// the book with these parameters instead.
     /// </para>
     /// <para>
     /// An error is not a zero either: a lost connection says nothing about the combination, and
@@ -50,7 +50,10 @@ namespace PhotoBook.Application.Sites.Pricing
         }
 
         public static SitePriceCheck Invalid() =>
-            new(SitePriceOutcome.Invalid, null, "Комбинация недоступна.");
+            new(
+                SitePriceOutcome.Invalid,
+                null,
+                "Сайт не продаёт книгу с такими параметрами — измените параметры формата.");
 
         public static SitePriceCheck Failed(string message) =>
             new(

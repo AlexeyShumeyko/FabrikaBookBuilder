@@ -64,7 +64,7 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.False(check.IsValid);
             Assert.Equal(SitePriceOutcome.Invalid, check.Outcome);
             Assert.Null(check.Quote);
-            Assert.Equal("Комбинация недоступна.", check.Error);
+            Assert.Equal("Сайт не продаёт книгу с такими параметрами — измените параметры формата.", check.Error);
         }
 
         [Fact]
