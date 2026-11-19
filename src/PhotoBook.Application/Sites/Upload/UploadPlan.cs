@@ -53,6 +53,13 @@ namespace PhotoBook.Application.Sites.Upload
         public const int MaxFilesPerProject = 500;
 
         /// <summary>
+        /// Books one project on the site takes. The uploader's settings name fifty
+        /// (<c>common.starting.projectItemsLimit</c>), and it never places a book past that
+        /// position: a project asked for a fifty-first book answers without one.
+        /// </summary>
+        public const int MaxBooksPerProject = 50;
+
+        /// <summary>
         /// Bytes one project on the site takes. The uploader's own settings name 1 GiB, and a
         /// run that reaches it starts answering 5xx halfway through a book - which reads as
         /// "the site is unavailable" but is really a project that is too large.
@@ -230,11 +237,13 @@ namespace PhotoBook.Application.Sites.Upload
                 var count = book.AllFiles.Count;
                 var size = book.AllFiles.Sum(file => file.LengthBytes);
 
-                // Both limits belong to one project: the site stops taking files after five
-                // hundred, and its uploader's settings name a gigabyte. A book is never split,
-                // so a single book over the limit travels alone.
+                // Every limit belongs to one project: the site stops taking files after five
+                // hundred, its uploader's settings name a gigabyte and fifty books. A book is
+                // never split, so a single book over a limit travels alone.
                 if (current.Count > 0 &&
-                    (files + count > MaxFilesPerProject || bytes + size > MaxBytesPerProject))
+                    (current.Count >= MaxBooksPerProject ||
+                     files + count > MaxFilesPerProject ||
+                     bytes + size > MaxBytesPerProject))
                 {
                     parts.Add(current);
                     current = new List<Book>();
@@ -256,6 +265,9 @@ namespace PhotoBook.Application.Sites.Upload
         /// <summary>Which of the site's two limits the group passes, in the note's own words.</summary>
         private static string TooLargeForOneProject(IReadOnlyList<Book> books)
         {
+            if (books.Count > MaxBooksPerProject)
+                return "больше " + MaxBooksPerProject + " книг";
+
             var files = books.Sum(book => book.AllFiles.Count);
             if (files > MaxFilesPerProject)
                 return "больше " + MaxFilesPerProject + " файлов";

@@ -125,12 +125,35 @@ namespace PhotoBook.Application.Tests.Sites.Upload
 
             Assert.True(plan.IsComplete);
             Assert.Equal(2, plan.Groups.Count);
-            Assert.Equal(55, plan.Groups[0].Group.Books.Count);
-            Assert.Equal(5, plan.Groups[1].Group.Books.Count);
-            Assert.Equal(495, plan.Groups[0].Pages.Count);
-            Assert.Equal(45, plan.Groups[1].Pages.Count);
-            Assert.Contains(plan.Notes!, note => note.Contains("500", StringComparison.Ordinal));
+            Assert.Equal(50, plan.Groups[0].Group.Books.Count);
+            Assert.Equal(10, plan.Groups[1].Group.Books.Count);
+            Assert.Equal(450, plan.Groups[0].Pages.Count);
+            Assert.Equal(90, plan.Groups[1].Pages.Count);
+            Assert.Contains(plan.Notes!, note => note.Contains("50", StringComparison.Ordinal));
             Assert.Equal(60, plan.Summary.BookCount);
+        }
+
+        /// <summary>
+        /// Fifty books is the site's own limit: the uploader never places a book past that
+        /// position, so a group of fifty-two goes up as two projects even though it has room
+        /// for its files.
+        /// </summary>
+        [Fact]
+        public void SplitsAGroupOfMoreBooksThanOneProjectTakes()
+        {
+            var books = Enumerable.Range(0, 52).Select(_ => Book(Layflat, "21x30", 2)).ToList();
+
+            var plan = UploadPlans.Build(
+                SiteRegion.Com,
+                new OrderDraft(books, Array.Empty<string>()),
+                Quote(books.ToArray()),
+                Formats());
+
+            Assert.True(plan.IsComplete);
+            Assert.Equal(2, plan.Groups.Count);
+            Assert.Equal(50, plan.Groups[0].Group.Books.Count);
+            Assert.Equal(2, plan.Groups[1].Group.Books.Count);
+            Assert.Contains(plan.Notes!, note => note.Contains("50 книг", StringComparison.Ordinal));
         }
 
         /// <summary>
