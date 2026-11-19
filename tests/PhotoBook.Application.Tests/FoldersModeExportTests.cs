@@ -142,6 +142,31 @@ public sealed class FoldersModeExportTests : IDisposable
 
         // The service answers with false: an export that cannot run is an expected outcome
         // here, not an exception the caller has to catch.
-        AssertFails(await Service().ExportProjectAsync(project, output), "no writable folder");
+        var result = await Service().ExportProjectAsync(project, output);
+        AssertFails(result, "missing source");
+
+        // The reason names the file and what the customer can do, rather than a copy failure
+        // that leaves them guessing which photograph the program means.
+        Assert.Contains("gone.jpg", result.Error);
+        Assert.Contains("создайте проект заново", result.Error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Names_every_missing_file_before_copying_anything()
+    {
+        var present = Source("present.jpg");
+        var project = TestProject.Folders(TestProject.Book(
+            1,
+            Path.Combine(_root, "gone-cover.jpg"),
+            present,
+            Path.Combine(_root, "gone-page.jpg")));
+
+        var output = OutputFolder("out");
+        var result = await Service().ExportProjectAsync(project, output);
+
+        AssertFails(result, "two missing sources");
+        Assert.Contains("gone-cover.jpg", result.Error);
+        Assert.Contains("gone-page.jpg", result.Error);
+        Assert.Empty(Directory.GetFiles(output));
     }
 }

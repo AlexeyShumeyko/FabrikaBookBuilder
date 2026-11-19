@@ -100,6 +100,28 @@ namespace PhotoBook.Application
                 if (work.Count == 0)
                     return Result.Ok();
 
+                // A project whose photographs were deleted used to be copied file by file: the
+                // first missing one threw, the message named a copy failure, and a folder on a
+                // network share that no longer answered made the window look hung while every
+                // path was tried. The whole list is checked first, so the answer is one sentence
+                // saying what is missing and what to do about it.
+                var missing = work
+                    .Where(item => !_fileService.FileExists(item.Source))
+                    .Select(item => System.IO.Path.GetFileName(item.Source))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (missing.Count > 0)
+                {
+                    var shown = string.Join(", ", missing.Take(10));
+                    if (missing.Count > 10)
+                        shown += " и ещё " + (missing.Count - 10);
+
+                    return Result.Fail(
+                        "Не удалось выгрузить: файлы проекта не найдены — " + shown +
+                        ". Верните файлы на место или создайте проект заново.");
+                }
+
                 var completed = 0;
                 var gate = new object();
 
