@@ -42,9 +42,11 @@ namespace PhotoBook.Presentation.ViewModels
             var created = target is null;
             if (created)
             {
+                // The row is put in at construction: adding it later would start a parameter
+                // reading of its own just before this method starts the one it means to keep.
                 target = new SiteOrderGroup(
                     0,
-                    Array.Empty<OrderBookRow>(),
+                    new[] { row },
                     _catalog,
                     _sessions,
                     _prices,
@@ -56,7 +58,9 @@ namespace PhotoBook.Presentation.ViewModels
             }
 
             source.Remove(row);
-            target!.Add(row);
+
+            if (!created)
+                target!.Add(row);
 
             if (source.Books.Count == 0)
                 groups.Remove(source);
