@@ -111,7 +111,7 @@ namespace PhotoBook.Application.Sites.Catalog
             List<PartProblem> problems)
         {
             var settings = part.Quantity;
-            var range = RangeFor(settings, selection);
+            var range = settings.RangeFor(selection.Elements);
 
             if (range is null)
             {
@@ -136,29 +136,6 @@ namespace PhotoBook.Application.Sites.Catalog
                 text.Append(" с шагом ").Append(range.Step);
 
             problems.Add(new PartProblem(PartProblemKind.QuantityNotAllowed, text.Append('.').ToString()));
-        }
-
-        /// <summary>
-        /// The range that governs the selection: the rule of a chosen element, else the part's
-        /// own default.
-        /// </summary>
-        private static QuantityRange? RangeFor(ProductQuantitySettings settings, PartSelection selection)
-        {
-            for (var index = 0; index < settings.Rules.Count; index++)
-            {
-                var rule = settings.Rules[index];
-
-                if (!long.TryParse(rule.OptionId, NumberStyles.Integer, CultureInfo.InvariantCulture, out var optionId))
-                    continue;
-
-                if (selection.ElementOf(optionId) is not { } elementId)
-                    continue;
-
-                if (rule.AppliesTo(rule.OptionId, elementId.ToString(CultureInfo.InvariantCulture)))
-                    return rule.Range;
-            }
-
-            return settings.Default;
         }
 
         private static string Counter(ProductQuantitySettings settings) =>

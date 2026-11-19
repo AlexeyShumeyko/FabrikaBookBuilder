@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using PhotoBook.Application.Sites.Catalog;
 using CoreBook = PhotoBook.Core.Book;
 using CoreProject = PhotoBook.Core.Project;
@@ -137,11 +138,11 @@ namespace PhotoBook.Application.Sites.Books.Order
             }
 
             var pagePart = pageParts[0];
-            var range = pagePart.Quantity?.Default;
+            var quantity = pagePart.Quantity;
+            var range = quantity?.RangeFor(source.SiteOptions);
             if (range is not null && !range.Allows(pages.Count))
             {
-                problems.Add(name + ": формат принимает от " + range.From + " до " + range.To +
-                    " файлов с шагом " + range.Step + ", а в книге " + pages.Count + ".");
+                problems.Add(OutOfRange(name, quantity!, range, pages.Count));
                 return null;
             }
 
@@ -193,6 +194,41 @@ namespace PhotoBook.Application.Sites.Books.Order
             return new Book(
                 product, variant, pagePart.Id, parts, fileList, coverPart?.Id ?? 0, coverFile, source);
         }
+
+        /// <summary>
+        /// Says how many spreads the chosen parameters take and how many the book holds.
+        /// </summary>
+        /// <remarks>
+        /// The numbers, not the price: the site answers zero for a set it will not sell, and a
+        /// customer told «the combination is unavailable» has nothing to change. The range is
+        /// read after the answers because it belongs to the chosen elements - paper on a layflat
+        /// starts at ten spreads where cardboard starts at two - and the sentence names both ways
+        /// out, editing the book or choosing other parameters.
+        /// </remarks>
+        private static string OutOfRange(
+            string name,
+            ProductQuantitySettings quantity,
+            QuantityRange range,
+            int count)
+        {
+            var text = new StringBuilder();
+            text.Append(name).Append(": для выбранных параметров нужно от ").Append(range.From)
+                .Append(" до ").Append(range.To).Append(' ').Append(UnitOf(quantity));
+
+            if (range.Step > 1)
+                text.Append(" с шагом ").Append(range.Step);
+
+            return text.Append(", а в книге ").Append(count)
+                .Append(". Отредактируйте книгу или выберите другие параметры формата.")
+                .ToString();
+        }
+
+        private static string UnitOf(ProductQuantitySettings quantity) => quantity.Unit switch
+        {
+            QuantityUnit.Spreads => "разворотов",
+            QuantityUnit.Pages => "страниц",
+            _ => "файлов",
+        };
 
         /// <summary>
         /// The part that holds the single cover file, or null when the format has no such part.

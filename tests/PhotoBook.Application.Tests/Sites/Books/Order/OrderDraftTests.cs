@@ -260,7 +260,42 @@ namespace PhotoBook.Application.Tests.Sites.Books.Order
             var draft = OrderDraft.From(ProjectWith(Book(Page(1))), new[] { narrow }, _files);
 
             Assert.Empty(draft.Books);
-            Assert.Contains(draft.Problems, problem => problem.Contains("принимает от 2 до 3"));
+            Assert.Contains(draft.Problems, problem =>
+                problem.Contains("нужно от 2 до 3 разворотов") && problem.Contains("а в книге 1"));
+        }
+
+        [Fact]
+        public void SaysHowManySpreadsTheChosenParametersTake()
+        {
+            // Paper on the layflat starts at ten spreads where cardboard starts at two, so the
+            // format's own rule refuses a short book instead of the site answering zero and the
+            // page telling the customer that the combination is unavailable.
+            var paper = new ProductPart(
+                SpreadPart,
+                "Разворот",
+                new List<ProductOption>
+                {
+                    new(65739, "Прослойка разворотов", true, "65075", new[] { "417891" }, "65075",
+                        new[] { "417892" }, new[] { new OptionElement(420270, "Без прослойки") }),
+                },
+                new ProductQuantitySettings(
+                    "Количество разворотов",
+                    QuantityUnit.Spreads,
+                    null,
+                    false,
+                    new[] { new QuantityRule("65739", new[] { "420270" }, new QuantityRange(10, 30, 1)) }),
+                true);
+
+            var book = Book(Page(1));
+            book.SetSiteOption(65739, 420270);
+
+            var draft = OrderDraft.From(ProjectWith(book), new[] { Catalog(part: paper) }, _files);
+
+            Assert.Empty(draft.Books);
+            Assert.Contains(draft.Problems, problem =>
+                problem.Contains("нужно от 10 до 30 разворотов") &&
+                problem.Contains("а в книге 1") &&
+                problem.Contains("Отредактируйте книгу или выберите другие параметры формата"));
         }
 
         [Fact]
