@@ -151,6 +151,29 @@ public sealed class FoldersModeExportTests : IDisposable
         Assert.Contains("создайте проект заново", result.Error, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// A copy that fails has to say what to do about it. The dialog used to show the word
+    /// "Не удалось" and nothing else, so the customer had no way to fix it themselves.
+    /// </summary>
+    [Fact]
+    public async Task Names_the_folder_that_refused_a_file_and_the_way_out()
+    {
+        var project = TestProject.Folders(
+            TestProject.Book(1, Source("c.jpg"), Source("s.jpg")));
+
+        var output = OutputFolder("out");
+
+        // A folder where the second file has to go: the copy cannot write over a directory.
+        Directory.CreateDirectory(Path.Combine(output, "001-01.jpg"));
+
+        var result = await Service().ExportProjectAsync(project, output);
+
+        AssertFails(result, "a blocked destination");
+        Assert.Contains("Не удалось выгрузить", result.Error);
+        Assert.Contains(output, result.Error);
+        Assert.Contains("другую папку", result.Error);
+    }
+
     [Fact]
     public async Task Names_every_missing_file_before_copying_anything()
     {
