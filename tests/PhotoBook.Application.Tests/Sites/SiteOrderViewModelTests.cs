@@ -31,7 +31,7 @@ namespace PhotoBook.Application.Tests.Sites
 
             // Assembled books are not a finished order: the group still needs a format.
             Assert.False(page.IsReady);
-            Assert.Equal("не выбран", page.ChosenFormatText);
+            Assert.Equal("не выбран", page.Groups[0].FormatText);
             Assert.Equal(new[] { "не выбран", "не выбран" }, page.Books.Select(book => book.FormatText));
             Assert.Equal("Лето 2026", page.ProjectName);
             Assert.Equal(2, page.Books.Count);
@@ -144,7 +144,7 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.False(page.IsReady);
 
             // One choice for the group, not one per row: a group is one project on the site.
-            page.SelectedFormat = page.Formats[1];
+            page.Groups[0].SelectedFormat = page.Formats[1];
 
             // A new format is new questions, so the order is ready only once they are read.
             await page.LoadFormatsAsync();
@@ -160,7 +160,7 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.True(page.IsReady);
             Assert.Equal(new[] { "Лайфлат 20x20", "Лайфлат 20x20" },
                 page.Books.Select(book => book.FormatText));
-            Assert.Equal("Лайфлат 20x20", page.ChosenFormatText);
+            Assert.Equal("Лайфлат 20x20", page.Groups[0].FormatText);
         }
 
         [Fact]
@@ -176,10 +176,10 @@ namespace PhotoBook.Application.Tests.Sites
             page.Prepare(project, "Проект");
 
             await page.LoadFormatsAsync();
-            page.SelectedFormat = page.Formats[0];
+            page.Groups[0].SelectedFormat = page.Formats[0];
             await page.LoadFormatsAsync();
 
-            var block = Assert.Single(page.Parameters);
+            var block = Assert.Single(page.Groups[0].Parameters);
             var question = Assert.Single(block.Parameters);
             Assert.Equal("Прослойка", question.Title);
             Assert.True(question.IsRequired);
@@ -214,9 +214,9 @@ namespace PhotoBook.Application.Tests.Sites
             page.Prepare(project, "Проект");
 
             await page.LoadFormatsAsync();
-            page.SelectedFormat = page.Formats[0];
+            page.Groups[0].SelectedFormat = page.Formats[0];
             await page.LoadFormatsAsync();
-            page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
+            page.Groups[0].Parameters[0].Parameters[0].Selected = page.Groups[0].Parameters[0].Parameters[0].Elements[0];
 
             await page.Pricing;
             await page.FileCheck;
@@ -228,7 +228,7 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.True(book.IsExpanded);
             Assert.Equal("Ошибка в файлах", book.ConditionText);
             Assert.Contains(book.FileRows, file => file.HasProblem);
-            Assert.Contains("исправьте", page.FilesText);
+            Assert.Contains("исправьте", page.Groups[0].FilesText);
         }
 
         /// <summary>
@@ -254,15 +254,15 @@ namespace PhotoBook.Application.Tests.Sites
 
             page.Prepare(project, "Проект");
             await page.LoadFormatsAsync();
-            page.SelectedFormat = page.Formats[0];
+            page.Groups[0].SelectedFormat = page.Formats[0];
             await page.LoadFormatsAsync();
-            page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
+            page.Groups[0].Parameters[0].Parameters[0].Selected = page.Groups[0].Parameters[0].Parameters[0].Elements[0];
 
             await page.Pricing;
             await page.FileCheck;
 
             var book = page.Books[0];
-            Assert.True(page.NeedsConfirmation);
+            Assert.True(page.Groups[0].NeedsConfirmation);
             Assert.False(book.IsFailed);
             Assert.True(book.IsExpanded);
             Assert.Equal(string.Empty, book.ReasonsText);
@@ -273,11 +273,174 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Contains("Разворот 1", file.Problem, StringComparison.Ordinal);
         }
 
+        /// <summary>
+        /// A project assembled from two folders: one book exported at 20×20's spread size, the
+        /// other at 21×30's. Both carry the same stored format, as a project built beside another
+        /// does - so the page sizes are the only thing that tells them apart.
+        /// </summary>
+        private static Project TwoPageSizes() => TestProject.Combined(
+            TestProject.Book(1, (4724, 2398), "/c1.jpg", "/p1.jpg"),
+            TestProject.Book(2, (4913, 3496), "/c2.jpg", "/p2.jpg"));
+
+        /// <summary>That project, on a page where both groups chose a format and answered it.</summary>
+        private static async Task<SiteOrderViewModel> TwoAnsweredGroupsAsync(
+            Project project,
+            OrderFileCheckService files)
+        {
+            var catalog = new StubCatalog(
+                new CatalogProduct(4494, "Лайфлат", "kit", 1, new[] { new CatalogFormat(9255, "21x30") }))
+            {
+                Format = TestFormats.WithCondition(37556),
+            };
+
+            var page = new SiteOrderViewModel(
+                catalog, new StubSessionStore(), new StubQuotes(), new StubFiles(), files);
+
+            page.Prepare(project, "Разные проекты");
+            await page.LoadFormatsAsync();
+
+            foreach (var group in page.Groups)
+            {
+                group.SelectedFormat = page.Formats[0];
+                await group.LoadParametersAsync();
+                group.Parameters[0].Parameters[0].Selected =
+                    group.Parameters[0].Parameters[0].Elements[0];
+            }
+
+            await page.Pricing;
+            await page.FileCheck;
+
+            return page;
+        }
+
+        /// <summary>
+        /// A project assembled from two folders holds two formats, and the site takes one per
+        /// project: the page stands them apart before anything is chosen.
+        /// </summary>
+        [Fact]
+        public void LaysABookOrderOutIntoOneGroupPerPageSize()
+        {
+            var page = new SiteOrderViewModel();
+            page.Prepare(TwoPageSizes(), "Разные проекты");
+
+            Assert.Equal(2, page.Groups.Count);
+            Assert.Equal(new[] { "Book 1" }, page.Groups[0].Books.Select(book => book.Name));
+            Assert.Equal(new[] { "Book 2" }, page.Groups[1].Books.Select(book => book.Name));
+
+            // The books keep the project's own numbering, so the numbers read on the page are the
+            // project's numbers rather than each group counting from one.
+            Assert.Equal(new[] { 1, 2 }, page.Books.Select(book => book.Number));
+        }
+
+        [Fact]
+        public void KeepsBooksOfOnePageSizeInOneGroup()
+        {
+            var project = TestProject.Combined(
+                TestProject.Book(1, (4724, 2398), "/c1.jpg", "/p1.jpg"),
+                TestProject.Book(2, (4722, 2398), "/c2.jpg", "/p2.jpg"));
+
+            var page = new SiteOrderViewModel();
+            page.Prepare(project, "Один формат");
+
+            // A pixel or two of another program's rounding is one format, not two groups.
+            Assert.Single(page.Groups);
+        }
+
+        [Fact]
+        public async Task ChoosesTheFormatOfEachGroupApart()
+        {
+            var project = TwoPageSizes();
+            var catalog = new StubCatalog(
+                new CatalogProduct(4494, "Лайфлат", "kit", 1, new[]
+                {
+                    new CatalogFormat(9255, "21x30"),
+                    new CatalogFormat(9257, "20x20"),
+                }));
+
+            var page = new SiteOrderViewModel(catalog, new StubSessionStore());
+            page.Prepare(project, "Разные проекты");
+            await page.LoadFormatsAsync();
+
+            page.Groups[0].SelectedFormat = page.Formats[1];
+
+            // The choice belongs to its group: the second group is still waiting for its own.
+            Assert.Equal(9257, project.Books[0].SiteVariantId);
+            Assert.Null(project.Books[1].SiteVariantId);
+            Assert.Null(page.Groups[1].SelectedFormat);
+        }
+
+        /// <summary>
+        /// Two ready groups are two projects on the site and one run in the program: the plans of
+        /// both go to the send window together.
+        /// </summary>
+        [Fact]
+        public async Task SendsEveryGroupThatCanGoInOneRun()
+        {
+            var page = await TwoAnsweredGroupsAsync(TwoPageSizes(), Files());
+
+            Assert.All(page.Groups, group => Assert.True(group.CanGo));
+            Assert.True(page.CanUpload);
+            Assert.False(page.HasWarningText);
+
+            page.Upload();
+
+            Assert.Equal(2, page.PendingUpload!.Groups.Count);
+            Assert.Equal(2, page.PendingUpload.Summary.ProjectCount);
+        }
+
+        /// <summary>
+        /// A group the site would refuse is left out, and said so: the other groups still go,
+        /// because the customer assembled several orders in one project.
+        /// </summary>
+        [Fact]
+        public async Task LeavesABrokenGroupOutOfTheRunAndSaysSo()
+        {
+            var required = Layout().RequiredPixels(94, 10, null)!;
+            var page = await TwoAnsweredGroupsAsync(
+                TwoPageSizes(),
+                FilesByPath(path => path.Contains("p2", StringComparison.Ordinal)
+                    ? new PixelSize(800, 600)
+                    : required));
+
+            Assert.True(page.Groups[0].CanGo);
+            Assert.False(page.Groups[1].CanGo);
+
+            // The send is allowed, and the page says what it leaves behind.
+            Assert.True(page.CanUpload);
+            Assert.True(page.HasWarningText);
+            Assert.Contains("Группа 2", page.WarningText, StringComparison.Ordinal);
+            Assert.Contains("не будут", page.WarningText, StringComparison.Ordinal);
+
+            page.Upload();
+
+            Assert.Single(page.PendingUpload!.Groups);
+            Assert.Equal(1, page.PendingUpload.Summary.ProjectCount);
+            Assert.Contains(
+                page.PendingUpload.Notes!,
+                note => note.Contains("Группа 2", StringComparison.Ordinal));
+        }
+
         /// <summary>A file check over a layout whose pages are what the site asks for.</summary>
         /// <param name="size">What the disk says a page is; null for the size the site asks.</param>
         private static OrderFileCheckService Files(PixelSize? size = null)
         {
-            var layout = new SiteLayout(
+            var layout = Layout();
+
+            return new OrderFileCheckService(
+                new FileCatalog(layout),
+                new FileInspector(size ?? layout.RequiredPixels(94, 10, null)!));
+        }
+
+        /// <summary>A file check whose answer depends on the file, for two groups at once.</summary>
+        private static OrderFileCheckService FilesByPath(Func<string, PixelSize> size)
+        {
+            var layout = Layout();
+
+            return new OrderFileCheckService(new FileCatalog(layout), new FileInspector(size));
+        }
+
+        /// <summary>The geometry the site describes for the test's format.</summary>
+        private static SiteLayout Layout() => new SiteLayout(
                 4494,
                 9255,
                 300,
@@ -303,11 +466,6 @@ namespace PhotoBook.Application.Tests.Sites
                         0)
                 },
                 37556);
-
-            return new OrderFileCheckService(
-                new FileCatalog(layout),
-                new FileInspector(size ?? layout.RequiredPixels(94, 10, null)!));
-        }
 
         private sealed class FileCatalog : ISiteCatalogService
         {
@@ -343,15 +501,21 @@ namespace PhotoBook.Application.Tests.Sites
 
         private sealed class FileInspector : IBookFileInspector
         {
-            private readonly PixelSize _size;
+            private readonly PixelSize? _size;
+            private readonly Func<string, PixelSize>? _byPath;
 
             internal FileInspector(PixelSize size) => _size = size;
+
+            internal FileInspector(Func<string, PixelSize> byPath) => _byPath = byPath;
 
             public Task<IReadOnlyList<PageFileFacts>> InspectAsync(
                 IReadOnlyList<PageFile> files,
                 CancellationToken cancellationToken = default) =>
                 Task.FromResult<IReadOnlyList<PageFileFacts>>(
-                    files.Select(file => new PageFileFacts(file.Path, true, _size)).ToList());
+                    files.Select(file => new PageFileFacts(
+                        file.Path,
+                        true,
+                        _byPath is null ? _size : _byPath(file.Path))).ToList());
         }
 
         [Fact]
@@ -368,9 +532,9 @@ namespace PhotoBook.Application.Tests.Sites
             page.Prepare(project, "Проект");
 
             await page.LoadFormatsAsync();
-            page.SelectedFormat = page.Formats[0];
+            page.Groups[0].SelectedFormat = page.Formats[0];
             await page.LoadFormatsAsync();
-            page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
+            page.Groups[0].Parameters[0].Parameters[0].Selected = page.Groups[0].Parameters[0].Parameters[0].Elements[0];
 
             // The price is not a button: the page asks for it as soon as the answers are complete.
             await page.Pricing;
@@ -410,16 +574,16 @@ namespace PhotoBook.Application.Tests.Sites
             page.Prepare(project, "Проект");
 
             await page.LoadFormatsAsync();
-            page.SelectedFormat = page.Formats[0];
+            page.Groups[0].SelectedFormat = page.Formats[0];
             await page.LoadFormatsAsync();
-            page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
+            page.Groups[0].Parameters[0].Parameters[0].Selected = page.Groups[0].Parameters[0].Parameters[0].Elements[0];
             await page.Pricing;
             await page.FileCheck;
 
             Assert.True(page.CanUpload);
 
             // The site was priced for one combination; another one has no price yet.
-            page.Parameters[0].Parameters[0].Selected = null;
+            page.Groups[0].Parameters[0].Parameters[0].Selected = null;
 
             Assert.False(page.CanUpload);
             Assert.Null(page.PendingUpload);
@@ -439,9 +603,9 @@ namespace PhotoBook.Application.Tests.Sites
             page.Prepare(project, "Проект");
 
             await page.LoadFormatsAsync();
-            page.SelectedFormat = page.Formats[0];
+            page.Groups[0].SelectedFormat = page.Formats[0];
             await page.LoadFormatsAsync();
-            page.Parameters[0].Parameters[0].Selected = page.Parameters[0].Parameters[0].Elements[0];
+            page.Groups[0].Parameters[0].Parameters[0].Selected = page.Groups[0].Parameters[0].Parameters[0].Elements[0];
 
             // Nothing was pressed: the total is there because the answers are complete.
             await page.Pricing;
@@ -490,8 +654,8 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.False(page.IsReady);
             Assert.False(page.HasMessage);
             Assert.True(page.HasFormats);
-            Assert.Null(page.SelectedFormat);
-            Assert.Equal("не выбран", page.ChosenFormatText);
+            Assert.Null(page.Groups[0].SelectedFormat);
+            Assert.Equal("не выбран", page.Groups[0].FormatText);
         }
 
         [Fact]

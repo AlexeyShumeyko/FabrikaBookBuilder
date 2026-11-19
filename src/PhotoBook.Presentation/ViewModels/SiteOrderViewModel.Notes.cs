@@ -3,25 +3,31 @@ using System.Linq;
 
 namespace PhotoBook.Presentation.ViewModels
 {
-    /// <summary>The words of the order page: what is wrong with the project, and what the button waits for.</summary>
+    /// <summary>The words of the order page: what is wrong with the project, and what waits.</summary>
     /// <remarks>
     /// <para>
-    /// Two kinds of sentence, kept apart. What is true of the project itself - a half-filled book,
-    /// photographs the site will not carry - is written once, when the page is opened. What a
-    /// reading of the site said about the order is replaced as a whole by the next reading. A
+    /// Three kinds of sentence, kept apart. What is true of the project itself - a half-filled
+    /// book, photographs the site will not carry - is written once, when the page is opened. What
+    /// a reading of the site said about the order is replaced as a whole by the next reading. A
     /// price run that succeeds must not clear the project's own lines: a card that appears on the
     /// way in and vanishes a second later reads as an error that fixed itself.
     /// </para>
     /// <para>
-    /// The reason beside the grey button is the second half of the same idea. A disabled button
-    /// with no sentence next to it is a puzzle, and the customer should not have to guess that the
-    /// format was never picked or that an answer is still missing.
+    /// The reason beside the grey button is the second half of the same idea: a disabled button
+    /// with no sentence next to it is a puzzle. And when some groups can go while others cannot,
+    /// the warning says which ones stay behind - sending part of an order is a decision the
+    /// customer has to make knowing what it leaves out.
     /// </para>
     /// </remarks>
     public sealed partial class SiteOrderViewModel
     {
         private string _projectMessage = string.Empty;
         private string _runMessage = string.Empty;
+        private string _warning = string.Empty;
+
+        /// <summary>The order's price summed over its groups, and the currency it is written in.</summary>
+        private decimal _total;
+        private string _currency = string.Empty;
 
         /// <summary>What the customer has to know before going on.</summary>
         public string Message
@@ -44,8 +50,10 @@ namespace PhotoBook.Presentation.ViewModels
         /// Why the send button is off, in the words of the step that keeps it off.
         /// </summary>
         /// <remarks>
-        /// The line is empty when there is nothing to explain - either the button is on, or the
-        /// list already names the book that is not full.
+        /// The line is empty when there is nothing to explain - either the button is on, or one
+        /// group's list already names the book that is not full. When the order was laid out into
+        /// several groups, every group that keeps the button off is named: with the groups now
+        /// standing apart, "не готова одна из групп" would leave the customer to find which.
         /// </remarks>
         public string BlockingText
         {
@@ -54,47 +62,49 @@ namespace PhotoBook.Presentation.ViewModels
                 if (IsLoadingFormats)
                     return "Читаем форматы сайта…";
 
-                if (Books.Count == 0 || Books.Any(book => !book.IsReady))
+                if (Groups.Count == 0)
                     return string.Empty;
 
-                if (SelectedFormat is null)
-                    return "Выберите формат группы: по нему сайт считает цену.";
+                if (Groups.Any(group => group.CanGo))
+                {
+                    // A group that is about to answer still holds the button: sending now would
+                    // send less than the page has already shown.
+                    return Groups.Any(group => group.IsBusy)
+                        ? "Дожидаемся ответа сайта по остальным группам…"
+                        : string.Empty;
+                }
 
-                if (!_parametersLoaded)
-                    return "Читаем параметры формата…";
+                if (Groups.Count == 1)
+                    return Groups[0].ProblemText;
 
-                if (!_parameters.IsAnswered)
-                    return "Ответьте на параметры формата: без ответов сайт цену не назовёт.";
-
-                if (_isPricing)
-                    return "Считаем цену на сайте…";
-
-                if (IsCheckingFiles)
-                    return "Проверяем файлы книг…";
-
-                if (NeedsConfirmation && !_confirmationsAccepted)
-                    return "Отметьте, что файлы можно отправлять: край сайт может обрезать.";
-
-                if (_files is null)
-                    return "Проверяем файлы книг…";
-
-                if (_files is { CanSend: false })
-                    return "Файлы не готовы к отправке: исправьте отмеченное в списке.";
-
-                // Nothing above explains it, so the plan itself is not complete. Saying at least
-                // that much keeps the button from being grey for no stated reason.
-                return CanUpload ? string.Empty : "Заказ не готов к отправке.";
+                return string.Join(
+                    Environment.NewLine,
+                    Groups.Select(group => "Группа " + group.Number + ": " + group.ProblemText));
             }
         }
 
         /// <summary>Whether there is a reason to show.</summary>
         public bool HasBlockingText => BlockingText.Length > 0;
 
+        /// <summary>
+        /// What will not be sent if the button is pressed now, group by group.
+        /// </summary>
+        /// <remarks>
+        /// Shown only when something is going: with every group stuck, the reason beside the
+        /// button already says what is missing, and a warning about books staying behind would
+        /// describe a send that cannot happen.
+        /// </remarks>
+        public string WarningText => _warning;
+
+        /// <summary>Whether the order would go without some of its groups.</summary>
+        public bool HasWarningText => _warning.Length > 0;
+
         /// <summary>What is true of the project, written once when the page is opened.</summary>
         private void SetProjectMessage(string? text)
         {
             _projectMessage = text ?? string.Empty;
             _runMessage = string.Empty;
+
             OnPropertyChanged(nameof(Message));
             OnPropertyChanged(nameof(HasMessage));
         }

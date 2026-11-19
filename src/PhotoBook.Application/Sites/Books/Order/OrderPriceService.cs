@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using PhotoBook.Application.Sites.Books.Pricing;
 using PhotoBook.Application.Sites.Catalog;
+using CoreBook = PhotoBook.Core.Book;
 using CoreProject = PhotoBook.Core.Project;
 
 namespace PhotoBook.Application.Sites.Books.Order
@@ -57,12 +58,34 @@ namespace PhotoBook.Application.Sites.Books.Order
             SiteSession session,
             CoreProject? project,
             IReadOnlyList<SiteProduct> catalog,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default) =>
+            await PriceAsync(session, OrderDraft.From(project, catalog, _files), cancellationToken)
+                .ConfigureAwait(false);
+
+        /// <summary>
+        /// Prices a set of the project's books, which is what one group of an order is.
+        /// </summary>
+        /// <remarks>
+        /// A page that split a project into groups prices each group on its own: a group is one
+        /// project on the site, and a single total over books of two formats would price a
+        /// project the site is never asked to make.
+        /// </remarks>
+        public async Task<PricedOrder> PriceAsync(
+            SiteSession session,
+            IReadOnlyList<CoreBook>? books,
+            IReadOnlyList<SiteProduct> catalog,
+            CancellationToken cancellationToken = default) =>
+            await PriceAsync(session, OrderDraft.From(books, catalog, _files), cancellationToken)
+                .ConfigureAwait(false);
+
+        private async Task<PricedOrder> PriceAsync(
+            SiteSession session,
+            OrderDraft draft,
+            CancellationToken cancellationToken)
         {
             if (session is null)
                 throw new ArgumentNullException(nameof(session));
 
-            var draft = OrderDraft.From(project, catalog, _files);
             if (!draft.IsComplete)
                 return PricedOrder.Refused(draft.Problems);
 

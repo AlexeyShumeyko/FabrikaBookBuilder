@@ -166,6 +166,42 @@ namespace PhotoBook.Application.Sites.Upload
         }
 
         /// <summary>
+        /// One plan over plans the page built group by group, in the order they go.
+        /// </summary>
+        /// <remarks>
+        /// The page prices each group of books apart, because a group is one project on the site
+        /// and only the page knows which groups are ready. What the upload screen receives is the
+        /// whole run: the groups of every plan, numbered as one order, with the notes and the
+        /// problems of all of them. Returns null when there is nothing to send at all, so a page
+        /// that left every group out offers no plan rather than an empty run.
+        /// </remarks>
+        public static UploadPlan? Combine(IReadOnlyList<UploadPlan>? plans, IReadOnlyList<string>? notes = null)
+        {
+            var parts = (plans ?? Array.Empty<UploadPlan>())
+                .Where(plan => plan is not null && plan.Groups.Count > 0)
+                .ToList();
+
+            if (parts.Count == 0)
+                return null;
+
+            var groups = new List<UploadGroup>();
+            foreach (var plan in parts)
+            {
+                foreach (var group in plan.Groups)
+                    groups.Add(group with { Number = groups.Count + 1 });
+            }
+
+            var lines = parts.SelectMany(plan => plan.Notes ?? Array.Empty<string>()).ToList();
+            if (notes is not null)
+                lines.AddRange(notes);
+
+            var problems = parts.SelectMany(plan => plan.Problems).ToList();
+            var summary = SubmissionSummary.Combine(parts.Select(plan => plan.Summary).ToList());
+
+            return new UploadPlan(summary, groups, problems, lines);
+        }
+
+        /// <summary>
         /// The books of one format split into as few projects as the site's file limit allows.
         /// </summary>
         /// <remarks>

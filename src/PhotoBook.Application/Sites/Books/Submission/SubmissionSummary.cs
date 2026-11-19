@@ -81,5 +81,38 @@ namespace PhotoBook.Application.Sites.Books.Submission
 
             return new SubmissionSummary(groups, layout);
         }
+
+        /// <summary>
+        /// One summary over several groups that were priced apart, one per project.
+        /// </summary>
+        /// <remarks>
+        /// The page prices each group on its own - a group is one project on the site - and the
+        /// window that confirms the run has to count the whole order: projects, books, and the
+        /// total with the site's currency. The groups are renumbered in the order they come in, so
+        /// the numbers in the confirmation read as one order rather than as several that each
+        /// start at one.
+        /// </remarks>
+        public static SubmissionSummary Combine(IReadOnlyList<SubmissionSummary> parts)
+        {
+            if (parts is null)
+                throw new ArgumentNullException(nameof(parts));
+
+            var groups = new List<GroupSummary>();
+            var layout = new List<OrderGroup>();
+            var problems = new List<string>();
+
+            foreach (var part in parts)
+            {
+                foreach (var group in part.Groups)
+                {
+                    groups.Add(group with { Number = groups.Count + 1 });
+                    layout.Add(group.Group);
+                }
+
+                problems.AddRange(part.Layout.Problems);
+            }
+
+            return new SubmissionSummary(groups, new BookGroups(layout, problems));
+        }
     }
 }

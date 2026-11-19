@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using PhotoBook.Application;
 using PhotoBook.Application.Sites;
 using PhotoBook.Application.Sites.Books;
 using PhotoBook.Application.Sites.Books.Files;
+using PhotoBook.Application.Sites.Books.Grouping;
 using PhotoBook.Application.Sites.Books.Order;
 using PhotoBook.Application.Sites.Books.Pricing;
 using PhotoBook.Application.Sites.Catalog;
@@ -17,8 +16,8 @@ using CoreProject = PhotoBook.Core.Project;
 namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>
-    /// The order page: the project's books, their formats and parameters, the price and the way
-    /// on.
+    /// The order page: the project's books, laid out into the groups that would become projects
+    /// on the site - each with its format, its parameters, its price - and the way on.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -32,11 +31,12 @@ namespace PhotoBook.Presentation.ViewModels
     /// the order lives, so closing the window must not lose what was picked.
     /// </para>
     /// <para>
-    /// The price is asked for by the page itself, once the answers are complete: the customer
-    /// should not have to press «рассчитать» to learn what the order costs. It is asked once per
-    /// settled set of answers rather than on every keystroke, because the platform is shared and
-    /// one book is one request: a page that called the site while the answers were still being
-    /// filled would spend requests on sets nobody chose.
+    /// <b>Groups.</b> A project on the site holds one format, while a program project may hold
+    /// books of two - two folders assembled side by side, exported at two page sizes. Those
+    /// cannot go as one order, so the page lays them out as separate groups before anything is
+    /// chosen, and every group answers for itself. One broken group must not take the others
+    /// down: what the page sends is the plans of the groups that can go, and the rest are named
+    /// in a warning rather than silently dropped.
     /// </para>
     /// </remarks>
     public sealed partial class SiteOrderViewModel : ViewModelBase
@@ -44,20 +44,15 @@ namespace PhotoBook.Presentation.ViewModels
         private readonly ISiteCatalogService? _catalog;
         private readonly ISiteSessionStore? _sessions;
         private readonly OrderPriceService? _prices;
-        private readonly SiteOrderParameters _parameters;
         private readonly OrderFileCheckService? _fileCheck;
-
-        private IReadOnlyList<OrderBookRow> _books = Array.Empty<OrderBookRow>();
-        private IReadOnlyList<FormatChoice> _formats = Array.Empty<FormatChoice>();
-        private FormatChoice? _selectedFormat;
-        private bool _applyingFormat;
-        private bool _parametersLoaded;
         private readonly SiteOrderUpload _upload;
 
-        private CoreProject? _project;
+        private IReadOnlyList<OrderBookRow> _books = Array.Empty<OrderBookRow>();
+        private IReadOnlyList<SiteOrderGroup> _groups = Array.Empty<SiteOrderGroup>();
+        private IReadOnlyList<FormatChoice> _formats = Array.Empty<FormatChoice>();
+
         private string _projectName = string.Empty;
         private int _spreadCount;
-        private string _totalText = string.Empty;
         private bool _isReady;
         private bool _isLoadingFormats;
 
@@ -78,12 +73,14 @@ namespace PhotoBook.Presentation.ViewModels
                 ? new OrderPriceService(files, quotes)
                 : null;
 
-            _upload = new SiteOrderUpload(() => OnPropertyChanged(nameof(CanUpload)));
-            _upload.Requested += (_, _) => UploadRequested?.Invoke(this, EventArgs.Empty);
+            _upload = new SiteOrderUpload(() =>
+            {
+                OnPropertyChanged(nameof(CanUpload));
+                OnPropertyChanged(nameof(TotalText));
+                OnPropertyChanged(nameof(HasTotal));
+            });
 
-            _parameters = new SiteOrderParameters(catalog, sessions);
-            _parameters.Answered += (_, _) => OnAnswerChanged();
-            _parameters.Blocks.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasParameters));
+            _upload.Requested += (_, _) => UploadRequested?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>Raised when the customer asks to go back to the project.</summary>
@@ -103,19 +100,41 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>The plan the upload screen is to send, once the customer has asked for it.</summary>
         public UploadPlan? PendingUpload => _upload.Pending;
 
-        /// <summary>The books of the order, in the project's order.</summary>
+        /// <summary>The project's books, in the project's order.</summary>
         public IReadOnlyList<OrderBookRow> Books
         {
             get => _books;
             private set
             {
                 if (SetProperty(ref _books, value))
-                {
                     OnPropertyChanged(nameof(BookCountText));
-                    OnPropertyChanged(nameof(ChosenFormatText));
+            }
+        }
+
+        /// <summary>
+        /// The groups the order was laid out into, in the order they go.
+        /// </summary>
+        /// <remarks>
+        /// One group per format, decided from the books' own page size: the format stored on a
+        /// book cannot tell them apart, because a project assembled from two folders carries one
+        /// stored format on both books.
+        /// </remarks>
+        public IReadOnlyList<SiteOrderGroup> Groups
+        {
+            get => _groups;
+            private set
+            {
+                if (SetProperty(ref _groups, value))
+                {
+                    OnPropertyChanged(nameof(HasGroups));
+                    OnPropertyChanged(nameof(BlockingText));
+                    OnPropertyChanged(nameof(HasBlockingText));
                 }
             }
         }
+
+        /// <summary>Whether the order has anything to lay out.</summary>
+        public bool HasGroups => _groups.Count > 0;
 
         /// <summary>The formats the site sells, in the site's order.</summary>
         public IReadOnlyList<FormatChoice> Formats => _formats;
@@ -123,47 +142,8 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Whether the site named any format at all.</summary>
         public bool HasFormats => _formats.Count > 0;
 
-        /// <summary>
-        /// The format of the group: one choice for every book in it.
-        /// </summary>
-        /// <remarks>
-        /// A group is one project on the site, and a project holds books of one format and one
-        /// set of parameters. The choice therefore belongs to the page rather than to each row:
-        /// ten rows with ten pickers invited ten answers the site would price separately, and
-        /// the order page has no way to send a project with two formats in it anyway. Picking
-        /// once writes the format into every book of the group.
-        /// </remarks>
-        public FormatChoice? SelectedFormat
-        {
-            get => _selectedFormat ?? Books.Select(row => row.SelectedFormat)
-                .FirstOrDefault(choice => choice is not null);
-            set
-            {
-                if (Equals(SelectedFormat, value))
-                    return;
-
-                _selectedFormat = value;
-                OnPropertyChanged(nameof(SelectedFormat));
-                OnPropertyChanged(nameof(ChosenFormatText));
-
-                ApplyFormatToBooks(value);
-                AfterFormatChosen();
-            }
-        }
-
-        /// <summary>The parameters of each format chosen in the order.</summary>
-        /// <remarks>
-        /// The collection belongs to the parameters collaborator and is updated there; the page
-        /// re-reads it for the view rather than replacing it, because a list swapped while the
-        /// window arranges its panels is what crashed the page once.
-        /// </remarks>
-        public ObservableCollection<OrderFormatParameters> Parameters => _parameters.Blocks;
-
-        /// <summary>Whether there is anything to answer.</summary>
-        public bool HasParameters => Parameters.Count > 0;
-
-        /// <summary>How many books are going. The label under it names them.</summary>
-        public string BookCountText => Books.Count.ToString(CultureInfo.CurrentCulture);
+        /// <summary>How many books are going, across the groups.</summary>
+        public string BookCountText => Books.Count.ToString(System.Globalization.CultureInfo.CurrentCulture);
 
         /// <summary>The project's name, as the header shows it.</summary>
         public string ProjectName
@@ -179,7 +159,7 @@ namespace PhotoBook.Presentation.ViewModels
             private set => SetProperty(ref _spreadCount, value);
         }
 
-        /// <summary>Whether every book is full, has a format and its parameters answered.</summary>
+        /// <summary>Whether every group is full, has a format and its parameters answered.</summary>
         public bool IsReady
         {
             get => _isReady;
@@ -192,32 +172,52 @@ namespace PhotoBook.Presentation.ViewModels
             get => _isLoadingFormats;
             private set
             {
-                if (SetProperty(ref _isLoadingFormats, value))
-                    OnPropertyChanged(nameof(BlockingText));
-            }
-        }
-        /// <summary>The order's total as the site wrote it, empty until it named one.</summary>
-        public string TotalText
-        {
-            get => _totalText;
-            private set
-            {
-                if (SetProperty(ref _totalText, value ?? string.Empty))
-                    OnPropertyChanged(nameof(HasTotal));
-            }
-        }
+                if (!SetProperty(ref _isLoadingFormats, value))
+                    return;
 
-        /// <summary>Whether the site has named a total.</summary>
-        public bool HasTotal => _totalText.Length > 0;
+                OnPropertyChanged(nameof(BlockingText));
+                OnPropertyChanged(nameof(HasBlockingText));
+                OnPropertyChanged(nameof(CanUpload));
+            }
+        }
 
         /// <summary>
-        /// Whether the order can be sent: priced, complete and with every book's integration
-        /// known. Sending is a write, so nothing but a finished order reaches the button.
+        /// The order's total as the site writes prices: the sum of the groups it has a price for.
         /// </summary>
-        public bool CanUpload => !_isPricing && _upload.CanUpload && FilesAllow;
+        /// <remarks>
+        /// Summed from the groups rather than read off the plan, because the plan is what will be
+        /// sent and the total is what the site said: a group whose run is still being prepared is
+        /// still a group with a price the customer has seen.
+        /// </remarks>
+        public string TotalText => HasTotal
+            ? _total.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("ru-RU")) +
+              (_currency.Length == 0 ? string.Empty : " " + _currency)
+            : string.Empty;
 
-        /// <summary>The group's format, as the control panel shows it.</summary>
-        public string ChosenFormatText => SelectedFormat?.DisplayText ?? "не выбран";
+        /// <summary>Whether the site has named a total.</summary>
+        public bool HasTotal => Groups.Any(group => group.HasTotal);
+
+        /// <summary>
+        /// Whether the order can be sent: at least one group is ready, priced and read, and no
+        /// group is still waiting for an answer. A group that cannot go does not hold the others
+        /// back - it is named in the warning beside the button instead.
+        /// </summary>
+        public bool CanUpload =>
+            !IsLoadingFormats &&
+            !Groups.Any(group => group.IsBusy) &&
+            _upload.CanUpload;
+
+        /// <summary>The price each group is asking for, so a reader can wait for the answers.</summary>
+        public Task Pricing =>
+            Groups.Count == 0
+                ? Task.CompletedTask
+                : Task.WhenAll(Groups.Select(group => group.Pricing));
+
+        /// <summary>The reading of the files of every group, so a reader can wait for it.</summary>
+        public Task FileCheck =>
+            Groups.Count == 0
+                ? Task.CompletedTask
+                : Task.WhenAll(Groups.Select(group => group.FileCheck));
 
         /// <summary>
         /// Reads the project into the page. A project that is not assembled comes back with the
@@ -225,39 +225,67 @@ namespace PhotoBook.Presentation.ViewModels
         /// </summary>
         public void Prepare(CoreProject? project, string? projectName = null)
         {
-            _project = project;
-            _selectedFormat = null;
-
-            // The questions have not been read yet, and an empty list of questions is not the
-            // same thing as a format that asks none: without this a price was asked for before
-            // the questions arrived, and the page showed a total and an enabled button over
-            // three unanswered questions.
-            _parametersLoaded = false;
-            OnPropertyChanged(nameof(SelectedFormat));
+            _formats = Array.Empty<FormatChoice>();
+            _upload.Offer(null);
 
             if (project is null)
             {
                 Books = Array.Empty<OrderBookRow>();
-                _parameters.Clear();
-                OnPropertyChanged(nameof(HasParameters));
+                Groups = Array.Empty<SiteOrderGroup>();
                 ProjectName = string.Empty;
                 SpreadCount = 0;
                 IsReady = false;
-                TotalText = string.Empty;
                 SetProjectMessage("Проект не открыт.");
-                ForgetFiles();
                 return;
             }
 
             var inventory = BookInventory.From(project);
 
-            Books = project.Books
-                .Select((book, index) => new OrderBookRow(book, index + 1, () => _formats, OnFormatChosen))
+            // One row per project book, numbered as the project numbers them: the rows stand in
+            // the groups, but a number is the book's place in the project and does not change
+            // because the order was laid out into two of them.
+            var rows = project.Books
+                .Select((book, index) => new OrderBookRow(
+                    book,
+                    index + 1,
+                    () => _formats,
+
+                    // No picker of its own: the format is chosen once for the group and written
+                    // into its books, so a row never answers for the group.
+                    _ => { }))
                 .ToList();
 
+            Books = rows;
+
+            var byBook = rows.ToDictionary(row => row.Book, row => row);
+
+            var groups = new List<SiteOrderGroup>();
+            foreach (var set in BookSplitting.Split(project.Books))
+            {
+                var groupRows = set.Where(book => byBook.ContainsKey(book))
+                    .Select(book => byBook[book])
+                    .ToList();
+
+                if (groupRows.Count == 0)
+                    continue;
+
+                var group = new SiteOrderGroup(
+                    groups.Count + 1,
+                    groupRows,
+                    _catalog,
+                    _sessions,
+                    _prices,
+                    _fileCheck,
+                    OnGroupChanged,
+                    OnChoiceChanged);
+
+                group.Noted += OnGroupNoted;
+                groups.Add(group);
+            }
+
+            Groups = groups;
             ProjectName = string.IsNullOrWhiteSpace(projectName) ? "Проект" : projectName!.Trim();
             SpreadCount = inventory.Books.Sum(book => book.Spreads);
-            TotalText = string.Empty;
             SetProjectMessage(ProjectProblems.Of(inventory));
 
             RefreshReadiness();
@@ -267,10 +295,11 @@ namespace PhotoBook.Presentation.ViewModels
         /// Reads the formats the site offers and the parameters of the ones already chosen.
         /// </summary>
         /// <remarks>
-        /// One read for the page rather than one per book: the list is the same for all of them,
-        /// and asking per row would multiply the same request by the size of the order. The
-        /// parameters come from the uploader's document for each chosen format, kept by the
-        /// catalog service, so a second visit to the page asks the site nothing.
+        /// One read for the page rather than one per group: the list is the same for all of them,
+        /// and asking per group would multiply the same request by the number of projects the
+        /// order becomes. The parameters come from the uploader's document for each chosen
+        /// format, kept by the catalog service, so a second visit to the page asks the site
+        /// nothing.
         /// </remarks>
         public async Task LoadFormatsAsync()
         {
@@ -296,7 +325,11 @@ namespace PhotoBook.Presentation.ViewModels
                 }
 
                 ApplyFormats(result.Value);
-                await LoadParametersAsync().ConfigureAwait(true);
+
+                // One group after another, not in parallel: the platform is shared, and the page
+                // is asking it the same question per group.
+                foreach (var group in Groups)
+                    await group.LoadParametersAsync().ConfigureAwait(true);
             }
             catch (Exception ex)
             {
@@ -308,7 +341,6 @@ namespace PhotoBook.Presentation.ViewModels
             }
         }
 
-
         /// <summary>Says something on the page that came from outside it, such as a failed save.</summary>
         public void ShowMessage(string text) => Note(text);
 
@@ -316,29 +348,18 @@ namespace PhotoBook.Presentation.ViewModels
         public void Back() => BackRequested?.Invoke(this, EventArgs.Empty);
 
         /// <summary>
-        /// Hands the priced order to the shell, which opens the upload screen. Nothing is sent
-        /// until that screen's own button is pressed.
+        /// Hands the order to the shell, which opens the upload screen. Nothing is sent until
+        /// that screen's own button is pressed.
         /// </summary>
-        public void Upload() => _upload.Request();
-
-        /// <summary>Keeps the button and the plan in step with what the page knows.</summary>
         /// <remarks>
-        /// A new plan is a new set of files to send, so the files are read again for it: the
-        /// formats and their answers decide what the site asks of a page, and a check made for
-        /// the answers before this one would be about a different order.
+        /// The plan is rebuilt here rather than trusted from the last change: the groups that can
+        /// go are the groups as they stand at the moment of the press, and a run assembled from a
+        /// plan that is a second old would send a group the customer has just broken.
         /// </remarks>
-        private void SetPlan(UploadPlan? plan)
+        public void Upload()
         {
-            _upload.Offer(plan);
-
-            if (plan is null)
-            {
-                ForgetFiles();
-                return;
-            }
-
-            ForgetFiles();
-            _filesRun = CheckFilesAsync();
+            RebuildPlan();
+            _upload.Request();
         }
 
         private void ApplyFormats(IReadOnlyList<CatalogProduct> products)
@@ -347,124 +368,123 @@ namespace PhotoBook.Presentation.ViewModels
                 .SelectMany(product => product.Formats.Select(format => new FormatChoice(product, format)))
                 .ToList();
 
-            foreach (var book in Books)
-                book.RefreshFormats();
-
-            // A project whose books already carry a format keeps it, and the whole group follows
-            // the first one: the page no longer offers a per-book choice, so two formats left in
-            // one project would be a group the site cannot be asked to make.
-            _selectedFormat = Books.Select(row => row.SelectedFormat)
-                .FirstOrDefault(choice => choice is not null);
-
-            if (_selectedFormat is not null)
-                ApplyFormatToBooks(_selectedFormat);
-
-            Note(_formats.Count == 0 ? "Сайт не предложил ни одного формата." : string.Empty);
-
             OnPropertyChanged(nameof(Formats));
             OnPropertyChanged(nameof(HasFormats));
-            OnPropertyChanged(nameof(SelectedFormat));
-            OnPropertyChanged(nameof(ChosenFormatText));
+
+            foreach (var group in Groups)
+                group.ApplyFormats(_formats);
+
+            Note(_formats.Count == 0 ? "Сайт не предложил ни одного формата." : string.Empty);
             RefreshReadiness();
         }
 
-        private async Task LoadParametersAsync()
-        {
-            _parametersLoaded = false;
-
-            await _parameters.LoadAsync(Books).ConfigureAwait(true);
-
-            Note(_parameters.Problem);
-
-            _parametersLoaded = true;
-
-            OnPropertyChanged(nameof(HasParameters));
-            RefreshReadiness();
-        }
-
-        private void OnFormatChosen(OrderBookRow row)
-        {
-            // A row written by the page itself is the group's choice being spread over the
-            // books, not a new answer: it must not start a second price run per book.
-            if (_applyingFormat)
-                return;
-
-            _selectedFormat = row.SelectedFormat;
-            OnPropertyChanged(nameof(SelectedFormat));
-            OnPropertyChanged(nameof(ChosenFormatText));
-
-            ApplyFormatToBooks(_selectedFormat);
-            AfterFormatChosen();
-        }
-
-        /// <summary>Writes the group's format into every book, without asking again.</summary>
-        private void ApplyFormatToBooks(FormatChoice? choice)
-        {
-            _applyingFormat = true;
-            try
-            {
-                foreach (var row in Books)
-                    row.SelectedFormat = choice;
-            }
-            finally
-            {
-                _applyingFormat = false;
-            }
-        }
-
-        /// <summary>What a new format means for the order: no price, no plan, new questions.</summary>
-        private void AfterFormatChosen()
-        {
-            // A new format asks new questions, so the order is not ready until they are read.
-            _parametersLoaded = false;
-            RefreshReadiness();
-            TotalText = string.Empty;
-            SetPlan(null);
-
-            foreach (var book in Books)
-                book.ForgetPrice();
-
-            ChoiceChanged?.Invoke(this, EventArgs.Empty);
-            _ = LoadParametersForChosenAsync();
-        }
-
-        private async Task LoadParametersForChosenAsync()
-        {
-            try
-            {
-                await LoadParametersAsync().ConfigureAwait(true);
-            }
-            catch (Exception ex)
-            {
-                Note("Параметры формата не открылись: " + ex.Message);
-            }
-        }
-
-        private void OnAnswerChanged()
-        {
-            foreach (var row in Books)
-                row.ForgetPrice();
-
-            TotalText = string.Empty;
-            SetPlan(null);
-            ChoiceChanged?.Invoke(this, EventArgs.Empty);
-            RefreshReadiness();
-        }
-
+        /// <summary>Re-reads whether the order as a whole is answerable, and rebuilds the plan.</summary>
         private void RefreshReadiness()
         {
-            IsReady = Books.Count > 0 &&
-                Books.All(book => book.IsReady && book.SelectedFormat is not null) &&
-                _parametersLoaded &&
-                _parameters.IsAnswered;
+            IsReady = Groups.Count > 0 && Groups.All(group => group.IsReady);
 
-            OnPropertyChanged(nameof(ChosenFormatText));
+            RebuildPlan();
+        }
+
+        /// <summary>
+        /// Builds what would be sent from the groups that can go, and says what stays behind.
+        /// </summary>
+        /// <remarks>
+        /// A group with a broken file or an unanswered question is left out rather than taking
+        /// the ready groups down with it: the customer assembled several orders in one project,
+        /// and sending the good ones is what they asked for. It is left out loudly - the warning
+        /// beside the button names the group and says its books will not be uploaded - because a
+        /// run that quietly skipped a book would leave the customer with a project on the site
+        /// that is missing a part they had assembled.
+        /// </remarks>
+        private void RebuildPlan()
+        {
+            var going = new List<SiteOrderGroup>();
+            var left = new List<SiteOrderGroup>();
+
+            foreach (var group in Groups)
+                (group.CanGo ? going : left).Add(group);
+
+            // The total covers what the site priced: a group whose price is still being asked for
+            // is not a zero, it is a group without a number yet.
+            var priced = Groups.Where(group => group.HasTotal).ToList();
+
+            _total = priced.Sum(group => group.TotalAmount);
+            _currency = priced
+                .Select(group => group.TotalCurrency)
+                .FirstOrDefault(currency => currency.Length > 0) ?? string.Empty;
+
+            // Only a send that goes leaves something behind: with every group stuck, the reason
+            // beside the button already says what is missing.
+            var notes = going.Count > 0
+                ? left.Select(SkippedLine).ToList()
+                : new List<string>();
+
+            _warning = string.Join(Environment.NewLine, notes);
+
+            var plan = going.Count == 0
+                ? null
+                : UploadPlans.Combine(going.Select(group => group.Plan!).ToList(), notes);
+
+            _upload.Offer(plan);
+
+            OnPropertyChanged(nameof(TotalText));
+            OnPropertyChanged(nameof(HasTotal));
+            OnPropertyChanged(nameof(WarningText));
+            OnPropertyChanged(nameof(HasWarningText));
+            OnPropertyChanged(nameof(BlockingText));
+            OnPropertyChanged(nameof(HasBlockingText));
+            OnPropertyChanged(nameof(CanUpload));
+        }
+
+        /// <summary>The line that names a group left out, and what will happen to its books.</summary>
+        private static string SkippedLine(SiteOrderGroup group)
+        {
+            var reason = group.ProblemText.Trim();
+            if (reason.Length == 0)
+                reason = "группа не готова.";
+
+            return "Группа " + group.Number + ": " + reason +
+                " Книги этой группы загружены не будут.";
+        }
+
+        private void OnGroupChanged()
+        {
+            // A group becomes answerable on its own schedule - an answer, a price, a reading of
+            // its files - so the page's own word about the order is re-read here rather than only
+            // when the page does something.
+            IsReady = Groups.Count > 0 && Groups.All(group => group.IsReady);
+
+            OnPropertyChanged(nameof(IsReady));
+            OnPropertyChanged(nameof(CanUpload));
+            OnPropertyChanged(nameof(TotalText));
+            OnPropertyChanged(nameof(HasTotal));
             OnPropertyChanged(nameof(BlockingText));
             OnPropertyChanged(nameof(HasBlockingText));
 
-            PriceIfReady();
+            RebuildPlan();
         }
 
+        private void OnGroupNoted(object? sender, string text)
+        {
+            var value = (text ?? string.Empty).Trim();
 
+            // A group that has nothing to report clears the page's answer only when it is the
+            // page's only group: with several, one group's clean reading is not news, and a
+            // heading with nothing after it is worse than no line at all.
+            if (value.Length == 0)
+            {
+                if (Groups.Count <= 1)
+                    Note(string.Empty);
+
+                return;
+            }
+
+            Note(sender is SiteOrderGroup group && Groups.Count > 1
+                ? group.Title + ": " + value
+                : value);
+        }
+
+        private void OnChoiceChanged() => ChoiceChanged?.Invoke(this, EventArgs.Empty);
     }
 }

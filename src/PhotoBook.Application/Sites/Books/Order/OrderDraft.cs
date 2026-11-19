@@ -37,23 +37,39 @@ namespace PhotoBook.Application.Sites.Books.Order
             if (project is null)
                 return new OrderDraft(Array.Empty<Book>(), new[] { "Проект не открыт." });
 
-            if (project.Books is null || project.Books.Count == 0)
+            return From(project.Books, catalog, files);
+        }
+
+        /// <summary>
+        /// Builds the order from a set of the project's books, saying what is missing.
+        /// </summary>
+        /// <remarks>
+        /// A set rather than the whole project, because a project may hold books of two formats
+        /// and the site takes one format per project: the page prices and sends each such set on
+        /// its own, and the assembly has to follow the same lines the customer sees.
+        /// </remarks>
+        public static OrderDraft From(
+            IReadOnlyList<CoreBook>? books,
+            IReadOnlyList<SiteProduct>? catalog,
+            IFileService files)
+        {
+            if (books is null || books.Count == 0)
                 return new OrderDraft(Array.Empty<Book>(), new[] { "В проекте нет ни одной книги." });
 
             var products = catalog ?? Array.Empty<SiteProduct>();
-            var books = new List<Book>();
+            var built = new List<Book>();
             var problems = new List<string>();
 
-            foreach (var source in project.Books)
+            foreach (var source in books)
             {
                 var name = NameOf(source);
-                var built = Build(source, name, products, files, problems);
+                var book = Build(source, name, products, files, problems);
 
-                if (built is not null)
-                    books.Add(built);
+                if (book is not null)
+                    built.Add(book);
             }
 
-            return new OrderDraft(books, problems);
+            return new OrderDraft(built, problems);
         }
 
         private static Book? Build(
@@ -156,7 +172,8 @@ namespace PhotoBook.Application.Sites.Books.Order
                 fileList.Add(new PageFile(page.SourcePath!, length, page.ImageWidth, page.ImageHeight));
             }
 
-            return new Book(product, variant, pagePart.Id, parts, fileList, coverPart?.Id ?? 0, coverFile);
+            return new Book(
+                product, variant, pagePart.Id, parts, fileList, coverPart?.Id ?? 0, coverFile, source);
         }
 
         /// <summary>

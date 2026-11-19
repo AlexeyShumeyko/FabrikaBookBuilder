@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using PhotoBook.Application.Sites.Catalog;
+using CoreBook = PhotoBook.Core.Book;
 
 namespace PhotoBook.Application.Sites.Books
 {
@@ -27,6 +28,12 @@ namespace PhotoBook.Application.Sites.Books
     /// position is 0 and the spreads start at 1. So <see cref="Files"/> stays the spreads, which
     /// are what pricing and readiness count, and <see cref="AllFiles"/> is what the upload sends.
     /// </para>
+    /// <para>
+    /// <see cref="Origin"/> is the project's own book this one was assembled from. The page keeps
+    /// one row per project book and the site prices whole books, so a price that came back has to
+    /// be put back on the row it belongs to - by identity, not by counting along a list that the
+    /// assembly may have skipped through.
+    /// </para>
     /// </remarks>
     public sealed record Book(
         SiteProduct Product,
@@ -35,7 +42,8 @@ namespace PhotoBook.Application.Sites.Books
         IReadOnlyList<SelectedPart> Parts,
         IReadOnlyList<PageFile> Files,
         long CoverPartId = 0,
-        PageFile? CoverFile = null)
+        PageFile? CoverFile = null,
+        CoreBook? Origin = null)
     {
         /// <summary>The choice made for the cover part, if the format has one.</summary>
         public SelectedPart? CoverPart =>
