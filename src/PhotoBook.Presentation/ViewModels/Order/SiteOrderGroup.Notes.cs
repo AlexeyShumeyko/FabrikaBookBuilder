@@ -35,9 +35,14 @@ namespace PhotoBook.Presentation.ViewModels
                 if (problem.Length == 0)
                     return string.Empty;
 
-                return _staysBehind
-                    ? problem + " Книги этой группы загружены не будут."
-                    : problem;
+                if (!_staysBehind)
+                    return problem;
+
+                // While the group is still reading, the honest sentence is "wait", not "these
+                // books are left out": the customer has not done anything wrong yet.
+                return !_parametersLoaded || IsBusy
+                    ? problem + " Дождитесь окончания — иначе книги этой группы не попадут в загрузку."
+                    : problem + " Книги этой группы загружены не будут.";
             }
         }
 
@@ -99,7 +104,7 @@ namespace PhotoBook.Presentation.ViewModels
                     return "Выберите формат группы — по нему сайт считает цену.";
 
                 if (!_parametersLoaded)
-                    return "Читаем параметры формата…";
+                    return "Читаем параметры формата на сайте — это займёт несколько секунд.";
 
                 if (_parametersProblem is not null)
                     return _parametersProblem;
