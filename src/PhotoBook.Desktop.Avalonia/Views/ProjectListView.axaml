@@ -2,16 +2,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="using:PhotoBook.Shell.Views"
              xmlns:controls="using:PhotoBook.Shell.Controls"
-             x:Class="PhotoBook.Shell.Views.ProjectListView"
-             FontFamily="Inter">
+             x:Class="PhotoBook.Shell.Views.ProjectListView">
 
     <!--
         Two steps up on this screen, and only this screen.
 
         A project name is the one thing on this screen a person scans for from across the
-        room, and sixteen pixels of Inter is not enough weight to be found. It goes to
-        seventeen and stays bold. The body - the panel's subtitle, the counts under the rule,
-        the call to action - goes from twelve to thirteen.
+        room, and sixteen pixels is not enough weight to be found. It goes to seventeen and
+        stays bold. The body - the panel's subtitle, the counts under the rule, the call to
+        action - goes to thirteen.
 
         Written here rather than in Typography.axaml: a twelve-pixel body is right in a
         dialog where the words are two lines long, and a scale that moves for one screen
@@ -87,8 +86,8 @@
 
                 <!-- The heading. -->
                 <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
-                    <TextBlock Text="Проекты фотокниг" Classes="t20Bold" />
-                    <TextBlock Classes="t12" Margin="0,2,0,0"
+                    <TextBlock Text="Проекты фотокниг" Classes="t29ExtraBold" />
+                    <TextBlock Classes="t14" Margin="0,2,0,0"
                                Foreground="{DynamicResource Slate500}"
                                Text="Управляйте подготовленными макетами и запускайте их в автоматический экспорт" />
                 </StackPanel>
@@ -233,7 +232,7 @@
         <Border Grid.Row="0" Classes="card" Padding="20"
                 IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}, ConverterParameter=empty}">
             <StackPanel MinHeight="58">
-                <TextBlock Text="Проекты фотокниг" Classes="t20Bold" VerticalAlignment="Center" />
+                <TextBlock Text="Проекты фотокниг" Classes="t29ExtraBold" VerticalAlignment="Center" />
                 <TextBlock Classes="t12" Margin="0,2,0,0" VerticalAlignment="Center"
                            Foreground="{DynamicResource Slate500}"
                            Text="Управляйте макетами" />
@@ -368,14 +367,14 @@
 
                                 <!-- status pill + when it changed -->
                                 <Grid ColumnDefinitions="Auto,*">
-                                    <Border Grid.Column="0" CornerRadius="10" Padding="11,5"
+                                    <Border Grid.Column="0" CornerRadius="999" Height="26" Padding="11,0"
                                             BorderThickness="1"
                                             Background="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=bg}"
                                             BorderBrush="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=border}">
                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                             <Ellipse Width="6" Height="6" VerticalAlignment="Center"
                                                      Fill="{Binding Status, Converter={StaticResource StatusToLabel}, ConverterParameter=dot}" />
-                                            <TextBlock Classes="t12Semi" VerticalAlignment="Center"
+                                            <TextBlock Classes="t11Bold" VerticalAlignment="Center"
                                                        Foreground="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=text}"
                                                        Text="{Binding Status, Converter={StaticResource StatusToLabel}}" />
                                         </StackPanel>
@@ -440,7 +439,7 @@
                                       the card's shape and it belongs to whoever owns the design.
                                   -->
                                   <Grid ColumnDefinitions="*,Auto" Margin="0,12,0,0" HorizontalAlignment="Stretch">
-                                      <TextBlock Grid.Column="0" Classes="t16Bold"
+                                      <TextBlock Grid.Column="0" Classes="t18Bold"
                                                  HorizontalAlignment="Stretch"
                                                  TextTrimming="CharacterEllipsis"
                                                  VerticalAlignment="Center"
@@ -457,7 +456,7 @@
                                       <Border Grid.Column="1" HorizontalAlignment="Right"
                                               Margin="12,0,0,0"
                                               CornerRadius="8"
-                                              Padding="9,4" BorderThickness="1"
+                                              Height="26" Padding="10,0" BorderThickness="1"
                                               VerticalAlignment="Center"
                                               IsVisible="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=visibility}"
                                               Background="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tintbg}"

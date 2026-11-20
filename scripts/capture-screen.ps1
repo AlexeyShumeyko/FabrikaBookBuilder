@@ -115,7 +115,22 @@ function Get-ByName($rootEl, [string]$label, [string]$typeName) {
     return $null
 }
 
-function Get-TabElement($rootEl, [string]$label) { Get-ByName $rootEl $label 'RadioButton' }
+function Get-TabElement($rootEl, [string]$label) {
+    # By name and by what the element can do, not by its type: these tabs are ToggleButtons,
+    # and asking for RadioButtons is what made every capture past the first screen fail with
+    # "tab not found".
+    $cond = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::NameProperty, $label)
+    foreach ($candidate in $rootEl.FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond)) {
+        $names = @($candidate.GetSupportedPatterns() | ForEach-Object { $_.ProgrammaticName })
+        if ($names -contains 'SelectionItemPatternIdentifiers.Pattern' -or
+            $names -contains 'TogglePatternIdentifiers.Pattern' -or
+            $names -contains 'InvokePatternIdentifiers.Pattern') {
+            return $candidate
+        }
+    }
+    return $null
+}
 
 function Get-OpenButtons($rootEl) {
     $cond = New-Object System.Windows.Automation.PropertyCondition(
@@ -235,16 +250,30 @@ try {
         $tabEl = Get-TabElement $el $Tab
         if ($null -eq $tabEl) {
             Write-Host "FAIL: tab '$Tab' not found. Available:"
-            $cond = New-Object System.Windows.Automation.PropertyCondition(
-                [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-                [System.Windows.Automation.ControlType]::RadioButton)
-            $el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond) |
-                ForEach-Object { Write-Host "  - $($_.Current.Name)" }
+            $all = $el.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+                [System.Windows.Automation.Condition]::TrueCondition)
+            foreach ($candidate in $all) {
+                $names = @($candidate.GetSupportedPatterns() | ForEach-Object { $_.ProgrammaticName })
+                if ($candidate.Current.Name -and (
+                        $names -contains 'TogglePatternIdentifiers.Pattern' -or
+                        $names -contains 'SelectionItemPatternIdentifiers.Pattern' -or
+                        $names -contains 'InvokePatternIdentifiers.Pattern')) {
+                    Write-Host "  - $($candidate.Current.Name)"
+                }
+            }
             Stop-Process -Id $proc.Id -Force
             exit 1
         }
-        $sel = $tabEl.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
-        $sel.Select()
+        $tabPatterns = @($tabEl.GetSupportedPatterns() | ForEach-Object { $_.ProgrammaticName })
+        if ($tabPatterns -contains 'SelectionItemPatternIdentifiers.Pattern') {
+            $tabEl.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
+        }
+        elseif ($tabPatterns -contains 'TogglePatternIdentifiers.Pattern') {
+            $tabEl.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern).Toggle()
+        }
+        else {
+            $tabEl.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+        }
         Start-Sleep -Seconds 2
     }
 

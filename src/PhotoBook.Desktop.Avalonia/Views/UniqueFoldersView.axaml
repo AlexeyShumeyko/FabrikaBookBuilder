@@ -1,7 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="PhotoBook.Shell.Views.UniqueFoldersView"
-             FontFamily="Inter">
+             x:Class="PhotoBook.Shell.Views.UniqueFoldersView">
 
     <!--
         Two steps up on this screen, and only this screen, for the reason the other two give.

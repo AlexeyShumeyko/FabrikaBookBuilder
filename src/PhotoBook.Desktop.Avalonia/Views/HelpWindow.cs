@@ -43,7 +43,6 @@ public class HelpWindow : Window
         // background, and a title bar with its own minimise and close buttons is a
         // window belonging to something else.
         SystemDecorations = SystemDecorations.None;
-        FontFamily = new FontFamily("Inter");
 
         Content = Build();
 

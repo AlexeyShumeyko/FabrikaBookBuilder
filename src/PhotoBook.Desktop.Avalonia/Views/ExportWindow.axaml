@@ -8,8 +8,7 @@
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
         Background="Transparent"
-        SystemDecorations="None"
-        FontFamily="Inter">
+        SystemDecorations="None">
 
     <!--
         The same card as every screen in this program: white, sixteen round the corners, one

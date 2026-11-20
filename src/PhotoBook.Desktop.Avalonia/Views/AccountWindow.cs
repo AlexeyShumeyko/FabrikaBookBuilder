@@ -40,7 +40,6 @@ namespace PhotoBook.Shell.Views
             ShowInTaskbar = false;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             Background = Brushes.Transparent;
-            FontFamily = new FontFamily("Inter");
             SystemDecorations = SystemDecorations.None;
 
             Content = Build();

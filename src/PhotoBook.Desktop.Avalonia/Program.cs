@@ -1,5 +1,6 @@
 using System;
 using Avalonia;
+using Avalonia.Media;
 
 namespace PhotoBook.Shell;
 
@@ -18,6 +19,11 @@ internal static class Program
     public static AppBuilder BuildAvaloniaApp() =>
         AppBuilder.Configure<App>()
             .UsePlatformDetect()
-            .WithInterFont()
+            .With(new FontManagerOptions
+            {
+                // One place names the family: the view files stopped naming a font, so a
+                // second typeface is this line and nowhere else.
+                DefaultFamilyName = "avares://PhotoBookRenamer/Assets/Fonts#Manrope"
+            })
             .LogToTrace();
 }

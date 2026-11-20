@@ -3,7 +3,6 @@
         x:Class="PhotoBook.Shell.ProbeWindow"
         Title="Probe 3.0"
         Width="760" Height="660"
-        FontFamily="Inter"
         Background="{DynamicResource AppBackground}"
         Opened="OnOpened">
 
@@ -19,7 +18,7 @@
 
         <TextBlock Grid.Row="1" Margin="0,6,0,14" Classes="t12"
                    Foreground="{DynamicResource Slate500}"
-                   Text="Inter at 9 / 10 / 11 / 12 / 14 / 16 / 20 / 24. If these look right, the typeface loaded." />
+                   Text="Manrope at 9.5 / 10.5 / 11 / 12.5 / 13.5 / 15 / 21 / 26. If these look right, the typeface loaded." />
 
         <ScrollViewer Grid.Row="2">
             <StackPanel>

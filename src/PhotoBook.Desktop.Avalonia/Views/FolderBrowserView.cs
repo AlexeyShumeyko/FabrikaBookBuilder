@@ -120,7 +120,6 @@ public class FolderBrowserView : OverlaySheet<List<string>>
     {
         _files = fileService;
 
-        FontFamily = new FontFamily("Inter");
         Content = Build();
 
         if (existingFolders is not null)

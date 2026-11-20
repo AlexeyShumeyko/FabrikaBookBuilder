@@ -20,10 +20,11 @@
         <Setter Property="Background" Value="{DynamicResource Surface}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Padding" Value="12,8" />
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Height" Value="42" />
+        <Setter Property="CornerRadius" Value="999" />
+        <Setter Property="Padding" Value="20,0" />
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
         <Setter Property="Cursor" Value="Hand" />
     </Style>
@@ -32,10 +33,11 @@
         <Setter Property="Background" Value="{DynamicResource Gold}" />
         <Setter Property="BorderBrush" Value="{DynamicResource GoldDeep}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Padding" Value="14,8" />
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Height" Value="42" />
+        <Setter Property="CornerRadius" Value="999" />
+        <Setter Property="Padding" Value="20,0" />
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Foreground" Value="{DynamicResource OnAccent}" />
         <Setter Property="Cursor" Value="Hand" />
     </Style>
@@ -61,11 +63,11 @@
         <Setter Property="Background" Value="{DynamicResource Gold}" />
         <Setter Property="BorderBrush" Value="{DynamicResource GoldDeep}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="Padding" Value="20,0" />
-        <Setter Property="Height" Value="40" />
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="CornerRadius" Value="999" />
+        <Setter Property="Padding" Value="24,0" />
+        <Setter Property="Height" Value="42" />
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Foreground" Value="{DynamicResource OnAccent}" />
         <Setter Property="Cursor" Value="Hand" />
 
@@ -82,7 +84,7 @@
                 <Border Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="11">
+                        CornerRadius="{TemplateBinding CornerRadius}">
                     <Border.Transitions>
                         <Transitions>
                             <BrushTransition Property="Background" Duration="0:0:0.14" />
@@ -156,9 +158,9 @@
         <Setter Property="Background" Value="{DynamicResource Brand50}" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="11" />
-        <Setter Property="Padding" Value="14,0" />
-        <Setter Property="Height" Value="38" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="16,0" />
+        <Setter Property="Height" Value="42" />
         <Setter Property="Width" Value="180" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="Medium" />

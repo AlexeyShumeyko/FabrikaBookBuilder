@@ -57,7 +57,6 @@ namespace PhotoBook.Shell.Views
             ShowInTaskbar = false;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             Background = Brushes.Transparent;
-            FontFamily = new FontFamily("Inter");
 
             // A sheet on the program's own background, like every other window here: a system
             // frame with its own buttons would look like another program's dialog.

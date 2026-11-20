@@ -1,16 +1,14 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="PhotoBook.Shell.Views.StartScreenView"
-             FontFamily="Inter">
+             x:Class="PhotoBook.Shell.Views.StartScreenView">
 
     <!--
         One step up on this screen, and only this screen.
 
-        The type scale is the product's and stays as it is - 9/10/11/12/14/16/18/20/24 - but a
-        screen that is nothing but paragraphs is read at a glance rather than studied, and at
-        twelve pixels Inter reads thin. The body goes to thirteen here and the two names to
-        nineteen; the headings are already large enough that moving them would only make the
-        page taller.
+        The type scale is the product's and stays as it is, but a screen that is nothing but
+        paragraphs is read at a glance rather than studied, and at twelve and a half pixels it
+        reads thin. The body goes to thirteen here and the two names to nineteen; the headings
+        are already large enough that moving them would only make the page taller.
 
         It is written here, in the view, rather than in Typography.axaml on purpose. The same
         twelve-pixel body is right in a dialog where the words are two lines long, and a

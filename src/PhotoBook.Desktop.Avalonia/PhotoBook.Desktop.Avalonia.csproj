@@ -30,7 +30,6 @@
     <PackageReference Include="Avalonia" Version="11.2.3" />
     <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <!-- The header's view model needs change notification and commands. The same toolkit the
          other two view models use, at the same version, rather than a hand-rolled base that
@@ -47,6 +46,14 @@
          start-up, in the engine's own vocabulary, with nothing in the message that says
          "image missing". -->
     <AvaloniaResource Include="Assets\logo.png" />
+
+    <!-- Manrope, five static weights, Open Font License. The typeface is part of the
+
+         design rather than a convenience: the mockup is drawn in it, and a different
+
+         font is a different set of widths for every word in it. -->
+
+    <AvaloniaResource Include="Assets\Fonts\*.ttf" />
     <ProjectReference Include="..\PhotoBook.Presentation\PhotoBook.Presentation.csproj" />
   </ItemGroup>
 

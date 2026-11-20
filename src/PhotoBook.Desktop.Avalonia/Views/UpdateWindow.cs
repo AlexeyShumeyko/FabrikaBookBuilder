@@ -45,7 +45,6 @@ public class UpdateWindow : Window
         ShowInTaskbar = false;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Background = Brushes.Transparent;
-        FontFamily = new FontFamily("Inter");
 
         // No system frame. See the note on the help window.
         SystemDecorations = SystemDecorations.None;

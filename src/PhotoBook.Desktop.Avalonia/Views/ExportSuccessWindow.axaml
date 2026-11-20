@@ -8,8 +8,7 @@
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
         Background="Transparent"
-        SystemDecorations="None"
-        FontFamily="Inter">
+        SystemDecorations="None">
 
     <!--
         A card, like everything else in this program, with a margin for its shadow.

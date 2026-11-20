@@ -4,7 +4,6 @@
         Title="Fabrika BookBuilder Studio"
         Width="1200" Height="680"
         WindowState="Maximized"
-        FontFamily="Inter"
         Background="{DynamicResource AppBackground}"
         PointerPressed="OnWindowPointerPressed"
         WindowStartupLocation="CenterScreen">

@@ -68,9 +68,10 @@
         <Setter Property="Foreground" Value="{DynamicResource OnAccent}" />
         <Setter Property="BorderBrush" Value="{DynamicResource GoldDeep}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Height" Value="42" />
+        <Setter Property="CornerRadius" Value="999" />
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Template">
             <ControlTemplate>
                 <Border Background="{TemplateBinding Background}"
@@ -128,9 +129,10 @@
         <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Height" Value="42" />
+        <Setter Property="CornerRadius" Value="999" />
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <ControlTemplate>
@@ -270,9 +272,10 @@
         <Setter Property="Background" Value="{DynamicResource Slate100}" />
         <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
         <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Height" Value="38" />
         <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Template">
             <ControlTemplate>
                 <Border Background="{TemplateBinding Background}"
