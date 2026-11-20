@@ -100,6 +100,17 @@
     </Style>
 
     <!-- The project's name in its bar, and the two panels' smaller headings. -->
+    <Style Selector="TextBlock.t12Half">
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="Foreground" Value="{DynamicResource TextDefault}" />
+    </Style>
+
+    <Style Selector="TextBlock.t13ExtraBold">
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+
     <Style Selector="TextBlock.t11ExtraBold">
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontWeight" Value="ExtraBold" />

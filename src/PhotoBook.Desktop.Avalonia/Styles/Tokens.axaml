@@ -99,6 +99,7 @@
             <Color x:Key="SurfaceMuted">#F1E9D8</Color>
             <Color x:Key="SurfaceRaised">#F1E9D8</Color>
             <Color x:Key="SurfaceModal">#FDFAF1</Color>
+            <Color x:Key="BorderSubtle">#124A3A1C</Color>
             <Color x:Key="BorderDefault">#214A3A1C</Color>
             <Color x:Key="BorderStrong">#3B4A3A1C</Color>
             <Color x:Key="TextStrong">#2B2417</Color>
@@ -301,6 +302,7 @@
             <Color x:Key="SurfaceMuted">#262017</Color>
             <Color x:Key="SurfaceRaised">#262017</Color>
             <Color x:Key="SurfaceModal">#1D1913</Color>
+            <Color x:Key="BorderSubtle">#0FFFF2D6</Color>
             <Color x:Key="BorderDefault">#14FFF2D6</Color>
             <Color x:Key="BorderStrong">#26FFF2D6</Color>
             <Color x:Key="TextStrong">#F8F3E7</Color>
