@@ -17,7 +17,7 @@
         project list is where the work continues. A third button that only closed the window
         would be the same as the close mark on a window that does not have one.
     -->
-    <Border Classes="card" Margin="18">
+    <Border Classes="card" CornerRadius="22" Margin="18">
         <StackPanel>
 
             <StackPanel Margin="24,24,24,0">
@@ -58,9 +58,9 @@
                 </Border>
             </StackPanel>
 
-            <Border Height="1" Background="{DynamicResource Slate200}" Margin="0,20,0,0" />
+            <Border Height="1" Background="{DynamicResource Slate200}" Margin="0,22,0,0" />
 
-            <StackPanel Margin="24,16,24,20" Spacing="8">
+            <StackPanel Margin="24,18,24,22" Spacing="10">
                 <Button x:Name="OpenFolderButton" Classes="primary" Padding="16,10"
                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                         AutomationProperties.Name="Открыть папку"
