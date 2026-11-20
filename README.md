@@ -12,7 +12,7 @@
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-492%20passing-3FB950?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-proprietary-6E7681?style=for-the-badge)
-![Version](https://img.shields.io/badge/version-2.1.0-4F46E5?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.1.1-4F46E5?style=for-the-badge)
 
 </div>
 
