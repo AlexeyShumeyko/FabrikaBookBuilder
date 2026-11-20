@@ -6,8 +6,34 @@
         The guide is a page, not a dialog: a cover that says what the program is for, the five
         steps of an order, then a spine that stays put while the chapters scroll beside it.
     -->
-    <Grid RowDefinitions="Auto,*,Auto" MaxWidth="1080" Margin="28,20,28,14"
-          HorizontalAlignment="Center" Background="{DynamicResource PageBackdrop}">
+    <UserControl.Styles>
+        <!-- A row of the spine reads as a line of the contents, not as a button: the default
+             button chrome is what turns a list of seven sections into seven grey blocks. -->
+        <Style Selector="Button.spine">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="8,7" />
+            <Setter Property="Margin" Value="0,1" />
+        </Style>
+        <Style Selector="Button.spine /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="10" />
+        </Style>
+        <Style Selector="Button.spine:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceMuted}" />
+        </Style>
+        <Style Selector="Button.spine:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceRaised}" />
+        </Style>
+    </UserControl.Styles>
+
+    <!-- No fixed width: the window is resized, and a page pinned to 1080 spilled out of it at
+         a large text scale. The margins keep the text off the frame instead. -->
+    <Grid RowDefinitions="Auto,*,Auto" Margin="28,20,28,14"
+          Background="{DynamicResource PageBackdrop}">
 
         <!-- ============================== the cover ============================== -->
         <StackPanel Grid.Row="0" Margin="0,0,0,22">
@@ -274,8 +300,881 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- the rest of the chapters is being ported; the spine above is live -->
-                    <StackPanel Name="ChapterTail" />
+                    <!-- ============================ 02 режимы ======================== -->
+                    <Border Name="Chapter2" Classes="card" CornerRadius="18" Padding="26,24">
+                        <StackPanel>
+                            <TextBlock Text="ГЛАВА 02" Classes="t11ExtraBold"
+                                       Foreground="{DynamicResource Gold}" />
+                            <TextBlock Text="Два режима — две логики" Classes="t25ExtraBold" Margin="0,8,0,0" />
+                            <TextBlock Text="Режим выбирается один раз при создании проекта"
+                                       Classes="t12Half" Margin="0,6,0,0"
+                                       Foreground="{DynamicResource Slate400}" />
+
+                            <TextBlock Classes="t13" Margin="0,16,0,0" TextWrapping="Wrap" LineHeight="24"
+                                       Text="Оба режима делают одно и то же — собирают фотокниги. Разница в том, кто решает, какой кадр попадёт в какую книгу. Если папки уже разложены по книгам — работает программа. Если состав каждой книги уникален — раскладываете вы, а программа держит структуру и проверяет формат." />
+
+                            <Grid ColumnDefinitions="*,34,*" Margin="0,16,0,0">
+                        <Border Grid.Column="0" Classes="card" CornerRadius="16" Padding="20,18">
+                            <StackPanel>
+                                <Border Width="44" Height="44" CornerRadius="13" HorizontalAlignment="Left"
+                                        Background="{DynamicResource AvatarFill}"
+                                        BorderBrush="{DynamicResource AvatarRing}" BorderThickness="1">
+                                    <TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="21"
+                                               Foreground="{DynamicResource AvatarInk}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="РЕЖИМ A · ПОТОК" Classes="t11ExtraBold" Margin="0,12,0,0"
+                                           Foreground="{DynamicResource Gold}" />
+                                <TextBlock Text="Уникальные папки" Classes="t23ExtraBold" Margin="0,6,0,0" />
+                                <TextBlock Text="Одна папка — одна книга." Classes="t13" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" Foreground="{DynamicResource Slate600}" />
+                                <TextBlock Text="Для серий: на каждую книгу есть готовая папка, внутри уже разложен порядок снимков. Программа читает папки подряд и собирает книги без вашего участия." Classes="t12Half" Margin="0,8,0,0"
+                                           TextWrapping="Wrap" LineHeight="20" />
+
+                                <TextBlock Text="Как идёт работа" Classes="t13ExtraBold" Margin="0,14,0,0" />
+                                <StackPanel Margin="0,8,0,0" Spacing="6">                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#8226;" Classes="t12Half"
+                                   Foreground="{DynamicResource Gold}" />
+                        <TextBlock Grid.Column="1" Text="Перетаскиваете папки в левую панель — каждая становится отдельной книгой." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid>
+                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#8226;" Classes="t12Half"
+                                   Foreground="{DynamicResource Gold}" />
+                        <TextBlock Grid.Column="1" Text="Самое большое фото папки встаёт на обложку, остальные идут по разворотам в порядке файлов." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid>
+                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#8226;" Classes="t12Half"
+                                   Foreground="{DynamicResource Gold}" />
+                        <TextBlock Grid.Column="1" Text="Программа проверяет пропорции и присваивает имена 001-00.jpg." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid>
+                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#8226;" Classes="t12Half"
+                                   Foreground="{DynamicResource Gold}" />
+                        <TextBlock Grid.Column="1" Text="Книги собираются в группы по формату — параметры задаются сразу на группу." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid></StackPanel>
+
+                                <TextBlock Text="Сильные стороны" Classes="t13ExtraBold" Margin="0,14,0,0" />
+                                <StackPanel Margin="0,8,0,0" Spacing="6">                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                   Foreground="{DynamicResource Gold}" Margin="0,3,0,0" />
+                        <TextBlock Grid.Column="1" Text="Самая быстрая сборка, когда книг много и они однотипные." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid>
+                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                   Foreground="{DynamicResource Gold}" Margin="0,3,0,0" />
+                        <TextBlock Grid.Column="1" Text="Порядок кадров повторяет порядок в папке — результат предсказуем." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid>
+                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                   Foreground="{DynamicResource Gold}" Margin="0,3,0,0" />
+                        <TextBlock Grid.Column="1" Text="Структура прозрачная: одна папка — одна книга, нужную видно сразу." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid></StackPanel>
+
+                                <Border Margin="0,14,0,0" CornerRadius="12" Padding="12,10"
+                                        Background="{DynamicResource Brand50}"
+                                        BorderBrush="{DynamicResource BorderAccentHover}"
+                                        BorderThickness="1">
+                                    <TextBlock Classes="t11Half" TextWrapping="Wrap" LineHeight="18"
+                                               Text="Тонкость. В одном проекте — только папки с одинаковым числом файлов. Иначе книги получатся разной толщины, и фабрика не соберёт тираж по одному макету." />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                                <TextBlock Grid.Column="1" Text="или" Classes="t11ExtraBold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Slate400}" />
+
+                        <Border Grid.Column="2" Classes="card" CornerRadius="16" Padding="20,18">
+                            <StackPanel>
+                                <Border Width="44" Height="44" CornerRadius="13" HorizontalAlignment="Left"
+                                        Background="{DynamicResource AvatarFill}"
+                                        BorderBrush="{DynamicResource AvatarRing}" BorderThickness="1">
+                                    <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="21"
+                                               Foreground="{DynamicResource AvatarInk}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="РЕЖИМ B · КОНТРОЛЬ" Classes="t11ExtraBold" Margin="0,12,0,0"
+                                           Foreground="{DynamicResource Gold}" />
+                                <TextBlock Text="Комбинированный" Classes="t23ExtraBold" Margin="0,6,0,0" />
+                                <TextBlock Text="Вы решаете, что в какой книге." Classes="t13" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" Foreground="{DynamicResource Slate600}" />
+                                <TextBlock Text="Для заказов, где книги отличаются: разный состав, разные истории, общие служебные страницы. Кадры раскладываете сами — программа следит за структурой и проверяет формат." Classes="t12Half" Margin="0,8,0,0"
+                                           TextWrapping="Wrap" LineHeight="20" />
+
+                                <TextBlock Text="Как идёт работа" Classes="t13ExtraBold" Margin="0,14,0,0" />
+                                <StackPanel Margin="0,8,0,0" Spacing="6">                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#8226;" Classes="t12Half"
+                                   Foreground="{DynamicResource Gold}" />
+                        <TextBlock Grid.Column="1" Text="Создаёте нужное количество книг и задаёте число разворотов." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid>
+                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#8226;" Classes="t12Half"
+                                   Foreground="{DynamicResource Gold}" />
+                        <TextBlock Grid.Column="1" Text="Перетаскиваете кадры в слоты — в любую книгу, на любой разворот." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid>
+                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#8226;" Classes="t12Half"
+                                   Foreground="{DynamicResource Gold}" />
+                        <TextBlock Grid.Column="1" Text="Общий разворот или обложку добавляете одним действием сразу во все книги." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid>
+                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#8226;" Classes="t12Half"
+                                   Foreground="{DynamicResource Gold}" />
+                        <TextBlock Grid.Column="1" Text="Проверяете порядок и отправляете книги на сайт." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid></StackPanel>
+
+                                <TextBlock Text="Сильные стороны" Classes="t13ExtraBold" Margin="0,14,0,0" />
+                                <StackPanel Margin="0,8,0,0" Spacing="6">                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                   Foreground="{DynamicResource Gold}" Margin="0,3,0,0" />
+                        <TextBlock Grid.Column="1" Text="Полный контроль над составом каждой книги." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid>
+                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                   Foreground="{DynamicResource Gold}" Margin="0,3,0,0" />
+                        <TextBlock Grid.Column="1" Text="Общие развороты не нужно повторять в каждой книге отдельно." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid>
+                    <Grid ColumnDefinitions="16,*">
+                        <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                   Foreground="{DynamicResource Gold}" Margin="0,3,0,0" />
+                        <TextBlock Grid.Column="1" Text="Одинаковое количество разворотов держит тираж собираемым." Classes="t11Half"
+                                   TextWrapping="Wrap" LineHeight="18" />
+                    </Grid></StackPanel>
+
+                                <Border Margin="0,14,0,0" CornerRadius="12" Padding="12,10"
+                                        Background="{DynamicResource Brand50}"
+                                        BorderBrush="{DynamicResource BorderAccentHover}"
+                                        BorderThickness="1">
+                                    <TextBlock Classes="t11Half" TextWrapping="Wrap" LineHeight="18"
+                                               Text="Тонкость. Число разворотов у всех книг одинаковое — это требование сборки на фабрике. Задайте его до того, как начнёте раскладывать кадры: потом придётся пересобирать." />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                            </Grid>
+
+                            <TextBlock Text="Чем отличаются" Classes="t15ExtraBold" Margin="0,18,0,0" />
+                            <Grid ColumnDefinitions="*,*,*" Margin="0,10,0,8">
+                                <TextBlock Grid.Column="0" Text="ВОПРОС" Classes="t11ExtraBold"
+                                           Foreground="{DynamicResource Slate400}" />
+                                <TextBlock Grid.Column="1" Text="УНИКАЛЬНЫЕ ПАПКИ" Classes="t11ExtraBold"
+                                           Margin="12,0" Foreground="{DynamicResource Slate400}" />
+                                <TextBlock Grid.Column="2" Text="КОМБИНИРОВАННЫЙ" Classes="t11ExtraBold"
+                                           Foreground="{DynamicResource Slate400}" />
+                            </Grid>
+                            <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" Margin="0,0,0,10" />
+                                <Grid ColumnDefinitions="*,*,*" Margin="0,0,0,14">
+                                    <TextBlock Grid.Column="0" Text="Кто раскладывает кадры" Classes="t12Semi"
+                                               Foreground="{DynamicResource Slate500}"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Grid.Column="1" Text="Программа, по порядку файлов в папке" Classes="t12Half"
+                                               TextWrapping="Wrap" Margin="12,0" LineHeight="19" />
+                                    <TextBlock Grid.Column="2" Text="Вы, кадр за кадром в каждой книге" Classes="t12Half"
+                                               TextWrapping="Wrap" LineHeight="19" />
+                                </Grid>
+                                <Grid ColumnDefinitions="*,*,*" Margin="0,0,0,14">
+                                    <TextBlock Grid.Column="0" Text="Обложка" Classes="t12Semi"
+                                               Foreground="{DynamicResource Slate500}"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Grid.Column="1" Text="Самое большое фото в папке" Classes="t12Half"
+                                               TextWrapping="Wrap" Margin="12,0" LineHeight="19" />
+                                    <TextBlock Grid.Column="2" Text="Та, которую поставите в первый слот" Classes="t12Half"
+                                               TextWrapping="Wrap" LineHeight="19" />
+                                </Grid>
+                                <Grid ColumnDefinitions="*,*,*" Margin="0,0,0,14">
+                                    <TextBlock Grid.Column="0" Text="Общие развороты" Classes="t12Semi"
+                                               Foreground="{DynamicResource Slate500}"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Grid.Column="1" Text="Не нужны: книги не пересекаются" Classes="t12Half"
+                                               TextWrapping="Wrap" Margin="12,0" LineHeight="19" />
+                                    <TextBlock Grid.Column="2" Text="Один разворот сразу во все книги" Classes="t12Half"
+                                               TextWrapping="Wrap" LineHeight="19" />
+                                </Grid>
+                                <Grid ColumnDefinitions="*,*,*" Margin="0,0,0,0">
+                                    <TextBlock Grid.Column="0" Text="Когда выбирать" Classes="t12Semi"
+                                               Foreground="{DynamicResource Slate500}"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Grid.Column="1" Text="Много однотипных книг, папки готовы" Classes="t12Half"
+                                               TextWrapping="Wrap" Margin="12,0" LineHeight="19" />
+                                    <TextBlock Grid.Column="2" Text="Состав книг разный, кадры отбираются вручную" Classes="t12Half"
+                                               TextWrapping="Wrap" LineHeight="19" />
+                                </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ============================ 03 проекты ======================== -->
+                    <Border Name="Chapter3" Classes="card" CornerRadius="18" Padding="26,24">
+                        <StackPanel>
+                            <TextBlock Text="ГЛАВА 03" Classes="t11ExtraBold"
+                                       Foreground="{DynamicResource Gold}" />
+                            <TextBlock Text="Проекты: создать и вести" Classes="t25ExtraBold" Margin="0,8,0,0" />
+                            <TextBlock Text="Проект хранит режим, книги и параметры"
+                                       Classes="t12Half" Margin="0,6,0,0"
+                                       Foreground="{DynamicResource Slate400}" />
+
+                            <TextBlock Classes="t13" Margin="0,16,0,0" TextWrapping="Wrap" LineHeight="24"
+                                       Text="Проект — это заказ. Можно закрыть программу и вернуться к сборке через день: режим, книги, выбранные кадры и параметры групп останутся на месте. Ниже — весь цикл работы с проектом, от создания до удаления." />
+
+                            <Grid ColumnDefinitions="*,14,*" Margin="0,16,0,0">
+                                <Border Grid.Column="0" Classes="card" CornerRadius="14" Padding="16,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Создать" Classes="t13ExtraBold" />
+                                        <TextBlock Classes="t11Half" Margin="0,6,0,0" TextWrapping="Wrap"
+                                                   LineHeight="18"
+                                                   Text="Кнопка «Создать проект» в правом верхнем углу списка. Открывается выбор режима — это единственное решение, которое нельзя изменить потом." />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="2" Classes="card" CornerRadius="14" Padding="16,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Открыть и продолжить" Classes="t13ExtraBold" />
+                                        <TextBlock Classes="t11Half" Margin="0,6,0,0" TextWrapping="Wrap"
+                                                   LineHeight="18"
+                                                   Text="Клик по карточке проекта возвращает к тому состоянию сборки, на котором вы остановились. Ничего не нужно собирать заново." />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,14,*" Margin="0,14,0,0">
+                                <Border Grid.Column="0" Classes="card" CornerRadius="14" Padding="16,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Найти нужный" Classes="t13ExtraBold" />
+                                        <TextBlock Classes="t11Half" Margin="0,6,0,0" TextWrapping="Wrap"
+                                                   LineHeight="18"
+                                                   Text="Фильтры по режиму и статусу над списком. Счётчик рядом показывает, сколько проектов всего — удобно, когда заказов десятки." />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="2" Classes="card" CornerRadius="14" Padding="16,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Понять статус" Classes="t13ExtraBold" />
+                                        <TextBlock Classes="t11Half" Margin="0,6,0,0" TextWrapping="Wrap"
+                                                   LineHeight="18"
+                                                   Text="Карточка показывает этап: проект собирается, готов к отправке или уже загружен на сайт. По статусу видно, что ждёт вашего внимания." />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <Border Classes="card" CornerRadius="14" Padding="16,14" Margin="0,14,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Удалить" Classes="t13ExtraBold" />
+                                    <TextBlock Classes="t11Half" Margin="0,6,0,0" TextWrapping="Wrap"
+                                               LineHeight="18"
+                                               Text="В меню карточки. Проект исчезает из списка, но файлы, уже выгруженные на сайт, остаются на месте — заказ не пропадёт." />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ============================ 04 обучение ====================== -->
+                    <Border Name="Chapter4" Classes="card" CornerRadius="18" Padding="26,24">
+                        <StackPanel>
+                            <TextBlock Text="ГЛАВА 04" Classes="t11ExtraBold"
+                                       Foreground="{DynamicResource Gold}" />
+                            <TextBlock Text="Пять шагов до сайта" Classes="t25ExtraBold" Margin="0,8,0,0" />
+                            <TextBlock Text="Мини-обучение: пройдите один раз целиком" Classes="t12Half" Margin="0,6,0,0"
+                                       Foreground="{DynamicResource Slate400}" />
+
+                            <TextBlock Classes="t13" Margin="0,16,0,0" TextWrapping="Wrap" LineHeight="24"
+                                       Text="Это короткая тренировка на реальном пути заказа. Пять шагов, у каждого — что нажать, что проверить и где обычно спотыкаются. На снимках цифры отмечают места, о которых идёт речь." />
+
+                            <Grid ColumnDefinitions="*,8,*,8,*,8,*,8,*" Margin="0,16,0,0">
+                                <Border Grid.Column="0" CornerRadius="10" Padding="10,7"
+                                        Background="{DynamicResource SurfaceMuted}"
+                                        BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="01" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Gold}" />
+                                        <TextBlock Text="Проект" Classes="t11Half" Margin="6,0,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="1" CornerRadius="10" Padding="10,7"
+                                        Background="{DynamicResource SurfaceMuted}"
+                                        BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="02" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Gold}" />
+                                        <TextBlock Text="Папки" Classes="t11Half" Margin="6,0,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="2" CornerRadius="10" Padding="10,7"
+                                        Background="{DynamicResource SurfaceMuted}"
+                                        BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="03" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Gold}" />
+                                        <TextBlock Text="Проверка" Classes="t11Half" Margin="6,0,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="3" CornerRadius="10" Padding="10,7"
+                                        Background="{DynamicResource SurfaceMuted}"
+                                        BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="04" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Gold}" />
+                                        <TextBlock Text="Экспорт" Classes="t11Half" Margin="6,0,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="4" CornerRadius="10" Padding="10,7"
+                                        Background="{DynamicResource SurfaceMuted}"
+                                        BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="05" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Gold}" />
+                                        <TextBlock Text="Сайт" Classes="t11Half" Margin="6,0,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                            <Border Classes="card" CornerRadius="16" Padding="20,18" Margin="0,12,0,0">
+                                <StackPanel>
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Border Width="34" Height="34" CornerRadius="10" VerticalAlignment="Top"
+                                                Background="{DynamicResource Brand50}"
+                                                BorderBrush="{DynamicResource BorderAccentHover}"
+                                                BorderThickness="1">
+                                            <TextBlock Text="01" Classes="t13ExtraBold"
+                                                       Foreground="{DynamicResource Gold}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                            <TextBlock Text="ШАГ 1 ИЗ 5 · ≈ 1 МИНУТА" Classes="t11ExtraBold"
+                                                       Foreground="{DynamicResource Slate400}" />
+                                            <TextBlock Text="Создайте проект и выберите режим" Classes="t15ExtraBold" Margin="0,4,0,0" />
+                                            <TextBlock Text="Нажмите «Создать проект» на экране «Мои проекты». Появится выбор из двух режимов: посмотрите, что произойдёт с фотографиями в каждом, и выберите подходящий. Это решение фиксируется — сменить режим можно только новым проектом." Classes="t11Half" Margin="0,6,0,0"
+                                                       TextWrapping="Wrap" LineHeight="19" />
+                                            <Grid ColumnDefinitions="*,*,*" Margin="0,12,0,0">                                        <Grid Grid.Column="0" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="1" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Кнопка создания проекта — единственный вход в новый заказ." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid>
+                                        <Grid Grid.Column="1" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="2" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Карточка режима: читайте не название, а описание работы." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid>
+                                        <Grid Grid.Column="2" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="3" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="«Выбрать режим» — проект создаётся и открывается редактор." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid></Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                            <Border Classes="card" CornerRadius="16" Padding="20,18" Margin="0,12,0,0">
+                                <StackPanel>
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Border Width="34" Height="34" CornerRadius="10" VerticalAlignment="Top"
+                                                Background="{DynamicResource Brand50}"
+                                                BorderBrush="{DynamicResource BorderAccentHover}"
+                                                BorderThickness="1">
+                                            <TextBlock Text="02" Classes="t13ExtraBold"
+                                                       Foreground="{DynamicResource Gold}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                            <TextBlock Text="ШАГ 2 ИЗ 5 · ≈ 3 МИНУТЫ" Classes="t11ExtraBold"
+                                                       Foreground="{DynamicResource Slate400}" />
+                                            <TextBlock Text="Добавьте фотографии" Classes="t15ExtraBold" Margin="0,4,0,0" />
+                                            <TextBlock Text="Перетащите папки или отдельные файлы в левую панель. Программа сразу покажет, сколько получилось книг, сколько в них разворотов и какие файлы не проходят проверку. Если книги не появились — почти всегда дело в разном количестве файлов в папках." Classes="t11Half" Margin="0,6,0,0"
+                                                       TextWrapping="Wrap" LineHeight="19" />
+                                            <Grid ColumnDefinitions="*,*,*" Margin="0,12,0,0">                                        <Grid Grid.Column="0" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="1" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Зона загрузки: папки можно перетаскивать или выбирать вручную." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid>
+                                        <Grid Grid.Column="1" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="2" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Список книг: одна папка — одна строка, с количеством разворотов." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid>
+                                        <Grid Grid.Column="2" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="3" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Счётчик файлов и предупреждения о неподходящих кадрах." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid></Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                            <Border Classes="card" CornerRadius="16" Padding="20,18" Margin="0,12,0,0">
+                                <StackPanel>
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Border Width="34" Height="34" CornerRadius="10" VerticalAlignment="Top"
+                                                Background="{DynamicResource Brand50}"
+                                                BorderBrush="{DynamicResource BorderAccentHover}"
+                                                BorderThickness="1">
+                                            <TextBlock Text="03" Classes="t13ExtraBold"
+                                                       Foreground="{DynamicResource Gold}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                            <TextBlock Text="ШАГ 3 ИЗ 5 · ≈ 5 МИНУТ" Classes="t11ExtraBold"
+                                                       Foreground="{DynamicResource Slate400}" />
+                                            <TextBlock Text="Проверьте обложку и развороты" Classes="t15ExtraBold" Margin="0,4,0,0" />
+                                            <TextBlock Text="Разверните книгу и пройдите по слотам: обложка, затем развороты по порядку. Если сюжет идёт иначе — поменяйте кадры местами или сбросьте порядок книги и начните заново. Рядом с каждым файлом видно отклонение пропорций в пикселях." Classes="t11Half" Margin="0,6,0,0"
+                                                       TextWrapping="Wrap" LineHeight="19" />
+                                            <Grid ColumnDefinitions="*,*,*" Margin="0,12,0,0">                                        <Grid Grid.Column="0" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="1" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Обложка всегда первая — её видно на карточке проекта." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid>
+                                        <Grid Grid.Column="1" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="2" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Слот разворота: кадр можно заменить, не трогая остальные." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid>
+                                        <Grid Grid.Column="2" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="3" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Допуск ±59 px. Больше — кадр нужно обрезать под макет." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid></Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                            <Border Classes="card" CornerRadius="16" Padding="20,18" Margin="0,12,0,0">
+                                <StackPanel>
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Border Width="34" Height="34" CornerRadius="10" VerticalAlignment="Top"
+                                                Background="{DynamicResource Brand50}"
+                                                BorderBrush="{DynamicResource BorderAccentHover}"
+                                                BorderThickness="1">
+                                            <TextBlock Text="04" Classes="t13ExtraBold"
+                                                       Foreground="{DynamicResource Gold}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                            <TextBlock Text="ШАГ 4 ИЗ 5 · ≈ 2 МИНУТЫ" Classes="t11ExtraBold"
+                                                       Foreground="{DynamicResource Slate400}" />
+                                            <TextBlock Text="Экспортируйте файлы" Classes="t15ExtraBold" Margin="0,4,0,0" />
+                                            <TextBlock Text="Выберите папку назначения и запустите экспорт. Каждая выгрузка создаёт новую папку, поэтому прошлые заказы не перезаписываются. Имена файлов программа задаёт сама — переименовывать вручную ничего не нужно." Classes="t11Half" Margin="0,6,0,0"
+                                                       TextWrapping="Wrap" LineHeight="19" />
+                                            <Grid ColumnDefinitions="*,*,*" Margin="0,12,0,0">                                        <Grid Grid.Column="0" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="1" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Папка назначения: новая для каждого экспорта." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid>
+                                        <Grid Grid.Column="1" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="2" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Склейки и количество файлов — проверьте до запуска." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid>
+                                        <Grid Grid.Column="2" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="3" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="«Начать экспорт»: прогресс идёт в фоне, окно можно свернуть." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid></Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                            <Border Classes="card" CornerRadius="16" Padding="20,18" Margin="0,12,0,0">
+                                <StackPanel>
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Border Width="34" Height="34" CornerRadius="10" VerticalAlignment="Top"
+                                                Background="{DynamicResource Brand50}"
+                                                BorderBrush="{DynamicResource BorderAccentHover}"
+                                                BorderThickness="1">
+                                            <TextBlock Text="05" Classes="t13ExtraBold"
+                                                       Foreground="{DynamicResource Gold}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                            <TextBlock Text="ШАГ 5 ИЗ 5 · ЗАВИСИТ ОТ ОБЪЁМА" Classes="t11ExtraBold"
+                                                       Foreground="{DynamicResource Slate400}" />
+                                            <TextBlock Text="Отправьте книги на сайт" Classes="t15ExtraBold" Margin="0,4,0,0" />
+                                            <TextBlock Text="Отметьте группы «В загрузке», проверьте параметры и итоговую цену, запустите отправку. Загрузка идёт в фоне: окно прогресса можно свернуть и продолжать работу над следующим проектом. Если связь прервалась — откройте загрузку заново, уже отправленные книги отмечены." Classes="t11Half" Margin="0,6,0,0"
+                                                       TextWrapping="Wrap" LineHeight="19" />
+                                            <Grid ColumnDefinitions="*,*,*" Margin="0,12,0,0">                                        <Grid Grid.Column="0" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="1" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Группы по формату: у каждой свои параметры и цена." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid>
+                                        <Grid Grid.Column="1" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="2" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Состояние книги: готова или не прошла проверку формата." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid>
+                                        <Grid Grid.Column="2" ColumnDefinitions="18,*" Margin="0,0,10,0">
+                                            <Border Width="18" Height="18" CornerRadius="9" VerticalAlignment="Top"
+                                                    Background="{DynamicResource Gold}">
+                                                <TextBlock Text="3" Classes="t11ExtraBold"
+                                                           Foreground="{DynamicResource OnAccent}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="Итог к отправке — сумма и количество файлов до запуска." Classes="t11"
+                                                       Margin="6,1,0,0" TextWrapping="Wrap" LineHeight="16"
+                                                       Foreground="{DynamicResource Slate500}" />
+                                        </Grid></Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ============================ 05 фишки ======================== -->
+                    <Border Name="Chapter5" Classes="card" CornerRadius="18" Padding="26,24">
+                        <StackPanel>
+                            <TextBlock Text="ГЛАВА 05" Classes="t11ExtraBold"
+                                       Foreground="{DynamicResource Gold}" />
+                            <TextBlock Text="Фишки, которые экономят время" Classes="t25ExtraBold" Margin="0,8,0,0" />
+                            <TextBlock Text="Мелочи, заметные на больших заказах" Classes="t12Half" Margin="0,6,0,0"
+                                       Foreground="{DynamicResource Slate400}" />
+
+                            <Grid ColumnDefinitions="*,14,*" Margin="0,16,0,0">
+                        <Border Classes="card" CornerRadius="16" Padding="18,16" Margin="0,0,0,14"
+                                Grid.Column="0">
+                            <StackPanel>
+                                <TextBlock Text="01" Classes="t13ExtraBold"
+                                           Foreground="{DynamicResource Gold}" />
+                                <TextBlock Text="Общие развороты" Classes="t13ExtraBold" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Text="Один разворот добавляется сразу во все книги — не нужно повторять его в каждой." Classes="t11Half" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" LineHeight="18" />
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="card" CornerRadius="16" Padding="18,16" Margin="0,0,0,14"
+                                Grid.Column="1">
+                            <StackPanel>
+                                <TextBlock Text="02" Classes="t13ExtraBold"
+                                           Foreground="{DynamicResource Gold}" />
+                                <TextBlock Text="Автоматическая обложка" Classes="t13ExtraBold" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Text="В режиме папок обложкой становится самое большое фото — обычно это и есть задуманный кадр." Classes="t11Half" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" LineHeight="18" />
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="card" CornerRadius="16" Padding="18,16" Margin="0,0,0,14"
+                                Grid.Column="2">
+                            <StackPanel>
+                                <TextBlock Text="03" Classes="t13ExtraBold"
+                                           Foreground="{DynamicResource Gold}" />
+                                <TextBlock Text="Проверка пропорций" Classes="t13ExtraBold" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Text="Отклонение показывается в пикселях: до ±59 px кадр считается допустимым." Classes="t11Half" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" LineHeight="18" />
+                            </StackPanel>
+                        </Border>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,14,*">
+                        <Border Classes="card" CornerRadius="16" Padding="18,16" Margin="0,0,0,14"
+                                Grid.Column="0">
+                            <StackPanel>
+                                <TextBlock Text="04" Classes="t13ExtraBold"
+                                           Foreground="{DynamicResource Gold}" />
+                                <TextBlock Text="Группы по формату" Classes="t13ExtraBold" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Text="Книги одного формата собраны вместе: параметры и цена считаются на всю группу." Classes="t11Half" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" LineHeight="18" />
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="card" CornerRadius="16" Padding="18,16" Margin="0,0,0,14"
+                                Grid.Column="1">
+                            <StackPanel>
+                                <TextBlock Text="05" Classes="t13ExtraBold"
+                                           Foreground="{DynamicResource Gold}" />
+                                <TextBlock Text="Фоновая отправка" Classes="t13ExtraBold" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Text="Прогресс не блокирует программу — можно продолжать сборку следующего проекта." Classes="t11Half" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" LineHeight="18" />
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="card" CornerRadius="16" Padding="18,16" Margin="0,0,0,14"
+                                Grid.Column="2">
+                            <StackPanel>
+                                <TextBlock Text="06" Classes="t13ExtraBold"
+                                           Foreground="{DynamicResource Gold}" />
+                                <TextBlock Text="История экспортов" Classes="t13ExtraBold" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Text="Новая выгрузка не перезаписывает предыдущую: файлы прошлого заказа остаются на диске." Classes="t11Half" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" LineHeight="18" />
+                            </StackPanel>
+                        </Border>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ============================ 06 вопросы ====================== -->
+                    <Border Name="Chapter6" Classes="card" CornerRadius="18" Padding="26,24">
+                        <StackPanel>
+                            <TextBlock Text="ГЛАВА 06" Classes="t11ExtraBold"
+                                       Foreground="{DynamicResource Gold}" />
+                            <TextBlock Text="Вопросы, с которых начинают" Classes="t25ExtraBold" Margin="0,8,0,0" />
+                            <TextBlock Text="" Classes="t12Half" Margin="0,6,0,0"
+                                       Foreground="{DynamicResource Slate400}" />
+                            <StackPanel Margin="0,12,0,0">                            <Expander Margin="0,0,0,10" Padding="0" BorderThickness="0"
+                                      Background="Transparent" HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch">
+                                <Expander.Header>
+                                    <Grid ColumnDefinitions="30,*" Margin="0,8,0,8">
+                                        <TextBlock Grid.Column="0" Text="01" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Gold}" VerticalAlignment="Top"
+                                                   Margin="0,2,0,0" />
+                                        <TextBlock Grid.Column="1" Text="Можно ли поменять режим после создания проекта?" Classes="t13ExtraBold"
+                                                   TextWrapping="Wrap" />
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock Text="Нет. Режим определяет структуру книг, поэтому меняется только созданием нового проекта. При смене режима уже собранные книги пришлось бы собирать заново — программа не даёт сделать это случайно." Classes="t12Half" Margin="30,0,0,10"
+                                           TextWrapping="Wrap" LineHeight="20"
+                                           Foreground="{DynamicResource Slate500}" />
+                            </Expander>
+                            <Expander Margin="0,0,0,10" Padding="0" BorderThickness="0"
+                                      Background="Transparent" HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch">
+                                <Expander.Header>
+                                    <Grid ColumnDefinitions="30,*" Margin="0,8,0,8">
+                                        <TextBlock Grid.Column="0" Text="02" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Gold}" VerticalAlignment="Top"
+                                                   Margin="0,2,0,0" />
+                                        <TextBlock Grid.Column="1" Text="Почему книга «не готова», хотя все фотографии на месте?" Classes="t13ExtraBold"
+                                                   TextWrapping="Wrap" />
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock Text="Чаще всего не выбраны параметры группы — ламинация и плотность разворота. Вторая причина — отклонение пропорций больше допуска. Разверните книгу: в списке файлов видно отклонение каждой страницы." Classes="t12Half" Margin="30,0,0,10"
+                                           TextWrapping="Wrap" LineHeight="20"
+                                           Foreground="{DynamicResource Slate500}" />
+                            </Expander>
+                            <Expander Margin="0,0,0,10" Padding="0" BorderThickness="0"
+                                      Background="Transparent" HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch">
+                                <Expander.Header>
+                                    <Grid ColumnDefinitions="30,*" Margin="0,8,0,8">
+                                        <TextBlock Grid.Column="0" Text="03" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Gold}" VerticalAlignment="Top"
+                                                   Margin="0,2,0,0" />
+                                        <TextBlock Grid.Column="1" Text="Что делать, если в папках разное количество файлов?" Classes="t13ExtraBold"
+                                                   TextWrapping="Wrap" />
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock Text="В режиме уникальных папок все папки проекта должны содержать одинаковое число снимков — иначе книги выйдут разной толщины. Добавьте недостающие кадры или уберите лишние, затем загрузите папки заново." Classes="t12Half" Margin="30,0,0,10"
+                                           TextWrapping="Wrap" LineHeight="20"
+                                           Foreground="{DynamicResource Slate500}" />
+                            </Expander>
+                            <Expander Margin="0,0,0,10" Padding="0" BorderThickness="0"
+                                      Background="Transparent" HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch">
+                                <Expander.Header>
+                                    <Grid ColumnDefinitions="30,*" Margin="0,8,0,8">
+                                        <TextBlock Grid.Column="0" Text="04" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Gold}" VerticalAlignment="Top"
+                                                   Margin="0,2,0,0" />
+                                        <TextBlock Grid.Column="1" Text="Нужно ли переименовывать файлы вручную?" Classes="t13ExtraBold"
+                                                   TextWrapping="Wrap" />
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock Text="Нет. Имена вида 001-00.jpg программа присваивает при экспорте: номер книги и номер страницы. Исходные имена могут быть любыми — на сборку они не влияют." Classes="t12Half" Margin="30,0,0,10"
+                                           TextWrapping="Wrap" LineHeight="20"
+                                           Foreground="{DynamicResource Slate500}" />
+                            </Expander>
+                            <Expander Margin="0,0,0,10" Padding="0" BorderThickness="0"
+                                      Background="Transparent" HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch">
+                                <Expander.Header>
+                                    <Grid ColumnDefinitions="30,*" Margin="0,8,0,8">
+                                        <TextBlock Grid.Column="0" Text="05" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Gold}" VerticalAlignment="Top"
+                                                   Margin="0,2,0,0" />
+                                        <TextBlock Grid.Column="1" Text="Можно ли загрузить книгу с другим соотношением сторон?" Classes="t13ExtraBold"
+                                                   TextWrapping="Wrap" />
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock Text="Небольшое отклонение допускается — до ±59 px. Если разница больше, обрежьте кадр под пропорции макета и замените его в слоте. Иначе сайт не примет файл." Classes="t12Half" Margin="30,0,0,10"
+                                           TextWrapping="Wrap" LineHeight="20"
+                                           Foreground="{DynamicResource Slate500}" />
+                            </Expander>
+                            <Expander Margin="0,0,0,10" Padding="0" BorderThickness="0"
+                                      Background="Transparent" HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch">
+                                <Expander.Header>
+                                    <Grid ColumnDefinitions="30,*" Margin="0,8,0,8">
+                                        <TextBlock Grid.Column="0" Text="06" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Gold}" VerticalAlignment="Top"
+                                                   Margin="0,2,0,0" />
+                                        <TextBlock Grid.Column="1" Text="Что делать, если загрузка на сайт прервалась?" Classes="t13ExtraBold"
+                                                   TextWrapping="Wrap" />
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock Text="Откройте загрузку заново: уже отправленные книги отмечены, повторять их не нужно. Программа не отправляет один и тот же файл дважды." Classes="t12Half" Margin="30,0,0,10"
+                                           TextWrapping="Wrap" LineHeight="20"
+                                           Foreground="{DynamicResource Slate500}" />
+                            </Expander>
+                            <Expander Margin="0,0,0,10" Padding="0" BorderThickness="0"
+                                      Background="Transparent" HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch">
+                                <Expander.Header>
+                                    <Grid ColumnDefinitions="30,*" Margin="0,8,0,8">
+                                        <TextBlock Grid.Column="0" Text="07" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Gold}" VerticalAlignment="Top"
+                                                   Margin="0,2,0,0" />
+                                        <TextBlock Grid.Column="1" Text="Где взять номер проекта для поддержки?" Classes="t13ExtraBold"
+                                                   TextWrapping="Wrap" />
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock Text="Он виден в верхней панели открытого проекта и в окне успешной загрузки, например 536691. С номером специалист сразу найдёт заказ и не будет уточнять детали." Classes="t12Half" Margin="30,0,0,10"
+                                           TextWrapping="Wrap" LineHeight="20"
+                                           Foreground="{DynamicResource Slate500}" />
+                            </Expander></StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ============================ 07 клавиши ====================== -->
+                    <Border Name="Chapter7" Classes="card" CornerRadius="18" Padding="26,24">
+                        <StackPanel>
+                            <TextBlock Text="ГЛАВА 07" Classes="t11ExtraBold"
+                                       Foreground="{DynamicResource Gold}" />
+                            <TextBlock Text="Горячие клавиши" Classes="t25ExtraBold" Margin="0,8,0,0" />
+                            <TextBlock Text="" Classes="t12Half" Margin="0,6,0,0"
+                                       Foreground="{DynamicResource Slate400}" />
+                            <Border CornerRadius="14" Padding="16,14" Margin="0,14,0,0"
+                                    Background="{DynamicResource SurfaceMuted}"
+                                    BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1">
+                                <StackPanel>                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                                    <TextBlock Grid.Column="0" Text="Экспорт книг" Classes="t12Half" />
+                                    <Border Grid.Column="1" CornerRadius="7" Padding="9,4"
+                                            Background="{DynamicResource SurfaceMuted}"
+                                            BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1">
+                                        <TextBlock Text="Ctrl E" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Slate600}" />
+                                    </Border>
+                                </Grid>
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                                    <TextBlock Grid.Column="0" Text="Сохранить проект" Classes="t12Half" />
+                                    <Border Grid.Column="1" CornerRadius="7" Padding="9,4"
+                                            Background="{DynamicResource SurfaceMuted}"
+                                            BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1">
+                                        <TextBlock Text="Ctrl S" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Slate600}" />
+                                    </Border>
+                                </Grid>
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                                    <TextBlock Grid.Column="0" Text="Загрузка на сайт" Classes="t12Half" />
+                                    <Border Grid.Column="1" CornerRadius="7" Padding="9,4"
+                                            Background="{DynamicResource SurfaceMuted}"
+                                            BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1">
+                                        <TextBlock Text="Ctrl U" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Slate600}" />
+                                    </Border>
+                                </Grid>
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,0">
+                                    <TextBlock Grid.Column="0" Text="Справка" Classes="t12Half" />
+                                    <Border Grid.Column="1" CornerRadius="7" Padding="9,4"
+                                            Background="{DynamicResource SurfaceMuted}"
+                                            BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1">
+                                        <TextBlock Text="F1" Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Slate600}" />
+                                    </Border>
+                                </Grid></StackPanel>
+                            </Border>
+
+                            <TextBlock Text="Не нашли свой случай?" Classes="t15ExtraBold" Margin="0,18,0,0" />
+                            <TextBlock Classes="t12Half" Margin="0,6,0,0" TextWrapping="Wrap"
+                                       LineHeight="20" Foreground="{DynamicResource Slate500}"
+                                       Text="Поддержка работает ежедневно с 9:00 до 21:00. Напишите, что происходит, и приложите снимок экрана — разберём конкретный проект." />
+
+                            <!-- The button waits for the support screen: it has to lead somewhere. -->
+                            <Button Classes="primary" Margin="0,12,0,0" HorizontalAlignment="Left"
+                                    IsVisible="False">
+                                <TextBlock Text="Написать в поддержку" />
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
                 </StackPanel>
             </ScrollViewer>
         </Grid>

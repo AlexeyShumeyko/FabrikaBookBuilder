@@ -7,7 +7,13 @@
 
 param(
     [string]$Out = 'doc\shots\help.png',
-    [int]$TimeoutSeconds = 40
+    [int]$TimeoutSeconds = 40,
+    # A section of the spine to click before the picture, e.g. 'Клавиши': the chapters below the
+    # fold are only visible after the page has scrolled to them.
+    [string]$Section = '',
+    # The whole screen, window frame and desktop included: a picture of the window alone cannot
+    # tell a layout mistake from a rectangle that is off by a margin.
+    [switch]$FullScreen
 )
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -21,6 +27,7 @@ $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 
 Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
 Add-Type @"
@@ -28,6 +35,10 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 public class WinHelp {
+    // The screen copy and the rectangle must be in the same unit. At 125 % Windows hides the
+    // difference unless the process says it knows about it, and the picture is shifted by a
+    // margin that looks like a layout bug.
+    [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
     private delegate bool EnumProc(IntPtr h, IntPtr l);
@@ -57,6 +68,8 @@ public class WinHelp {
     }
 }
 "@
+
+[WinHelp]::SetProcessDPIAware() | Out-Null
 
 $exe = Get-AppExe
 if (-not (Test-Path $exe)) { throw "no build at $exe" }
@@ -111,6 +124,9 @@ try {
     # point already proves every key resolved.
     $dlgEl = [System.Windows.Automation.AutomationElement]::FromHandle($dialog)
     $r = $dlgEl.Current.BoundingRectangle
+    if (-not $FullScreen -and $r.Width -lt 600) {
+        Write-Host 'NOTE: the window crop is unreliable on a scaled display; use -FullScreen.'
+    }
     Write-Host ("dialog: {0}x{1} at {2},{3}" -f [int]$r.Width, [int]$r.Height, [int]$r.X, [int]$r.Y)
 
     $pathText = ''
@@ -136,6 +152,20 @@ try {
     }
     Write-Host ("journal shown in the dialog: {0}" -f $(if ($pathText) { $pathText } else { 'NOT FOUND' }))
     if (-not $pathText) { throw 'the dialog opened but does not show the journal path' }
+
+    if ($Section) {
+        $buttons = $dlgEl.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+            (New-Object System.Windows.Automation.PropertyCondition(
+                [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+                [System.Windows.Automation.ControlType]::Button)))
+        $hit = $null
+        foreach ($b in $buttons) { if ($b.Current.Name -like "*$Section*") { $hit = $b; break } }
+        if ($null -eq $hit) { throw "the spine has no section '$Section'" }
+        $hit.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+        Start-Sleep -Milliseconds 700
+    }
+
+    if ($FullScreen) { $r = New-Object System.Windows.Rect(0, 0, [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width, [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height) }
 
     $bmp = New-Object System.Drawing.Bitmap([int]$r.Width, [int]$r.Height)
     $g = [System.Drawing.Graphics]::FromImage($bmp)

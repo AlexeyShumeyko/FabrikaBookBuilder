@@ -1,3 +1,4 @@
+using System;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -25,10 +26,21 @@ public class HelpWindow : Window
     public HelpWindow()
     {
         Title = "Руководство";
-        Width = 1060;
-        Height = 800;
-        MinWidth = 860;
-        MinHeight = 560;
+        // Sized against the screen, not in absolute units: the same 1060 is a comfortable page at
+        // 100 % and a window wider than the screen at 150 %, where it opened full-bleed.
+        if (Screens.Primary is { } screen)
+        {
+            Width = Math.Clamp(screen.WorkingArea.Width / screen.Scaling * 0.72, 720, 960);
+            Height = Math.Clamp(screen.WorkingArea.Height / screen.Scaling * 0.82, 480, 760);
+        }
+        else
+        {
+            Width = 1060;
+            Height = 800;
+        }
+
+        MinWidth = 760;
+        MinHeight = 480;
         CanResize = true;
         ShowInTaskbar = false;
         // Centred on the screen, not on the window that opened it: the shell is maximised, and a
