@@ -67,11 +67,37 @@ public partial class App : Avalonia.Application
             await Task.Delay(2000);
 
             var feed = services.GetRequiredService<IUpdateFeed>();
+            var journal = services.GetRequiredService<IJournal>();
+
             var update = await feed.CheckForUpdatesAsync();
-            if (!update.IsSuccess || !update.Value) return;
+            if (!update.IsSuccess)
+            {
+                journal.Write(
+                    JournalLevel.Warning,
+                    "update",
+                    $"Проверка обновлений не удалась: {update.Error}");
+                return;
+            }
 
             var latest = await feed.GetLatestVersionAsync();
-            if (string.IsNullOrEmpty(latest)) return;
+            if (!update.Value || string.IsNullOrEmpty(latest))
+            {
+                journal.Write(
+                    JournalLevel.Information,
+                    "update",
+                    $"Обновлений нет, установлена {feed.GetCurrentVersion()}");
+                return;
+            }
+
+            // Both answers are written down, and not only the failures. "The update did not
+            // come" is a support question, and this is the line that answers it: either there
+            // was nothing newer, or here is the version that was offered. Informational lines
+            // reach the file only with FBR_JOURNAL_VERBOSE, so a customer's journal stays two
+            // entries long; verify-startup.ps1 turns that on and insists this line appears.
+            journal.Write(
+                JournalLevel.Information,
+                "update",
+                $"Установлена {feed.GetCurrentVersion()}, доступна {latest}");
 
             var notes = await feed.GetLatestReleaseNotesAsync();
 
@@ -103,8 +129,6 @@ public partial class App : Avalonia.Application
         }
     }
 
-    private ServiceProvider? _services;
-
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -122,19 +146,23 @@ public partial class App : Avalonia.Application
                 return;
             }
 
-            var services = new ServiceCollection();
-            ConfigureServices(services);
-            _services = services.BuildServiceProvider();
+            var collection = new ServiceCollection();
+            ConfigureServices(collection);
 
-            FilePathToBitmapConverter.Attach(_services);
+            // A local, not a field. The update check near the end of this method is handed
+            // this object, and a field that is filled in after the method that reads it is
+            // exactly how that check came to be handed a null.
+            var provider = collection.BuildServiceProvider();
+
+            FilePathToBitmapConverter.Attach(provider);
             PageToBitmapConverter.Attach(
-                _services.GetRequiredService<AvaloniaImageCache>(),
-                _services.GetRequiredService<IJournal>());
+                provider.GetRequiredService<AvaloniaImageCache>(),
+                provider.GetRequiredService<IJournal>());
 
-            var navigator = _services.GetRequiredService<AvaloniaNavigator>();
+            var navigator = provider.GetRequiredService<AvaloniaNavigator>();
             var window = new MainWindow(
-                _services.GetRequiredService<ShellHeaderViewModel>(),
-                _services.GetRequiredService<SiteLoginViewModel>());
+                provider.GetRequiredService<ShellHeaderViewModel>(),
+                provider.GetRequiredService<SiteLoginViewModel>());
 
             // The screen to open is decided before the window exists, which is what makes it
             // reliable. Done from a command it would be an asynchronous call whose
@@ -150,7 +178,7 @@ public partial class App : Avalonia.Application
                 if (open.Equals("start", StringComparison.OrdinalIgnoreCase))
                     navigator.CurrentMode = AppMode.StartScreen;
                 else
-                    OpenNewest(_services, navigator, open);
+                    OpenNewest(provider, navigator, open);
             }
 
             // The navigator drives the window: it is the thing that knows which screen a mode
@@ -181,6 +209,13 @@ public partial class App : Avalonia.Application
 
             desktop.MainWindow = window;
 
+            // Started here, where the container is an object that exists, rather than from
+            // ConfigureServices, which runs before the container has been built and passed on
+            // the field that had not been filled in yet. The check then threw two seconds into
+            // every launch, inside its own catch block - so nothing was shown, nothing was
+            // written, and two releases went out without one client being offered an update.
+            _ = CheckForUpdatesLaterAsync(provider);
+
             // Only useful while FBR_PERF_TRACE=1; harmless otherwise. Installed here rather
             // than in the navigator because the walk needs the window the shell has just
             // chosen, and that is this line.
@@ -189,7 +224,7 @@ public partial class App : Avalonia.Application
             // Disposal hangs off the lifetime's own shutdown event. There is no OnExit to
             // override here: the classic desktop lifetime has no such callback with an event
             // argument - the names look obvious and none of them exist.
-            desktop.ShutdownRequested += (_, _) => _services?.Dispose();
+            desktop.ShutdownRequested += (_, _) => provider.Dispose();
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -262,11 +297,6 @@ public partial class App : Avalonia.Application
         // The projects list is not a singleton: it is built per visit, because it exists to
         // show the projects as they are at the moment it is opened. The navigator creates it.
         services.AddTransient<ProjectListViewModel>();
-
-        // The update check starts once the window is up, not before it: the person who
-        // started the program should see the program first, and a window that appears two
-        // seconds late is a window that looks broken on a slow connection.
-        _ = CheckForUpdatesLaterAsync(_services);
     }
 
     /// <summary>
