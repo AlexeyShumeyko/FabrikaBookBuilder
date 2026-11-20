@@ -123,6 +123,12 @@
         <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
     </Style>
 
+    <Style Selector="TextBlock.t14ExtraBold">
+        <Setter Property="FontSize" Value="14.5" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+
     <Style Selector="TextBlock.t15ExtraBold">
         <Setter Property="FontSize" Value="15" />
         <Setter Property="FontWeight" Value="ExtraBold" />

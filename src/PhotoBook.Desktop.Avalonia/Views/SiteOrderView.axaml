@@ -22,33 +22,33 @@
     -->
     <Grid RowDefinitions="Auto,*" MaxWidth="1600" Margin="32,24" HorizontalAlignment="Stretch">
         <!-- ============================ control panel ========================== -->
-        <Border Grid.Row="0" Classes="card" Padding="20"
+        <Border Grid.Row="0" Classes="card" Padding="24,22,24,20"
                 HorizontalAlignment="Stretch" VerticalAlignment="Top">
-            <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="58" VerticalAlignment="Center">
+            <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="52" VerticalAlignment="Center">
 
                 <!-- A mark of the page's own, as every other screen has: the same 48 tile and 12
                      radius, in the product's colour, with the upload arrow the send window uses.
                      The panel used to open with the project's name and nothing else, which read
                      as a heading for the wrong page. -->
-                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="12"
+                <Border Grid.Column="0" Width="52" Height="52" CornerRadius="15"
                         VerticalAlignment="Center"
-                        Background="{DynamicResource Brand50}"
-                        BorderBrush="{DynamicResource Brand100}" BorderThickness="1">
-                    <Path Width="20" Height="20" Stretch="Uniform"
-                          Stroke="{DynamicResource Brand600}" StrokeThickness="1.8"
+                        Background="{DynamicResource AvatarFill}"
+                        BorderBrush="{DynamicResource AvatarRing}" BorderThickness="1">
+                    <Path Width="23" Height="23" Stretch="Uniform"
+                          Stroke="{DynamicResource AvatarInk}" StrokeThickness="1.8"
                           StrokeLineCap="Round" StrokeJoin="Round"
                           HorizontalAlignment="Center" VerticalAlignment="Center"
                           Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
                 </Border>
 
                 <StackPanel Grid.Column="1" Margin="16,0,24,0" VerticalAlignment="Center" Spacing="3">
-                    <TextBlock Text="Загрузка на сайт" Classes="t20Bold" />
+                    <TextBlock Text="Загрузка на сайт" Classes="t25ExtraBold" />
 
                     <!-- Nothing else is said here: every sentence about a group - why it cannot
                          go, or that its books stay behind - belongs to that group's own card. -->
                 </StackPanel>
 
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10"
                             VerticalAlignment="Center">
                     <Button Classes="outline" Padding="12,10"
                             AutomationProperties.Name="Вернуться к проекту"
@@ -73,11 +73,14 @@
              the unique-folder mode does it: nothing is lost, and the scroll no longer lies over
              the parameter card's own edge. -->
         <ScrollViewer Grid.Row="1" Classes="contentScroll" VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled" Margin="0,24,-20,0">
+                      HorizontalScrollBarVisibility="Disabled" Margin="0,18,-20,0">
             <Border Padding="0,0,20,0">
-                <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+                <StackPanel Spacing="14" HorizontalAlignment="Stretch">
 
-                    <Border Classes="card" Padding="20,16" IsVisible="{Binding HasMessage}">
+                    <Border Classes="card" CornerRadius="14" Padding="16,12"
+                            Background="{DynamicResource Amber50}"
+                            BorderBrush="{DynamicResource Amber100}" BorderThickness="1"
+                            IsVisible="{Binding HasMessage}">
                         <TextBlock Text="{Binding Message}" Classes="t12"
                                    Foreground="{DynamicResource Slate600}" TextWrapping="Wrap" />
                     </Border>
@@ -93,16 +96,29 @@
                     <ItemsControl ItemsSource="{Binding Groups}" HorizontalAlignment="Stretch">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid ColumnDefinitions="7*,24,3*" VerticalAlignment="Top"
-                                      Margin="0,0,0,16">
+                                <Grid ColumnDefinitions="*,18,352" VerticalAlignment="Top"
+                                      Margin="0,0,0,14">
 
                                     <!-- the group of books -->
                                     <Border Grid.Column="0" Name="BooksCard" Classes="card" Padding="0"
                                             HorizontalAlignment="Stretch">
                                         <Grid RowDefinitions="Auto,Auto,*,Auto">
-                                            <StackPanel Grid.Row="0" Spacing="3" Margin="20,16,20,12">
-                                                <StackPanel Orientation="Horizontal" Spacing="10">
-                                                    <TextBlock Text="{Binding Title}" Classes="t14SemiBold" />
+                                            <StackPanel Grid.Row="0" Spacing="3" Margin="18,15,18,14">
+                                                <StackPanel Orientation="Horizontal" Spacing="11">
+                                                    <!-- The group's number in its own square, as the mockup
+                                                         marks a card's place in the order. -->
+                                                    <Border Width="30" Height="30" CornerRadius="9"
+                                                            VerticalAlignment="Center"
+                                                            Background="{DynamicResource Slate100}"
+                                                            BorderBrush="{DynamicResource Slate200}"
+                                                            BorderThickness="1">
+                                                        <TextBlock Text="{Binding Number}" Classes="t11ExtraBold"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"
+                                                                   Foreground="{DynamicResource Slate500}" />
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Title}" Classes="t14ExtraBold"
+                                                               VerticalAlignment="Center" />
                                                     <TextBlock Text="{Binding SummaryText}" Classes="t11"
                                                                Foreground="{DynamicResource Slate500}"
                                                                VerticalAlignment="Center" />
@@ -113,8 +129,8 @@
                                                          itself in the line below. -->
                                                     <Border Background="{DynamicResource Emerald50}"
                                                             BorderBrush="{DynamicResource Emerald100}"
-                                                            BorderThickness="1" CornerRadius="8"
-                                                            Padding="8,3" VerticalAlignment="Center"
+                                                            BorderThickness="1" CornerRadius="999"
+                                                            Padding="9,3" VerticalAlignment="Center"
                                                             IsVisible="{Binding HasStatus}">
                                                         <TextBlock Text="{Binding StatusText}" Classes="t11"
                                                                    Foreground="{DynamicResource Emerald700}" />
@@ -299,7 +315,7 @@
                                         neither is given the other's height: the row is as tall as the
                                         taller card and both fill it.
                                     -->
-                                    <Border Grid.Column="2" Classes="card" Padding="20,16"
+                                    <Border Grid.Column="2" Classes="card" Padding="20,18"
                                             HorizontalAlignment="Stretch">
                                         <Grid RowDefinitions="Auto,Auto,*,Auto">
                                             <TextBlock Grid.Row="0" Text="Формат и параметры" Classes="t14SemiBold" />
