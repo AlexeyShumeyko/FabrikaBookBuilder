@@ -45,15 +45,15 @@
             <Color x:Key="Indigo600">#A87400</Color>
 
             <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ slate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-            <Color x:Key="Slate50">#F7F1E6</Color>
+            <Color x:Key="Slate50">#0E4A3A1C</Color>
             <Color x:Key="Slate100">#F1E9D8</Color>
-            <Color x:Key="Slate200">#E2D7C1</Color>
-            <Color x:Key="Slate300">#CFC1A6</Color>
-            <Color x:Key="Slate400">#A7977A</Color>
+            <Color x:Key="Slate200">#214A3A1C</Color>
+            <Color x:Key="Slate300">#3B4A3A1C</Color>
+            <Color x:Key="Slate400">#8A7C63</Color>
             <Color x:Key="Slate500">#776A53</Color>
-            <Color x:Key="Slate600">#5E5240</Color>
-            <Color x:Key="Slate700">#42392A</Color>
-            <Color x:Key="Slate800">#352C1E</Color>
+            <Color x:Key="Slate600">#42392A</Color>
+            <Color x:Key="Slate700">#2B2417</Color>
+            <Color x:Key="Slate800">#2B2417</Color>
             <Color x:Key="Slate900">#2B2417</Color>
 
             <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ status ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -112,6 +112,19 @@
             <!-- The ink that sits on a filled accent button. Never white: gold takes ink. -->
             <Color x:Key="OnAccent">#2A1E00</Color>
 
+            <!-- The gold a filled control is filled with, and the line that defines it.
+                 The prototype keeps the same gold in both themes, and so does this. -->
+            <Color x:Key="Gold">#F2B41C</Color>
+            <Color x:Key="GoldDeep">#CF9105</Color>
+            <!-- A filled gold control lifts on hover and settles on press, the way the
+                 prototype's does. Darkening it would read as a door instead of a lamp. -->
+            <Color x:Key="GoldHover">#F8BF2B</Color>
+            <Color x:Key="GoldPressed">#E7A80F</Color>
+
+            <!-- The line a card takes under the pointer. Gold, not a darker hairline: it is
+                 the card answering, and the answer is the product's colour. -->
+            <Color x:Key="BorderAccentHover">#59B07B00</Color>
+
             <!-- The mat behind a photograph, and the tray a group of tabs sits in. -->
             <Color x:Key="MatSurface">#E2D7C1</Color>
             <Color x:Key="TabTray">#0F4A3A1C</Color>
@@ -131,6 +144,29 @@
                 is a crash at startup, not a wrong shade.
             -->
             <Color x:Key="Slate200At70">#B3E2D7C1</Color>
+
+            <!-- The page, as the prototype draws it: a warm wash from the top down, not one
+                 flat colour. A flat fill reads as a screenshot of the design, not the design. -->
+            <LinearGradientBrush x:Key="PageBackdrop" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#F7F1E6" Offset="0" />
+                <GradientStop Color="#F3EBDE" Offset="0.6" />
+                <GradientStop Color="#EFE6D6" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- The glow behind the top of the page, one ellipse wide and mostly above it. -->
+            <RadialGradientBrush x:Key="PageGlow" Center="0.5,-0.18" GradientOrigin="0.5,-0.18"
+                                 RadiusX="0.55" RadiusY="1.1">
+                <GradientStop Color="#73FFE8AA" Offset="0" />
+                <GradientStop Color="#00FFE8AA" Offset="0.64" />
+                <GradientStop Color="#00FFE8AA" Offset="1" />
+            </RadialGradientBrush>
+
+            <!-- A card is lighter at its top edge than at its foot, by two percent. -->
+            <LinearGradientBrush x:Key="CardFill" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#FFFDF7" Offset="0" />
+                <GradientStop Color="#FAF6EA" Offset="0.42" />
+                <GradientStop Color="#FAF6EA" Offset="1" />
+            </LinearGradientBrush>
 
             <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ shadows ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
             <!--
@@ -169,15 +205,15 @@
                 page the lightest surface is the card and the ink is nearly white. Used as
                 they were written, they keep meaning the same thing.
             -->
-            <Color x:Key="Slate50">#241E16</Color>
+            <Color x:Key="Slate50">#0FFFF2D6</Color>
             <Color x:Key="Slate100">#2B2318</Color>
-            <Color x:Key="Slate200">#332B1F</Color>
-            <Color x:Key="Slate300">#453B2C</Color>
-            <Color x:Key="Slate400">#6E6350</Color>
+            <Color x:Key="Slate200">#14FFF2D6</Color>
+            <Color x:Key="Slate300">#26FFF2D6</Color>
+            <Color x:Key="Slate400">#8D8372</Color>
             <Color x:Key="Slate500">#8D8372</Color>
-            <Color x:Key="Slate600">#AAA08F</Color>
-            <Color x:Key="Slate700">#C9BFAC</Color>
-            <Color x:Key="Slate800">#E6DDCA</Color>
+            <Color x:Key="Slate600">#E6DDCA</Color>
+            <Color x:Key="Slate700">#F8F3E7</Color>
+            <Color x:Key="Slate800">#F8F3E7</Color>
             <Color x:Key="Slate900">#F8F3E7</Color>
 
             <!-- Status keeps its hues; only the tints and the ink turn for the dark page. -->
@@ -228,6 +264,12 @@
             <Color x:Key="AccentStrong">#E09A00</Color>
             <Color x:Key="OnAccent">#241800</Color>
 
+            <Color x:Key="Gold">#F2B41C</Color>
+            <Color x:Key="GoldDeep">#CF9105</Color>
+            <Color x:Key="GoldHover">#F8BF2B</Color>
+            <Color x:Key="GoldPressed">#E7A80F</Color>
+            <Color x:Key="BorderAccentHover">#3DFFCD2D</Color>
+
             <Color x:Key="MatSurface">#15120E</Color>
             <Color x:Key="TabTray">#42000000</Color>
 
@@ -238,6 +280,27 @@
             <Color x:Key="SunkenFaint">#14000000</Color>
 
             <Color x:Key="Slate200At70">#14FFF2D6</Color>
+
+            <!-- No light wash here: the dark page is the same graphite with the glow at its
+                 top left, and the card is lifted off it by a slight lightening. -->
+            <LinearGradientBrush x:Key="PageBackdrop" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#17130E" Offset="0" />
+                <GradientStop Color="#14110D" Offset="0.7" />
+                <GradientStop Color="#14110D" Offset="1" />
+            </LinearGradientBrush>
+
+            <RadialGradientBrush x:Key="PageGlow" Center="0.06,-0.14" GradientOrigin="0.06,-0.14"
+                                 RadiusX="0.5" RadiusY="1.05">
+                <GradientStop Color="#1FFFC428" Offset="0" />
+                <GradientStop Color="#00FFC428" Offset="0.62" />
+                <GradientStop Color="#00FFC428" Offset="1" />
+            </RadialGradientBrush>
+
+            <LinearGradientBrush x:Key="CardFill" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#252019" Offset="0" />
+                <GradientStop Color="#1F1A14" Offset="0.38" />
+                <GradientStop Color="#1F1A14" Offset="1" />
+            </LinearGradientBrush>
 
             <BoxShadows x:Key="ShadowSm">0 1 3 0 #33000000</BoxShadows>
             <BoxShadows x:Key="ShadowSubtle">0 2 8 0 #3D000000</BoxShadows>
@@ -254,6 +317,6 @@
     <CornerRadius x:Key="RadiusMd">6</CornerRadius>
     <CornerRadius x:Key="RadiusLg">8</CornerRadius>
     <CornerRadius x:Key="RadiusXl">12</CornerRadius>
-    <CornerRadius x:Key="Radius2Xl">16</CornerRadius>
+    <CornerRadius x:Key="Radius2Xl">18</CornerRadius>
 
 </ResourceDictionary>

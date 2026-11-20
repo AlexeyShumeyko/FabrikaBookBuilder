@@ -29,8 +29,9 @@
     </Style>
 
     <Style Selector="Button.primary">
-        <Setter Property="Background" Value="{DynamicResource Brand600}" />
-        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="{DynamicResource Gold}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GoldDeep}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="12" />
         <Setter Property="Padding" Value="14,8" />
         <Setter Property="FontSize" Value="12" />
@@ -40,11 +41,11 @@
     </Style>
 
     <Style Selector="Button.primary:pointerover">
-        <Setter Property="Background" Value="{DynamicResource Brand700}" />
+        <Setter Property="Background" Value="{DynamicResource GoldHover}" />
     </Style>
 
     <Style Selector="Button.primary:pressed">
-        <Setter Property="Background" Value="{DynamicResource Brand700}" />
+        <Setter Property="Background" Value="{DynamicResource GoldPressed}" />
     </Style>
     <!--
         The one action on a screen. Deliberately not the loudest thing in the window: the
@@ -57,8 +58,9 @@
         The mark is 12 now and the word is the same size, which is what a mark is for.
     -->
     <Style Selector="Button.createProject">
-        <Setter Property="Background" Value="{DynamicResource Brand600}" />
-        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="{DynamicResource Gold}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GoldDeep}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="10" />
         <Setter Property="Padding" Value="20,0" />
         <Setter Property="Height" Value="40" />
@@ -77,7 +79,10 @@
 
         <Setter Property="Template">
             <ControlTemplate>
-                <Border Background="{TemplateBinding Background}" CornerRadius="11">
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="11">
                     <Border.Transitions>
                         <Transitions>
                             <BrushTransition Property="Background" Duration="0:0:0.14" />
@@ -109,11 +114,12 @@
     </Style>
 
     <Style Selector="Button.createProject:pointerover">
-        <Setter Property="Background" Value="{DynamicResource Brand500}" />
+        <Setter Property="Background" Value="{DynamicResource GoldHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GoldDeep}" />
     </Style>
 
     <Style Selector="Button.createProject:pressed">
-        <Setter Property="Background" Value="{DynamicResource Brand700}" />
+        <Setter Property="Background" Value="{DynamicResource GoldPressed}" />
     </Style>
 
     <!--

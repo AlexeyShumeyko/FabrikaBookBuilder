@@ -47,9 +47,13 @@
         The layer sits over the whole window, header included, so the page behind is plainly
         the same page and not a different one.
     -->
-    <Grid Background="{DynamicResource AppBackground}">
+    <Grid Background="{DynamicResource PageBackdrop}">
 
-    <DockPanel LastChildFill="True" Background="{DynamicResource AppBackground}">
+    <!-- The warm glow the prototype lays over the top of the page. It is behind everything
+         and takes no input: a background is not a control. -->
+    <Border Background="{DynamicResource PageGlow}" IsHitTestVisible="False" />
+
+    <DockPanel LastChildFill="True">
 
     <Border DockPanel.Dock="Top" Padding="32,10"
             Background="{DynamicResource Surface}"
@@ -91,7 +95,7 @@
                      is bound from the view model instead. Chosen is a white pill standing
                      above the track; the rest are transparent. -->
                 <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Background="{DynamicResource Slate200At70}" CornerRadius="11" Padding="3">
+                        Background="{DynamicResource TabTray}" CornerRadius="11" Padding="3">
                     <StackPanel Orientation="Horizontal" Spacing="2">
                         <ToggleButton Classes="tab" AutomationProperties.Name="Мои проекты"
                                       Background="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"

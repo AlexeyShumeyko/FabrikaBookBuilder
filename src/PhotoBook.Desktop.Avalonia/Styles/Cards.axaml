@@ -7,8 +7,8 @@
         Card: padding comes from the caller because two screens pad theirs differently (24 for
         the section header, 20 for a project card) and a style that carries both has to be
         overridden as often as it is used. What the style does own is the part that must be
-        identical everywhere: white, a one-pixel slate-200 at 80%, radius 16, the subtle
-        shadow.
+        identical everywhere: the card surface with its light top edge, a one-pixel line at
+        thirteen percent of the ink, radius 18, the subtle shadow.
 
         The shadow is a BoxShadow rather than a DropShadowEffect. WPF painted its drop shadow
         inside the element's own bounds, which is why every dialog needed a transparent margin
@@ -17,10 +17,10 @@
     -->
 
     <Style Selector="Border.card">
-        <Setter Property="Background" Value="{DynamicResource Surface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Slate200At70}" />
+        <Setter Property="Background" Value="{DynamicResource CardFill}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius2Xl}" />
         <Setter Property="BoxShadow" Value="{DynamicResource ShadowSubtle}" />
     </Style>
 
@@ -60,19 +60,22 @@
 
     <Style Selector="Border.card:pointerover">
         <Setter Property="BoxShadow" Value="{DynamicResource ShadowCard}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Slate300}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderAccentHover}" />
     </Style>
 
     <Style Selector="Button.primary">
-        <Setter Property="Background" Value="{DynamicResource Brand600}" />
+        <Setter Property="Background" Value="{DynamicResource Gold}" />
         <Setter Property="Foreground" Value="{DynamicResource OnAccent}" />
-        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GoldDeep}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="12" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Template">
             <ControlTemplate>
                 <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}"
                         Padding="{TemplateBinding Padding}">
                     <!--
@@ -88,8 +91,12 @@
         </Setter>
     </Style>
 
-    <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
-        <Setter Property="Opacity" Value="0.92" />
+    <Style Selector="Button.primary:pointerover">
+        <Setter Property="Background" Value="{DynamicResource GoldHover}" />
+    </Style>
+
+    <Style Selector="Button.primary:pressed">
+        <Setter Property="Background" Value="{DynamicResource GoldPressed}" />
     </Style>
 
     <!--
@@ -99,6 +106,7 @@
     -->
     <Style Selector="Button.primary:disabled">
         <Setter Property="Background" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
         <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
     </Style>
 

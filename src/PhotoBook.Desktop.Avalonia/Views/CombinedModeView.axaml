@@ -517,7 +517,7 @@
                             <StackPanel Margin="0,20,0,0">
                                 <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,14">
                                     <Border Grid.Column="0" Width="24" Height="24" CornerRadius="8"
-                                            Background="{DynamicResource Brand600}"
+                                            Background="{DynamicResource Gold}"
                                             VerticalAlignment="Top">
                                         <TextBlock Text="1" FontSize="12" FontWeight="Bold"
                                                    Foreground="{DynamicResource OnAccent}"
@@ -626,7 +626,7 @@
                                         <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
                                             <StackPanel Grid.Column="0" Orientation="Horizontal"
                                                         Spacing="10" VerticalAlignment="Center">
-                                                <Border Background="{DynamicResource Brand600}"
+                                                <Border Background="{DynamicResource Gold}"
                                                         CornerRadius="8" Padding="10,4"
                                                         VerticalAlignment="Center">
                                                     <TextBlock FontSize="12" FontWeight="Bold"
