@@ -46,7 +46,7 @@
                 <Run Text="потом соберём" Foreground="{DynamicResource BrandNameTail}" />
             </TextBlock>
 
-            <TextBlock Classes="t14" Margin="0,12,0,0" MaxWidth="860" TextWrapping="Wrap" LineHeight="24"
+            <TextBlock Classes="t14" Margin="0,12,0,0" MaxWidth="860" HorizontalAlignment="Left" TextWrapping="Wrap" LineHeight="24"
                        Foreground="{DynamicResource Slate500}"
                        Text="Программа не просит запоминать кнопки. Она держит структуру книги целиком: раскладывает кадры по разворотам, выбирает обложку, проверяет пропорции и готовит файлы, которые принимает сайт фабрики. Здесь — как всё это устроено и в каком порядке идти." />
 
@@ -170,15 +170,6 @@
 
                     <Rectangle Height="1" Margin="8,10" Fill="{DynamicResource BorderSubtle}" />
 
-                    <Button Classes="spine" IsVisible="False" HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Stretch" Padding="8,7"
-                            AutomationProperties.Name="Поддержка">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="&#xE8BD;" FontFamily="Segoe MDL2 Assets" FontSize="13"
-                                       Foreground="{DynamicResource Gold}" VerticalAlignment="Center" />
-                            <TextBlock Text="Поддержка" Classes="t12Semi" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
                 </StackPanel>
             </Border>
 
@@ -1167,9 +1158,9 @@
                                        LineHeight="20" Foreground="{DynamicResource Slate500}"
                                        Text="Поддержка работает ежедневно с 9:00 до 21:00. Напишите, что происходит, и приложите снимок экрана — разберём конкретный проект." />
 
-                            <!-- The button waits for the support screen: it has to lead somewhere. -->
                             <Button Classes="primary" Margin="0,12,0,0" HorizontalAlignment="Left"
-                                    IsVisible="False">
+                                    AutomationProperties.Name="Написать в поддержку"
+                                    Click="OnSupportClick">
                                 <TextBlock Text="Написать в поддержку" />
                             </Button>
                         </StackPanel>

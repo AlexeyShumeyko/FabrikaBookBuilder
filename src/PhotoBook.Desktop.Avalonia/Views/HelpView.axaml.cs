@@ -32,6 +32,12 @@ public partial class HelpView : UserControl
         JournalPath.Text = Diagnostics.JournalPath;
     }
 
+    /// <summary>Raised when the last chapter sends the reader to the support page.</summary>
+    public event EventHandler? SupportRequested;
+
+    private void OnSupportClick(object? sender, RoutedEventArgs e)
+        => SupportRequested?.Invoke(this, EventArgs.Empty);
+
     private void OnSpineClick(object? sender, RoutedEventArgs e)
     {
         var number = (sender as Button)?.Tag as string;

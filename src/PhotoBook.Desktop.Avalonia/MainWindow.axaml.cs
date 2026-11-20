@@ -126,6 +126,16 @@ public partial class MainWindow : Window
         => await new HelpWindow().ShowDialog(this);
 
     /// <summary>
+    /// Opens the support page: the hours and the four channels.
+    /// </summary>
+    /// <remarks>
+    /// A window of its own beside the guide, because the two answer different questions and
+    /// somebody looking for an address should not have to read seven chapters to find it.
+    /// </remarks>
+    private async void OnContactsClick(object? sender, RoutedEventArgs e)
+        => await new SupportWindow().ShowDialog(this);
+
+    /// <summary>
     /// Opens the account when somebody is signed in, and the sign-in form when nobody is.
     /// </summary>
     /// <remarks>

@@ -1,0 +1,268 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PhotoBook.Shell.Views.SupportView">
+
+    <!--
+        The support page: the hours on the left, four channels on the right, the way back into
+        the guide at the foot. It answers one question - how to reach a person - and shows the
+        four ways as equal, because they are: one queue on the other side.
+    -->
+    <UserControl.Styles>
+        <!-- A channel is a row of a list, not a button: the default chrome turns four addresses
+             into four grey slabs. -->
+        <Style Selector="Button.channel">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="6,16" />
+        </Style>
+        <Style Selector="Button.channel /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="12" />
+        </Style>
+        <Style Selector="Button.channel:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceMuted}" />
+        </Style>
+        <Style Selector="Button.plain">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+        <Style Selector="Button.plain /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.plain:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.channel:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceRaised}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="*" Margin="28,20,28,18" Background="{DynamicResource PageBackdrop}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,0,6,0">
+
+                <!-- ============================== the hour =========================== -->
+                <StackPanel Margin="0,0,0,26">
+                    <TextBlock Text="ПОДДЕРЖКА" Classes="t11ExtraBold"
+                               Foreground="{DynamicResource Gold}" />
+
+                    <TextBlock Classes="t37ExtraBold" Margin="0,12,0,0" LineHeight="46" TextWrapping="Wrap">
+                        <Run Text="Мы рядом," />
+                        <LineBreak />
+                        <Run Text="пока вы собираете" Foreground="{DynamicResource BrandNameTail}" />
+                    </TextBlock>
+
+                    <TextBlock Classes="t14" Margin="0,14,0,0" MaxWidth="640" HorizontalAlignment="Left" TextWrapping="Wrap"
+                               LineHeight="24" Foreground="{DynamicResource Slate500}"
+                               Text="Вопросы по программе, проектам и заказам. На той стороне — человек, который собирает такие же книги каждый день, поэтому отвечаем по делу, а не по скрипту." />
+
+                    <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" Margin="0,22,0,0" />
+                </StackPanel>
+
+                <Grid ColumnDefinitions="300,56,*">
+
+                    <!-- ============================ working hours ==================== -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="РАБОТАЕМ ЕЖЕДНЕВНО" Classes="t11ExtraBold"
+                                   Foreground="{DynamicResource Slate400}" />
+                        <TextBlock Text="9:00 — 21:00" Classes="t44ExtraBold" Margin="0,12,0,0" />
+
+                        <StackPanel Margin="0,20,0,0">
+                            <Rectangle Height="2" RadiusX="2">
+                                <Rectangle.Fill>
+                                    <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                                        <GradientStop Offset="0" Color="{DynamicResource Brand200}" />
+                                        <GradientStop Offset="1" Color="{DynamicResource Gold}" />
+                                    </LinearGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <Grid ColumnDefinitions="*,*,*,*,*" Margin="0,8,0,0">
+                                <TextBlock Grid.Column="0" Text="9:00" Classes="t11"
+                                           Foreground="{DynamicResource Slate400}" />
+                                <TextBlock Grid.Column="1" Text="12:00" Classes="t11"
+                                           HorizontalAlignment="Center" Foreground="{DynamicResource Slate400}" />
+                                <TextBlock Grid.Column="2" Text="15:00" Classes="t11"
+                                           HorizontalAlignment="Center" Foreground="{DynamicResource Slate400}" />
+                                <TextBlock Grid.Column="3" Text="18:00" Classes="t11"
+                                           HorizontalAlignment="Center" Foreground="{DynamicResource Slate400}" />
+                                <TextBlock Grid.Column="4" Text="21:00" Classes="t11"
+                                           HorizontalAlignment="Right" Foreground="{DynamicResource Slate400}" />
+                            </Grid>
+                        </StackPanel>
+
+                        <TextBlock Classes="t11Half" Margin="0,18,0,0" TextWrapping="Wrap" LineHeight="19"
+                                   Foreground="{DynamicResource Slate500}"
+                                   Text="Без выходных и праздников. Все каналы в одной очереди — выбирайте тот, где удобнее писать." />
+                    </StackPanel>
+
+                    <!-- ============================== channels ======================== -->
+                    <StackPanel Grid.Column="2">
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                            <TextBlock Grid.Column="0" Text="КАНАЛЫ СВЯЗИ" Classes="t11ExtraBold"
+                                       Foreground="{DynamicResource Slate400}" />
+                            <TextBlock Grid.Column="1" Text="Ответ одинаково быстрый" Classes="t11"
+                                       Foreground="{DynamicResource Slate400}" />
+                        </Grid>
+                        <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" />
+
+                        <Button Classes="channel" Tag="https://t.me/fabrika_support"
+                                AutomationProperties.Name="Telegram @fabrika_support"
+                                Click="OnChannelClick">
+                            <Grid ColumnDefinitions="26,44,*,22">
+                                <TextBlock Grid.Column="0" Margin="0,0,14,0" Text="01" Classes="t11ExtraBold"
+                                           VerticalAlignment="Center" Foreground="{DynamicResource Slate400}" />
+                                <Border Grid.Column="1" Margin="0,0,14,0" Width="44" Height="44" CornerRadius="22"
+                                        Background="{DynamicResource Brand50}"
+                                        BorderBrush="{DynamicResource BorderAccentHover}"
+                                        BorderThickness="1">
+                                    <TextBlock Text="&#xE8BD;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                               Foreground="{DynamicResource Gold}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel Grid.Column="2" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Telegram" Classes="t17ExtraBold" />
+                                    <TextBlock Text="@fabrika_support" Classes="t11Half" Margin="0,3,0,0"
+                                               Foreground="{DynamicResource Slate600}" />
+                                    <TextBlock Classes="t11" Margin="0,4,0,0" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource Slate400}"
+                                               Text="Удобно приложить скриншот или короткое видео с ошибкой." />
+                                </StackPanel>
+                                <TextBlock Grid.Column="3" Text="&#xE72A;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="13" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Slate400}" />
+                            </Grid>
+                        </Button>
+                        <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" />
+
+                        <Button Classes="channel" Tag="mailto:support@fabrika-fotoknigi.com"
+                                AutomationProperties.Name="Почта support@fabrika-fotoknigi.com"
+                                Click="OnChannelClick">
+                            <Grid ColumnDefinitions="26,44,*,22">
+                                <TextBlock Grid.Column="0" Margin="0,0,14,0" Text="02" Classes="t11ExtraBold"
+                                           VerticalAlignment="Center" Foreground="{DynamicResource Slate400}" />
+                                <Border Grid.Column="1" Margin="0,0,14,0" Width="44" Height="44" CornerRadius="22"
+                                        Background="{DynamicResource Brand50}"
+                                        BorderBrush="{DynamicResource BorderAccentHover}"
+                                        BorderThickness="1">
+                                    <TextBlock Text="&#xE715;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                               Foreground="{DynamicResource Gold}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel Grid.Column="2" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Почта" Classes="t17ExtraBold" />
+                                    <TextBlock Text="support@fabrika-fotoknigi.com" Classes="t11Half" Margin="0,3,0,0"
+                                               Foreground="{DynamicResource Slate600}" />
+                                    <TextBlock Classes="t11" Margin="0,4,0,0" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource Slate400}"
+                                               Text="Для заказов, оплаты, документов и больших проектов." />
+                                </StackPanel>
+                                <TextBlock Grid.Column="3" Text="&#xE72A;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="13" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Slate400}" />
+                            </Grid>
+                        </Button>
+                        <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" />
+
+                        <Button Classes="channel" Tag="https://vk.com/fabrika_fotoknigi"
+                                AutomationProperties.Name="ВКонтакте vk.com/fabrika_fotoknigi"
+                                Click="OnChannelClick">
+                            <Grid ColumnDefinitions="26,44,*,22">
+                                <TextBlock Grid.Column="0" Margin="0,0,14,0" Text="03" Classes="t11ExtraBold"
+                                           VerticalAlignment="Center" Foreground="{DynamicResource Slate400}" />
+                                <Border Grid.Column="1" Margin="0,0,14,0" Width="44" Height="44" CornerRadius="22"
+                                        Background="{DynamicResource Brand50}"
+                                        BorderBrush="{DynamicResource BorderAccentHover}"
+                                        BorderThickness="1">
+                                    <TextBlock Text="&#xE774;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                               Foreground="{DynamicResource Gold}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel Grid.Column="2" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <TextBlock Text="ВКонтакте" Classes="t17ExtraBold" />
+                                    <TextBlock Text="vk.com/fabrika_fotoknigi" Classes="t11Half" Margin="0,3,0,0"
+                                               Foreground="{DynamicResource Slate600}" />
+                                    <TextBlock Classes="t11" Margin="0,4,0,0" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource Slate400}"
+                                               Text="Если привычнее переписка в соцсети." />
+                                </StackPanel>
+                                <TextBlock Grid.Column="3" Text="&#xE72A;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="13" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Slate400}" />
+                            </Grid>
+                        </Button>
+                        <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" />
+
+                        <Button Classes="channel" Tag="https://max.ru/fabrika"
+                                AutomationProperties.Name="MAX max.ru/fabrika"
+                                Click="OnChannelClick">
+                            <Grid ColumnDefinitions="26,44,*,22">
+                                <TextBlock Grid.Column="0" Margin="0,0,14,0" Text="04" Classes="t11ExtraBold"
+                                           VerticalAlignment="Center" Foreground="{DynamicResource Slate400}" />
+                                <Border Grid.Column="1" Margin="0,0,14,0" Width="44" Height="44" CornerRadius="22"
+                                        Background="{DynamicResource Brand50}"
+                                        BorderBrush="{DynamicResource BorderAccentHover}"
+                                        BorderThickness="1">
+                                    <TextBlock Text="&#xE8F2;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                               Foreground="{DynamicResource Gold}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel Grid.Column="2" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <TextBlock Text="MAX" Classes="t17ExtraBold" />
+                                    <TextBlock Text="max.ru/fabrika" Classes="t11Half" Margin="0,3,0,0"
+                                               Foreground="{DynamicResource Slate600}" />
+                                    <TextBlock Classes="t11" Margin="0,4,0,0" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource Slate400}"
+                                               Text="Официальный канал в MAX — тот же специалист и та же очередь." />
+                                </StackPanel>
+                                <TextBlock Grid.Column="3" Text="&#xE72A;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="13" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Slate400}" />
+                            </Grid>
+                        </Button>
+                        <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" />
+
+                        <Grid ColumnDefinitions="Auto,*" Margin="0,18,0,0">
+                            <TextBlock Grid.Column="0" Text="&#xE946;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="12" Margin="0,3,0,0"
+                                       Foreground="{DynamicResource Gold}" Opacity="0.75" />
+                            <TextBlock Grid.Column="1" Classes="t11" Margin="8,0,0,0" TextWrapping="Wrap"
+                                       LineHeight="18" Foreground="{DynamicResource Slate400}"
+                                       Text="Быстрых и медленных каналов нет: обращения попадают в общую очередь и обрабатываются одинаково. Ответы обычно приходят очень быстро." />
+                        </Grid>
+
+                        <TextBlock Name="FailureNote" Classes="t11" IsVisible="False" Margin="0,10,0,0"
+                                   TextWrapping="Wrap" LineHeight="18"
+                                   Foreground="{DynamicResource Gold}" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- =========================== the way into the guide ================ -->
+                <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" Margin="0,26,0,0" />
+                <Grid ColumnDefinitions="*,Auto" Margin="0,18,0,0">
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Возможно, ответ уже есть в руководстве" Classes="t13ExtraBold" />
+                        <TextBlock Classes="t11Half" Margin="0,5,0,0" TextWrapping="Wrap" MaxWidth="560" HorizontalAlignment="Left"
+                                   LineHeight="19" Foreground="{DynamicResource Slate500}"
+                                   Text="Режимы, экспорт, проверка формата и работа с проектами разобраны по шагам — со снимками экранов и подсказками." />
+                    </StackPanel>
+
+                    <Button Grid.Column="1" Classes="plain" Padding="0" VerticalAlignment="Center"
+                            AutomationProperties.Name="Открыть руководство"
+                            Click="OnOpenGuide">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Открыть руководство" Classes="t12Semi"
+                                       Foreground="{DynamicResource Gold}" />
+                            <TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                       VerticalAlignment="Center" Foreground="{DynamicResource Gold}" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

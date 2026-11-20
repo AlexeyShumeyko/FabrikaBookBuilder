@@ -11,6 +11,10 @@ param(
     # A section of the spine to click before the picture, e.g. 'Клавиши': the chapters below the
     # fold are only visible after the page has scrolled to them.
     [string]$Section = '',
+    # Which button of the header opens the window, and the window's title. The script was written
+    # for the guide and is used for the support page too, which is the same kind of window.
+    [string]$Button = 'Помощь',
+    [string]$WindowTitle = 'Руководство',
     # The whole screen, window frame and desktop included: a picture of the window alone cannot
     # tell a layout mistake from a rectangle that is off by a margin.
     [switch]$FullScreen
@@ -98,11 +102,11 @@ try {
     $dl = (Get-Date).AddSeconds($TimeoutSeconds)
     while ($null -eq $help -and (Get-Date) -lt $dl) {
         foreach ($b in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond)) {
-            if ($b.Current.Name -eq 'Помощь') { $help = $b; break }
+            if ($b.Current.Name -eq $Button) { $help = $b; break }
         }
         if ($null -eq $help) { Start-Sleep -Milliseconds 500 }
     }
-    if ($null -eq $help) { throw 'the Помощь button was not found' }
+    if ($null -eq $help) { throw "the $Button button was not found" }
 
     $help.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
     Start-Sleep -Seconds 2
@@ -115,10 +119,10 @@ try {
         foreach ($h in [WinHelp]::Visible($proc.Id)) {
             if ($h -eq $main) { continue }
             # The window is the guide now, and its title says so.
-            if ([WinHelp]::Title($h) -eq 'Руководство') { $dialog = $h; break }
+            if ([WinHelp]::Title($h) -eq $WindowTitle) { $dialog = $h; break }
         }
     }
-    if ($dialog -eq [intptr]::Zero) { throw 'the help dialog did not open' }
+    if ($dialog -eq [intptr]::Zero) { throw "the $WindowTitle window did not open" }
 
     # A StaticResource that does not exist only fails when the window loads, so reaching this
     # point already proves every key resolved.
@@ -151,7 +155,9 @@ try {
         foreach ($t in $texts) { Write-Host ("   [" + $t.Current.Name + "]") }
     }
     Write-Host ("journal shown in the dialog: {0}" -f $(if ($pathText) { $pathText } else { 'NOT FOUND' }))
-    if (-not $pathText) { throw 'the dialog opened but does not show the journal path' }
+    if (-not $pathText -and $WindowTitle -eq 'Руководство') {
+        throw 'the dialog opened but does not show the journal path'
+    }
 
     if ($Section) {
         $buttons = $dlgEl.FindAll([System.Windows.Automation.TreeScope]::Descendants,

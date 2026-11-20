@@ -220,7 +220,7 @@
                                 AutomationProperties.Name="Помощь">
                             <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
                         </Button>
-                        <Button Classes="utility" ToolTip.Tip="Контакты — в разработке"
+                        <Button Classes="utility" Click="OnContactsClick" ToolTip.Tip="Поддержка: часы и каналы связи"
                                 AutomationProperties.Name="Контакты">
                             <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
                         </Button>

@@ -149,6 +149,18 @@
     </Style>
 
     <!-- A screen that is a single choice carries the largest heading in the product. -->
+    <Style Selector="TextBlock.t44ExtraBold">
+        <Setter Property="FontSize" Value="44" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+
+    <Style Selector="TextBlock.t17ExtraBold">
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+
     <Style Selector="TextBlock.t37ExtraBold">
         <Setter Property="FontSize" Value="37" />
         <Setter Property="FontWeight" Value="ExtraBold" />
