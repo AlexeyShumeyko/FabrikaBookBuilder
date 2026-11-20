@@ -101,7 +101,8 @@ try {
         Start-Sleep -Milliseconds 400
         foreach ($h in [WinHelp]::Visible($proc.Id)) {
             if ($h -eq $main) { continue }
-            if ([WinHelp]::Title($h) -eq 'Помощь') { $dialog = $h; break }
+            # The window is the guide now, and its title says so.
+            if ([WinHelp]::Title($h) -eq 'Руководство') { $dialog = $h; break }
         }
     }
     if ($dialog -eq [intptr]::Zero) { throw 'the help dialog did not open' }

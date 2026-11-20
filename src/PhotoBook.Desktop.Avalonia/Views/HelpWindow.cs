@@ -1,284 +1,48 @@
-using System;
-using System.Diagnostics;
-using System.IO;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Layout;
 using Avalonia.Media;
-using PhotoBook.Infrastructure;
 using PhotoBook.Shell.Services;
 
 namespace PhotoBook.Shell.Views;
 
 /// <summary>
-/// The help button's answer for now: what is being prepared, and where the journal is.
+/// The guide, in a window of its own.
 /// </summary>
 /// <remarks>
 /// <para>
-/// What a customer can be given today is the journal. The program records every failure in
-/// one file, and without that file an answer to "it did not work" is a guess. So the window
-/// says two things - what is being prepared, and where the journal is - and offers one click
-/// to open the folder it is in.
+/// A window rather than a screen in the shell, because the guide is read beside the work: somebody
+/// who is unsure what a group needs wants the answer and their project on the same desk, and a
+/// screen in the shell replaces the project while it is open.
 /// </para>
 /// <para>
-/// The path is in a read-only box rather than a label with a "copy" button beside it: a
-/// ghost button on white paper is invisible until you know it is there, and a box can be
-/// selected and copied without being told how.
+/// The window is decorated by the system: a page this tall is read by scrolling and by resizing,
+/// and a sheet without edges would have to grow its own grip, its own close, and its own maximum
+/// size on a small screen. What is inside is the design's own - see <see cref="HelpView"/>.
 /// </para>
 /// </remarks>
 public class HelpWindow : Window
 {
     public HelpWindow()
     {
-        Title = "Помощь";
-        Width = 520;
-        SizeToContent = SizeToContent.Height;
-        CanResize = false;
+        Title = "Руководство";
+        Width = 1060;
+        Height = 800;
+        MinWidth = 860;
+        MinHeight = 560;
+        CanResize = true;
         ShowInTaskbar = false;
-        WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        Background = Brushes.Transparent;
+        // Centred on the screen, not on the window that opened it: the shell is maximised, and a
+        // window this tall placed against its owner hung over the screen's edge.
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        Background = ThemeResources.Brush("PageBackdrop");
 
-        // No system frame. The reference draws these as a sheet on the app's own
-        // background, and a title bar with its own minimise and close buttons is a
-        // window belonging to something else.
-        SystemDecorations = SystemDecorations.None;
-
-        Content = Build();
+        Content = new HelpView();
 
         KeyDown += (_, e) =>
         {
-            if (e.Key != Key.Escape && e.Key != Key.Enter) return;
+            if (e.Key != Key.Escape) return;
             Close();
             e.Handled = true;
         };
     }
-
-    private Control Build()
-    {
-        var close = new Button
-        {
-            Content = "Понятно",
-            MinWidth = 104,
-            Padding = new Thickness(16, 9),
-            FontSize = 12,
-            FontWeight = FontWeight.SemiBold,
-            CornerRadius = new CornerRadius(12),
-            Background = ThemeResources.Brush("Gold"),
-            BorderThickness = new Thickness(0),
-            Foreground = ThemeResources.Brush("OnAccent"),
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Cursor = new Cursor(StandardCursorType.Hand)
-        };
-        close.Click += (_, _) => Close();
-
-        var openFolder = new Button
-        {
-            Content = "Открыть папку с журналом",
-            Padding = new Thickness(14, 9),
-            FontSize = 12,
-            FontWeight = FontWeight.SemiBold,
-            CornerRadius = new CornerRadius(12),
-            Background = ThemeResources.Brush("Surface"),
-            BorderBrush = ThemeResources.Brush("BorderDefault"),
-            BorderThickness = new Thickness(1),
-            Foreground = ThemeResources.Brush("TextDefault"),
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Cursor = new Cursor(StandardCursorType.Hand)
-        };
-        openFolder.Click += (_, _) => OpenJournalFolder();
-
-        var body = new StackPanel { Margin = new Thickness(24, 22, 24, 20), Spacing = 0 };
-
-        body.Children.Add(Header());
-        body.Children.Add(Line(
-            "Здесь будет полное описание программы: что делает каждая функция, как устроена работа с проектом, ответы на частые вопросы и сведения о том, что программа делает с фотографиями и где их хранит.",
-            48));
-
-        body.Children.Add(new Border { Height = 1, Background = ThemeResources.Brush("BorderDefault"), Margin = new Thickness(0, 18, 0, 16) });
-
-        body.Children.Add(Line("Пока раздела нет, вот что поможет быстрее:", 48, heading: true));
-
-        var card = new StackPanel { Spacing = 4 };
-        card.Children.Add(new TextBlock
-        {
-            Text = "Если что-то не сработало",
-            FontSize = 13,
-            FontWeight = FontWeight.SemiBold,
-            Foreground = ThemeResources.Brush("TextDefault")
-        });
-        card.Children.Add(new TextBlock
-        {
-            Text = "Программа записывает каждую ошибку в один файл. Приложите его к обращению в поддержку - по нему будет видно, что именно произошло.",
-            FontSize = 12,
-            TextWrapping = TextWrapping.Wrap,
-            LineHeight = 18,
-            Foreground = ThemeResources.Brush("TextMuted"),
-            Margin = new Thickness(0, 4, 0, 0)
-        });
-        card.Children.Add(new Border { Height = 1, Background = ThemeResources.Brush("BorderDefault"), Margin = new Thickness(0, 12, 0, 10) });
-        card.Children.Add(new TextBlock { Text = "Журнал:", FontSize = 12, Foreground = ThemeResources.Brush("TextMuted") });
-        card.Children.Add(JournalPathBox());
-
-        body.Children.Add(new Border
-        {
-            Background = ThemeResources.Brush("SurfaceMuted"),
-            CornerRadius = new CornerRadius(8),
-            BorderBrush = ThemeResources.Brush("SurfaceMuted"),
-            BorderThickness = new Thickness(1),
-            Padding = new Thickness(14, 12),
-            Margin = new Thickness(48, 10, 0, 0),
-            Child = card
-        });
-
-        var openRow = new StackPanel { Margin = new Thickness(48, 12, 0, 0) };
-        openRow.Children.Add(openFolder);
-        body.Children.Add(openRow);
-
-        body.Children.Add(new Border { Height = 1, Background = ThemeResources.Brush("BorderDefault"), Margin = new Thickness(0, 18, 0, 16) });
-
-        var closeRow = new StackPanel { Orientation = Orientation.Horizontal };
-        closeRow.Children.Add(close);
-        body.Children.Add(closeRow);
-
-        return new Border
-        {
-            Background = ThemeResources.Brush("Surface"),
-            CornerRadius = new CornerRadius(16),
-            BorderBrush = ThemeResources.Brush("BorderDefault"),
-            BorderThickness = new Thickness(1),
-            BoxShadow = ThemeResources.Shadow("ShadowModal"),
-            Child = body
-        };
-    }
-
-    /// <summary>
-    /// The icon tile on the left, the title beside it.
-    /// </summary>
-    /// <remarks>
-    /// Both columns are named rather than left to the order the children are written in: the
-    /// tile is the left one, and until it was said out loud it came out to the right of the
-    /// title - which is not a mistake a screenshot of the whole window would catch, because
-    /// the tile was still there, just on the wrong side of the words.
-    /// </remarks>
-    private static Control Header()
-    {
-        var tile = new Border
-        {
-            Width = 36,
-            Height = 36,
-            CornerRadius = new CornerRadius(10),
-            Background = ThemeResources.Brush("Brand50"),
-            VerticalAlignment = VerticalAlignment.Center,
-            Child = Glyph(0xE897, 15, "Accent")
-        };
-
-        var title = new StackPanel
-        {
-            Margin = new Thickness(12, 0, 0, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            Children =
-            {
-                new TextBlock
-                {
-                    Text = "Помощь",
-                    FontSize = 16,
-                    FontWeight = FontWeight.Bold,
-                    Foreground = ThemeResources.Brush("TextStrong")
-                },
-                new TextBlock
-                {
-                    Text = "Раздел готовится и появится в ближайших обновлениях",
-                    FontSize = 12,
-                    Foreground = ThemeResources.Brush("TextMuted"),
-                    Margin = new Thickness(0, 2, 0, 0)
-                }
-            }
-        };
-
-        Grid.SetColumn(tile, 0);
-        Grid.SetColumn(title, 1);
-
-        return new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
-            Margin = new Thickness(0, 0, 0, 16),
-            Children = { tile, title }
-        };
-    }
-
-    private static Control JournalPathBox()
-    {
-        var box = new TextBox
-        {
-            Text = Diagnostics.JournalPath,
-            IsReadOnly = true,
-            TextWrapping = TextWrapping.Wrap,
-            FontFamily = new FontFamily("Consolas"),
-            FontSize = 12,
-            Padding = new Thickness(8, 6),
-            CornerRadius = new CornerRadius(8),
-            Background = ThemeResources.Brush("Surface"),
-            BorderBrush = ThemeResources.Brush("BorderDefault"),
-            BorderThickness = new Thickness(1),
-            Margin = new Thickness(0, 4, 0, 0)
-        };
-
-        return box;
-    }
-
-    /// <summary>
-    /// Opens the folder the journal is in, and creates it if it is not there yet.
-    /// </summary>
-    /// <remarks>
-    /// Explorer refusing is not worth a message box: the path is on screen two lines above,
-    /// so the person can get there without us. What is worth doing is making the folder
-    /// exist, so that the very next failure has somewhere to be written.
-    /// </remarks>
-    private static void OpenJournalFolder()
-    {
-        try
-        {
-            var folder = Path.GetDirectoryName(Diagnostics.JournalPath);
-            if (string.IsNullOrEmpty(folder)) return;
-
-            Directory.CreateDirectory(folder);
-
-            Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true });
-        }
-        catch
-        {
-            // The path is on screen. Nothing to add by interrupting the person about it.
-        }
-    }
-
-    private static Control Line(string text, double left, bool heading = false) => new TextBlock
-    {
-        Text = text,
-        FontSize = 13,
-        TextWrapping = TextWrapping.Wrap,
-        LineHeight = 20,
-        Foreground = ThemeResources.Brush(heading ? "TextDefault" : "TextMuted"),
-        FontWeight = heading ? FontWeight.SemiBold : FontWeight.Normal,
-        Margin = new Thickness(left, 0, 0, 0)
-    };
-
-    /// <summary>
-    /// One icon glyph, written as its code point.
-    /// </summary>
-    /// <remarks>
-    /// A number rather than the character itself. These live in the private use area, and a
-    /// private use character does not survive being written, read and written again by
-    /// different tools - it came back as a neighbouring code point twice, which renders as
-    /// nothing at all rather than as an error. A number is the glyph.
-    /// </remarks>
-    private static Control Glyph(int codePoint, double size, string brush) => new TextBlock
-    {
-        Text = ((char)codePoint).ToString(),
-        FontFamily = new FontFamily("Segoe MDL2 Assets"),
-        FontSize = size,
-        Foreground = ThemeResources.Brush(brush),
-        HorizontalAlignment = HorizontalAlignment.Center,
-        VerticalAlignment = VerticalAlignment.Center
-    };
 }
