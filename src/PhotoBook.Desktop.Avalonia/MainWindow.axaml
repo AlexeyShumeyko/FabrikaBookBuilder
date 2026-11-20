@@ -2,12 +2,28 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="PhotoBook.Shell.MainWindow"
         Title="Fabrika BookBuilder Studio"
-        Width="1520" Height="800"
+        Width="1200" Height="680"
+        WindowState="Maximized"
         FontFamily="Inter"
         Background="{DynamicResource AppBackground}"
         PointerPressed="OnWindowPointerPressed"
         WindowStartupLocation="CenterScreen">
 
+    <!--
+        Opens maximised, always, and that is a rule rather than a preference.
+
+        It used to open at a fixed 1520x800, centred. On a second monitor smaller than that,
+        the window was wider than the screen and the minimise, maximise and close buttons sat
+        past its right edge - with the person looking at a window they could not move, resize
+        or close, because every control that would do it was off the screen. It was "fixed"
+        once before by sizing to a share of the working area, then the size came back as a
+        constant and so did the report.
+
+        A person who wants a window can restore it themselves; that is their decision, and the
+        width and height above are the size it goes back to when they do. 1200x680 fits inside
+        the smallest screen the program supports, so restoring cannot put the buttons off the
+        edge either.
+    -->
     <!--
         The shell is a tinted page with white cards on it, and that is the decision this file
         encodes. It used to be a white page with a full-width bar across the top and a
