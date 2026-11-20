@@ -127,9 +127,11 @@
 
             <!-- The mat behind a photograph, and the tray a group of tabs sits in. -->
             <Color x:Key="MatSurface">#E2D7C1</Color>
-            <Color x:Key="TabTray">#0F4A3A1C</Color>
-            <!-- The chosen tab is the one surface that has to stand above the tray. -->
-            <Color x:Key="TabSelected">#FAF6EA</Color>
+            <Color x:Key="TabTray">#0F4A3A1C</Color>
+
+            <!-- The chosen tab is the one surface that has to stand above the tray. -->
+
+            <Color x:Key="TabSelected">#FFFDF7</Color>
 
             <!-- The dim over the page behind a modal panel. -->
             <Color x:Key="Backdrop">#6B3A301E</Color>
@@ -168,6 +170,47 @@
                 <GradientStop Color="#FFFDF7" Offset="0" />
                 <GradientStop Color="#FAF6EA" Offset="0.42" />
                 <GradientStop Color="#FAF6EA" Offset="1" />
+            </LinearGradientBrush>
+
+
+            <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~ the shell ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+            <!--
+                The header is a pane of glass over the page: the prototype's topbar is
+                translucent with a blur, and a window that cannot blur what is behind it
+                still shows the tint through. The gold line along its top edge is one pixel
+                of light rather than a frame, and it fades out at both ends.
+            -->
+            <Color x:Key="TopBarGlass">#D1FAF6EC</Color>
+            <LinearGradientBrush x:Key="TopBarEdge" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#00B07B00" Offset="0" />
+                <GradientStop Color="#50B07B00" Offset="0.5" />
+                <GradientStop Color="#00B07B00" Offset="1" />
+            </LinearGradientBrush>
+            <BoxShadows x:Key="TopBarShadow">0 1 0 0 #0D4A3A1C, 0 12 32 0 #0F4A3A1C</BoxShadows>
+
+            <!-- The tray the tabs sit in, and the ring around the chosen one. -->
+            <Color x:Key="TabTrayBorder">#144A3A1C</Color>
+            <Color x:Key="TabSelectedRing">#124A3A1C</Color>
+
+            <!-- What a quiet icon shows under the pointer, and under a press. -->
+            <Color x:Key="HoverWash">#0D4A3A1C</Color>
+            <Color x:Key="ActiveWash">#174A3A1C</Color>
+
+            <!-- The glow the company's mark carries, and the gradient the product's second
+                 word is cut out of. -->
+            <Color x:Key="LogoGlowColor">#59AA7D00</Color>
+            <LinearGradientBrush x:Key="BrandNameTail" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#C99100" Offset="0" />
+                <GradientStop Color="#8A6000" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- The account's avatar: gold, and the ink that reads on it. -->
+            <Color x:Key="AvatarInk">#2A1C00</Color>
+            <Color x:Key="AvatarRing">#CF9105</Color>
+            <LinearGradientBrush x:Key="AvatarFill" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#FFD471" Offset="0" />
+                <GradientStop Color="#F2B41C" Offset="0.48" />
+                <GradientStop Color="#DC9A08" Offset="1" />
             </LinearGradientBrush>
 
             <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ shadows ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -273,7 +316,8 @@
             <Color x:Key="BorderAccentHover">#3DFFCD2D</Color>
 
             <Color x:Key="MatSurface">#15120E</Color>
-            <Color x:Key="TabTray">#42000000</Color>
+            <Color x:Key="TabTray">#42000000</Color>
+
             <Color x:Key="TabSelected">#2B2318</Color>
 
             <Color x:Key="Backdrop">#B8080505</Color>
@@ -303,6 +347,36 @@
                 <GradientStop Color="#252019" Offset="0" />
                 <GradientStop Color="#1F1A14" Offset="0.38" />
                 <GradientStop Color="#1F1A14" Offset="1" />
+            </LinearGradientBrush>
+
+
+            <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~ the shell ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+            <Color x:Key="TopBarGlass">#C213100B</Color>
+            <LinearGradientBrush x:Key="TopBarEdge" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#00FFCD2D" Offset="0" />
+                <GradientStop Color="#26FFCD2D" Offset="0.5" />
+                <GradientStop Color="#00FFCD2D" Offset="1" />
+            </LinearGradientBrush>
+            <BoxShadows x:Key="TopBarShadow">0 0 0 0 #00000000</BoxShadows>
+
+            <Color x:Key="TabTrayBorder">#0EFFFFFF</Color>
+            <Color x:Key="TabSelectedRing">#12FFFFFF</Color>
+
+            <Color x:Key="HoverWash">#0DFFFFFF</Color>
+            <Color x:Key="ActiveWash">#17FFFFFF</Color>
+
+            <Color x:Key="LogoGlowColor">#47FFBE14</Color>
+            <LinearGradientBrush x:Key="BrandNameTail" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#FFE98A" Offset="0" />
+                <GradientStop Color="#FFC21A" Offset="1" />
+            </LinearGradientBrush>
+
+            <Color x:Key="AvatarInk">#2A1C00</Color>
+            <Color x:Key="AvatarRing">#CF9105</Color>
+            <LinearGradientBrush x:Key="AvatarFill" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#FFD471" Offset="0" />
+                <GradientStop Color="#F2B41C" Offset="0.48" />
+                <GradientStop Color="#DC9A08" Offset="1" />
             </LinearGradientBrush>
 
             <BoxShadows x:Key="ShadowSm">0 1 3 0 #33000000</BoxShadows>

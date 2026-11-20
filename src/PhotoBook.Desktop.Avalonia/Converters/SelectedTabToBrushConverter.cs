@@ -43,6 +43,14 @@ namespace PhotoBook.Shell.Converters
 
                 "fg" => selected ? ThemeResources.Brush("TextStrong") : ThemeResources.Brush("TextMuted"),
 
+                // The chosen tab is a card inside the tray, so it carries the hairline that
+                // separates a card from what it lies on. The rest have no frame at all.
+                "ring" => selected ? ThemeResources.Brush("TabSelectedRing") : Brushes.Transparent,
+
+                // The mark beside the words goes gold on the chosen tab, which is the one
+                // place in the header where the accent appears twice.
+                "icon" => ThemeResources.Brush("Accent"),
+
                 _ => Brushes.Transparent
             };
         }

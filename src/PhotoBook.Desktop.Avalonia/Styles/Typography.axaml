@@ -38,6 +38,18 @@
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
+    <!-- The header's project line: the prototype sets it a half step under twelve. -->
+    <Style Selector="TextBlock.t11Half">
+        <Setter Property="FontSize" Value="11.5" />
+    </Style>
+
+    <!-- The product's own name in the header, at the weight the prototype gives it. -->
+    <Style Selector="TextBlock.t16ExtraBold">
+        <Setter Property="FontSize" Value="16.5" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+
     <!-- The status tag is a label at 11.5 bold. -->
     <Style Selector="TextBlock.t11Bold">
         <Setter Property="FontSize" Value="11.5" />

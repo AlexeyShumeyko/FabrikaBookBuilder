@@ -327,11 +327,11 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="14,0" />
-        <Setter Property="Height" Value="34" />
+        <Setter Property="Padding" Value="15,0" />
+        <Setter Property="Height" Value="35" />
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
         <Setter Property="Cursor" Value="Hand" />
 
         <!--
@@ -346,7 +346,7 @@
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="9">
+                        CornerRadius="999">
                     <ContentPresenter Content="{TemplateBinding Content}"
                                       Margin="{TemplateBinding Padding}"
                                       HorizontalAlignment="Center"
@@ -356,14 +356,12 @@
         </Setter>
     </Style>
 
-    <Style Selector="ToggleButton.tab:pointerover">
-        <Setter Property="BorderBrush" Value="{DynamicResource Slate300}" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate800}" />
-    </Style>
-
-    <Style Selector="ToggleButton.tab:pressed">
-        <Setter Property="BorderBrush" Value="{DynamicResource Slate400}" />
-    </Style>
+    <!--
+        No pointer rule for the tab itself: Background, Foreground and BorderBrush are bound
+        from the view model's answer to "am I current?", and a binding outranks a style, so a
+        rule here would be a rule that never runs. The tray is the surface that reacts; a
+        tab that lights up under the pointer would compete with the one that is current.
+    -->
 
     <!--
         Difference one of this step, listed rather than fudged: the active tab carries a
@@ -397,11 +395,11 @@
     <Style Selector="Button.utility">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="9" />
-        <Setter Property="Padding" Value="9" />
-        <Setter Property="Width" Value="34" />
-        <Setter Property="Height" Value="34" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
         <Setter Property="Cursor" Value="Hand" />
 
         <!--
@@ -413,7 +411,7 @@
         <Setter Property="Template">
             <ControlTemplate>
                 <Border Background="{TemplateBinding Background}"
-                        CornerRadius="9">
+                        CornerRadius="10">
                     <ContentPresenter Content="{TemplateBinding Content}"
                                       Margin="{TemplateBinding Padding}"
                                       HorizontalAlignment="Center"
@@ -424,12 +422,12 @@
     </Style>
 
     <Style Selector="Button.utility:pointerover">
-        <Setter Property="Background" Value="{DynamicResource Slate100}" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+        <Setter Property="Background" Value="{DynamicResource HoverWash}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextDefault}" />
     </Style>
 
     <Style Selector="Button.utility:pressed">
-        <Setter Property="Background" Value="{DynamicResource Slate200}" />
+        <Setter Property="Background" Value="{DynamicResource ActiveWash}" />
     </Style>
 
     <!--
@@ -456,15 +454,15 @@
         photograph is what this program is for, and the account is not that.
     -->
     <Style Selector="Button.account">
-        <Setter Property="Background" Value="{DynamicResource Surface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Slate300}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="Padding" Value="12,0" />
-        <Setter Property="Height" Value="34" />
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+        <Setter Property="CornerRadius" Value="999" />
+        <Setter Property="Padding" Value="5,0,9,0" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextDefault}" />
         <Setter Property="Cursor" Value="Hand" />
 
         <!-- Written out for the same reason as the utility button's: the platform owns the
@@ -474,7 +472,7 @@
                 <Border Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="10">
+                        CornerRadius="{TemplateBinding CornerRadius}">
                     <ContentPresenter Content="{TemplateBinding Content}"
                                       Margin="{TemplateBinding Padding}"
                                       HorizontalAlignment="Center"
@@ -485,14 +483,14 @@
     </Style>
 
     <Style Selector="Button.account:pointerover">
-        <Setter Property="BorderBrush" Value="{DynamicResource Brand500}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brand600}" />
-        <Setter Property="Background" Value="{DynamicResource Brand50}" />
+        <Setter Property="Background" Value="{DynamicResource HoverWash}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
     </Style>
 
     <Style Selector="Button.account:pressed">
-        <Setter Property="BorderBrush" Value="{DynamicResource Brand600}" />
-        <Setter Property="Background" Value="{DynamicResource Brand100}" />
+        <Setter Property="Background" Value="{DynamicResource ActiveWash}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}" />
     </Style>
 
 <!--
