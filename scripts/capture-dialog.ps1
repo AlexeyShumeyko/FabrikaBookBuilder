@@ -127,9 +127,18 @@ try {
             $all = @($parsed | ForEach-Object { $_ } | Sort-Object { [datetime]$_.lastModified } -Descending)
             $wantMode = if ($Mode -eq 'Combined') { 3 } else { 2 }
             $pick = @($all | Where-Object { $_.mode -eq $wantMode -and $_.bookCount -gt 0 })[0]
-            if (-not $pick) { throw "no filled $Mode project in the index" }
-            $OpenAt = [array]::IndexOf($all, $pick)
-            Write-Host "opening '$($pick.name)' ($Mode, card $OpenAt)"
+            if (-not $pick) {
+                # The index is not what the list reads: the screen scans the project files, and
+                # projects.json can be empty while cards are on screen. Falling back to the first
+                # card keeps the captures running; the card's own mode is checked by the dialog
+                # that opens next.
+                Write-Host 'no matching project in the index - opening the first card'
+                $OpenAt = 0
+            }
+            else {
+                $OpenAt = [array]::IndexOf($all, $pick)
+                Write-Host "opening '$($pick.name)' ($Mode, card $OpenAt)"
+            }
         }
 
         $btn = $null
@@ -140,10 +149,17 @@ try {
             # depends on how the card template is built. $textCond used to be referenced
             # here and never defined, so passing -ProjectName always threw and this path
             # was never exercised until a capture actually needed it.
-            $anyCond = [System.Windows.Automation.Condition]::TrueCondition
-            foreach ($t in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $anyCond)) {
-                if ($t.Current.Name -like "*$ProjectName*") { $titleEl = $t; break }
-            }
+            # The list fills asynchronously, so the title is not there the moment the window
+            # appears: searching once found nothing and the run ended with "no project titled"
+            # while the card was on screen a second later.
+            $titleDeadline = (Get-Date).AddSeconds($TimeoutSeconds)
+            do {
+                $anyCond = [System.Windows.Automation.Condition]::TrueCondition
+                foreach ($t in $el.FindAll([System.Windows.Automation.TreeScope]::Descendants, $anyCond)) {
+                    if ($t.Current.Name -like "*$ProjectName*") { $titleEl = $t; break }
+                }
+                if ($null -eq $titleEl) { Start-Sleep -Milliseconds 700 }
+            } while ($null -eq $titleEl -and (Get-Date) -lt $titleDeadline)
             if ($null -eq $titleEl) { throw "no project titled '$ProjectName'" }
 
             $walker = [System.Windows.Automation.TreeWalker]::ControlViewWalker

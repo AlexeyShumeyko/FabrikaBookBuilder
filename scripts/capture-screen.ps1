@@ -29,7 +29,8 @@ param(
     [int]$Width = 0,
     [int]$Height = 0,
     [int]$OpenWaitSeconds = 7,
-    [switch]$WithDialog
+    [switch]$WithDialog,
+    [string]$ClickButton = ''
 )
 
 # The harness console runs on code page 866, which turns every Cyrillic string this
@@ -333,6 +334,14 @@ try {
 
     $bmp = New-Object System.Drawing.Bitmap $w, $h
     $g = [System.Drawing.Graphics]::FromImage($bmp)
+    # A dialog is a window of its own, so it is not in the main window's tree until it is
+    # opened. Pressing the button that opens it first means the picture below has it.
+    if ($ClickButton) {
+        $click = Get-ByName $el $ClickButton 'Button'
+        if ($null -eq $click) { Write-Host "FAIL: no button '$ClickButton'" }
+        else { Invoke-Element $click; Start-Sleep -Seconds 3 }
+    }
+
     # The picture is taken from the screen, so what is in front is what lands in it.
     Set-WindowInFront $hwnd $proc.Id
     Assert-WindowInFront $hwnd
