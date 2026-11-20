@@ -100,20 +100,34 @@
                     and the brand colour kept in the words, it reads as what it is, and the
                     eye has something to land on before the cards.
                 -->
-                <TextBlock Text="Выберите режим создания проекта"
-                           FontSize="20" FontWeight="Bold"
-                           HorizontalAlignment="Center"
-                           Foreground="{DynamicResource Brand600}" />
+                <!-- The prototype opens this screen with a kicker, not with the heading:
+                     two rules and a line of gold capitals say what the screen is for, and
+                     the heading that follows is the largest type in the product. -->
+                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                    <Border Width="44" Height="1" VerticalAlignment="Center"
+                            Background="{DynamicResource BorderAccentHover}" />
+                    <TextBlock Text="НОВЫЙ ПРОЕКТ" FontSize="11.5" FontWeight="Bold"
+                               Foreground="{DynamicResource Brand600}" />
+                    <Border Width="44" Height="1" VerticalAlignment="Center"
+                            Background="{DynamicResource BorderAccentHover}" />
+                </StackPanel>
 
-                <TextBlock Classes="t12" HorizontalAlignment="Center" TextAlignment="Center"
-                           TextWrapping="Wrap" MaxWidth="560" Margin="0,8,0,0"
-                           Foreground="{DynamicResource Slate500}"
-                           Text="Выбранный режим определяет формат работы с книгами. Режим выбирается один раз при создании проекта" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
+                    <TextBlock Text="Выберите " Classes="t37ExtraBold" />
+                    <TextBlock Text="режим" Classes="t37ExtraBold"
+                               Foreground="{DynamicResource BrandNameTail}" />
+                    <TextBlock Text=" создания проекта" Classes="t37ExtraBold" />
+                </StackPanel>
+
+                <TextBlock Classes="t14" HorizontalAlignment="Center" TextAlignment="Center"
+                           TextWrapping="Wrap" MaxWidth="590" Margin="0,12,0,0"
+                           Foreground="{DynamicResource TextMuted}"
+                           Text="Выбранный режим определяет формат работы с книгами. Режим выбирается один раз при создании проекта." />
             </StackPanel>
 
             <!-- A fixed 24-wide spacer column rather than a spacing property: this engine's grid has
                 no ColumnSpacing, and a spacer is the same 24 with nothing left to get wrong. -->
-            <Grid ColumnDefinitions="*,24,*" Margin="0,32,0,0">
+            <Grid ColumnDefinitions="*,22,*" Margin="0,36,0,0">
 
                 <!-- ======================== уникальные папки ========================= -->
                 <Button x:Name="UniqueCard" Classes="modeCard"
@@ -134,7 +148,7 @@
                                 after it moves by a pixel.
                             -->
                             <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,20">
-                                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="16"
+                                <Border Grid.Column="0" Width="50" Height="50" CornerRadius="15"
                                         VerticalAlignment="Center"
                                         Background="{DynamicResource Sky50}">
                                     <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets"
@@ -143,20 +157,19 @@
                                 </Border>
 
                                 <TextBlock Grid.Column="1" Text="Уникальные папки"
-                                           FontSize="19" FontWeight="Bold"
-                                           Margin="14,0,0,0" VerticalAlignment="Center"
-                                           Foreground="{DynamicResource Slate900}" />
+                                           Classes="t23ExtraBold"
+                                           Margin="14,0,0,0" VerticalAlignment="Center" />
                             </Grid>
 
-                            <TextBlock Classes="t12" TextWrapping="Wrap" Margin="0,8,0,0"
-                                       LineHeight="19" Foreground="{DynamicResource Slate600}"
+                            <TextBlock FontSize="14" TextWrapping="Wrap" Margin="0,10,0,0"
+                                       LineHeight="24" Foreground="{DynamicResource TextDefault}"
                                        Text="Каждая загруженная папка становится отдельной фотокнигой. Программа сама определит обложку, разложит фотографии по разворотам и присвоит файлам имена, готовые к загрузке." />
 
                             <StackPanel Margin="0,20,0,0">
                                 <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,10">
                                     <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
                                                FontSize="12" VerticalAlignment="Center"
-                                               Foreground="{DynamicResource Sky500}" />
+                                               Foreground="{DynamicResource Brand500}" />
                                     <TextBlock Grid.Column="1" Classes="t12" TextWrapping="Wrap"
                                                Margin="8,0,0,0" Foreground="{DynamicResource Slate600}"
                                                Text="Обложка определяется сама: самое большое фото в папке" />
@@ -164,7 +177,7 @@
                                 <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,10">
                                     <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
                                                FontSize="12" VerticalAlignment="Center"
-                                               Foreground="{DynamicResource Sky500}" />
+                                               Foreground="{DynamicResource Brand500}" />
                                     <TextBlock Grid.Column="1" Classes="t12" TextWrapping="Wrap"
                                                Margin="8,0,0,0" Foreground="{DynamicResource Slate600}"
                                                Text="Порядок разворотов можно изменить, если фотографии в папке идут не по сюжету" />
@@ -172,7 +185,7 @@
                                 <Grid ColumnDefinitions="Auto,*">
                                     <TextBlock Grid.Column="0" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
                                                FontSize="12" VerticalAlignment="Center"
-                                               Foreground="{DynamicResource Sky500}" />
+                                               Foreground="{DynamicResource Brand500}" />
                                     <TextBlock Grid.Column="1" Classes="t12" TextWrapping="Wrap"
                                                Margin="8,0,0,0" Foreground="{DynamicResource Slate600}"
                                                Text="В одном проекте можно загружать только папки с одинаковым количеством файлов — это нужно для правильной сборки книг" />
@@ -188,25 +201,25 @@
                         <StackPanel Grid.Row="1" Margin="0,32,0,0">
                             <Border Height="1" Background="{DynamicResource Slate100}" />
                             <Grid Margin="0,16,0,0">
-                                <TextBlock Text="Выбрать режим" Classes="t12Semi"
-                                           Foreground="{DynamicResource Sky600}" />
+                                <TextBlock Text="Выбрать режим" Classes="t14Bold"
+                                           Foreground="{DynamicResource Brand600}" />
                                 <TextBlock Text="&#xE72A;" HorizontalAlignment="Right"
-                                           FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                           Foreground="{DynamicResource Sky600}" />
+                                           FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                           Foreground="{DynamicResource Brand600}" />
                             </Grid>
                         </StackPanel>
                     </Grid>
                 </Button>
 
                 <!-- ========================= комбинированный ========================= -->
-                <Button x:Name="CombinedCard" Classes="modeCard" Grid.Column="2"
+                <Button x:Name="CombinedCard" Classes="modeCard featured" Grid.Column="2"
                         AutomationProperties.Name="Комбинированный"
                         HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <Grid RowDefinitions="*,Auto">
 
                         <StackPanel Grid.Row="0">
-                            <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,20">
-                                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="16"
+                            <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,20">
+                                <Border Grid.Column="0" Width="50" Height="50" CornerRadius="15"
                                         VerticalAlignment="Center"
                                         Background="{DynamicResource Brand50}">
                                     <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets"
@@ -215,13 +228,22 @@
                                 </Border>
 
                                 <TextBlock Grid.Column="1" Text="Комбинированный"
-                                           FontSize="19" FontWeight="Bold"
-                                           Margin="14,0,0,0" VerticalAlignment="Center"
-                                           Foreground="{DynamicResource Slate900}" />
+                                           Classes="t23ExtraBold"
+                                           Margin="14,0,0,0" VerticalAlignment="Center" />
+
+                                <!-- The one card the product recommends, and it says so
+                                     itself rather than through the order it is drawn in. -->
+                                <Border Grid.Column="2" Height="26" CornerRadius="999"
+                                        Padding="10,0" VerticalAlignment="Center"
+                                        Background="{DynamicResource Brand100}">
+                                    <TextBlock Text="Рекомендуем" FontSize="11.5" FontWeight="Bold"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource Brand700}" />
+                                </Border>
                             </Grid>
 
-                            <TextBlock Classes="t12" TextWrapping="Wrap" Margin="0,8,0,0"
-                                       LineHeight="19" Foreground="{DynamicResource Slate600}"
+                            <TextBlock FontSize="14" TextWrapping="Wrap" Margin="0,10,0,0"
+                                       LineHeight="24" Foreground="{DynamicResource TextDefault}"
                                        Text="Режим для сборки книг вручную: вы выбираете, какое фото в какой книге и на каком развороте будет стоять. Подходит, когда состав каждой книги подбирают отдельно." />
 
                             <!--
@@ -272,10 +294,10 @@
                         <StackPanel Grid.Row="1" Margin="0,32,0,0">
                             <Border Height="1" Background="{DynamicResource Slate100}" />
                             <Grid Margin="0,16,0,0">
-                                <TextBlock Text="Выбрать режим" Classes="t12Semi"
+                                <TextBlock Text="Выбрать режим" Classes="t14Bold"
                                            Foreground="{DynamicResource Brand600}" />
                                 <TextBlock Text="&#xE72A;" HorizontalAlignment="Right"
-                                           FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                           FontFamily="Segoe MDL2 Assets" FontSize="14"
                                            Foreground="{DynamicResource Brand600}" />
                             </Grid>
                         </StackPanel>

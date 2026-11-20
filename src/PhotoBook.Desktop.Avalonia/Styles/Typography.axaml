@@ -99,6 +99,20 @@
         <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
     </Style>
 
+    <!-- A mode card's name: the largest thing inside a card. -->
+    <Style Selector="TextBlock.t23ExtraBold">
+        <Setter Property="FontSize" Value="23" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+
+    <!-- A screen that is a single choice carries the largest heading in the product. -->
+    <Style Selector="TextBlock.t37ExtraBold">
+        <Setter Property="FontSize" Value="37" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+
     <!-- The one heading a screen carries: the prototype sets it at 29, extra bold, a touch
          tighter than the rest. -->
     <Style Selector="TextBlock.t29ExtraBold">

@@ -188,6 +188,10 @@
             </LinearGradientBrush>
             <BoxShadows x:Key="TopBarShadow">0 1 0 0 #0D4A3A1C, 0 12 32 0 #0F4A3A1C</BoxShadows>
 
+            <!-- The recommended mode card is lifted off the page by a warm glow, not by a
+                 grey shadow: it is the card the product is pointing at. -->
+            <BoxShadows x:Key="ModeCardGlow">0 18 44 0 #40AA7D00</BoxShadows>
+
             <!-- The tray the tabs sit in, and the ring around the chosen one. -->
             <Color x:Key="TabTrayBorder">#144A3A1C</Color>
             <Color x:Key="TabSelectedRing">#124A3A1C</Color>
@@ -358,6 +362,8 @@
                 <GradientStop Color="#00FFCD2D" Offset="1" />
             </LinearGradientBrush>
             <BoxShadows x:Key="TopBarShadow">0 0 0 0 #00000000</BoxShadows>
+
+            <BoxShadows x:Key="ModeCardGlow">0 18 44 0 #4DFFBE14</BoxShadows>
 
             <Color x:Key="TabTrayBorder">#0EFFFFFF</Color>
             <Color x:Key="TabSelectedRing">#12FFFFFF</Color>

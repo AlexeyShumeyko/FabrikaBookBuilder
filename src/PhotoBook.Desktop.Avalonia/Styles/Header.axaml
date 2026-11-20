@@ -543,10 +543,11 @@
     -->
     <Style Selector="Button.modeCard">
         <Setter Property="Background" Value="{DynamicResource Surface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="16" />
-        <Setter Property="Padding" Value="24" />
+        <Setter Property="CornerRadius" Value="22" />
+        <Setter Property="MinWidth" Value="496" />
+        <Setter Property="Padding" Value="28" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
         <Setter Property="Cursor" Value="Hand" />
@@ -569,6 +570,19 @@
                 </Border>
             </ControlTemplate>
         </Setter>
+    </Style>
+
+    <!--
+        The recommended card. Gold along its frame and a warm glow under it, because it is
+        the one the product points at; nothing else about it is louder, and its contents are
+        the same as its neighbour's.
+    -->
+    <Style Selector="Button.modeCard.featured">
+        <Setter Property="BorderBrush" Value="{DynamicResource Gold}" />
+    </Style>
+
+    <Style Selector="Button.modeCard.featured /template/ Border">
+        <Setter Property="BoxShadow" Value="{DynamicResource ModeCardGlow}" />
     </Style>
 
     <Style Selector="Button.modeCard:pointerover">
