@@ -46,7 +46,7 @@
           RowDefinitions="Auto,*">
 
         <!-- =========================== control panel ========================== -->
-        <Border Grid.Row="0" Classes="card" Padding="20">
+        <Border Grid.Row="0" Classes="card" Padding="24,20">
             <Grid ColumnDefinitions="Auto,*,Auto" MinHeight="58">
 
                 <!-- Sky, like the mode card on the screen this one is chosen from. It was emerald:
@@ -54,15 +54,16 @@
                      it here was this tile, which is why the screen looked like it belonged
                      to something else. The structure line below the books still turns green
                      when a book is complete, because that is a state and not an accent. -->
-                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="12"
-                        Background="{DynamicResource Sky50}"
-                        BorderBrush="{DynamicResource Sky100}" BorderThickness="1">
-                    <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="20"
-                               Foreground="{DynamicResource Sky600}"
+                <Border Grid.Column="0" Width="52" Height="52" CornerRadius="15"
+                        VerticalAlignment="Center" Margin="0,0,14,0"
+                        Background="{DynamicResource AvatarFill}"
+                        BorderBrush="{DynamicResource AvatarRing}" BorderThickness="1">
+                    <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="24"
+                               Foreground="{DynamicResource AvatarInk}"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
 
-                <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <!--
                         The name is edited where it is shown, not in a dialog. The other shell
                         does it this way and the reason is worth keeping: a name you are
@@ -70,20 +71,20 @@
                         thing to look at. Clicking the name itself starts the edit too - the
                         whole name is the target, not just the pencil.
                     -->
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
                         <!-- The word first. A name on its own says what it is called; the
                              word says what it is, and the two screens that also show a
                              project - this one and the combined one - both say it. -->
-                        <TextBlock Text="Проект:" Classes="t14Bold"
+                        <TextBlock Grid.Column="0" Text="Проект:" Classes="t19ExtraBold"
                                    VerticalAlignment="Center" />
 
-                        <TextBlock Name="ProjectNameTextBlock" Classes="t14Bold"
-                                   Text="{Binding DisplayProjectName}"
-                                   TextTrimming="CharacterEllipsis" MaxWidth="420"
+                        <TextBlock Grid.Column="1" Name="ProjectNameTextBlock" Classes="t19ExtraBold"
+                                   Text="{Binding DisplayProjectName}" Margin="8,0,0,0"
+                                   TextTrimming="CharacterEllipsis"
                                    VerticalAlignment="Center" Cursor="Hand"
                                    PointerPressed="OnProjectNameClick" />
 
-                        <Button Classes="icon" Padding="4,4"
+                        <Button Grid.Column="2" Classes="icon" Padding="4,4" Margin="6,0,0,0"
                                 AutomationProperties.Name="Переименовать проект"
                                 ToolTip.Tip="Переименовать проект"
                                 Click="OnProjectNamePencilClick">
@@ -91,19 +92,19 @@
                                        Foreground="{DynamicResource Slate600}" />
                         </Button>
 
-                        <TextBox Name="ProjectNameTextBox" Width="360" FontSize="13"
+                        <TextBox Grid.Column="3" Name="ProjectNameTextBox" Width="360" FontSize="13"
                                  Margin="6,0,0,0" VerticalAlignment="Center"
                                  IsVisible="False"
                                  KeyDown="OnProjectNameKeyDown"
                                  LostFocus="OnProjectNameLostFocus" />
-                    </StackPanel>
-                    <TextBlock Classes="t12" Margin="0,2,0,0"
+                    </Grid>
+                    <TextBlock Classes="t11Half" Margin="0,3,0,0"
                                Foreground="{DynamicResource Slate500}"
                                Text="{Binding BooksSummary}" />
                 </StackPanel>
 
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
-                            VerticalAlignment="Center">
+                <WrapPanel Grid.Column="2" Orientation="Horizontal"
+                           VerticalAlignment="Center">
 
                     <!--
                         Drawn, not fetched from a font.
@@ -115,7 +116,7 @@
                         so they scale with the button, centre on it by construction, and are
                         the same weight as the line beside them.
                     -->
-                    <Button Classes="outline" Padding="12,10"
+                    <Button Classes="outline" Padding="12,10" Margin="0,0,8,0"
                             AutomationProperties.Name="Добавить или заменить папки"
                             ToolTip.Tip="Догрузить новые папки или заменить все папки проекта"
                             Command="{Binding LoadFoldersCommand}">
@@ -128,7 +129,7 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Classes="outline" Padding="12,10"
+                    <Button Classes="outline" Padding="12,10" Margin="0,0,8,0"
                             AutomationProperties.Name="Сохранить проект"
                             Command="{Binding SaveProjectCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
@@ -140,10 +141,10 @@
                         </StackPanel>
                     </Button>
 
-                    <Border Width="1" Height="20" VerticalAlignment="Center"
+                    <Border Width="1" Height="20" Margin="0,0,8,0" VerticalAlignment="Center"
                             Background="{DynamicResource Slate200}" />
 
-                    <Button Classes="outline" Padding="12,10"
+                    <Button Classes="outline" Padding="12,10" Margin="0,0,8,0"
                             AutomationProperties.Name="Загрузить на сайт"
                             ToolTip.Tip="Собрать заказ для сайта: только полностью собранный проект"
                             IsEnabled="{Binding CanExport}"
@@ -157,7 +158,7 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Classes="primary" Padding="16,10"
+                    <Button Classes="primary" Padding="16,10" Margin="0,0,8,0"
                             AutomationProperties.Name="Экспортировать"
                             ToolTip.Tip="Выгрузить все книги проекта в одну папку"
                             IsEnabled="{Binding CanExport}"
@@ -171,7 +172,7 @@
                             <TextBlock Text="Экспортировать" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                </StackPanel>
+                </WrapPanel>
             </Grid>
         </Border>
 
@@ -188,7 +189,7 @@
                 it. Twenty pixels are taken back here and handed over by the padding, so
                 nothing is lost and the bar is no longer pressed against the last book.
             -->
-            <Border Padding="0,0,20,0">
+            <Border Padding="0,18,20,0">
             <ItemsControl ItemsSource="{Binding Books}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -197,7 +198,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Classes="card" Padding="20" Margin="0,0,0,24"
+                        <Border Classes="card" Padding="20,18,20,22" Margin="0,0,0,18"
                                 VerticalAlignment="Top">
                             <StackPanel>
 
@@ -205,10 +206,11 @@
                                 <Grid ColumnDefinitions="Auto,Auto,*,Auto">
 
                                     <Border Grid.Column="0" Width="28" Height="28" CornerRadius="8"
-                                            Background="{DynamicResource Indigo50}"
+                                            Background="{DynamicResource Slate100}"
+                                            BorderBrush="{DynamicResource Slate200}" BorderThickness="1"
                                             VerticalAlignment="Center">
-                                        <TextBlock Classes="t12Semi"
-                                                   Foreground="{DynamicResource Indigo600}"
+                                        <TextBlock Classes="t11ExtraBold"
+                                                   Foreground="{DynamicResource Slate500}"
                                                    HorizontalAlignment="Center"
                                                    VerticalAlignment="Center"
                                                    Text="{Binding BookIndex, StringFormat={}{0:D2}}" />
@@ -231,7 +233,7 @@
                                                TextTrimming="CharacterEllipsis" MaxWidth="460"
                                                ToolTip.Tip="{Binding FolderPath}"
                                                IsVisible="{Binding FolderPath, Converter={StaticResource NotEmpty}}"
-                                               Classes="t12" Foreground="{DynamicResource Slate400}">
+                                               Classes="t11Half" Foreground="{DynamicResource Slate400}">
                                         <TextBlock Text="(Папка: " />
                                         <TextBlock Text="{Binding FolderPath}" />
                                     </TextBlock>
@@ -458,10 +460,11 @@
                                                     </Grid>
 
                                                         <Border Grid.Column="1"
-                                                                Background="{DynamicResource Slate100}"
-                                                                CornerRadius="8" Padding="2">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <Button Classes="arrow" Padding="4"
+                                                                Background="Transparent"
+                                                                CornerRadius="6" Padding="0">
+                                                            <StackPanel Orientation="Horizontal" Spacing="3">
+                                                                <Button Classes="arrow" Padding="0"
+                                                                        Width="22" Height="22"
                                                                         AutomationProperties.Name="Переместить левее"
                                                                         Click="OnMovePageLeftClick">
                                                                     <TextBlock Text="&#xE72B;"
@@ -471,7 +474,8 @@
                                                                 </Button>
                                                                 <Border Width="1" Margin="2,0"
                                                                         Background="{DynamicResource Slate200}" />
-                                                                <Button Classes="arrow" Padding="4"
+                                                                <Button Classes="arrow" Padding="0"
+                                                                        Width="22" Height="22"
                                                                         AutomationProperties.Name="Переместить правее"
                                                                         Click="OnMovePageRightClick">
                                                                     <TextBlock Text="&#xE72A;"
