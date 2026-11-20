@@ -5,8 +5,10 @@ using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Styling;
 using Avalonia.VisualTree;
 using PhotoBook.Presentation.ViewModels;
+using PhotoBook.Shell.Services;
 using PhotoBook.Shell.ViewModels;
 using PhotoBook.Shell.Views;
 
@@ -44,6 +46,11 @@ public partial class MainWindow : Window
         // leaves the address in place.
         Loaded += async (_, _) => await _login.RefreshProfileAsync();
 
+        // The mark follows the theme that is actually in force, not the one the handler
+        // would toggle to: on a machine where the choice was made once and kept, this is
+        // the only place the icon can learn it.
+        Loaded += (_, _) => ShowThemeGlyph(ActualThemeVariant);
+
         // A refused token opens the same window a fresh start would, once: the profile read and
         // the header button can both find the session gone in the same moment.
         _login.SessionExpired += async (_, _) => await SignInAsync();
@@ -76,6 +83,35 @@ public partial class MainWindow : Window
             open.TryCommitPendingRename();
         }
     }
+
+    /// <summary>
+    /// Switches between the light and the dark theme, and remembers the choice.
+    /// </summary>
+    /// <remarks>
+    /// The variant is changed on the application rather than on this window, so the dialogs
+    /// and the sheet layer behind it change with it; a window that switched alone would leave
+    /// every dialog it opened in the other theme. Saving is the second half of the job: a
+    /// switch that is forgotten at the next launch is a switch that did not work.
+    /// </remarks>
+    private void OnThemeClick(object? sender, RoutedEventArgs e)
+    {
+        var next = ActualThemeVariant == ThemeVariant.Dark ? ThemeVariant.Light : ThemeVariant.Dark;
+
+        // Spelled out in full: inside a namespace starting with PhotoBook the bare word
+        // Application resolves to that namespace, not to Avalonia's class.
+        if (Avalonia.Application.Current is { } application)
+            application.RequestedThemeVariant = next;
+
+        ThemePreference.Save(next);
+        ShowThemeGlyph(next);
+    }
+
+    /// <summary>
+    /// Draws the switch as the way out of the theme on screen: a sun in the light theme, a
+    /// moon in the dark one.
+    /// </summary>
+    private void ShowThemeGlyph(ThemeVariant variant) =>
+        ThemeGlyph.Text = variant == ThemeVariant.Dark ? "\uE708" : "\uE706";
 
     /// <summary>
     /// Opens the help window against this one.

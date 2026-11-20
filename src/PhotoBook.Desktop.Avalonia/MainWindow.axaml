@@ -175,9 +175,19 @@
                     <Border Width="1" Height="22" Background="{DynamicResource Slate200}"
                             Margin="10,0" VerticalAlignment="Center" />
 
-                    <Button Classes="utility" ToolTip.Tip="Тема оформления — в разработке"
+                    <!--
+                        The theme switch. Light is the product's own face, and dark is there
+                        for the evening; whichever is chosen stays chosen, across runs and
+                        across updates, until it is chosen again.
+
+                        The mark says what pressing it gives you rather than what is on
+                        screen: a sun while the light theme is up, a moon while the dark one
+                        is. A control that shows its current state in its own icon is a
+                        control whose label has to be read twice.
+                    -->
+                    <Button Classes="utility" Click="OnThemeClick" ToolTip.Tip="Светлая или тёмная тема"
                             AutomationProperties.Name="Тема оформления">
-                        <TextBlock Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
+                        <TextBlock x:Name="ThemeGlyph" Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
                     </Button>
                     <Button Classes="utility" Click="OnHelpClick" ToolTip.Tip="Помощь и журнал работы программы"
                             AutomationProperties.Name="Помощь">
@@ -223,7 +233,7 @@
          The dimming layer and nothing else. What is in it is put there by code and taken
          out again when it has answered; the layer itself knows no more than that.
     -->
-    <Border x:Name="SheetLayer" IsVisible="False" Background="#8C0F172A">
+    <Border x:Name="SheetLayer" IsVisible="False" Background="{DynamicResource Backdrop}">
         <Grid Margin="28">
             <ContentControl x:Name="SheetHost"
                             HorizontalAlignment="Center" VerticalAlignment="Center"

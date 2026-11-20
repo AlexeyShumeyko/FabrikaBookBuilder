@@ -419,7 +419,7 @@
                                                                    FontFamily="Consolas"
                                                                    FontSize="12"
                                                                    FontWeight="SemiBold"
-                                                                   Foreground="White"
+                                                                   Foreground="{DynamicResource Surface}"
                                                                    TextTrimming="CharacterEllipsis" />
                                                             </Border>
                                                         </Panel>

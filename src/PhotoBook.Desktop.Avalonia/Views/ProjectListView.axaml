@@ -215,7 +215,7 @@
                         and it sits centred because there is nothing else in the control to
                         align it with.
                     -->
-                    <TextBlock Text="Создать проект" Foreground="White"
+                    <TextBlock Text="Создать проект" Foreground="{DynamicResource OnAccent}"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Button>
             </Grid>
@@ -253,10 +253,10 @@
 
             <!-- error banner -->
             <Border IsVisible="{Binding ErrorMessage, Converter={StaticResource NotEmpty}}"
-                    Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1"
+                    Background="{DynamicResource Red50}" BorderBrush="{DynamicResource Red200}" BorderThickness="1"
                     CornerRadius="12" Padding="16,12" VerticalAlignment="Top">
                 <TextBlock Text="{Binding ErrorMessage}" Classes="t12"
-                           Foreground="#DC2626" TextWrapping="Wrap" />
+                           Foreground="{DynamicResource Red600}" TextWrapping="Wrap" />
             </Border>
 
             <!-- empty state: gone the moment there is one project -->
@@ -277,7 +277,7 @@
                                Text="Ни один проект не подходит под выбранные условия" />
                     <Button Classes="createProject" AutomationProperties.Name="Сбросить фильтры пусто"
                             Command="{Binding ClearFiltersCommand}">
-                        <TextBlock Text="Сбросить фильтры" Foreground="White" />
+                        <TextBlock Text="Сбросить фильтры" Foreground="{DynamicResource OnAccent}" />
                     </Button>
                 </StackPanel>
             </Border>
@@ -303,8 +303,8 @@
                             Command="{Binding CreateProjectCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                       Foreground="White" />
-                            <TextBlock Text="Создать проект" Foreground="White" />
+                                       Foreground="{DynamicResource OnAccent}" />
+                            <TextBlock Text="Создать проект" Foreground="{DynamicResource OnAccent}" />
                         </StackPanel>
                     </Button>
                 </StackPanel>

@@ -35,7 +35,7 @@
         <Setter Property="Padding" Value="14,8" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Foreground" Value="{DynamicResource OnAccent}" />
         <Setter Property="Cursor" Value="Hand" />
     </Style>
 
@@ -64,7 +64,7 @@
         <Setter Property="Height" Value="40" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Foreground" Value="{DynamicResource OnAccent}" />
         <Setter Property="Cursor" Value="Hand" />
 
         <!-- Light, not heavy: the fill LIFTS on hover and settles on press. A button that

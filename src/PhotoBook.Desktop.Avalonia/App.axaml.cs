@@ -42,7 +42,11 @@ public partial class App : Avalonia.Application
         // does nothing. Set right after loading, it takes. The symptom of getting this wrong
         // is the platform's own control colours arriving dark while the product's palette
         // stays light, which reads as one stray dark tab and is not one stray dark tab.
-        RequestedThemeVariant = ThemeVariant.Light;
+        //
+        // The value is the person's own choice, remembered across runs and updates. The
+        // default is light - a photograph sits on paper, and that is what the product is -
+        // and the switch in the header is the only thing that changes it.
+        RequestedThemeVariant = ThemePreference.Load();
     }
 
     /// <summary>
