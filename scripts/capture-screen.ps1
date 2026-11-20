@@ -264,6 +264,18 @@ try {
             Stop-Process -Id $proc.Id -Force
             exit 1
         }
+        # An editor tab is disabled until the project it belongs to has finished loading, so
+        # pressing it the moment it is found throws "Element not enabled" and leaves the
+        # capture on whatever screen came before.
+        for ($wait = 0; $wait -lt 40 -and -not $tabEl.Current.IsEnabled; $wait++) {
+            Start-Sleep -Milliseconds 250
+        }
+        if (-not $tabEl.Current.IsEnabled) {
+            Write-Host "FAIL: tab '$Tab' never became enabled"
+            Stop-Process -Id $proc.Id -Force
+            exit 1
+        }
+
         $tabPatterns = @($tabEl.GetSupportedPatterns() | ForEach-Object { $_.ProgrammaticName })
         if ($tabPatterns -contains 'SelectionItemPatternIdentifiers.Pattern') {
             $tabEl.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()

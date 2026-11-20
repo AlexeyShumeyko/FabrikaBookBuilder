@@ -99,6 +99,19 @@
         <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
     </Style>
 
+    <!-- The project's name in its bar, and the two panels' smaller headings. -->
+    <Style Selector="TextBlock.t19ExtraBold">
+        <Setter Property="FontSize" Value="19.5" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+
+    <Style Selector="TextBlock.t15ExtraBold">
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+
     <!-- A mode card's name: the largest thing inside a card. -->
     <Style Selector="TextBlock.t23ExtraBold">
         <Setter Property="FontSize" Value="23" />
