@@ -124,6 +124,7 @@ Windows-зависимостей: `using System.Windows;` в них — ошиб
 | `scripts\audit-closed-steps.ps1` | перепроверка закрытых шагов кампании по текущему коду |
 | `scripts\check-workflow-scripts.ps1` | синтаксис `run:` блоков пайплайна |
 | `scripts\check-release-notes.ps1` | текст релиза без ссылок и служебной разметки |
+| `scripts\verify-startup.ps1` | программа запускается, окно открывается развёрнутым, проверка обновлений выполняется |
 
 Правила веток: [BRANCHING.md](BRANCHING.md). Сборка и выпуск: [BUILD.md](BUILD.md).
 Принятые решения: [docs/decisions](docs/decisions).
