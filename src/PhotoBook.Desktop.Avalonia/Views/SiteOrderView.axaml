@@ -155,8 +155,8 @@
                                             </StackPanel>
 
                                             <!-- the column headings, once -->
-                                            <Grid Grid.Row="1" ColumnDefinitions="56,*,100,110,130,140,24,24"
-                                                  Margin="20,0,20,12">
+                                            <Grid Grid.Row="1" ColumnDefinitions="46,*,86,96,122,112,28,28"
+                                                  Margin="18,0,18,10">
                                                 <TextBlock Grid.Column="0" Text="№" Classes="t11" Foreground="{DynamicResource Slate500}" />
                                                 <TextBlock Grid.Column="1" Text="Книга" Classes="t11" Foreground="{DynamicResource Slate500}" />
                                                 <TextBlock Grid.Column="2" Text="Развороты" Classes="t11" Foreground="{DynamicResource Slate500}" />
@@ -175,7 +175,7 @@
                                                             <!-- One book as a row of the table. The chevron opens what
                                                                  the check found: the cover, the spreads, and the file
                                                                  the site refused. A book with a problem opens itself. -->
-                                                            <Grid ColumnDefinitions="56,*,100,110,130,140,24,24" Margin="20,12"
+                                                            <Grid ColumnDefinitions="46,*,86,96,122,112,28,28" Margin="18,11"
                                                                   Opacity="{Binding RowOpacity}">
                                                                 <TextBlock Grid.Column="0" Text="{Binding Number}" Classes="t12"
                                                                            Foreground="{DynamicResource Slate500}" />

@@ -130,6 +130,12 @@
     </Style>
 
     <!-- A mode card's name: the largest thing inside a card. -->
+    <Style Selector="TextBlock.t25ExtraBold">
+        <Setter Property="FontSize" Value="25" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+
     <Style Selector="TextBlock.t23ExtraBold">
         <Setter Property="FontSize" Value="23" />
         <Setter Property="FontWeight" Value="ExtraBold" />
