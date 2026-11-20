@@ -80,7 +80,7 @@
             because the thing below it is a grid of cards and every pixel of height is a
             row of photographs the photographer can see.
         -->
-        <Border Grid.Row="0" Classes="card" Padding="20"
+        <Border Grid.Row="0" Classes="card" Padding="24,28"
                 IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}}">
             <Grid ColumnDefinitions="*,Auto,Auto,Auto" MinHeight="58">
 
@@ -497,7 +497,7 @@
                                       in yet is not a thing to draw a box around.
                                   -->
                                   <StackPanel Orientation="Horizontal" Margin="0,16,0,0"
-                                              Spacing="8" Height="48">
+                                              Spacing="8" Height="66">
                                       <ItemsControl ItemsSource="{Binding PreviewPhotos}">
                                           <ItemsControl.ItemsPanel>
                                               <ItemsPanelTemplate>
@@ -506,21 +506,21 @@
                                           </ItemsControl.ItemsPanel>
                                           <ItemsControl.ItemTemplate>
                                               <DataTemplate>
-                                                  <Border Width="48" Height="48" CornerRadius="8"
+                                                  <Border Width="66" Height="66" CornerRadius="10"
                                                           ClipToBounds="True"
                                                           BorderThickness="1"
                                                           Background="{DynamicResource Slate100}"
                                                           BorderBrush="{DynamicResource Slate200}">
-                                                      <!-- 96 for a 48-pixel tile: two times the drawn size, so a card that lands on a
-                                                                 high-density screen is not scaling a 48-pixel bitmap back up. -->
+                                                      <!-- 132 for a 66-pixel tile: two times the drawn size, so a card that lands on a
+                                                                 high-density screen is not scaling a 66-pixel bitmap back up. -->
                                                       <Image Stretch="UniformToFill"
-                                                             Source="{Binding Converter={StaticResource FilePathToBitmap}, ConverterParameter=96}" />
+                                                             Source="{Binding Converter={StaticResource FilePathToBitmap}, ConverterParameter=132}" />
                                                   </Border>
                                               </DataTemplate>
                                           </ItemsControl.ItemTemplate>
                                       </ItemsControl>
 
-                                      <Border Width="48" Height="48" CornerRadius="8"
+                                      <Border Width="66" Height="66" CornerRadius="10"
                                               Background="{DynamicResource Slate100}"
                                               IsVisible="{Binding RemainingPhotoCount, Converter={StaticResource NotEmpty}}">
                                           <StackPanel Orientation="Horizontal" Spacing="0"
@@ -588,6 +588,7 @@
                                     </Button>
 
                                     <Button Grid.Column="1" Classes="icon" Margin="8,0,0,0"
+                                            Width="38" Height="38" CornerRadius="12"
                                             AutomationProperties.Name="Удалить проект"
                                             Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">

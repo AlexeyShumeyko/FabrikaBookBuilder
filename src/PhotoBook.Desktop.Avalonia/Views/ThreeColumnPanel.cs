@@ -38,8 +38,11 @@ public sealed class ThreeColumnPanel : Panel
     /// blocks did not line up.
     ///
     /// One place for it, and the card carries no margin of its own.
+    ///
+    /// Eighteen, which is the prototype's gap between cards. It was twenty-four, and the
+    /// cards were narrower than the mockup with more air between them.
     /// </remarks>
-    private const double Gutter = 24;
+    private const double Gutter = 18;
 
     protected override Size MeasureOverride(Size availableSize)
     {
