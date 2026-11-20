@@ -27,16 +27,26 @@ namespace PhotoBook.Infrastructure
         public static string JournalPath => Path.Combine(Directory, "journal.log");
 
         /// <summary>
-        /// Sends the journal to disk. Informational entries are dropped unless
-        /// FBR_JOURNAL_VERBOSE is set: a support file full of routine lines hides the two
-        /// entries that explain the report.
+        /// True when routine entries are kept as well as failures. FBR_JOURNAL_VERBOSE turns
+        /// them on: a support file full of routine lines hides the two entries that explain
+        /// the report.
         /// </summary>
-        public static void InstallJournal()
-        {
-            var verbose = !string.IsNullOrWhiteSpace(
-                Environment.GetEnvironmentVariable("FBR_JOURNAL_VERBOSE"));
+        public static bool Verbose =>
+            !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("FBR_JOURNAL_VERBOSE"));
 
-            Journal.Install(new FileJournal(Directory, verbose));
-        }
+        /// <summary>
+        /// Builds the sink. One factory, because there are two of them: the shell installs one
+        /// for its static writers, and the container has one for everything it injects. They
+        /// used to be constructed separately and the container's was built without the
+        /// verbosity flag - so setting FBR_JOURNAL_VERBOSE turned verbose entries on for half
+        /// the program, which reads as "the check never ran" rather than "the setting is
+        /// partial".
+        /// </summary>
+        public static IJournal Create() => new FileJournal(Directory, Verbose);
+
+        /// <summary>
+        /// Sends the journal to disk for the code that cannot be handed one.
+        /// </summary>
+        public static void InstallJournal() => Journal.Install(Create());
     }
 }

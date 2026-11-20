@@ -58,6 +58,14 @@ jobs:
     - name: Run tests
       run: dotnet test ${{ env.SOLUTION_FILE }} --configuration Release --no-build --nologo
 
+    # Two startup rules, each broken once without a single unit test noticing: the window
+    # opens maximised, and the update check really runs. Neither can be seen from a test
+    # that never starts a window - and the update one cost two releases before anyone saw
+    # it, because the check failed inside its own catch block and said nothing.
+    # See scripts\verify-startup.ps1 and docs/decisions/0011.
+    - name: "Program starts maximised and checks for updates"
+      run: pwsh -File scripts/verify-startup.ps1
+
     - name: Check formatting
       run: dotnet format ${{ env.SOLUTION_FILE }} --verify-no-changes --verbosity minimal
 

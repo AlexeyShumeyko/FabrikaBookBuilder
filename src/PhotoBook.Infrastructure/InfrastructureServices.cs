@@ -42,7 +42,7 @@ namespace PhotoBook.Infrastructure
             // The journal is in the container rather than reached for statically, so that anything
             // with a reason to write something down can be given it. A converter with no journal
             // writes nothing, which is how a photograph that cannot be read used to leave no trace.
-            services.AddSingleton<IJournal>(sp => new FileJournal(Diagnostics.Directory));
+            services.AddSingleton<IJournal>(sp => Diagnostics.Create());
             services.AddSingleton<IProjectRepository, ProjectRepository>();
             services.AddSingleton<IProjectIndexStore, ProjectIndexStore>();
 

@@ -12,7 +12,7 @@
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-492%20passing-3FB950?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-proprietary-6E7681?style=for-the-badge)
-![Version](https://img.shields.io/badge/version-2.1.0-4F46E5?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.1.1-4F46E5?style=for-the-badge)
 
 </div>
 
@@ -93,7 +93,7 @@ Windows 11.
 | Изображения | SixLabors.ImageSharp |
 | Обновления | Octokit, GitHub Releases |
 | Установщик | Inno Setup, сборка в GitHub Actions |
-| Тесты | xUnit, 125 тестов |
+| Тесты | xUnit, 492 теста |
 
 ## Производительность
 
@@ -133,7 +133,7 @@ FabrikaBookBuilder/
 |---|---|
 | Только Windows | исполняемый файл и установщик собраны под Windows; перенос на другой движок не планируется |
 | Уникальные папки: число файлов в папках должно совпадать | расхождение показывается до загрузки и не исправляется автоматически |
-| Кнопки «Тема», «Контакты», «Войти» не реализованы | раздел справки и учётные записи входят в следующий выпуск |
+| Кнопки «Тема» и «Контакты» не реализованы | тема оформления и раздел контактов входят в следующий выпуск |
 | Автоматические тесты покрывают контракты и сценарии, не интерфейс | [docs/decisions/0005](docs/decisions/0005-tests-are-mandatory.md) |
 
 ## Документация
@@ -170,7 +170,7 @@ photograph applies to one book, all books or a chosen set.
 self-contained.
 
 **Stack.** .NET 8 · Avalonia 11.2 · MVVM (CommunityToolkit.Mvvm) · SixLabors.ImageSharp ·
-Octokit · Inno Setup · GitHub Actions · xUnit (125 tests).
+Octokit · Inno Setup · GitHub Actions · xUnit (492 tests).
 
 **Licence.** Proprietary. All rights reserved by the author; the author's employer is
 granted full use. Any other use, including commercial use, requires written permission. See
