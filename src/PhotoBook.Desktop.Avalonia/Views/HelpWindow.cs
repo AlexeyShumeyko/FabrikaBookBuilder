@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using PhotoBook.Infrastructure;
+using PhotoBook.Shell.Services;
 
 namespace PhotoBook.Shell.Views;
 
@@ -64,9 +65,9 @@ public class HelpWindow : Window
             FontSize = 12,
             FontWeight = FontWeight.SemiBold,
             CornerRadius = new CornerRadius(12),
-            Background = ConfirmWindow.Brush("#4F46E5"),
+            Background = ThemeResources.Brush("Gold"),
             BorderThickness = new Thickness(0),
-            Foreground = Brushes.White,
+            Foreground = ThemeResources.Brush("OnAccent"),
             HorizontalAlignment = HorizontalAlignment.Right,
             Cursor = new Cursor(StandardCursorType.Hand)
         };
@@ -79,10 +80,10 @@ public class HelpWindow : Window
             FontSize = 12,
             FontWeight = FontWeight.SemiBold,
             CornerRadius = new CornerRadius(12),
-            Background = ConfirmWindow.Brush("#FFFFFF"),
-            BorderBrush = ConfirmWindow.Brush("#E2E8F0"),
+            Background = ThemeResources.Brush("Surface"),
+            BorderBrush = ThemeResources.Brush("BorderDefault"),
             BorderThickness = new Thickness(1),
-            Foreground = ConfirmWindow.Brush("#334155"),
+            Foreground = ThemeResources.Brush("TextDefault"),
             HorizontalAlignment = HorizontalAlignment.Left,
             Cursor = new Cursor(StandardCursorType.Hand)
         };
@@ -95,7 +96,7 @@ public class HelpWindow : Window
             "Здесь будет полное описание программы: что делает каждая функция, как устроена работа с проектом, ответы на частые вопросы и сведения о том, что программа делает с фотографиями и где их хранит.",
             48));
 
-        body.Children.Add(new Border { Height = 1, Background = ConfirmWindow.Brush("#F1F5F9"), Margin = new Thickness(0, 18, 0, 16) });
+        body.Children.Add(new Border { Height = 1, Background = ThemeResources.Brush("BorderDefault"), Margin = new Thickness(0, 18, 0, 16) });
 
         body.Children.Add(Line("Пока раздела нет, вот что поможет быстрее:", 48, heading: true));
 
@@ -105,7 +106,7 @@ public class HelpWindow : Window
             Text = "Если что-то не сработало",
             FontSize = 13,
             FontWeight = FontWeight.SemiBold,
-            Foreground = ConfirmWindow.Brush("#334155")
+            Foreground = ThemeResources.Brush("TextDefault")
         });
         card.Children.Add(new TextBlock
         {
@@ -113,18 +114,18 @@ public class HelpWindow : Window
             FontSize = 12,
             TextWrapping = TextWrapping.Wrap,
             LineHeight = 18,
-            Foreground = ConfirmWindow.Brush("#64748B"),
+            Foreground = ThemeResources.Brush("TextMuted"),
             Margin = new Thickness(0, 4, 0, 0)
         });
-        card.Children.Add(new Border { Height = 1, Background = ConfirmWindow.Brush("#E2E8F0"), Margin = new Thickness(0, 12, 0, 10) });
-        card.Children.Add(new TextBlock { Text = "Журнал:", FontSize = 12, Foreground = ConfirmWindow.Brush("#64748B") });
+        card.Children.Add(new Border { Height = 1, Background = ThemeResources.Brush("BorderDefault"), Margin = new Thickness(0, 12, 0, 10) });
+        card.Children.Add(new TextBlock { Text = "Журнал:", FontSize = 12, Foreground = ThemeResources.Brush("TextMuted") });
         card.Children.Add(JournalPathBox());
 
         body.Children.Add(new Border
         {
-            Background = ConfirmWindow.Brush("#F8FAFC"),
+            Background = ThemeResources.Brush("SurfaceMuted"),
             CornerRadius = new CornerRadius(8),
-            BorderBrush = ConfirmWindow.Brush("#F1F5F9"),
+            BorderBrush = ThemeResources.Brush("SurfaceMuted"),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(14, 12),
             Margin = new Thickness(48, 10, 0, 0),
@@ -135,7 +136,7 @@ public class HelpWindow : Window
         openRow.Children.Add(openFolder);
         body.Children.Add(openRow);
 
-        body.Children.Add(new Border { Height = 1, Background = ConfirmWindow.Brush("#F1F5F9"), Margin = new Thickness(0, 18, 0, 16) });
+        body.Children.Add(new Border { Height = 1, Background = ThemeResources.Brush("BorderDefault"), Margin = new Thickness(0, 18, 0, 16) });
 
         var closeRow = new StackPanel { Orientation = Orientation.Horizontal };
         closeRow.Children.Add(close);
@@ -143,11 +144,11 @@ public class HelpWindow : Window
 
         return new Border
         {
-            Background = ConfirmWindow.Brush("#FFFFFF"),
+            Background = ThemeResources.Brush("Surface"),
             CornerRadius = new CornerRadius(16),
-            BorderBrush = ConfirmWindow.Brush("#E2E8F0"),
+            BorderBrush = ThemeResources.Brush("BorderDefault"),
             BorderThickness = new Thickness(1),
-            BoxShadow = new BoxShadows(BoxShadow.Parse("0 12 50 0 #40000000")),
+            BoxShadow = ThemeResources.Shadow("ShadowModal"),
             Child = body
         };
     }
@@ -168,9 +169,9 @@ public class HelpWindow : Window
             Width = 36,
             Height = 36,
             CornerRadius = new CornerRadius(10),
-            Background = ConfirmWindow.Brush("#EEF2FF"),
+            Background = ThemeResources.Brush("Brand50"),
             VerticalAlignment = VerticalAlignment.Center,
-            Child = Glyph(0xE897, 15, "#4F46E5")
+            Child = Glyph(0xE897, 15, "Accent")
         };
 
         var title = new StackPanel
@@ -184,13 +185,13 @@ public class HelpWindow : Window
                     Text = "Помощь",
                     FontSize = 16,
                     FontWeight = FontWeight.Bold,
-                    Foreground = ConfirmWindow.Brush("#0F172A")
+                    Foreground = ThemeResources.Brush("TextStrong")
                 },
                 new TextBlock
                 {
                     Text = "Раздел готовится и появится в ближайших обновлениях",
                     FontSize = 12,
-                    Foreground = ConfirmWindow.Brush("#64748B"),
+                    Foreground = ThemeResources.Brush("TextMuted"),
                     Margin = new Thickness(0, 2, 0, 0)
                 }
             }
@@ -218,8 +219,8 @@ public class HelpWindow : Window
             FontSize = 12,
             Padding = new Thickness(8, 6),
             CornerRadius = new CornerRadius(8),
-            Background = ConfirmWindow.Brush("#FFFFFF"),
-            BorderBrush = ConfirmWindow.Brush("#E2E8F0"),
+            Background = ThemeResources.Brush("Surface"),
+            BorderBrush = ThemeResources.Brush("BorderDefault"),
             BorderThickness = new Thickness(1),
             Margin = new Thickness(0, 4, 0, 0)
         };
@@ -258,7 +259,7 @@ public class HelpWindow : Window
         FontSize = 13,
         TextWrapping = TextWrapping.Wrap,
         LineHeight = 20,
-        Foreground = ConfirmWindow.Brush(heading ? "#334155" : "#475569"),
+        Foreground = ThemeResources.Brush(heading ? "TextDefault" : "TextMuted"),
         FontWeight = heading ? FontWeight.SemiBold : FontWeight.Normal,
         Margin = new Thickness(left, 0, 0, 0)
     };
@@ -277,7 +278,7 @@ public class HelpWindow : Window
         Text = ((char)codePoint).ToString(),
         FontFamily = new FontFamily("Segoe MDL2 Assets"),
         FontSize = size,
-        Foreground = ConfirmWindow.Brush(brush),
+        Foreground = ThemeResources.Brush(brush),
         HorizontalAlignment = HorizontalAlignment.Center,
         VerticalAlignment = VerticalAlignment.Center
     };

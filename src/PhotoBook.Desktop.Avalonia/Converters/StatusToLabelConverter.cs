@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using PhotoBook.Shell.Services;
 using PhotoBook.Core;
 
 namespace PhotoBook.Shell.Converters
@@ -28,11 +29,11 @@ namespace PhotoBook.Shell.Converters
 
             if (Is(parameter, "dot"))
             {
-                return Brush(status switch
+                return ThemeResources.Brush(status switch
                 {
-                    ProjectStatus.SuccessfullyCompleted => "#10B981", // emerald-500
-                    ProjectStatus.Ready => "#F59E0B",                // amber-500
-                    _ => "#94A3B8"                                     // slate-400
+                    ProjectStatus.SuccessfullyCompleted => "Emerald500",
+                    ProjectStatus.Ready => "Amber500",
+                    _ => "Slate400"
                 });
             }
 
@@ -54,6 +55,6 @@ namespace PhotoBook.Shell.Converters
         internal static bool Is(object? parameter, string role)
             => string.Equals(parameter as string, role, StringComparison.OrdinalIgnoreCase);
 
-        internal static IBrush Brush(string hex) => new SolidColorBrush(Color.Parse(hex));
+        internal static IBrush Brush(string token) => ThemeResources.Brush(token);
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
-using Avalonia.Media;
+using PhotoBook.Shell.Services;
 using PhotoBook.Core;
 using PhotoBook.Presentation.ViewModels;
 
@@ -24,9 +24,9 @@ namespace PhotoBook.Shell.Converters
             CultureInfo culture)
             => value switch
             {
-                PhotoUsage.Assigned => Solid("#10B981"),
-                PhotoUsage.Shared => Solid("#6366F1"),
-                _ => Solid("#94A3B8")
+                PhotoUsage.Assigned => ThemeResources.Brush("Emerald500"),
+                PhotoUsage.Shared => ThemeResources.Brush("Gold"),
+                _ => ThemeResources.Brush("Slate400")
             };
 
         public object? ConvertBack(
@@ -36,6 +36,5 @@ namespace PhotoBook.Shell.Converters
             CultureInfo culture)
             => throw new NotSupportedException();
 
-        private static IBrush Solid(string hex) => new SolidColorBrush(Color.Parse(hex));
     }
 }

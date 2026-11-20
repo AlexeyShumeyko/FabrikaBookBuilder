@@ -127,7 +127,9 @@
 
             <!-- The mat behind a photograph, and the tray a group of tabs sits in. -->
             <Color x:Key="MatSurface">#E2D7C1</Color>
-            <Color x:Key="TabTray">#0F4A3A1C</Color>
+            <Color x:Key="TabTray">#0F4A3A1C</Color>
+            <!-- The chosen tab is the one surface that has to stand above the tray. -->
+            <Color x:Key="TabSelected">#FAF6EA</Color>
 
             <!-- The dim over the page behind a modal panel. -->
             <Color x:Key="Backdrop">#6B3A301E</Color>
@@ -271,7 +273,8 @@
             <Color x:Key="BorderAccentHover">#3DFFCD2D</Color>
 
             <Color x:Key="MatSurface">#15120E</Color>
-            <Color x:Key="TabTray">#42000000</Color>
+            <Color x:Key="TabTray">#42000000</Color>
+            <Color x:Key="TabSelected">#2B2318</Color>
 
             <Color x:Key="Backdrop">#B8080505</Color>
 

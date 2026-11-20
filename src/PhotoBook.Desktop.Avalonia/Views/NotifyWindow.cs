@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using PhotoBook.Shell.Services;
 
 namespace PhotoBook.Shell.Views
 {
@@ -30,7 +31,7 @@ namespace PhotoBook.Shell.Views
             CanResize = false;
             ShowInTaskbar = false;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            Background = Brushes.White;
+            Background = ThemeResources.Brush("Surface");
 
             Content = Build();
 
@@ -42,14 +43,14 @@ namespace PhotoBook.Shell.Views
 
         private Control Build()
         {
-            var accent = _destructive ? ConfirmWindow.Brush("#DC2626") : ConfirmWindow.Brush("#4F46E5");
+            var accent = _destructive ? ThemeResources.Brush("Red600") : ThemeResources.Brush("Gold");
 
             var ok = new Button
             {
                 Content = _okText,
                 Padding = new Thickness(16, 9),
                 Background = accent,
-                Foreground = Brushes.White,
+                Foreground = ThemeResources.Brush("OnAccent"),
                 FontSize = 12,
                 FontWeight = FontWeight.SemiBold,
                 CornerRadius = new CornerRadius(10),
@@ -69,7 +70,7 @@ namespace PhotoBook.Shell.Views
                         Text = _message,
                         TextWrapping = TextWrapping.Wrap,
                         FontSize = 13,
-                        Foreground = ConfirmWindow.Brush("#334155"),
+                        Foreground = ThemeResources.Brush("TextDefault"),
                         MaxWidth = 392
                     },
                     ok

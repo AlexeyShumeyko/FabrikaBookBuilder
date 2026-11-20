@@ -29,7 +29,7 @@ namespace PhotoBook.Shell.Converters
             {
                 "text" => valid ? "Структура корректна" : "Структура неполная",
                 "glyph" => valid ? "\uE73E" : "\uE7BA",   // the tick and the warning
-                "brush" => valid ? PageCaptionConverter.Brush("#059669") : PageCaptionConverter.Brush("#D97706"),
+                "brush" => valid ? PageCaptionConverter.Brush("Emerald600") : PageCaptionConverter.Brush("Amber600"),
                 _ => null
             };
         }

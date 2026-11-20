@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using PhotoBook.Shell.Services;
 using PhotoBook.Core;
 using PhotoBook.Presentation.ViewModels;
 
@@ -51,11 +52,11 @@ namespace PhotoBook.Shell.Converters
             "empty" => (true, flag),          // IsEmpty
             "imageerror" => (true, !flag),    // HasImage
 
-            "slotbrush" => (true, Solid(flag ? "#4F46E5" : "#64748B")),
+            "slotbrush" => (true, ThemeResources.Brush(flag ? "Accent" : "TextMuted")),
             "slotweight" => (true, flag ? FontWeight.Bold : FontWeight.Normal),
-            "filledbrush" => (true, Solid(flag ? "#059669" : "#EF4444")),
+            "filledbrush" => (true, ThemeResources.Brush(flag ? "Emerald600" : "Red500")),
             "filledsemi" => (true, flag ? FontWeight.SemiBold : FontWeight.Normal),
-            "structurecomplete" => (true, Solid(flag ? "#059669" : "#EF4444")),
+            "structurecomplete" => (true, ThemeResources.Brush(flag ? "Emerald600" : "Red500")),
 
             // The empty slot's own caption, decided from IsCover. It used to be asked for with
             // the bool and answered only for a page - so the bold line in the middle of an
@@ -67,7 +68,7 @@ namespace PhotoBook.Shell.Converters
         };
 
         /// <summary>What a colour role answers when nothing is known about the state.</summary>
-        private static readonly IBrush FallbackBrush = new SolidColorBrush(Color.Parse("#64748B"));
+        private static IBrush FallbackBrush => ThemeResources.Brush("TextMuted");
 
         public object? Convert(
             object? value,
@@ -90,7 +91,7 @@ namespace PhotoBook.Shell.Converters
                     "hasphoto" => !string.IsNullOrEmpty(page.SourcePath),
                     "empty" => string.IsNullOrEmpty(page.SourcePath),
                     "imageerror" => !string.IsNullOrEmpty(page.SourcePath) && !page.HasImage,
-                    "slotbrush" => page.IsSlotLabelAccent ? Solid("#4F46E5") : Solid("#64748B"),
+                    "slotbrush" => ThemeResources.Brush(page.IsSlotLabelAccent ? "Accent" : "TextMuted"),
                     "slotempty" => page.IsCover ? "Обложка" : "Слот пуст",
                     _ => Fallback(role)
                 };
@@ -127,6 +128,5 @@ namespace PhotoBook.Shell.Converters
             CultureInfo culture)
             => throw new NotSupportedException();
 
-        private static IBrush Solid(string hex) => new SolidColorBrush(Color.Parse(hex));
     }
 }

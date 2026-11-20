@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using PhotoBook.Shell.Services;
 
 namespace PhotoBook.Shell.Views;
 
@@ -83,10 +84,10 @@ public class PageNumberWindow : Window
             FontSize = 12,
             FontWeight = FontWeight.SemiBold,
             CornerRadius = new CornerRadius(12),
-            Background = ConfirmWindow.Brush("#FFFFFF"),
-            BorderBrush = ConfirmWindow.Brush("#E2E8F0"),
+            Background = ThemeResources.Brush("Surface"),
+            BorderBrush = ThemeResources.Brush("BorderDefault"),
             BorderThickness = new Thickness(1),
-            Foreground = ConfirmWindow.Brush("#334155"),
+            Foreground = ThemeResources.Brush("TextDefault"),
             HorizontalAlignment = HorizontalAlignment.Right
         };
         cancel.Click += (_, _) => Close(null);
@@ -98,20 +99,20 @@ public class PageNumberWindow : Window
             FontSize = 12,
             FontWeight = FontWeight.SemiBold,
             CornerRadius = new CornerRadius(12),
-            Background = ConfirmWindow.Brush("#4F46E5"),
+            Background = ThemeResources.Brush("Gold"),
             BorderThickness = new Thickness(0),
-            Foreground = Brushes.White,
+            Foreground = ThemeResources.Brush("OnAccent"),
             HorizontalAlignment = HorizontalAlignment.Right
         };
         accept.Click += (_, _) => Accept();
 
         return new Border
         {
-            Background = ConfirmWindow.Brush("#FFFFFF"),
+            Background = ThemeResources.Brush("Surface"),
             CornerRadius = new CornerRadius(16),
-            BorderBrush = ConfirmWindow.Brush("#E2E8F0"),
+            BorderBrush = ThemeResources.Brush("BorderDefault"),
             BorderThickness = new Thickness(1),
-            BoxShadow = new BoxShadows(BoxShadow.Parse("0 12 50 0 #40000000")),
+            BoxShadow = ThemeResources.Shadow("ShadowModal"),
             Child = new StackPanel
             {
                 Margin = new Thickness(24),
@@ -129,7 +130,7 @@ public class PageNumberWindow : Window
                                 Width = 36,
                                 Height = 36,
                                 CornerRadius = new CornerRadius(10),
-                                Background = ConfirmWindow.Brush("#EEF2FF"),
+                                Background = ThemeResources.Brush("Brand50"),
                                 VerticalAlignment = VerticalAlignment.Center,
                                 Child = new TextBlock
                                 {
@@ -137,7 +138,7 @@ public class PageNumberWindow : Window
                                     // See the same note in the help window.
                                     Text = ((char)0xE8FD).ToString(),
                                     FontSize = 15,
-                                    Foreground = ConfirmWindow.Brush("#4F46E5"),
+                                    Foreground = ThemeResources.Brush("Accent"),
                                     HorizontalAlignment = HorizontalAlignment.Center,
                                     VerticalAlignment = VerticalAlignment.Center
                                 }
@@ -147,7 +148,7 @@ public class PageNumberWindow : Window
                                 Text = "Назначить разворот",
                                 FontSize = 16,
                                 FontWeight = FontWeight.Bold,
-                                Foreground = ConfirmWindow.Brush("#0F172A"),
+                                Foreground = ThemeResources.Brush("TextStrong"),
                                 Margin = new Thickness(12, 0, 0, 0),
                                 VerticalAlignment = VerticalAlignment.Center
                             }
@@ -159,7 +160,7 @@ public class PageNumberWindow : Window
                         Text = "Введите номер, на который нужно переместить этот разворот.",
                         FontSize = 12,
                         TextWrapping = TextWrapping.Wrap,
-                        Foreground = ConfirmWindow.Brush("#64748B"),
+                        Foreground = ThemeResources.Brush("TextMuted"),
                         Margin = new Thickness(0, 0, 0, 12)
                     },
 

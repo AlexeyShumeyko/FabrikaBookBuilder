@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using PhotoBook.Presentation.ViewModels;
+using PhotoBook.Shell.Services;
 
 namespace PhotoBook.Shell.Views
 {
@@ -77,7 +78,7 @@ namespace PhotoBook.Shell.Views
             _message = new TextBlock
             {
                 FontSize = 12,
-                Foreground = ConfirmWindow.Brush("#B91C1C"),
+                Foreground = ThemeResources.Brush("Red700"),
                 TextWrapping = TextWrapping.Wrap,
                 LineHeight = 18,
                 Margin = new Thickness(0, 2, 0, 10)
@@ -91,8 +92,8 @@ namespace PhotoBook.Shell.Views
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 Padding = new Thickness(16, 10),
-                Background = ConfirmWindow.Brush("#4F46E5"),
-                Foreground = Brushes.White,
+                Background = ThemeResources.Brush("Gold"),
+                Foreground = ThemeResources.Brush("OnAccent"),
                 FontSize = 13,
                 FontWeight = FontWeight.SemiBold,
                 CornerRadius = new CornerRadius(12),
@@ -114,10 +115,10 @@ namespace PhotoBook.Shell.Views
                 Content = "Закрыть",
                 HorizontalAlignment = HorizontalAlignment.Right,
                 Padding = new Thickness(16, 9),
-                Background = ConfirmWindow.Brush("#FFFFFF"),
-                BorderBrush = ConfirmWindow.Brush("#E2E8F0"),
+                Background = ThemeResources.Brush("Surface"),
+                BorderBrush = ThemeResources.Brush("BorderDefault"),
                 BorderThickness = new Thickness(1),
-                Foreground = ConfirmWindow.Brush("#334155"),
+                Foreground = ThemeResources.Brush("TextDefault"),
                 FontSize = 12,
                 FontWeight = FontWeight.SemiBold,
                 CornerRadius = new CornerRadius(12),
@@ -128,7 +129,7 @@ namespace PhotoBook.Shell.Views
             var who = new TextBlock
             {
                 FontSize = 13,
-                Foreground = ConfirmWindow.Brush("#334155"),
+                Foreground = ThemeResources.Brush("TextDefault"),
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 14)
             };
@@ -196,8 +197,8 @@ namespace PhotoBook.Shell.Views
             FontSize = 13,
             Padding = new Thickness(12, 9),
             CornerRadius = new CornerRadius(10),
-            Background = ConfirmWindow.Brush("#FFFFFF"),
-            BorderBrush = ConfirmWindow.Brush("#CBD5E1"),
+            Background = ThemeResources.Brush("Surface"),
+            BorderBrush = ThemeResources.Brush("BorderStrong"),
             BorderThickness = new Thickness(1),
             Margin = new Thickness(0, 0, 0, 10)
         };
@@ -209,7 +210,7 @@ namespace PhotoBook.Shell.Views
                 Text = "Вход в аккаунт",
                 FontSize = 16,
                 FontWeight = FontWeight.Bold,
-                Foreground = ConfirmWindow.Brush("#0F172A"),
+                Foreground = ThemeResources.Brush("TextStrong"),
                 VerticalAlignment = VerticalAlignment.Center
             };
 
@@ -218,14 +219,14 @@ namespace PhotoBook.Shell.Views
                 Width = 36,
                 Height = 36,
                 CornerRadius = new CornerRadius(10),
-                Background = ConfirmWindow.Brush("#EEF2FF"),
+                Background = ThemeResources.Brush("Brand50"),
                 VerticalAlignment = VerticalAlignment.Center,
                 Child = new TextBlock
                 {
                     Text = ((char)0xE77B).ToString(),
                     FontFamily = new FontFamily("Segoe MDL2 Assets"),
                     FontSize = 15,
-                    Foreground = ConfirmWindow.Brush("#4F46E5"),
+                    Foreground = ThemeResources.Brush("Accent"),
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center
                 }
@@ -244,7 +245,7 @@ namespace PhotoBook.Shell.Views
             {
                 Text = "Почта и пароль от аккаунта на сайте фабрики.",
                 FontSize = 12,
-                Foreground = ConfirmWindow.Brush("#475569"),
+                Foreground = ThemeResources.Brush("TextMuted"),
                 TextWrapping = TextWrapping.Wrap,
                 LineHeight = 18,
                 Margin = new Thickness(48, 6, 0, 18)
@@ -253,7 +254,7 @@ namespace PhotoBook.Shell.Views
             var rule = new Border
             {
                 Height = 1,
-                Background = ConfirmWindow.Brush("#F1F5F9"),
+                Background = ThemeResources.Brush("BorderDefault"),
                 Margin = new Thickness(0, 18, 0, 16)
             };
 
@@ -267,11 +268,11 @@ namespace PhotoBook.Shell.Views
             return new Border
             {
                 Margin = new Thickness(18),
-                Background = ConfirmWindow.Brush("#FFFFFF"),
+                Background = ThemeResources.Brush("Surface"),
                 CornerRadius = new CornerRadius(16),
-                BorderBrush = ConfirmWindow.Brush("#E2E8F0"),
+                BorderBrush = ThemeResources.Brush("BorderDefault"),
                 BorderThickness = new Thickness(1),
-                BoxShadow = new BoxShadows(BoxShadow.Parse("0 12 50 0 #40000000")),
+                BoxShadow = ThemeResources.Shadow("ShadowModal"),
                 Child = body
             };
         }

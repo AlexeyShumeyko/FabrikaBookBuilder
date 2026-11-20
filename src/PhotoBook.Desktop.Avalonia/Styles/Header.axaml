@@ -131,10 +131,10 @@
         Thirty-eight pixels, fourteen of padding, an eleven-pixel corner and thirteen-point
         type is the same shape with air in it.
 
-        The fill is the brand's own lightest, #EEF2FF, barely a shade off the white it sits
-        on, and the pointer deepens it rather than darkening it. Grey on grey - which is
-        what this wore before - is the one combination that looks like a control nobody
-        finished drawing.
+        The fill is the brand's own lightest tint, Brand50, barely a shade off the surface
+        it sits on, and the pointer deepens it rather than darkening it. Grey on grey -
+        which is what this wore before - is the one combination that looks like a control
+        nobody finished drawing.
 
         The width is fixed, and that is the whole of the second half of this rule.
         It used to be a floor, so each box was as wide as its own wording and the panel

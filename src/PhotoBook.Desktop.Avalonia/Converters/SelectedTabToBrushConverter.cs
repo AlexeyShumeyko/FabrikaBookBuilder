@@ -4,6 +4,7 @@ using Avalonia.Data.Converters;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using PhotoBook.Core;
+using PhotoBook.Shell.Services;
 
 namespace PhotoBook.Shell.Converters
 {
@@ -38,11 +39,11 @@ namespace PhotoBook.Shell.Converters
                 // The selected tab is a white card lifted off the grey strip; the rest show
                 // the strip through. There is no third state and no hover colour here - the
                 // hover is the platform's, on top of whichever of these two is underneath.
-                "bg" => selected ? Solid("#FFFFFF") : Solid("Transparent"),
+                "bg" => selected ? ThemeResources.Brush("TabSelected") : Brushes.Transparent,
 
-                "fg" => selected ? Solid("#4F46E5") : Solid("#475569"),
+                "fg" => selected ? ThemeResources.Brush("TextStrong") : ThemeResources.Brush("TextMuted"),
 
-                _ => Solid("Transparent")
+                _ => Brushes.Transparent
             };
         }
 
@@ -53,6 +54,5 @@ namespace PhotoBook.Shell.Converters
             CultureInfo culture)
             => throw new NotSupportedException();
 
-        private static IBrush Solid(string hex) => new SolidColorBrush(Color.Parse(hex));
     }
 }

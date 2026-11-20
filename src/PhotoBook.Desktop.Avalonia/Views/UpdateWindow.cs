@@ -11,6 +11,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using PhotoBook.Application;
 using PhotoBook.Shell.ViewModels;
+using PhotoBook.Shell.Services;
 
 namespace PhotoBook.Shell.Views;
 
@@ -135,7 +136,7 @@ public class UpdateWindow : Window
             CornerRadius = new CornerRadius(16),
             BorderBrush = Ink.Border,
             BorderThickness = new Thickness(1),
-            BoxShadow = new BoxShadows(BoxShadow.Parse("0 12 50 0 #40000000")),
+            BoxShadow = ThemeResources.Shadow("ShadowModal"),
             Child = body
         };
     }
@@ -296,8 +297,8 @@ public class UpdateWindow : Window
         FontSize = 12,
         FontWeight = FontWeight.SemiBold,
         CornerRadius = new CornerRadius(12),
-        Background = accent ? Ink.Accent : Ink.Surface,
-        Foreground = accent ? Brushes.White : Ink.Text,
+        Background = accent ? Ink.Primary : Ink.Surface,
+        Foreground = accent ? Ink.OnPrimary : Ink.Text,
         BorderBrush = accent ? Brushes.Transparent : Ink.Border,
         BorderThickness = new Thickness(1),
         Cursor = new Cursor(StandardCursorType.Hand)
@@ -305,15 +306,19 @@ public class UpdateWindow : Window
 
     private static class Ink
     {
-        public static IBrush Surface => ConfirmWindow.Brush("#FFFFFF");
-        public static IBrush Muted => ConfirmWindow.Brush("#F8FAFC");
-        public static IBrush Muted2 => ConfirmWindow.Brush("#64748B");
-        public static IBrush Border => ConfirmWindow.Brush("#E2E8F0");
-        public static IBrush FaintBorder => ConfirmWindow.Brush("#E2E8F0");
-        public static IBrush Faint => ConfirmWindow.Brush("#94A3B8");
-        public static IBrush Heading => ConfirmWindow.Brush("#0F172A");
-        public static IBrush Text => ConfirmWindow.Brush("#334155");
-        public static IBrush Accent => ConfirmWindow.Brush("#4F46E5");
-        public static IBrush AccentTint => ConfirmWindow.Brush("#EEF2FF");
+        public static IBrush Surface => ThemeResources.Brush("Surface");
+        public static IBrush Muted => ThemeResources.Brush("SurfaceMuted");
+        public static IBrush Muted2 => ThemeResources.Brush("TextMuted");
+        public static IBrush Border => ThemeResources.Brush("BorderDefault");
+        public static IBrush FaintBorder => ThemeResources.Brush("BorderDefault");
+        public static IBrush Faint => ThemeResources.Brush("TextFaint");
+        public static IBrush Heading => ThemeResources.Brush("TextStrong");
+        public static IBrush Text => ThemeResources.Brush("TextDefault");
+        public static IBrush Accent => ThemeResources.Brush("Accent");
+
+        public static IBrush Primary => ThemeResources.Brush("Gold");
+
+        public static IBrush OnPrimary => ThemeResources.Brush("OnAccent");
+        public static IBrush AccentTint => ThemeResources.Brush("Brand50");
     }
 }

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using PhotoBook.Shell.Services;
 
 namespace PhotoBook.Shell.Views
 {
@@ -48,7 +49,7 @@ namespace PhotoBook.Shell.Views
             CanResize = false;
             ShowInTaskbar = false;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            Background = Brushes.White;
+            Background = Brush("Surface");
             Title = "Подтверждение";
 
             Content = Build();
@@ -64,13 +65,13 @@ namespace PhotoBook.Shell.Views
 
         private Control Build()
         {
-            var accent = _destructive ? Brush("#DC2626") : Brush("#4F46E5");
+            var accent = _destructive ? ThemeResources.Brush("Red600") : ThemeResources.Brush("Gold");
 
             // A question is marked by whether it can take something away, so the icon's two
             // colours are the whole of the warning: red when the answer can destroy, the
             // brand's own colours when it cannot.
-            var iconTint = _destructive ? Brush("#DC2626") : Brush("#4F46E5");
-            var iconTintPale = _destructive ? Brush("#FEF2F2") : Brush("#EEF2FF");
+            var iconTint = _destructive ? ThemeResources.Brush("Red600") : ThemeResources.Brush("Accent");
+            var iconTintPale = _destructive ? ThemeResources.Brush("Red50") : ThemeResources.Brush("Brand50");
 
             var iconHost = new Border
             {
@@ -112,7 +113,7 @@ namespace PhotoBook.Shell.Views
                 Text = _title,
                 FontSize = 16,
                 FontWeight = FontWeight.Bold,
-                Foreground = Brush("#0F172A"),
+                Foreground = ThemeResources.Brush("TextStrong"),
                 TextWrapping = TextWrapping.Wrap,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(12, 0, 0, 0)
@@ -126,7 +127,7 @@ namespace PhotoBook.Shell.Views
             {
                 Text = _message,
                 FontSize = 12,
-                Foreground = Brush("#475569"),
+                Foreground = ThemeResources.Brush("TextMuted"),
                 TextWrapping = TextWrapping.Wrap,
                 LineHeight = 19,
                 Margin = new Thickness(48, 0, 0, 0)
@@ -135,7 +136,7 @@ namespace PhotoBook.Shell.Views
             var rule = new Border
             {
                 Height = 1,
-                Background = Brush("#F1F5F9"),
+                Background = ThemeResources.Brush("BorderDefault"),
                 Margin = new Thickness(0, 20, 0, 18)
             };
 
@@ -144,7 +145,7 @@ namespace PhotoBook.Shell.Views
                 Content = _confirmText,
                 Padding = new Thickness(16, 9),
                 Background = accent,
-                Foreground = Brushes.White,
+                Foreground = Brush("OnAccent"),
                 FontSize = 12,
                 FontWeight = FontWeight.SemiBold,
                 CornerRadius = new CornerRadius(10),
@@ -156,8 +157,8 @@ namespace PhotoBook.Shell.Views
             {
                 Content = "Отмена",
                 Padding = new Thickness(16, 9),
-                Background = Brush("#F1F5F9"),
-                Foreground = Brush("#334155"),
+                Background = ThemeResources.Brush("SurfaceMuted"),
+                Foreground = ThemeResources.Brush("TextDefault"),
                 FontSize = 12,
                 FontWeight = FontWeight.SemiBold,
                 CornerRadius = new CornerRadius(10),
@@ -183,6 +184,6 @@ namespace PhotoBook.Shell.Views
 
         private void Answer(bool accepted) => Close(accepted);
 
-        internal static IBrush Brush(string hex) => new SolidColorBrush(Color.Parse(hex));
+        internal static IBrush Brush(string token) => ThemeResources.Brush(token);
     }
 }

@@ -3,6 +3,7 @@ using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia;
 using Avalonia.Media;
+using PhotoBook.Shell.Services;
 using PhotoBook.Core;
 
 namespace PhotoBook.Shell.Converters
@@ -40,7 +41,7 @@ namespace PhotoBook.Shell.Converters
             return role switch
             {
                 "text" => page is null ? string.Empty : page.IsCover ? "Обложка" : $"Разворот {page.DisplayIndex}",
-                "brush" => isCover ? Brush("#4F46E5") : Brush("#64748B"),
+                "brush" => Brush(isCover ? "Accent" : "TextMuted"),
 
                 // The cover is the one slot that has to be findable in a row of twenty, so it
                 // is framed in the accent colour and two pixels. Everything else is a hairline.
@@ -50,7 +51,7 @@ namespace PhotoBook.Shell.Converters
                 // should have exactly one place in it that is meant for something specific.
                 // It was tried without the accent on an empty cover, and the row read as
                 // eleven interchangeable blanks with no beginning.
-                "border" => isCover ? Brush("#6366F1") : Brush("#E2E8F0"),
+                "border" => Brush(isCover ? "Accent" : "BorderDefault"),
 
                 // A Thickness, not a number. Bound to a plain double this conversion is not
                 // made at all, the border comes out with no thickness, and every slot on the
@@ -69,7 +70,7 @@ namespace PhotoBook.Shell.Converters
 
                 // Violet for the cover's own action and green for the promotion, as in the
                 // released program: the colour says which of the two things this is.
-                "actionbrush" => isCover ? Brush("#4F46E5") : Brush("#059669"),
+                "actionbrush" => Brush(isCover ? "Accent" : "Emerald600"),
 
                 "actionname" => page is null
                     ? string.Empty
@@ -88,6 +89,6 @@ namespace PhotoBook.Shell.Converters
             CultureInfo culture)
             => throw new NotSupportedException();
 
-        internal static IBrush Brush(string hex) => new SolidColorBrush(Color.Parse(hex));
+        internal static IBrush Brush(string token) => ThemeResources.Brush(token);
     }
 }

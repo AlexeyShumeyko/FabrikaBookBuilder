@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using PhotoBook.Shell.Services;
 
 namespace PhotoBook.Shell.Converters
 {
@@ -21,7 +22,7 @@ namespace PhotoBook.Shell.Converters
         public static readonly RunFieldFrameConverter Instance = new();
 
         private static readonly IBrush Valid = Brushes.Transparent;
-        private static readonly IBrush Invalid = new SolidColorBrush(Color.Parse("#F87171"));
+        private static IBrush Invalid => ThemeResources.Brush("Red400");
 
         public object? Convert(
             object? value,

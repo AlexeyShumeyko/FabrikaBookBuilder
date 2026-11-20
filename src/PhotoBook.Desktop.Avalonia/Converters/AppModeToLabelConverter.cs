@@ -2,6 +2,8 @@ using System;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Data.Converters;
+using Avalonia.Media;
+using PhotoBook.Shell.Services;
 using PhotoBook.Core;
 
 namespace PhotoBook.Shell.Converters
@@ -50,14 +52,13 @@ namespace PhotoBook.Shell.Converters
 
             if (role is not null && role.StartsWith("tint", StringComparison.OrdinalIgnoreCase))
             {
-                bool folders = mode == AppMode.UniqueFolders;
                 return role.ToLowerInvariant() switch
                 {
-                    "tintbg" => StatusToLabelConverter.Brush(folders ? "#F0F9FF" : "#EEF2FF"),
-                    "tintborder" => StatusToLabelConverter.Brush(folders ? "#BAE6FD" : "#C7D2FE"),
-                    "tinttext" => StatusToLabelConverter.Brush(folders ? "#0369A1" : "#4338CA"),
-                    "tinticon" => StatusToLabelConverter.Brush(folders ? "#0284C7" : "#4F46E5"),
-                    _ => StatusToLabelConverter.Brush("#00000000")
+                    "tintbg" => ThemeResources.Brush("Sunken"),
+                    "tintborder" => ThemeResources.Brush("BorderDefault"),
+                    "tinttext" => ThemeResources.Brush("TextDefault"),
+                    "tinticon" => ThemeResources.Brush("Accent"),
+                    _ => Brushes.Transparent
                 };
             }
 

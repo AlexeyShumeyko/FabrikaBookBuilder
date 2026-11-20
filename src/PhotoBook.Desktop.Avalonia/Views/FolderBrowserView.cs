@@ -14,6 +14,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using PhotoBook.Application;
+using PhotoBook.Shell.Services;
 
 namespace PhotoBook.Shell.Views;
 
@@ -181,8 +182,8 @@ public class FolderBrowserView : OverlaySheet<List<string>>
         _ok.FontSize = 13;
         _ok.FontWeight = FontWeight.SemiBold;
         _ok.CornerRadius = new CornerRadius(12);
-        _ok.Background = Ink.Accent;
-        _ok.Foreground = Brushes.White;
+        _ok.Background = Ink.Primary;
+        _ok.Foreground = Ink.OnPrimary;
         _ok.BorderThickness = new Thickness(0);
         _ok.Cursor = new Cursor(StandardCursorType.Hand);
         _ok.Click += async (_, _) => await ConfirmAsync();
@@ -272,7 +273,7 @@ public class FolderBrowserView : OverlaySheet<List<string>>
             CornerRadius = new CornerRadius(20),
             BorderBrush = Ink.Border,
             BorderThickness = new Thickness(1),
-            BoxShadow = new BoxShadows(BoxShadow.Parse("0 24 70 0 #520F172A")),
+            BoxShadow = ThemeResources.Shadow("ShadowModal"),
             Child = root
         };
     }
@@ -781,11 +782,11 @@ public class FolderBrowserView : OverlaySheet<List<string>>
             Width = 18,
             Height = 18,
             CornerRadius = new CornerRadius(5),
-            Background = chosen ? Ink.Accent : Brushes.White,
-            BorderBrush = chosen ? Ink.Accent : Ink.BorderStrong,
+            Background = chosen ? Ink.Primary : Ink.Surface,
+            BorderBrush = chosen ? Ink.Primary : Ink.BorderStrong,
             BorderThickness = new Thickness(1),
             VerticalAlignment = VerticalAlignment.Center,
-            Child = chosen ? Icon.Stroke(IconGeometry.Tick, 11, Brushes.White) : null
+            Child = chosen ? Icon.Stroke(IconGeometry.Tick, 11, Ink.OnPrimary) : null
         };
 
         var choose = new Button
@@ -1156,8 +1157,8 @@ public class FolderBrowserView : OverlaySheet<List<string>>
             FontSize = 13,
             FontWeight = FontWeight.SemiBold,
             CornerRadius = new CornerRadius(12),
-            Background = accent ? Ink.Accent : Ink.Surface,
-            Foreground = accent ? Brushes.White : Ink.Text,
+            Background = accent ? Ink.Primary : Ink.Surface,
+            Foreground = accent ? Ink.OnPrimary : Ink.Text,
             BorderBrush = accent ? Brushes.Transparent : Ink.Border,
             BorderThickness = new Thickness(1),
             Cursor = new Cursor(StandardCursorType.Hand)
@@ -1277,26 +1278,30 @@ public class FolderBrowserView : OverlaySheet<List<string>>
     /// <summary>The colours this shell's windows use, in one place.</summary>
     private static class Ink
     {
-        public static IBrush Surface => ConfirmWindow.Brush("#FFFFFF");
-        public static IBrush Muted => ConfirmWindow.Brush("#F8FAFC");
-        public static IBrush Border => ConfirmWindow.Brush("#E2E8F0");
-        public static IBrush BorderStrong => ConfirmWindow.Brush("#CBD5E1");
-        public static IBrush Faint => ConfirmWindow.Brush("#94A3B8");
-        public static IBrush Heading => ConfirmWindow.Brush("#0F172A");
-        public static IBrush Text => ConfirmWindow.Brush("#334155");
-        public static IBrush Text2 => ConfirmWindow.Brush("#475569");
-        public static IBrush Accent => ConfirmWindow.Brush("#4F46E5");
-        public static IBrush AccentTint => ConfirmWindow.Brush("#EEF2FF");
-        public static IBrush AccentLine => ConfirmWindow.Brush("#C7D2FE");
-        public static IBrush Warn => ConfirmWindow.Brush("#F59E0B");
+        public static IBrush Surface => ThemeResources.Brush("Surface");
+        public static IBrush Muted => ThemeResources.Brush("SurfaceMuted");
+        public static IBrush Border => ThemeResources.Brush("BorderDefault");
+        public static IBrush BorderStrong => ThemeResources.Brush("BorderStrong");
+        public static IBrush Faint => ThemeResources.Brush("TextFaint");
+        public static IBrush Heading => ThemeResources.Brush("TextStrong");
+        public static IBrush Text => ThemeResources.Brush("TextDefault");
+        public static IBrush Text2 => ThemeResources.Brush("TextMuted");
+        public static IBrush Accent => ThemeResources.Brush("Accent");
+
+        public static IBrush Primary => ThemeResources.Brush("Gold");
+
+        public static IBrush OnPrimary => ThemeResources.Brush("OnAccent");
+        public static IBrush AccentTint => ThemeResources.Brush("Brand50");
+        public static IBrush AccentLine => ThemeResources.Brush("Brand100");
+        public static IBrush Warn => ThemeResources.Brush("Amber500");
 
         // Named rather than written where they are used: `Brush` on its own inside a control
         // resolves to the control's own protected property of that name, not to the colour
         // helper, and the mistake reads as a method that cannot be called.
-        public static IBrush Danger => ConfirmWindow.Brush("#FEF2F2");
-        public static IBrush DangerLine => ConfirmWindow.Brush("#FECACA");
-        public static IBrush DangerInk => ConfirmWindow.Brush("#991B1B");
-        public static IBrush DangerStrong => ConfirmWindow.Brush("#B91C1C");
-        public static IBrush DangerMark => ConfirmWindow.Brush("#DC2626");
+        public static IBrush Danger => ThemeResources.Brush("Red50");
+        public static IBrush DangerLine => ThemeResources.Brush("Red200");
+        public static IBrush DangerInk => ThemeResources.Brush("Red700");
+        public static IBrush DangerStrong => ThemeResources.Brush("Red700");
+        public static IBrush DangerMark => ThemeResources.Brush("Red600");
     }
 }
