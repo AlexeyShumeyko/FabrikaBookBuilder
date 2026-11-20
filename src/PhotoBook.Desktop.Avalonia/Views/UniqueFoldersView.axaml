@@ -217,7 +217,7 @@
                                    Classes="t29ExtraBold" Margin="0,12,0,0"
                                    LineHeight="34" TextWrapping="Wrap" />
 
-                        <TextBlock Classes="t14" Margin="0,12,0,0" MaxWidth="700"
+                        <TextBlock Classes="t14" Margin="0,12,0,0" MaxWidth="700" HorizontalAlignment="Left"
                                    TextWrapping="Wrap" LineHeight="24"
                                    Foreground="{DynamicResource Slate500}"
                                    Text="Каждая папка становится отдельной книгой. Программа выберет обложку, разложит фотографии по разворотам и даст файлам имена, готовые к загрузке." />
