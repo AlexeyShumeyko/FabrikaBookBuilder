@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -129,14 +130,19 @@ namespace PhotoBook.Presentation.ViewModels
         public bool IsNarrowed => _modeChoice != ModeChoice.All || _statusChoice != StatusChoice.All;
 
         /// <summary>
-        /// "12 из 39" while narrowing, and the plain total when not.
+        /// The sentence before the count, and the count itself, kept apart so that only the
+        /// number can be given weight. In markup a bold run inside a sentence is the whole
+        /// difference between "Всего: 3" as a caption and as an answer.
         /// </summary>
         /// <remarks>
-        /// In words when it is a total. A bare number beside two filters reads as "the filter
-        /// returned 39", which is a different and wrong thing to believe.
+        /// In words when it is a total: a bare number beside two filters reads as "the filter
+        /// returned 39", which is a different and wrong thing to believe. While narrowing the
+        /// lead is "12 из" instead, and the number after it stays the total.
         /// </remarks>
-        public string FilterSummary =>
-            IsNarrowed ? $"{FilteredProjects.Count} из {Projects.Count}" : $"Всего: {Projects.Count}";
+        public string FilterSummaryLead => IsNarrowed ? $"{FilteredProjects.Count} из " : "Всего: ";
+
+        /// <summary>The number the filters left, or the total when nothing is filtered.</summary>
+        public string FilterSummaryValue => Projects.Count.ToString(CultureInfo.InvariantCulture);
 
         /// <summary>Puts both filters back. One control, for the moment somebody gives up.</summary>
         [RelayCommand]
@@ -174,7 +180,8 @@ namespace PhotoBook.Presentation.ViewModels
                 wanted.OrderByDescending(p => p.LastModified));
 
             OnPropertyChanged(nameof(IsNarrowed));
-            OnPropertyChanged(nameof(FilterSummary));
+            OnPropertyChanged(nameof(FilterSummaryLead));
+            OnPropertyChanged(nameof(FilterSummaryValue));
             OnPropertyChanged(nameof(HasNoMatches));
         }
 

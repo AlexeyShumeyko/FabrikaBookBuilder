@@ -250,12 +250,19 @@
                  -->
                 <Border Grid.Column="2" Width="78" HorizontalAlignment="Center"
                         VerticalAlignment="Center" Margin="40,0,20,0">
+                    <!--
+                        The number is the answer and the words are the question, so only the
+                        number is bold, as in the prototype: "Всего: 3" is a sentence about
+                        three projects, and the three is where the eye should land.
+                    -->
                     <TextBlock Classes="t12"
                                HorizontalAlignment="Center"
                                TextAlignment="Center"
-                               VerticalAlignment="Center"
-                               Foreground="{DynamicResource Slate400}"
-                               Text="{Binding FilterSummary}" />
+                               VerticalAlignment="Center">
+                        <Run Text="{Binding FilterSummaryLead}" Foreground="{DynamicResource TextFaint}" />
+                        <Run Text="{Binding FilterSummaryValue}" FontWeight="Bold"
+                             Foreground="{DynamicResource TextDefault}" />
+                    </TextBlock>
                 </Border>
 
                 <!--
@@ -273,17 +280,21 @@
                         AutomationProperties.Name="Создать проект"
                         Command="{Binding CreateProjectCommand}">
                     <!--
-                        Text, and only text.
+                        A plus, then the words, as the prototype draws it.
 
-                        The mark beside it was a thin plus in a dark shade on a dark fill -
-                        it was barely there, and what it added was a second thing to look at
-                        in the one control a person should not have to look at twice. The
-                        word alone is unambiguous in any language this program is used in,
-                        and it sits centred because there is nothing else in the control to
-                        align it with.
+                        The mark is twelve pixels and not sixteen: at the size of this button a
+                        sixteen-pixel plus outweighed the word it stands for. Twelve is a mark
+                        beside a label rather than a second label.
                     -->
-                    <TextBlock Text="Создать проект" Foreground="{DynamicResource ActionInk}"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Path Width="12" Height="12" Stretch="Uniform" StrokeThickness="1.5"
+                              StrokeLineCap="Round"
+                              VerticalAlignment="Center"
+                              Stroke="{DynamicResource ActionInk}"
+                              Data="M12 5v14M5 12h14" />
+                        <TextBlock Text="Создать проект" Foreground="{DynamicResource ActionInk}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
                 </Button>
             </Grid>
         </Border>
@@ -768,12 +779,21 @@
                                               VerticalAlignment="Center"
                                               IsVisible="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=visibility}"
                                               Background="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tintbg}"
-                                              BorderBrush="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tintborder}">
-                                          <StackPanel Orientation="Horizontal" Spacing="5">
-                                              <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="11"
-                                                         VerticalAlignment="Center"
-                                                         Foreground="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tinticon}"
-                                                         Text="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=icon}" />
+                                              BorderBrush="{DynamicResource BorderSubtle}">
+                                          <StackPanel Orientation="Horizontal" Spacing="6">
+                                              <!--
+                                                  The mark is drawn rather than typed. The chip carried
+                                                  two platform glyphs - a folder and a bookshelf - and the
+                                                  prototype draws its own: four leaves for the combined
+                                                  mode and a folder with a flap for the folders mode. The
+                                                  sizes are the chip's, unchanged: thirteen pixels, a
+                                                  hairline, gold for one mode and amber for the other.
+                                              -->
+                                              <Path Width="13" Height="13" Stretch="Uniform"
+                                                    StrokeThickness="1.3" StrokeLineCap="Round" StrokeJoin="Round"
+                                                    VerticalAlignment="Center"
+                                                    Stroke="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=tinticon}"
+                                                    Data="{Binding Mode, Converter={StaticResource AppModeToLabel}, ConverterParameter=iconpath}" />
 
                                               <!-- The label shortens too, once the badge is told it may not
                                                    be wider than it is: a badge whose words are cut off says
@@ -799,13 +819,59 @@
                                       that had photographs. The grid changed shape
                                       depending on what happened to be in the projects.
 
-                                      The space is reserved, and an empty project shows
-                                      that space and nothing else - no frames, no
-                                      placeholders. A photograph that has not been put
-                                      in yet is not a thing to draw a box around.
+                                      The space is reserved, and an empty project fills it
+                                      with three dashed frames - places waiting for a
+                                      photograph, which is what they are. Reserved and
+                                      blank read as a card that failed to draw its
+                                      pictures.
                                   -->
                                   <StackPanel Orientation="Horizontal" Margin="0,16,0,0"
                                               Spacing="8" Height="66">
+                                      <!--
+                                          A project with no photographs yet shows three empty
+                                          frames, as the prototype does. The row used to be
+                                          reserved and blank, and a card with nothing where its
+                                          pictures go reads as a card that failed to draw them.
+                                          A dashed frame is a place waiting for a photograph,
+                                          which is exactly what it is.
+                                      -->
+                                      <StackPanel Orientation="Horizontal" Spacing="8"
+                                                  IsVisible="{Binding PreviewPhotos.Count, Converter={StaticResource NotEmpty}, ConverterParameter=empty}">
+                                          <Panel Width="66" Height="66" Opacity="0.5">
+                                              <Rectangle RadiusX="10" RadiusY="10" StrokeThickness="1"
+                                                         Stroke="{DynamicResource BorderSubtle}"
+                                                         StrokeDashArray="3,3"
+                                                         Fill="{DynamicResource SunkenSoft}" />
+                                              <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.4"
+                                                    StrokeLineCap="Round" StrokeJoin="Round"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Stroke="{DynamicResource TextFaint}"
+                                                    Data="M6 4.5h12a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5H6A2.5 2.5 0 0 1 3.5 17V7A2.5 2.5 0 0 1 6 4.5zM4.5 17l4.8-4.4a1.5 1.5 0 0 1 2 0l3 2.7 2.2-2a1.5 1.5 0 0 1 2 0l1.6 1.4M10.6 10a1.6 1.6 0 1 1-3.2 0a1.6 1.6 0 1 1 3.2 0" />
+                                          </Panel>
+                                          <Panel Width="66" Height="66" Opacity="0.5">
+                                              <Rectangle RadiusX="10" RadiusY="10" StrokeThickness="1"
+                                                         Stroke="{DynamicResource BorderSubtle}"
+                                                         StrokeDashArray="3,3"
+                                                         Fill="{DynamicResource SunkenSoft}" />
+                                              <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.4"
+                                                    StrokeLineCap="Round" StrokeJoin="Round"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Stroke="{DynamicResource TextFaint}"
+                                                    Data="M6 4.5h12a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5H6A2.5 2.5 0 0 1 3.5 17V7A2.5 2.5 0 0 1 6 4.5zM4.5 17l4.8-4.4a1.5 1.5 0 0 1 2 0l3 2.7 2.2-2a1.5 1.5 0 0 1 2 0l1.6 1.4M10.6 10a1.6 1.6 0 1 1-3.2 0a1.6 1.6 0 1 1 3.2 0" />
+                                          </Panel>
+                                          <Panel Width="66" Height="66" Opacity="0.5">
+                                              <Rectangle RadiusX="10" RadiusY="10" StrokeThickness="1"
+                                                         Stroke="{DynamicResource BorderSubtle}"
+                                                         StrokeDashArray="3,3"
+                                                         Fill="{DynamicResource SunkenSoft}" />
+                                              <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.4"
+                                                    StrokeLineCap="Round" StrokeJoin="Round"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Stroke="{DynamicResource TextFaint}"
+                                                    Data="M6 4.5h12a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5H6A2.5 2.5 0 0 1 3.5 17V7A2.5 2.5 0 0 1 6 4.5zM4.5 17l4.8-4.4a1.5 1.5 0 0 1 2 0l3 2.7 2.2-2a1.5 1.5 0 0 1 2 0l1.6 1.4M10.6 10a1.6 1.6 0 1 1-3.2 0a1.6 1.6 0 1 1 3.2 0" />
+                                          </Panel>
+                                      </StackPanel>
+
                                       <ItemsControl ItemsSource="{Binding PreviewPhotos}">
                                           <ItemsControl.ItemsPanel>
                                               <ItemsPanelTemplate>
@@ -887,22 +953,38 @@
                                 <Border Height="1" Background="{DynamicResource Slate100}"
                                         Margin="0,16,0,0" />
                                 <Grid ColumnDefinitions="*,Auto" Margin="0,12,0,0">
-                                    <Button Grid.Column="0" Classes="secondary" Padding="12,8"
+                                    <Button Grid.Column="0" Classes="openProject"
                                             HorizontalAlignment="Stretch"
                                             AutomationProperties.Name="Открыть проект"
                                             Command="{Binding DataContext.OpenProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
-                                        <TextBlock Text="Открыть проект" Classes="t12Semi" />
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="Открыть проект" VerticalAlignment="Center" />
+                                            <Path Classes="openArrow" Width="14" Height="14" Stretch="Uniform"
+                                                  StrokeThickness="1.4" StrokeLineCap="Round" StrokeJoin="Round"
+                                                  VerticalAlignment="Center"
+                                                  Stroke="{DynamicResource Accent}"
+                                                  Data="M4 12h15M13 6l6 6-6 6" />
+                                        </StackPanel>
                                     </Button>
 
-                                    <Button Grid.Column="1" Classes="icon" Margin="8,0,0,0"
-                                            Width="38" Height="38" CornerRadius="12"
+                                    <Button Grid.Column="1" Classes="projectDelete" Margin="8,0,0,0"
+                                            Width="38" Height="38"
                                             AutomationProperties.Name="Удалить проект"
+                                            ToolTip.Tip="Удалить проект"
                                             Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
-                                        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"
-                                                   FontSize="14"
-                                                   Foreground="{DynamicResource Slate400}" />
+                                        <Path Width="18" Height="18" Stretch="Uniform" StrokeThickness="1.3"
+                                              StrokeLineCap="Round" StrokeJoin="Round"
+                                              VerticalAlignment="Center"
+                                              Stroke="{Binding $parent[Button].Foreground}"
+                                              Data="M4 7h16M9.5 7V5h5v2M6.5 7l.9 12.2a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5L17.5 7M10 11v6M14 11v6">
+                                            <Path.Transitions>
+                                                <Transitions>
+                                                    <BrushTransition Property="Stroke" Duration="0:0:0.16" />
+                                                </Transitions>
+                                            </Path.Transitions>
+                                        </Path>
                                     </Button>
                                 </Grid>
                                 </StackPanel>

@@ -312,6 +312,26 @@
             <BoxShadows x:Key="ShadowHover">0 14 34 0 #2458421C</BoxShadows>
             <BoxShadows x:Key="ShadowModal">0 30 70 0 #4D58421C</BoxShadows>
 
+            <!-- ~~~~~~~~~~~~~~~~~~ saved projects and the delete panel ~~~~~~~~ -->
+
+            <!-- The filled action deepens its gold line as the fill warms, which is what the
+                 prototype's light theme does under the pointer. -->
+            <Color x:Key="ActionBorderHover">#80B07B00</Color>
+
+            <!-- A delete under the pointer: the red the prototype uses for a destructive
+                 icon, pale enough to stay a warning rather than an alarm. -->
+            <Color x:Key="DangerInk">#B4461F</Color>
+            <Color x:Key="DangerWash">#1FFF7846</Color>
+
+            <!-- "Открыть проект" warms toward gold under the pointer. -->
+            <Color x:Key="OpenHoverFill">#1AFFCD2D</Color>
+            <Color x:Key="OpenHoverBorder">#4DFFCD2D</Color>
+
+            <!-- The folders mode carries amber and the combined one the product gold, so the
+                 two are told apart by the mark before the word is read. -->
+            <Color x:Key="ModeIconUnique">#B25F10</Color>
+
+
         </ResourceDictionary>
 
         <!-- ================================ dark ================================ -->
@@ -523,6 +543,14 @@
             <BoxShadows x:Key="ShadowCard">0 16 40 0 #2E000000</BoxShadows>
             <BoxShadows x:Key="ShadowHover">0 26 60 0 #57000000</BoxShadows>
             <BoxShadows x:Key="ShadowModal">0 50 120 0 #A6000000</BoxShadows>
+
+            <Color x:Key="ActionBorderHover">#FFD9990A</Color>
+            <Color x:Key="DangerInk">#FF9A73</Color>
+            <Color x:Key="DangerWash">#1FFF7846</Color>
+            <Color x:Key="OpenHoverFill">#1AFFCD2D</Color>
+            <Color x:Key="OpenHoverBorder">#4DFFCD2D</Color>
+            <Color x:Key="ModeIconUnique">#EAA063</Color>
+
 
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>

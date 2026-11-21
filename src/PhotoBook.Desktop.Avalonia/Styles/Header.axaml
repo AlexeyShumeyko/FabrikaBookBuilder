@@ -53,7 +53,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource ActionBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="999" />
-        <Setter Property="Padding" Value="24,0" />
+        <Setter Property="Padding" Value="20,0" />
         <Setter Property="Height" Value="42" />
         <Setter Property="FontSize" Value="13.5" />
         <Setter Property="FontWeight" Value="Bold" />
@@ -112,7 +112,7 @@
 
     <Style Selector="Button.createProject:pointerover">
         <Setter Property="Background" Value="{DynamicResource ActionFillHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource ActionBorder}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ActionBorderHover}" />
     </Style>
 
     <!-- The lift and the shadow it casts: one pixel up and a wider, softer descent,
@@ -145,6 +145,10 @@
         which is what this wore before - is the one combination that looks like a control
         nobody finished drawing.
 
+        The frame is a hairline of ink at seven percent, and it is the whole of what keeps
+        the box from disappearing into the panel: fill and panel are the same cream, so
+        without the line a filter read as two words floating in the corner of the header.
+
         The width is fixed, and that is the whole of the second half of this rule.
         It used to be a floor, so each box was as wide as its own wording and the panel
         breathed in and out as the filter changed: 112 pixels for "Черновик", 166 for
@@ -163,7 +167,7 @@
     -->
     <Style Selector="Button.filterChip">
         <Setter Property="Background" Value="{DynamicResource Brand50}" />
-        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="12" />
         <Setter Property="Padding" Value="16,0" />
@@ -234,6 +238,7 @@
 
     <Style Selector="Button.filterChip:pointerover">
         <Setter Property="Background" Value="{DynamicResource Brand100}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
         <Setter Property="Foreground" Value="{DynamicResource Slate900}" />
     </Style>
 

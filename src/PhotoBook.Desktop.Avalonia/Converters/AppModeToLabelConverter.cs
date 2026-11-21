@@ -31,6 +31,15 @@ namespace PhotoBook.Shell.Converters
     {
         public static readonly AppModeToLabelConverter Instance = new();
 
+        /// <summary>The mode's mark, drawn rather than typed: the two glyphs the platform
+        /// carried before were a folder and a bookshelf, and the prototype's are a grid of
+        /// four leaves and a folder with a flap. Sizes stay where the chip had them.</summary>
+        private static readonly Geometry UniqueIcon =
+            Geometry.Parse("M3.5 8A2.5 2.5 0 0 1 6 5.5h3.6l1.8 2.2H18a2.5 2.5 0 0 1 2.5 2.5v7A2.5 2.5 0 0 1 18 19.7H6A2.5 2.5 0 0 1 3.5 17.2z");
+
+        private static readonly Geometry CombinedIcon =
+            Geometry.Parse("M5.3 3.5h3.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1-1.8 1.8H5.3a1.8 1.8 0 0 1-1.8-1.8V5.3a1.8 1.8 0 0 1 1.8-1.8zM15.3 3.5h3.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1-1.8 1.8h-3.4a1.8 1.8 0 0 1-1.8-1.8V5.3a1.8 1.8 0 0 1 1.8-1.8zM5.3 13.5h3.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1-1.8 1.8H5.3a1.8 1.8 0 0 1-1.8-1.8v-3.4a1.8 1.8 0 0 1 1.8-1.8zM15.3 13.5h3.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1-1.8 1.8h-3.4a1.8 1.8 0 0 1-1.8-1.8v-3.4a1.8 1.8 0 0 1 1.8-1.8z");
+
         public object? Convert(
             object? value,
             Type targetType,
@@ -50,14 +59,26 @@ namespace PhotoBook.Shell.Converters
 
             bool wantIcon = StatusToLabelConverter.Is(role, "icon");
 
+            if (StatusToLabelConverter.Is(role, "iconpath"))
+            {
+                return mode switch
+                {
+                    AppMode.UniqueFolders => UniqueIcon,
+                    AppMode.Combined => CombinedIcon,
+                    _ => null
+                };
+            }
+
             if (role is not null && role.StartsWith("tint", StringComparison.OrdinalIgnoreCase))
             {
                 return role.ToLowerInvariant() switch
                 {
                     "tintbg" => ThemeResources.Brush("Sunken"),
-                    "tintborder" => ThemeResources.Brush("BorderDefault"),
+                    "tintborder" => ThemeResources.Brush("BorderSubtle"),
                     "tinttext" => ThemeResources.Brush("TextDefault"),
-                    "tinticon" => ThemeResources.Brush("Accent"),
+                    "tinticon" => mode == AppMode.UniqueFolders
+                        ? ThemeResources.Brush("ModeIconUnique")
+                        : ThemeResources.Brush("Accent"),
                     _ => Brushes.Transparent
                 };
             }
@@ -65,9 +86,7 @@ namespace PhotoBook.Shell.Converters
             return (mode, wantIcon) switch
             {
                 (AppMode.UniqueFolders, false) => "Уникальные папки",
-                (AppMode.UniqueFolders, true) => "\uE8C0",   // the folder
                 (AppMode.Combined, false) => "Комбинированный",
-                (AppMode.Combined, true) => "\uE8F1",     // books on a shelf
                 _ => string.Empty
             };
         }

@@ -349,4 +349,121 @@
         <Setter Property="Background" Value="{DynamicResource Slate200}" />
     </Style>
 
+
+    <!--
+        "Открыть проект" on a saved card.
+
+        The template is written out because the platform's button paints its own wash, and
+        what the prototype does here is a warm gold wash and a gold frame under the pointer
+        with the arrow stepping two pixels to the right. The card's whole width is this
+        control, so the answer has to be read at its edges, not in a grey rectangle.
+    -->
+    <Style Selector="Button.openProject">
+        <Setter Property="Background" Value="{DynamicResource SunkenSoft}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Height" Value="38" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextDefault}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.16" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.16" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.16" />
+            </Transitions>
+        </Setter>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.openProject:pointerover">
+        <Setter Property="Background" Value="{DynamicResource OpenHoverFill}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource OpenHoverBorder}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+    </Style>
+
+    <Style Selector="Button.openProject:pressed">
+        <Setter Property="Background" Value="{DynamicResource OpenHoverFill}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource OpenHoverBorder}" />
+    </Style>
+
+    <!-- The arrow is the only mark on the button, and it steps toward the screen the press
+         opens rather than sitting still while the words change colour. -->
+    <Style Selector="Path.openArrow">
+        <Setter Property="RenderTransform" Value="translate(0px,0px)" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.openProject:pointerover Path.openArrow">
+        <Setter Property="RenderTransform" Value="translate(2px,0px)" />
+    </Style>
+
+    <!--
+        The one destructive control on a card.
+
+        It has a field of its own - a faint wash with a hairline - because the prototype puts
+        it beside the wide "open" button as a square of the same height, and a bare glyph
+        there read as a decoration. Under the pointer the field warms to red and the basket
+        turns with it.
+    -->
+    <Style Selector="Button.projectDelete">
+        <Setter Property="Background" Value="{DynamicResource SunkenFaint}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.16" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.16" />
+            </Transitions>
+        </Setter>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.projectDelete:pointerover">
+        <Setter Property="Background" Value="{DynamicResource DangerWash}" />
+        <Setter Property="Foreground" Value="{DynamicResource DangerInk}" />
+    </Style>
+
+    <Style Selector="Button.projectDelete:pressed">
+        <Setter Property="Background" Value="{DynamicResource DangerWash}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DangerInk}" />
+    </Style>
+
 </Styles>
