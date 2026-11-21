@@ -29,17 +29,17 @@ namespace PhotoBook.Shell.Converters
 
             var token = (status, role) switch
             {
-                (ProjectStatus.SuccessfullyCompleted, "border") => "Emerald200",
-                (ProjectStatus.SuccessfullyCompleted, "text") => "Emerald700",
-                (ProjectStatus.SuccessfullyCompleted, _) => "Emerald50",
+                (ProjectStatus.SuccessfullyCompleted, "border") => "StatusTealBorder",
+                (ProjectStatus.SuccessfullyCompleted, "text") => "StatusTealInk",
+                (ProjectStatus.SuccessfullyCompleted, _) => "StatusTealFill",
 
-                (ProjectStatus.Ready, "border") => "Amber200",
-                (ProjectStatus.Ready, "text") => "Amber700",
-                (ProjectStatus.Ready, _) => "Amber50",
+                (ProjectStatus.Ready, "border") => "StatusWarnBorder",
+                (ProjectStatus.Ready, "text") => "StatusWarnInk",
+                (ProjectStatus.Ready, _) => "StatusWarnFill",
 
-                (_, "border") => "BorderDefault",
-                (_, "text") => "TextDefault",
-                _ => "Sunken"
+                (_, "border") => "StatusMutedBorder",
+                (_, "text") => "StatusMutedInk",
+                _ => "StatusMutedFill"
             };
 
             return ThemeResources.Brush(token);

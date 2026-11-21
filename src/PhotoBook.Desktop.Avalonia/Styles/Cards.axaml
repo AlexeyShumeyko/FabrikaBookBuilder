@@ -360,7 +360,7 @@
     -->
     <Style Selector="Button.openProject">
         <Setter Property="Background" Value="{DynamicResource SunkenSoft}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource QuietBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="12" />
         <Setter Property="Height" Value="38" />
@@ -427,8 +427,8 @@
         turns with it.
     -->
     <Style Selector="Button.projectDelete">
-        <Setter Property="Background" Value="{DynamicResource SunkenFaint}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}" />
+        <Setter Property="Background" Value="{DynamicResource FieldFill}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource FieldBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="12" />
         <Setter Property="Padding" Value="0" />
@@ -471,8 +471,8 @@
         a wash instead of a fill, and a hairline that keeps it a control rather than a word.
     -->
     <Style Selector="Button.soft">
-        <Setter Property="Background" Value="{DynamicResource SunkenSoft}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}" />
+        <Setter Property="Background" Value="{DynamicResource QuietFill}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource QuietBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="999" />
         <Setter Property="Height" Value="42" />
@@ -504,8 +504,8 @@
     </Style>
 
     <Style Selector="Button.soft:pointerover">
-        <Setter Property="Background" Value="{DynamicResource Sunken}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+        <Setter Property="Background" Value="{DynamicResource QuietFillHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource QuietBorderHover}" />
     </Style>
 
     <!--
@@ -553,6 +553,10 @@
                 </Border>
             </ControlTemplate>
         </Setter>
+    </Style>
+
+    <Style Selector="Button.danger TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource DangerButtonInk}" />
     </Style>
 
     <Style Selector="Button.danger:pointerover">

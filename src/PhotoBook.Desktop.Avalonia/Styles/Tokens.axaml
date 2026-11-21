@@ -321,7 +321,7 @@
             <!-- A delete under the pointer: the red the prototype uses for a destructive
                  icon, pale enough to stay a warning rather than an alarm. -->
             <Color x:Key="DangerInk">#B4461F</Color>
-            <Color x:Key="DangerWash">#1FFF7846</Color>
+            <Color x:Key="DangerWash">#13B4461F</Color>
 
             <!-- "Открыть проект" warms toward gold under the pointer. -->
             <Color x:Key="OpenHoverFill">#1AFFCD2D</Color>
@@ -358,9 +358,9 @@
             </LinearGradientBrush>
             <Color x:Key="DangerButtonBorder">#A8341A</Color>
             <Color x:Key="DangerButtonBorderHover">#B93A19</Color>
-            <Color x:Key="DangerButtonInk">#FFF4EE</Color>
+            <Color x:Key="DangerButtonInk">#FFF6F2</Color>
             <BoxShadows x:Key="DangerButtonShadow">0 2 5 0 #3D5A1E0A, inset 0 1 0 0 #38FFFFFF</BoxShadows>
-            <BoxShadows x:Key="DangerButtonShadowHover">0 8 18 0 #4212780F, inset 0 1 0 0 #3DFFFFFF</BoxShadows>
+            <BoxShadows x:Key="DangerButtonShadowHover">0 8 18 0 #4278280F, inset 0 1 0 0 #3DFFFFFF</BoxShadows>
             <BoxShadows x:Key="DangerButtonShadowPressed">inset 0 2 4 0 #665A1405</BoxShadows>
 
             <!-- The line that says the photographs are not part of what is being deleted. -->
@@ -375,6 +375,33 @@
             <!-- The folders mode carries amber and the combined one the product gold, so the
                  two are told apart by the mark before the word is read. -->
             <Color x:Key="ModeIconUnique">#B25F10</Color>
+
+            <!-- ~~~~~~~~~~~~~ the quiet fields of a card, and the pill ~~~~~~~~~~ -->
+            <!--
+                A field on a card is a wash of the card's own ink rather than a shadow sunk
+                into it: the prototype mixes the card's own ink at a few percent, which is
+                brown at noon and white in the evening. Sunken* is the other thing - it is
+                darker than the surface in both themes - and used here it made the open
+                button and the basket read as holes punched in a dark card.
+            -->
+            <Color x:Key="FieldFill">#084A3A1C</Color>
+            <Color x:Key="FieldBorder">#0F4A3A1C</Color>
+            <Color x:Key="QuietFill">#0B4A3A1C</Color>
+            <Color x:Key="QuietBorder">#144A3A1C</Color>
+            <Color x:Key="QuietFillHover">#134A3A1C</Color>
+            <Color x:Key="QuietBorderHover">#294A3A1C</Color>
+
+            <!-- The pill's three answers: a draft is grey, a book being assembled is amber,
+                 a finished one is teal, and the dot is the text's own colour. -->
+            <Color x:Key="StatusMutedInk">#776A53</Color>
+            <Color x:Key="StatusMutedFill">#0E4A3A1C</Color>
+            <Color x:Key="StatusMutedBorder">#0F4A3A1C</Color>
+            <Color x:Key="StatusWarnInk">#A8570C</Color>
+            <Color x:Key="StatusWarnFill">#1FBE6919</Color>
+            <Color x:Key="StatusWarnBorder">#40AA5F14</Color>
+            <Color x:Key="StatusTealInk">#0B7A69</Color>
+            <Color x:Key="StatusTealFill">#1A0D8B79</Color>
+            <Color x:Key="StatusTealBorder">#330D8B79</Color>
 
 
         </ResourceDictionary>
@@ -591,7 +618,7 @@
 
             <Color x:Key="ActionBorderHover">#FFD9990A</Color>
             <Color x:Key="DangerInk">#FF9A73</Color>
-            <Color x:Key="DangerWash">#1FFF7846</Color>
+            <Color x:Key="DangerWash">#1AFF7846</Color>
             <Color x:Key="OpenHoverFill">#1AFFCD2D</Color>
             <Color x:Key="OpenHoverBorder">#4DFFCD2D</Color>
             <Color x:Key="ModalEdge">#1AFFF2D6</Color>
@@ -631,6 +658,23 @@
             <Color x:Key="ModeMarkFill">#14FFCD2D</Color>
             <BoxShadows x:Key="ModeMarkShadow">inset 0 0 0 1 #2EFFCD2D</BoxShadows>
             <Color x:Key="ModeIconUnique">#EAA063</Color>
+
+            <Color x:Key="FieldFill">#08FFFFFF</Color>
+            <Color x:Key="FieldBorder">#0FFFFFFF</Color>
+            <Color x:Key="QuietFill">#0BFFFFFF</Color>
+            <Color x:Key="QuietBorder">#14FFFFFF</Color>
+            <Color x:Key="QuietFillHover">#13FFFFFF</Color>
+            <Color x:Key="QuietBorderHover">#29FFFFFF</Color>
+
+            <Color x:Key="StatusMutedInk">#AAA08F</Color>
+            <Color x:Key="StatusMutedFill">#0EFFFFFF</Color>
+            <Color x:Key="StatusMutedBorder">#0FFFFFFF</Color>
+            <Color x:Key="StatusWarnInk">#EAA063</Color>
+            <Color x:Key="StatusWarnFill">#1AFFA046</Color>
+            <Color x:Key="StatusWarnBorder">#33FFA046</Color>
+            <Color x:Key="StatusTealInk">#5AD9C6</Color>
+            <Color x:Key="StatusTealFill">#1A5AD9C6</Color>
+            <Color x:Key="StatusTealBorder">#2E5AD9C6</Color>
 
 
         </ResourceDictionary>

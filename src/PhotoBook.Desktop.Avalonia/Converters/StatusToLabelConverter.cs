@@ -31,9 +31,9 @@ namespace PhotoBook.Shell.Converters
             {
                 return ThemeResources.Brush(status switch
                 {
-                    ProjectStatus.SuccessfullyCompleted => "Emerald500",
-                    ProjectStatus.Ready => "Amber500",
-                    _ => "Slate400"
+                    ProjectStatus.SuccessfullyCompleted => "StatusTealInk",
+                    ProjectStatus.Ready => "StatusWarnInk",
+                    _ => "StatusMutedInk"
                 });
             }
 
