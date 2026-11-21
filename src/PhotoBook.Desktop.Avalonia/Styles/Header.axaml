@@ -59,6 +59,9 @@
         <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Foreground" Value="{DynamicResource ActionInk}" />
         <Setter Property="Cursor" Value="Hand" />
+        <!-- The button rises under the pointer, and a rise draws outside its own
+             rectangle; clipping would cut the shadow to a rim, as it did on the tab. -->
+        <Setter Property="ClipToBounds" Value="False" />
 
         <!-- Light, not heavy: the fill LIFTS on hover and settles on press. A button that
              darkens on hover is telling the person it is a door; this one is a lamp. -->
@@ -73,10 +76,13 @@
                 <Border Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="{TemplateBinding CornerRadius}">
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        BoxShadow="{DynamicResource ActionShadow}">
                     <Border.Transitions>
                         <Transitions>
                             <BrushTransition Property="Background" Duration="0:0:0.14" />
+                            <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.16" />
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.16" />
                         </Transitions>
                     </Border.Transitions>
                     <!--
@@ -109,8 +115,20 @@
         <Setter Property="BorderBrush" Value="{DynamicResource ActionBorder}" />
     </Style>
 
+    <!-- The lift and the shadow it casts: one pixel up and a wider, softer descent,
+         which is the whole of what makes the prototype's button feel raised. -->
+    <Style Selector="Button.createProject:pointerover /template/ Border">
+        <Setter Property="RenderTransform" Value="translate(0px,-1px)" />
+        <Setter Property="BoxShadow" Value="{DynamicResource ActionShadowHover}" />
+    </Style>
+
     <Style Selector="Button.createProject:pressed">
         <Setter Property="Background" Value="{DynamicResource ActionFillPressed}" />
+    </Style>
+
+    <Style Selector="Button.createProject:pressed /template/ Border">
+        <Setter Property="RenderTransform" Value="translate(0px,0px)" />
+        <Setter Property="BoxShadow" Value="{DynamicResource ActionShadowPressed}" />
     </Style>
 
     <!--
@@ -345,6 +363,12 @@
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="17">
+                    <Border.Transitions>
+                        <Transitions>
+                            <BrushTransition Property="Background" Duration="0:0:0.18" />
+                            <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.18" />
+                        </Transitions>
+                    </Border.Transitions>
                     <ContentPresenter Content="{TemplateBinding Content}"
                                       Margin="{TemplateBinding Padding}"
                                       HorizontalAlignment="Center"

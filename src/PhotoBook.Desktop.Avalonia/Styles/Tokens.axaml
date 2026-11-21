@@ -132,6 +132,14 @@
             <Color x:Key="ActionBorder">#61B07B00</Color>
             <Color x:Key="ActionInk">#8A5F00</Color>
 
+            <!-- What gives the filled action its thickness. The prototype's own
+                 numbers: a hairline of light inside the top edge and a brown descent
+                 below, so the button is a raised cap of paint rather than a tinted
+                 rectangle. -->
+            <BoxShadows x:Key="ActionShadow">inset 0 1 0 0 #99FFFFFF, 0 6 16 -12 #B358421C</BoxShadows>
+            <BoxShadows x:Key="ActionShadowHover">inset 0 1 0 0 #B3FFFFFF, 0 8 20 -12 #B358421C</BoxShadows>
+            <BoxShadows x:Key="ActionShadowPressed">inset 0 2 4 0 #33785A14, 0 1 2 0 #1A785A14</BoxShadows>
+
             <!-- The line a card takes under the pointer. Gold, not a darker hairline: it is
                  the card answering, and the answer is the product's colour. -->
             <Color x:Key="BorderAccentHover">#59B07B00</Color>
@@ -182,13 +190,18 @@
             <!-- The two hairlines of the halo, and the paper the photographs are mounted on.
                  The paper stays cream in both themes: it is a photograph on a desk, not a
                  surface of the program. -->
-            <Color x:Key="WelcomeRing">#2EFFCD2D</Color>
-            <Color x:Key="WelcomeRingFaint">#1FFCDD2D</Color>
+            <!-- Daylight hairlines are brown rather than gold: gold at a fifth of its
+                 strength on cream vanishes into the paper, which is exactly what the
+                 two rings did before this line. -->
+            <Color x:Key="WelcomeRing">#33B07B00</Color>
+            <Color x:Key="WelcomeRingFaint">#24B07B00</Color>
             <Color x:Key="PhotoSheet">#FBF7EE</Color>
 
             <!-- The chip on the stack: a dark glass pill with a gold hairline. -->
-            <Color x:Key="WelcomeChipFill">#D118140E</Color>
-            <Color x:Key="WelcomeChipBorder">#3DFFCD2D</Color>
+            <Color x:Key="WelcomeChipFill">#EBFFFDF7</Color>
+            <Color x:Key="WelcomeChipBorder">#4DB07B00</Color>
+            <Color x:Key="WelcomeChipInk">#42392A</Color>
+            <BoxShadows x:Key="WelcomeChipShadow">0 14 34 0 #2958421C</BoxShadows>
 
             <!-- The dim over the page behind a modal panel. -->
             <Color x:Key="Backdrop">#6B3A301E</Color>
@@ -273,6 +286,19 @@
                 <GradientStop Color="#F2B41C" Offset="0.48" />
                 <GradientStop Color="#DC9A08" Offset="1" />
             </LinearGradientBrush>
+
+            <!-- The three marks under the welcome panel are not the avatar. By day the
+                 prototype washes them to a quarter-strength gold with a white sheen on
+                 top and writes them in deep gold; at night they are the gold itself.
+                 Separate keys, because sharing the avatar would repaint the account too. -->
+            <LinearGradientBrush x:Key="WelcomeIconFill" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#7BFCF0D6" Offset="0" />
+                <GradientStop Color="#3DFFC43C" Offset="0.62" />
+                <GradientStop Color="#3DFFC43C" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="WelcomeIconRing">#61B07B00</Color>
+            <Color x:Key="WelcomeIconInk">#8A5F00</Color>
+            <BoxShadows x:Key="WelcomeIconShadow">inset 0 1 0 0 #99FFFFFF, 0 10 22 -14 #BF58421C</BoxShadows>
 
             <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ shadows ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
             <!--
@@ -383,6 +409,12 @@
             <Color x:Key="ActionBorder">#CF9105</Color>
             <Color x:Key="ActionInk">#2A1C00</Color>
 
+            <!-- The prototype's evening button: a black descent under it and a shade
+                 pressed into the bottom edge. -->
+            <BoxShadows x:Key="ActionShadow">0 2 5 0 #4D000000, inset 0 -2 0 0 #388C5600</BoxShadows>
+            <BoxShadows x:Key="ActionShadowHover">0 6 16 0 #57000000, inset 0 -2 0 0 #388C5600</BoxShadows>
+            <BoxShadows x:Key="ActionShadowPressed">inset 0 2 4 0 #4D6E4200</BoxShadows>
+
             <Color x:Key="BorderAccentHover">#3DFFCD2D</Color>
 
             <Color x:Key="MatSurface">#15120E</Color>
@@ -414,6 +446,8 @@
             <Color x:Key="PhotoSheet">#FBF7EE</Color>
             <Color x:Key="WelcomeChipFill">#D118140E</Color>
             <Color x:Key="WelcomeChipBorder">#3DFFCD2D</Color>
+            <Color x:Key="WelcomeChipInk">#E6DDCA</Color>
+            <BoxShadows x:Key="WelcomeChipShadow">0 14 34 0 #59000000</BoxShadows>
 
             <Color x:Key="Backdrop">#B8080505</Color>
 
@@ -474,6 +508,15 @@
                 <GradientStop Color="#F2B41C" Offset="0.48" />
                 <GradientStop Color="#DC9A08" Offset="1" />
             </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="WelcomeIconFill" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#FFD471" Offset="0" />
+                <GradientStop Color="#F2B41C" Offset="0.48" />
+                <GradientStop Color="#DC9A08" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="WelcomeIconRing">#CF9105</Color>
+            <Color x:Key="WelcomeIconInk">#2A1C00</Color>
+            <BoxShadows x:Key="WelcomeIconShadow">inset 0 1 0 0 #80FFFFFF, 0 8 18 -10 #80BE8200</BoxShadows>
 
             <BoxShadows x:Key="ShadowSm">0 1 3 0 #33000000</BoxShadows>
             <BoxShadows x:Key="ShadowSubtle">0 2 8 0 #3D000000</BoxShadows>

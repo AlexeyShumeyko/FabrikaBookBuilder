@@ -272,7 +272,7 @@
         </Border>
 
         <!-- ================================ body ============================== -->
-        <Panel Grid.Row="2" Margin="0,24,0,0">
+        <Panel Grid.Row="2" Margin="0,12,0,0">
 
             <!-- No loading plate, and there is nothing to load.
                  The list used to open and parse every project file to draw the cards, so a
@@ -322,18 +322,29 @@
                 for "no matches".
             -->
             <ScrollViewer IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}, ConverterParameter=empty}"
-                          VerticalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Hidden"
                           HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
                 <!--
-                    The panel is two layers: the card, and a warm glow laid over its top-right
-                    corner. A control carries one brush, so a glow that sits on top of a card
-                    gradient has to be its own layer - and it is the layer above, because it
-                    falls on the empty corner beside the stack of photographs, not on the words.
+                    The panel is a card with a warm glow in its top-right corner. The glow is
+                    the card's lowest layer, drawn before the words and the photographs: laid
+                    over them it tinted the rings and the paper, which in daylight made the
+                    hairlines around the stack disappear.
                 -->
                 <Panel Classes="welcomePanel">
                     <Border Classes="card" CornerRadius="26" Padding="44,36,44,32">
-                        <Grid ColumnDefinitions="1.06*,40,0.94*">
+                        <Grid ColumnDefinitions="1.12*,36,0.88*">
+
+                            <!--
+                                The corner glow, under everything: a layer of the card's own
+                                grid rather than a sheet over it. Drawn on top it tinted the
+                                rings and the paper, which is what made the two hairlines
+                                disappear in daylight. The negative margin is the padding,
+                                so the light still reaches the card's corner.
+                            -->
+                            <Border Grid.ColumnSpan="3" CornerRadius="26"
+                                    Margin="-44,-36,-44,-32" IsHitTestVisible="False"
+                                    Background="{DynamicResource WelcomeGlow}" />
 
                             <StackPanel Grid.Column="0">
                                 <!-- the kicker, with a hairline either side of it -->
@@ -366,7 +377,7 @@
                                                    Margin="0,4,0,0" Foreground="{DynamicResource Accent}" />
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="Выберите режим" Classes="t13ExtraBold" />
-                                            <TextBlock Classes="t12Half" Margin="0,4,0,0" MaxWidth="560" HorizontalAlignment="Left"
+                                            <TextBlock Classes="t12Half" Margin="0,4,0,0" MaxWidth="640" HorizontalAlignment="Left"
                                                        TextWrapping="Wrap" LineHeight="20"
                                                        Foreground="{DynamicResource Slate500}"
                                                        Text="Папки целиком или ручная раскладка по разворотам — режим определяет, как собирается книга." />
@@ -378,7 +389,7 @@
                                                    Margin="0,4,0,0" Foreground="{DynamicResource Accent}" />
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="Добавьте фотографии" Classes="t13ExtraBold" />
-                                            <TextBlock Classes="t12Half" Margin="0,4,0,0" MaxWidth="560" HorizontalAlignment="Left"
+                                            <TextBlock Classes="t12Half" Margin="0,4,0,0" MaxWidth="640" HorizontalAlignment="Left"
                                                        TextWrapping="Wrap" LineHeight="20"
                                                        Foreground="{DynamicResource Slate500}"
                                                        Text="Одной папкой или по одной. В режиме папок программа сама разложит кадры и выберет обложку." />
@@ -390,7 +401,7 @@
                                                    Margin="0,4,0,0" Foreground="{DynamicResource Accent}" />
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="Проверьте и загрузите" Classes="t13ExtraBold" />
-                                            <TextBlock Classes="t12Half" Margin="0,4,0,0" MaxWidth="560" HorizontalAlignment="Left"
+                                            <TextBlock Classes="t12Half" Margin="0,4,0,0" MaxWidth="640" HorizontalAlignment="Left"
                                                        TextWrapping="Wrap" LineHeight="20"
                                                        Foreground="{DynamicResource Slate500}"
                                                        Text="Состав и имена файлов видны до отправки. Загрузка на сайт — одно нажатие." />
@@ -403,7 +414,7 @@
                                             AutomationProperties.Name="Создать первый проект"
                                             Command="{Binding CreateProjectCommand}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.3"
+                                            <Path Width="10" Height="10" Stretch="Uniform" StrokeThickness="1.2"
                                                   StrokeLineCap="Round"
                                                   Stroke="{DynamicResource ActionInk}"
                                                   Data="M12 5v14M5 12h14" />
@@ -414,7 +425,7 @@
                                     <Button Classes="welcomeGhost" Click="OnHowItWorksClick"
                                             AutomationProperties.Name="Как это работает">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.4"
+                                            <Path Width="11.5" Height="11.5" Stretch="Uniform" StrokeThickness="1.2"
                                                   StrokeLineCap="Round" StrokeJoin="Round"
                                                   Stroke="{Binding $parent[Button].Foreground}"
                                                   Data="M4 19.2V5.6A2.6 2.6 0 0 1 6.6 3H20v14.4H6.6A2.6 2.6 0 0 0 4 20M8 7h8M8 10.5h5" />
@@ -447,7 +458,8 @@
                                 from the web is a panel that looks broken on the machine of a
                                 customer who is behind a proxy.
                             -->
-                            <Grid Grid.Column="2" MinHeight="430" IsHitTestVisible="False">
+                            <Grid Grid.Column="2" Height="470" VerticalAlignment="Center"
+                                  IsHitTestVisible="False">
                                 <Ellipse Width="430" Height="430" HorizontalAlignment="Center"
                                          VerticalAlignment="Center" Fill="{DynamicResource WelcomeHalo}" />
                                 <Ellipse Width="392" Height="392" HorizontalAlignment="Center"
@@ -501,9 +513,10 @@
                                 </Border>
 
                                 <Border HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                                        Margin="0,0,0,14" Padding="12,8" CornerRadius="999"
+                                        Margin="0,0,0,18" Padding="12,8" CornerRadius="999"
                                         Background="{DynamicResource WelcomeChipFill}"
-                                        BorderBrush="{DynamicResource WelcomeChipBorder}" BorderThickness="1">
+                                        BorderBrush="{DynamicResource WelcomeChipBorder}" BorderThickness="1"
+                                        BoxShadow="{DynamicResource WelcomeChipShadow}">
                                     <StackPanel Orientation="Horizontal" Spacing="7">
                                         <Path Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.9"
                                               StrokeLineCap="Round" StrokeJoin="Round"
@@ -511,15 +524,13 @@
                                               Data="M4.5 12.5l5 5 10-11" />
                                         <TextBlock Text="001-01.jpg &#183; готов к загрузке" Classes="t11Bold"
                                                    VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource PhotoSheet}" />
+                                                   Foreground="{DynamicResource WelcomeChipInk}" />
                                     </StackPanel>
                                 </Border>
                             </Grid>
                         </Grid>
                     </Border>
 
-                    <Border CornerRadius="26" IsHitTestVisible="False"
-                            Background="{DynamicResource WelcomeGlow}" />
                 </Panel>
 
                 <Grid ColumnDefinitions="*,16,*,16,*" Margin="0,16,0,0">
@@ -527,12 +538,13 @@
                         <StackPanel>
                             <Border Width="38" Height="38" CornerRadius="11"
                                     HorizontalAlignment="Left"
-                                    Background="{DynamicResource AvatarFill}"
-                                    BorderBrush="{DynamicResource AvatarRing}" BorderThickness="1">
+                                    Background="{DynamicResource WelcomeIconFill}"
+                                    BorderBrush="{DynamicResource WelcomeIconRing}" BorderThickness="1"
+                                    BoxShadow="{DynamicResource WelcomeIconShadow}">
                                 <Path Width="18" Height="18" Stretch="Uniform" StrokeThickness="1.5"
                                       StrokeLineCap="Round" StrokeJoin="Round"
                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                      Stroke="{DynamicResource AvatarInk}"
+                                      Stroke="{DynamicResource WelcomeIconInk}"
                                       Data="M3.5 8A2.5 2.5 0 0 1 6 5.5h3.6l1.8 2.2H18a2.5 2.5 0 0 1 2.5 2.5v7A2.5 2.5 0 0 1 18 19.7H6A2.5 2.5 0 0 1 3.5 17.2z" />
                             </Border>
                             <TextBlock Text="Весь заказ за один проход" Classes="t13ExtraBold" Margin="0,11,0,0" />
@@ -546,12 +558,13 @@
                         <StackPanel>
                             <Border Width="38" Height="38" CornerRadius="11"
                                     HorizontalAlignment="Left"
-                                    Background="{DynamicResource AvatarFill}"
-                                    BorderBrush="{DynamicResource AvatarRing}" BorderThickness="1">
+                                    Background="{DynamicResource WelcomeIconFill}"
+                                    BorderBrush="{DynamicResource WelcomeIconRing}" BorderThickness="1"
+                                    BoxShadow="{DynamicResource WelcomeIconShadow}">
                                 <Path Width="18" Height="18" Stretch="Uniform" StrokeThickness="1.5"
                                       StrokeLineCap="Round" StrokeJoin="Round"
                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                      Stroke="{DynamicResource AvatarInk}"
+                                      Stroke="{DynamicResource WelcomeIconInk}"
                                       Data="M5.3 3.5h3.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1-1.8 1.8H5.3a1.8 1.8 0 0 1-1.8-1.8V5.3a1.8 1.8 0 0 1 1.8-1.8zM15.3 3.5h3.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1-1.8 1.8h-3.4a1.8 1.8 0 0 1-1.8-1.8V5.3a1.8 1.8 0 0 1 1.8-1.8zM5.3 13.5h3.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1-1.8 1.8H5.3a1.8 1.8 0 0 1-1.8-1.8v-3.4a1.8 1.8 0 0 1 1.8-1.8zM15.3 13.5h3.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1-1.8 1.8h-3.4a1.8 1.8 0 0 1-1.8-1.8v-3.4a1.8 1.8 0 0 1 1.8-1.8z" />
                             </Border>
                             <TextBlock Text="Порядок под контролем" Classes="t13ExtraBold" Margin="0,11,0,0" />
@@ -565,12 +578,13 @@
                         <StackPanel>
                             <Border Width="38" Height="38" CornerRadius="11"
                                     HorizontalAlignment="Left"
-                                    Background="{DynamicResource AvatarFill}"
-                                    BorderBrush="{DynamicResource AvatarRing}" BorderThickness="1">
+                                    Background="{DynamicResource WelcomeIconFill}"
+                                    BorderBrush="{DynamicResource WelcomeIconRing}" BorderThickness="1"
+                                    BoxShadow="{DynamicResource WelcomeIconShadow}">
                                 <Path Width="18" Height="18" Stretch="Uniform" StrokeThickness="1.5"
                                       StrokeLineCap="Round" StrokeJoin="Round"
                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                      Stroke="{DynamicResource AvatarInk}"
+                                      Stroke="{DynamicResource WelcomeIconInk}"
                                       Data="M8.3 17.9a4.2 4.2 0 0 1-.6-8.4 5.5 5.5 0 0 1 10.4 1 3.7 3.7 0 0 1-.5 7.4M12 16.6v-5.1M9.9 13.6 12 11.5l2.1 2.1" />
                             </Border>
                             <TextBlock Text="Загрузка прямо на сайт" Classes="t13ExtraBold" Margin="0,11,0,0" />

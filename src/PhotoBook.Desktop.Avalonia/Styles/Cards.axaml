@@ -80,13 +80,24 @@
         <Setter Property="CornerRadius" Value="999" />
         <Setter Property="FontSize" Value="13.5" />
         <Setter Property="FontWeight" Value="Bold" />
+        <!-- The filled action rises under the pointer, and a rise draws outside the
+             control's rectangle: clipping would cut the shadow to a rim. -->
+        <Setter Property="ClipToBounds" Value="False" />
         <Setter Property="Template">
             <ControlTemplate>
                 <Border Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}"
-                        Padding="{TemplateBinding Padding}">
+                        Padding="{TemplateBinding Padding}"
+                        BoxShadow="{DynamicResource ActionShadow}">
+                    <Border.Transitions>
+                        <Transitions>
+                            <BrushTransition Property="Background" Duration="0:0:0.14" />
+                            <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.16" />
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.16" />
+                        </Transitions>
+                    </Border.Transitions>
                     <!--
                         The words and the mark take the button's own colour rather than
                         whatever the theme hands them, so that a disabled button - which is
@@ -105,8 +116,19 @@
         <Setter Property="BorderBrush" Value="{DynamicResource ActionBorder}" />
     </Style>
 
+    <!-- One pixel up, and a wider and softer descent under it. -->
+    <Style Selector="Button.primary:pointerover /template/ Border">
+        <Setter Property="RenderTransform" Value="translate(0px,-1px)" />
+        <Setter Property="BoxShadow" Value="{DynamicResource ActionShadowHover}" />
+    </Style>
+
     <Style Selector="Button.primary:pressed">
         <Setter Property="Background" Value="{DynamicResource ActionFillPressed}" />
+    </Style>
+
+    <Style Selector="Button.primary:pressed /template/ Border">
+        <Setter Property="RenderTransform" Value="translate(0px,0px)" />
+        <Setter Property="BoxShadow" Value="{DynamicResource ActionShadowPressed}" />
     </Style>
 
     <!--
