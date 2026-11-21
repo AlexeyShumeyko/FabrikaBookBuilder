@@ -48,9 +48,14 @@
     -->
     <Grid Background="{DynamicResource PageBackdrop}">
 
-    <!-- The warm glow the prototype lays over the top of the page. It is behind everything
-         and takes no input: a background is not a control. -->
+    <!--
+        The light the page stands in: the prototype's sun over its top edge, and the shade
+        its lower corner sits in. Two layers, because a brush carries one gradient and the
+        page needs both. They are behind everything and take no input: a background is not
+        a control.
+    -->
     <Border Background="{DynamicResource PageGlow}" IsHitTestVisible="False" />
+    <Border Background="{DynamicResource PageGlowCorner}" IsHitTestVisible="False" />
 
     <DockPanel x:Name="PageLayer" LastChildFill="True">
 

@@ -227,12 +227,24 @@
                 <GradientStop Color="#EFE6D6" Offset="1" />
             </LinearGradientBrush>
 
-            <!-- The glow behind the top of the page, one ellipse wide and mostly above it. -->
-            <RadialGradientBrush x:Key="PageGlow" Center="0.5,-0.18" GradientOrigin="0.5,-0.18"
-                                 RadiusX="0.55" RadiusY="1.1">
+            <!--
+                The light the page stands in: the prototype's two radial washes over its
+                vertical one, in its numbers. 1300x820 at 50% -18% is the sun over the top
+                of the page; 900x600 at 100% 108% is the shade its lower right corner sits
+                in. Both are written as percentages of the page, so they hold their shape
+                when the window changes - the pixel figures are what they come to at the
+                program's usual 1600x860.
+            -->
+            <RadialGradientBrush x:Key="PageGlow" Center="50%,-18%" GradientOrigin="50%,-18%"
+                                 RadiusX="81%" RadiusY="95%">
                 <GradientStop Color="#73FFE8AA" Offset="0" />
                 <GradientStop Color="#00FFE8AA" Offset="0.64" />
-                <GradientStop Color="#00FFE8AA" Offset="1" />
+            </RadialGradientBrush>
+
+            <RadialGradientBrush x:Key="PageGlowCorner" Center="100%,108%" GradientOrigin="100%,108%"
+                                 RadiusX="56%" RadiusY="70%">
+                <GradientStop Color="#24D6C4A0" Offset="0" />
+                <GradientStop Color="#00D6C4A0" Offset="0.6" />
             </RadialGradientBrush>
 
             <!-- A card is lighter at its top edge than at its foot, by two percent. -->
@@ -258,9 +270,60 @@
             </LinearGradientBrush>
             <BoxShadows x:Key="TopBarShadow">0 1 0 0 #0D4A3A1C, 0 12 32 0 #0F4A3A1C</BoxShadows>
 
-            <!-- The recommended mode card is lifted off the page by a warm glow, not by a
-                 grey shadow: it is the card the product is pointing at. -->
-            <BoxShadows x:Key="ModeCardGlow">0 18 44 0 #40AA7D00</BoxShadows>
+            <!--
+                A mode card on the start screen, in the prototype's own numbers. Its shadow is
+                large and soft rather than a hairline descent: the card is a sheet of paper
+                standing off the page, drawn with eighteen of offset and forty-four of blur at
+                twelve percent of brown, and a second, tighter descent under its edge.
+            -->
+            <BoxShadows x:Key="ModeCardShadow">0 18 44 0 #1F58421C, 0 2 6 0 #0D58421C</BoxShadows>
+            <BoxShadows x:Key="ModeCardShadowHover">0 26 56 0 #2B58421C, 0 0 0 1 #1FD6A014</BoxShadows>
+
+            <!-- The frame answers the pointer in gold, and the recommended card wears a gold
+                 ring that is brightest at its top-left and gone by the far corner. -->
+            <Color x:Key="ModeCardBorderHover">#59B07B00</Color>
+            <LinearGradientBrush x:Key="ModeCardFeaturedRing" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#2EB07B00" Offset="0" />
+                <GradientStop Color="#00B07B00" Offset="0.3" />
+                <GradientStop Color="#00B07B00" Offset="0.7" />
+                <GradientStop Color="#0FB07B00" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- The recommended card is lit from its top-right corner, inside the card rather
+                 than behind it: a glow drawn outside a rounded card spills past its corners. -->
+            <RadialGradientBrush x:Key="ModeCardGlowFill" Center="110%,-10%" GradientOrigin="110%,-10%"
+                                 RadiusX="90%" RadiusY="48%">
+                <GradientStop Color="#38FFBA28" Offset="0" />
+                <GradientStop Color="#00FFBA28" Offset="0.7" />
+            </RadialGradientBrush>
+
+            <!-- The plate a mode's mark sits on: a gold tile with a hairline ring inside it. -->
+            <LinearGradientBrush x:Key="ModePlateFill" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#7BFCF0D6" Offset="0" />
+                <GradientStop Color="#3DFFC43C" Offset="0.62" />
+                <GradientStop Color="#3DFFC43C" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="ModePlateRing">#61B07B00</Color>
+            <Color x:Key="ModePlateInnerRing">#33B07B00</Color>
+            <Color x:Key="ModePlateInk">#8A5F00</Color>
+            <BoxShadows x:Key="ModePlateShadow">inset 0 1 0 0 #99FFFFFF, 0 8 18 -12 #B358421C</BoxShadows>
+
+            <!-- The one line the recommended mode leads with: a warm box inside the card. -->
+            <LinearGradientBrush x:Key="CalloutFill" StartPoint="0%,0%" EndPoint="35%,100%">
+                <GradientStop Color="#3DFFCE3C" Offset="0" />
+                <GradientStop Color="#1AFFCE3C" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="CalloutBorder">#52B07B00</Color>
+            <Color x:Key="CalloutTitle">#7D5900</Color>
+            <Color x:Key="CalloutText">#6C5A3C</Color>
+
+            <!-- The "Рекомендуем" tag is a cap of gold, not a pale wash. -->
+            <LinearGradientBrush x:Key="TagAccentFill" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#F9C53C" Offset="0" />
+                <GradientStop Color="#EAA60D" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="TagAccentInk">#2A1C00</Color>
+            <BoxShadows x:Key="TagAccentShadow">inset 0 1 0 0 #73FFFFFF, 0 4 14 0 #38B47D00</BoxShadows>
 
             <!-- The tray the tabs sit in. The ring around the chosen one is part of its
                  shadow, where the prototype puts it, so it cannot drift from the fill. -->
@@ -557,11 +620,20 @@
                 <GradientStop Color="#14110D" Offset="1" />
             </LinearGradientBrush>
 
-            <RadialGradientBrush x:Key="PageGlow" Center="0.06,-0.14" GradientOrigin="0.06,-0.14"
-                                 RadiusX="0.5" RadiusY="1.05">
+            <!-- The evening page carries the same two washes - warm light off its top-left
+                 corner, and the pool of it under the bottom of the page. The prototype's
+                 third one, a six-percent wash at the top right, is not drawn: at that
+                 strength it is the same pixel as the wash beside it. -->
+            <RadialGradientBrush x:Key="PageGlow" Center="6%,-14%" GradientOrigin="6%,-14%"
+                                 RadiusX="69%" RadiusY="81%">
                 <GradientStop Color="#1FFFC428" Offset="0" />
                 <GradientStop Color="#00FFC428" Offset="0.62" />
-                <GradientStop Color="#00FFC428" Offset="1" />
+            </RadialGradientBrush>
+
+            <RadialGradientBrush x:Key="PageGlowCorner" Center="58%,118%" GradientOrigin="58%,118%"
+                                 RadiusX="69%" RadiusY="88%">
+                <GradientStop Color="#0FFFB92D" Offset="0" />
+                <GradientStop Color="#00FFB92D" Offset="0.62" />
             </RadialGradientBrush>
 
             <LinearGradientBrush x:Key="CardFill" StartPoint="50%,0%" EndPoint="50%,100%">
@@ -580,7 +652,48 @@
             </LinearGradientBrush>
             <BoxShadows x:Key="TopBarShadow">0 0 0 0 #00000000</BoxShadows>
 
-            <BoxShadows x:Key="ModeCardGlow">0 18 44 0 #4DFFBE14</BoxShadows>
+            <!-- The mode card at night: the same lift, drawn with a black descent. -->
+            <BoxShadows x:Key="ModeCardShadow">0 24 60 0 #33000000</BoxShadows>
+            <BoxShadows x:Key="ModeCardShadowHover">0 30 70 0 #57000000</BoxShadows>
+
+            <Color x:Key="ModeCardBorderHover">#47FFCD2D</Color>
+            <LinearGradientBrush x:Key="ModeCardFeaturedRing" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#2EFFCD2D" Offset="0" />
+                <GradientStop Color="#00FFCD2D" Offset="0.3" />
+                <GradientStop Color="#00FFCD2D" Offset="0.7" />
+                <GradientStop Color="#0FFFCD2D" Offset="1" />
+            </LinearGradientBrush>
+
+            <RadialGradientBrush x:Key="ModeCardGlowFill" Center="110%,-10%" GradientOrigin="110%,-10%"
+                                 RadiusX="90%" RadiusY="48%">
+                <GradientStop Color="#1FFFCD2D" Offset="0" />
+                <GradientStop Color="#00FFCD2D" Offset="0.7" />
+            </RadialGradientBrush>
+
+            <LinearGradientBrush x:Key="ModePlateFill" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#FFD471" Offset="0" />
+                <GradientStop Color="#F2B41C" Offset="0.48" />
+                <GradientStop Color="#D99405" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="ModePlateRing">#CF9105</Color>
+            <Color x:Key="ModePlateInnerRing">#263A2600</Color>
+            <Color x:Key="ModePlateInk">#2A1C00</Color>
+            <BoxShadows x:Key="ModePlateShadow">inset 0 1 0 0 #80FFFFFF, 0 10 24 0 #33BE8200</BoxShadows>
+
+            <LinearGradientBrush x:Key="CalloutFill" StartPoint="0%,0%" EndPoint="35%,100%">
+                <GradientStop Color="#1AFFCD2D" Offset="0" />
+                <GradientStop Color="#09FFCD2D" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="CalloutBorder">#2EFFCD2D</Color>
+            <Color x:Key="CalloutTitle">#FFE08A</Color>
+            <Color x:Key="CalloutText">#D8C9A8</Color>
+
+            <LinearGradientBrush x:Key="TagAccentFill" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#F9C53C" Offset="0" />
+                <GradientStop Color="#EAA60D" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="TagAccentInk">#2A1C00</Color>
+            <BoxShadows x:Key="TagAccentShadow">inset 0 1 0 0 #66FFFFFF, 0 4 14 0 #38BE8200</BoxShadows>
 
             <Color x:Key="TabTrayBorder">#0EFFFFFF</Color>
 

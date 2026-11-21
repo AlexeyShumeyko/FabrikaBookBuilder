@@ -584,66 +584,113 @@
 
     <!--
         A mode card on the start screen: the whole card is the choice, so the control has to
-        be one that can be pressed, focused and reached by automation. Padding 24, a 1px
-        slate frame, radius 16, the card shadow, and on hover the frame takes the product's
-        colour and the shadow deepens - which is what makes a screen-sized block read as a
-        card rather than as a form field.
+        be one that can be pressed, focused and reached by automation.
+
+        Transcribed from the prototype rather than approximated: 28 of padding, radius 22, a
+        hairline frame, and a shadow with real depth - eighteen of descent under forty-four
+        of blur, and a second, tighter one under the edge. The card this screen had before
+        looked flat because of its shadow, not because of its radius.
+
+        It answers the pointer the way the prototype's does: it rises three pixels, its frame
+        warms to gold, its shadow deepens, and the arrow in its foot steps four pixels toward
+        the screen it opens. All of it moves over a fifth of a second rather than jumping,
+        because a screen-sized card that snaps under the pointer reads as a glitch.
 
         The template is written out because the built-in one paints a grey wash over the
-        content on hover. The released program had no wash: its card was a Border, and a
-        Border has nothing to wash. Hover is the frame changing colour and the shadow
-        deepening, and nothing else - a screen-sized block that greys out reads as disabled.
+        content on hover, and a screen-sized block that greys out reads as disabled.
     -->
     <Style Selector="Button.modeCard">
-        <Setter Property="Background" Value="{DynamicResource Surface}" />
+        <Setter Property="Background" Value="{DynamicResource CardFill}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="22" />
-        <Setter Property="MinWidth" Value="496" />
+        <Setter Property="MinHeight" Value="496" />
         <Setter Property="Padding" Value="28" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
         <Setter Property="Cursor" Value="Hand" />
+        <!-- The card rises out of its own rectangle, and its shadow is drawn outside it. -->
+        <Setter Property="ClipToBounds" Value="False" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.22" />
+            </Transitions>
+        </Setter>
         <Setter Property="Template">
             <ControlTemplate>
                 <!--
-                    The shadow lives on the Border rather than on the Button: in this engine
-                    BoxShadow is a Border's property and there is no Button one, so a setter
-                    naming it on the Button does not compile.
+                    The frame and the shadow live on the Border: in this engine BoxShadow is a
+                    Border's property and there is no Button one, so a setter naming it on the
+                    Button does not compile.
                 -->
-                <Border Background="{TemplateBinding Background}"
+                <Border x:Name="Shell"
+                        Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}"
                         Padding="{TemplateBinding Padding}"
-                        BoxShadow="{DynamicResource ShadowCard}">
-                    <ContentPresenter Content="{TemplateBinding Content}"
-                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        BoxShadow="{DynamicResource ModeCardShadow}">
+                    <Border.Transitions>
+                        <Transitions>
+                            <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.22" />
+                        </Transitions>
+                    </Border.Transitions>
+                    <Panel>
+                        <!--
+                            The recommended card's warm corner. A layer of its own rather than a
+                            second brush on the Border, because a Border carries one background
+                            and this card needs both its paper and this light over it - and it is
+                            drawn inside the card, because a glow behind a rounded card spills
+                            past its corners. That spill is what the gold shadow on this card
+                            used to do.
+                        -->
+                        <Border x:Name="Glow" IsVisible="False" IsHitTestVisible="False"
+                                CornerRadius="22" Margin="-29"
+                                Background="{DynamicResource ModeCardGlowFill}" />
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Panel>
                 </Border>
             </ControlTemplate>
         </Setter>
     </Style>
 
     <!--
-        The recommended card. Gold along its frame and a warm glow under it, because it is
-        the one the product points at; nothing else about it is louder, and its contents are
-        the same as its neighbour's.
+        The one card the product recommends. A gold ring that is bright where the light falls
+        on it and gone by the far corner, and the warm glow inside it; nothing else about it
+        is louder, and its contents are the same as its neighbour's.
     -->
     <Style Selector="Button.modeCard.featured">
-        <Setter Property="BorderBrush" Value="{DynamicResource Gold}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ModeCardFeaturedRing}" />
     </Style>
 
-    <Style Selector="Button.modeCard.featured /template/ Border">
-        <Setter Property="BoxShadow" Value="{DynamicResource ModeCardGlow}" />
+    <Style Selector="Button.modeCard.featured /template/ Border#Glow">
+        <Setter Property="IsVisible" Value="True" />
     </Style>
 
     <Style Selector="Button.modeCard:pointerover">
-        <Setter Property="BorderBrush" Value="{DynamicResource Brand500}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ModeCardBorderHover}" />
+        <Setter Property="RenderTransform" Value="translate(0px,-3px)" />
     </Style>
 
-    <Style Selector="Button.modeCard:pointerover /template/ Border">
-        <Setter Property="BoxShadow" Value="{DynamicResource ShadowHover}" />
+    <Style Selector="Button.modeCard:pointerover /template/ Border#Shell">
+        <Setter Property="BoxShadow" Value="{DynamicResource ModeCardShadowHover}" />
+    </Style>
+
+    <!-- The arrow in the card's foot, and its step toward the screen the press opens. -->
+    <Style Selector="Path.modeArrow">
+        <Setter Property="RenderTransform" Value="translate(0px,0px)" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.modeCard:pointerover Path.modeArrow">
+        <Setter Property="RenderTransform" Value="translate(4px,0px)" />
     </Style>
 
 </Styles>
