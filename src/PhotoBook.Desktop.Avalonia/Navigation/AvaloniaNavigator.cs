@@ -112,6 +112,13 @@ namespace PhotoBook.Shell.Navigation
         /// <summary>Raised when a screen needs a password the shell has to ask for.</summary>
         public event EventHandler? SignInRequested;
 
+        /// <summary>Raised when the guide asks for the support page.</summary>
+        /// <remarks>
+        /// The page says a person was asked for and stops there; which window answers that
+        /// is the shell's business, as it is for the upload screen.
+        /// </remarks>
+        public event EventHandler? SupportRequested;
+
         /// <summary>Raised whenever the mode changes, so a shell can react.</summary>
         public event EventHandler<AppMode>? ModeChanged;
 
@@ -178,11 +185,12 @@ namespace PhotoBook.Shell.Navigation
             // The projects list is built per visit - it exists to show the projects as they
             // are at the moment it is opened - so it is created here rather than kept. The
             // editors are singletons and come back exactly as they were left.
-            var viewModel = _currentMode switch
+            object? viewModel = _currentMode switch
             {
-                AppMode.UniqueFolders => (object)_uniqueFolders,
+                AppMode.UniqueFolders => _uniqueFolders,
                 AppMode.Combined => _combined,
                 AppMode.SiteOrder => _siteOrder,
+                AppMode.Help => null,
                 _ => ProjectListProvider()
             };
 
@@ -212,6 +220,11 @@ namespace PhotoBook.Shell.Navigation
             // the subscription is made here and nowhere else.
             if (_host.Content is Views.StartScreenView startScreen)
                 startScreen.Chosen += CreateProject;
+
+            // The guide offers the way to the support page, and that way belongs to the
+            // shell: the page does not know how windows are opened.
+            if (_host.Content is Views.HelpView help)
+                help.SupportRequested += (_, _) => SupportRequested?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>

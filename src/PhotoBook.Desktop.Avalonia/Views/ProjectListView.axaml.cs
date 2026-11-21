@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 
 namespace PhotoBook.Shell.Views
 {
@@ -18,20 +17,8 @@ namespace PhotoBook.Shell.Views
             InitializeComponent();
         }
 
-        /// <summary>
-        /// Opens the guide from the first-run panel.
-        /// </summary>
-        /// <remarks>
-        /// The button says "как это работает" and the answer is the guide, so it opens the same
-        /// window the header's help button does rather than a window of its own. The owner is
-        /// looked up rather than passed in: this view is built by the shell and has no window of
-        /// its own to hand.
-        /// </remarks>
-        private async void OnHowItWorksClick(object? sender, RoutedEventArgs e)
-        {
-            if (TopLevel.GetTopLevel(this) is not Window owner) return;
-
-            await new HelpWindow().ShowDialog(owner);
-        }
+        // The button that says "как это работает" asks the view model for the guide, which is
+        // the same screen the header's help button opens. It used to open a window of its own;
+        // a screen is a place, and there is one of it.
     }
 }

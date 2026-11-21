@@ -451,7 +451,8 @@
                                                        Foreground="{DynamicResource ActionInk}" />
                                         </StackPanel>
                                     </Button>
-                                    <Button Classes="welcomeGhost" Click="OnHowItWorksClick"
+                                    <Button Classes="welcomeGhost"
+                                            Command="{Binding OpenGuideCommand}"
                                             AutomationProperties.Name="Как это работает">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <Path Width="11.5" Height="11.5" Stretch="Uniform" StrokeThickness="1.2"

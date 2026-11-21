@@ -22,6 +22,19 @@ namespace PhotoBook.Presentation.ViewModels
             CurrentMode = AppMode.StartScreen;
         }
 
+        /// <summary>
+        /// Opens the guide from the first-run panel.
+        /// </summary>
+        /// <remarks>
+        /// The guide is a screen of the shell, so the list asks the navigator for it the same
+        /// way it asks for the mode screen. It used to be a window opened by the view, which
+        /// put a second copy of the shell around it.
+        /// </remarks>
+        private void OpenGuide()
+        {
+            CurrentMode = AppMode.Help;
+        }
+
         private void OpenProject(ProjectInfo? projectInfo)
         {
             if (projectInfo != null)

@@ -45,6 +45,7 @@ namespace PhotoBook.Presentation.ViewModels
 
             LoadProjectsCommand = new AsyncRelayCommand(LoadProjectsAsync);
             CreateProjectCommand = new RelayCommand(CreateProject);
+            OpenGuideCommand = new RelayCommand(OpenGuide);
             OpenProjectCommand = new RelayCommand<ProjectInfo>(OpenProject);
             DeleteProjectCommand = new AsyncRelayCommand<ProjectInfo>(DeleteProjectAsync, CanDeleteProject);
 
@@ -94,6 +95,9 @@ namespace PhotoBook.Presentation.ViewModels
 
         public ICommand LoadProjectsCommand { get; }
         public ICommand CreateProjectCommand { get; }
+
+        /// <summary>The first-run panel's "как это работает": the guide, as a screen.</summary>
+        public ICommand OpenGuideCommand { get; }
         public ICommand OpenProjectCommand { get; }
         public ICommand DeleteProjectCommand { get; }
         public ICommand BackCommand { get; }

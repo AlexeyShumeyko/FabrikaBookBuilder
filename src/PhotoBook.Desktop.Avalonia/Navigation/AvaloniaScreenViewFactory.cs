@@ -42,9 +42,13 @@ namespace PhotoBook.Shell.Navigation
             _newProjectsViewModel = newProjectsViewModel;
         }
 
-        public object CreateScreen(AppMode mode, object viewModel) => mode switch
+        public object CreateScreen(AppMode mode, object? viewModel) => mode switch
         {
             AppMode.StartScreen => new StartScreenView(),
+
+            // The guide is a page of text and its own behaviour: it has no view model to be
+            // built around.
+            AppMode.Help => new HelpView(),
 
             AppMode.ProjectList => ProjectsScreen(viewModel),
 
@@ -86,7 +90,7 @@ namespace PhotoBook.Shell.Navigation
         /// navigator has nothing to give.
         /// </para>
         /// </remarks>
-        private Control ProjectsScreen(object viewModel) => new ProjectListView
+        private Control ProjectsScreen(object? viewModel) => new ProjectListView
         {
             DataContext = viewModel as ProjectListViewModel ?? _newProjectsViewModel()
         };

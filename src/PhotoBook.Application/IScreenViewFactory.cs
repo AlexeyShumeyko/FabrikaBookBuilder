@@ -28,6 +28,6 @@ namespace PhotoBook.Application
         /// <summary>
         /// Builds the screen for <paramref name="mode"/> around <paramref name="viewModel"/>.
         /// </summary>
-        object CreateScreen(AppMode mode, object viewModel);
+        object CreateScreen(AppMode mode, object? viewModel);
     }
 }

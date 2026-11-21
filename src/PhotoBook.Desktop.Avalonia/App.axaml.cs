@@ -166,7 +166,8 @@ public partial class App : Avalonia.Application
             var navigator = provider.GetRequiredService<AvaloniaNavigator>();
             var window = new MainWindow(
                 provider.GetRequiredService<ShellHeaderViewModel>(),
-                provider.GetRequiredService<SiteLoginViewModel>());
+                provider.GetRequiredService<SiteLoginViewModel>(),
+                navigator);
 
             // The screen to open is decided before the window exists, which is what makes it
             // reliable. Done from a command it would be an asynchronous call whose
@@ -210,6 +211,10 @@ public partial class App : Avalonia.Application
                 if (await upload.ShowDialog<bool>(window))
                     navigator.EndSession();
             };
+
+            // The guide offers the way to the support page, and the page comes back to the
+            // guide: one window, one answer, and the heading the reader asked for.
+            navigator.SupportRequested += async (_, _) => await window.ShowSupportAsync();
 
             desktop.MainWindow = window;
 

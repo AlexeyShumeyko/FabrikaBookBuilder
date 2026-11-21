@@ -9,6 +9,9 @@ namespace PhotoBook.Core
         Combined,
 
         /// <summary>The order page: what will go to the site, opened from the project.</summary>
-        SiteOrder
+        SiteOrder,
+
+        /// <summary>The guide: a screen inside the shell, not a window beside it.</summary>
+        Help
     }
 }

@@ -227,7 +227,8 @@
                                       Data="M20.2 14.6A8.6 8.6 0 0 1 9.4 3.8 8.6 8.6 0 1 0 20.2 14.6z" />
                             </Panel>
                         </Button>
-                        <Button Classes="utility" Click="OnHelpClick" ToolTip.Tip="Помощь и журнал работы программы"
+                        <Button Classes="utility" Command="{Binding GoToHelpCommand}"
+                                ToolTip.Tip="Помощь и журнал работы программы"
                                 AutomationProperties.Name="Помощь">
                             <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.5"
                                   StrokeLineCap="Round" StrokeJoin="Round"

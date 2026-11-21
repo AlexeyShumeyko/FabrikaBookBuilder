@@ -466,6 +466,70 @@
             <Color x:Key="StatusTealFill">#1A0D8B79</Color>
             <Color x:Key="StatusTealBorder">#330D8B79</Color>
 
+            <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ the guide ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+            <!--
+                The manual is a page of type on paper rather than a set of cards, so it needs
+                inks of its own: the prototype writes its small capitals in a deeper gold than
+                the accent by day, and in the gold itself at night.
+
+                "Mock" is the drawn window in chapter one and the empty screenshot frames:
+                washes of the page's own ink, which are brown on paper and white in the evening.
+                The gold washes stay the same gold in both themes, as the prototype's do.
+            -->
+            <Color x:Key="ManualAccent">#8A5F00</Color>
+            <Color x:Key="ManualPageMat">#F3EBDE</Color>
+            <Color x:Key="ManualRule">#214A3A1C</Color>
+            <Color x:Key="ManualRuleStrong">#3B4A3A1C</Color>
+            <Color x:Key="ManualMockTop">#0B4A3A1C</Color>
+            <Color x:Key="ManualMockBottom">#034A3A1C</Color>
+            <Color x:Key="ManualMockDot">#294A3A1C</Color>
+            <Color x:Key="ManualMockLineSoft">#1F4A3A1C</Color>
+            <Color x:Key="ManualMockLine">#1A4A3A1C</Color>
+            <Color x:Key="ManualMockCard">#084A3A1C</Color>
+            <Color x:Key="ManualGold55">#8CF2B41C</Color>
+            <Color x:Key="ManualGold50">#80F2B41C</Color>
+            <Color x:Key="ManualGold40">#66F2B41C</Color>
+            <Color x:Key="ManualGold28">#47F2B41C</Color>
+            <Color x:Key="ManualGold06">#0FF2B41C</Color>
+            <Color x:Key="ManualFrameBorder">#47B07B00</Color>
+            <Color x:Key="ManualFrameTop">#29FFCE3C</Color>
+            <Color x:Key="ManualFrameTagBorder">#124A3A1C</Color>
+            <Color x:Key="ManualPinFill">#EAB223</Color>
+            <Color x:Key="ManualPinBorder">#C89100</Color>
+            <Color x:Key="ManualPinInk">#2A1E00</Color>
+            <BoxShadows x:Key="ManualPinShadow">0 4 10 0 #40785A14</BoxShadows>
+            <Color x:Key="ManualSealBorder">#61B07B00</Color>
+            <Color x:Key="ManualSealRing">#33B07B00</Color>
+            <Color x:Key="ManualSealInk">#8A5F00</Color>
+            <LinearGradientBrush x:Key="ManualSealFill" StartPoint="0%,0%" EndPoint="41%,100%">
+                <GradientStop Color="#FCF1D4" Offset="0" />
+                <GradientStop Color="#FBEAC0" Offset="1" />
+            </LinearGradientBrush>
+            <BoxShadows x:Key="ManualSealShadow">inset 0 1 0 0 #8CFFFFFF, 0 10 22 -14 #BF58421C</BoxShadows>
+            <BoxShadows x:Key="ManualWindowShadow">0 16 38 0 #2458421C</BoxShadows>
+            <Color x:Key="ManualLifeLine">#294A3A1C</Color>
+            <Color x:Key="ManualLifeDotRing">#80B07B00</Color>
+            <BoxShadows x:Key="ManualLifeGlow">0 0 12 0 #73F2B41C</BoxShadows>
+            <Color x:Key="ManualGhostNumeral">#33B07B00</Color>
+            <Color x:Key="ManualRouteDot">#D69A08</Color>
+            <BoxShadows x:Key="ManualRouteDotShadow">0 0 0 4 #F3EBDE</BoxShadows>
+            <LinearGradientBrush x:Key="ManualFrameWash" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#29FFCE3C" Offset="0" />
+                <GradientStop Color="#05FFCE3C" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="ManualGold70">#B3B07B00</Color>
+            <Color x:Key="ManualTipRule">#66B07B00</Color>
+            <Color x:Key="ManualTick">#B07B00</Color>
+            <Color x:Key="ManualKeyFill">#0F4A3A1C</Color>
+            <Color x:Key="ManualKeyInk">#2B2417</Color>
+            <LinearGradientBrush x:Key="ManualNextFill" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#F3C04A" Offset="0" />
+                <GradientStop Color="#E0A30C" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="ManualNextBorder">#C89100</Color>
+            <Color x:Key="ManualNextInk">#2A1C00</Color>
+            <BoxShadows x:Key="ManualNextShadow">inset 0 1 0 0 #59FFFFFF</BoxShadows>
+
 
         </ResourceDictionary>
 
@@ -788,6 +852,63 @@
             <Color x:Key="StatusTealInk">#5AD9C6</Color>
             <Color x:Key="StatusTealFill">#1A5AD9C6</Color>
             <Color x:Key="StatusTealBorder">#2E5AD9C6</Color>
+
+            <!-- The guide in the evening: the gold itself for its small capitals, and the
+                 mock washes turned white. See the light theme for what each one is. -->
+            <Color x:Key="ManualAccent">#F2B41C</Color>
+            <Color x:Key="ManualPageMat">#14110D</Color>
+            <Color x:Key="ManualRule">#14FFF2D6</Color>
+            <Color x:Key="ManualRuleStrong">#26FFF2D6</Color>
+            <Color x:Key="ManualMockTop">#0BFFFFFF</Color>
+            <Color x:Key="ManualMockBottom">#03FFFFFF</Color>
+            <Color x:Key="ManualMockDot">#29FFFFFF</Color>
+            <Color x:Key="ManualMockLineSoft">#1FFFFFFF</Color>
+            <Color x:Key="ManualMockLine">#1AFFFFFF</Color>
+            <Color x:Key="ManualMockCard">#08FFFFFF</Color>
+            <Color x:Key="ManualGold55">#8CF2B41C</Color>
+            <Color x:Key="ManualGold50">#80F2B41C</Color>
+            <Color x:Key="ManualGold40">#66F2B41C</Color>
+            <Color x:Key="ManualGold28">#47F2B41C</Color>
+            <Color x:Key="ManualGold06">#0FF2B41C</Color>
+            <Color x:Key="ManualFrameBorder">#38FFCD2D</Color>
+            <Color x:Key="ManualFrameTop">#0BFFCD2D</Color>
+            <Color x:Key="ManualFrameTagBorder">#12FFFFFF</Color>
+            <Color x:Key="ManualPinFill">#F2B41C</Color>
+            <Color x:Key="ManualPinBorder">#CF9105</Color>
+            <Color x:Key="ManualPinInk">#2A1C00</Color>
+            <BoxShadows x:Key="ManualPinShadow">0 4 12 0 #66000000</BoxShadows>
+            <Color x:Key="ManualSealBorder">#CF9105</Color>
+            <Color x:Key="ManualSealRing">#293A2600</Color>
+            <Color x:Key="ManualSealInk">#2A1C00</Color>
+            <LinearGradientBrush x:Key="ManualSealFill" StartPoint="0%,0%" EndPoint="41%,100%">
+                <GradientStop Color="#FFD471" Offset="0" />
+                <GradientStop Color="#F2B41C" Offset="0.48" />
+                <GradientStop Color="#D99405" Offset="1" />
+            </LinearGradientBrush>
+            <BoxShadows x:Key="ManualSealShadow">inset 0 1 0 0 #73FFFFFF, 0 10 24 0 #2EBE8200</BoxShadows>
+            <BoxShadows x:Key="ManualWindowShadow">0 22 50 0 #38000000</BoxShadows>
+            <Color x:Key="ManualLifeLine">#14FFF2D6</Color>
+            <Color x:Key="ManualLifeDotRing">#8CFFCD2D</Color>
+            <BoxShadows x:Key="ManualLifeGlow">0 0 12 0 #73F2B41C</BoxShadows>
+            <Color x:Key="ManualGhostNumeral">#29FFCD2D</Color>
+            <Color x:Key="ManualRouteDot">#F2B41C</Color>
+            <BoxShadows x:Key="ManualRouteDotShadow">0 0 0 4 #14110D, 0 0 14 #80F2B41C</BoxShadows>
+            <LinearGradientBrush x:Key="ManualFrameWash" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#0BFFCD2D" Offset="0" />
+                <GradientStop Color="#01FFCD2D" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="ManualGold70">#B3F2B41C</Color>
+            <Color x:Key="ManualTipRule">#73F2B41C</Color>
+            <Color x:Key="ManualTick">#F2B41C</Color>
+            <Color x:Key="ManualKeyFill">#0FFFFFFF</Color>
+            <Color x:Key="ManualKeyInk">#42392A</Color>
+            <LinearGradientBrush x:Key="ManualNextFill" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#F7C235" Offset="0" />
+                <GradientStop Color="#EAA60D" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="ManualNextBorder">#CF9105</Color>
+            <Color x:Key="ManualNextInk">#2A1C00</Color>
+            <BoxShadows x:Key="ManualNextShadow">inset 0 1 0 0 #59FFFFFF</BoxShadows>
 
 
         </ResourceDictionary>

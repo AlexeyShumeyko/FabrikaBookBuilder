@@ -1,12 +1,13 @@
 using System;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using PhotoBook.Shell.Services;
+using Avalonia.Media;
 
 namespace PhotoBook.Shell.Views;
 
 /// <summary>
-/// A window that holds one page of the guide kind: the guide itself, the support page.
+/// A window that holds a page read beside the work: the support page, until it becomes a screen.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -42,7 +43,15 @@ public abstract class PageWindow : Window
         CanResize = true;
         ShowInTaskbar = false;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        Background = ThemeResources.Brush("PageBackdrop");
+        // The page's backdrop is a gradient, and Brush() builds a solid colour from a
+        // colour token - asking it for this one left the window without a background at all,
+        // so the screen behind it showed through. The resource itself is the right answer.
+        if (Avalonia.Application.Current is { } application
+            && application.TryFindResource("PageBackdrop", application.ActualThemeVariant, out var backdrop)
+            && backdrop is IBrush brush)
+        {
+            Background = brush;
+        }
 
         Content = page;
 

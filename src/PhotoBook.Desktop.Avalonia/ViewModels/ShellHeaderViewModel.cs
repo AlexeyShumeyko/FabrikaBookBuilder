@@ -55,6 +55,8 @@ namespace PhotoBook.Shell.ViewModels
 
         public bool IsCombinedSelected => CurrentMode == AppMode.Combined;
 
+        public bool IsHelpSelected => CurrentMode == AppMode.Help;
+
         /// <summary>
         /// An editor is reachable while its project is open, and unreachable otherwise.
         /// </summary>
@@ -117,6 +119,10 @@ namespace PhotoBook.Shell.ViewModels
         [RelayCommand]
         private void GoToCombined() => CurrentMode = AppMode.Combined;
 
+        /// <summary>The header's mark for the guide. It is a screen, so it is a place.</summary>
+        [RelayCommand]
+        private void GoToHelp() => CurrentMode = AppMode.Help;
+
         private bool IsReachable(AppMode mode) => CurrentMode == mode || _navigator.SessionMode == mode;
 
         private string NameOf(AppMode mode)
@@ -129,6 +135,7 @@ namespace PhotoBook.Shell.ViewModels
             OnPropertyChanged(nameof(IsStartSelected));
             OnPropertyChanged(nameof(IsUniqueFoldersSelected));
             OnPropertyChanged(nameof(IsCombinedSelected));
+            OnPropertyChanged(nameof(IsHelpSelected));
             OnPropertyChanged(nameof(CanOpenUniqueFoldersTab));
             OnPropertyChanged(nameof(CanOpenCombinedTab));
             OnPropertyChanged(nameof(ProjectTitle));
