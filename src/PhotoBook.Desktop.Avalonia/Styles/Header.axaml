@@ -1,4 +1,4 @@
-<Styles xmlns="https://github.com/avaloniaui"
+﻿<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!--
@@ -322,6 +322,16 @@
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
         <Setter Property="Cursor" Value="Hand" />
+        <!--
+            The tab does not clip its own template.
+
+            A control clips what its template draws to its own rectangle, and the chosen tab's
+            shadow falls outside that rectangle - so with clipping on, an eight-pixel blur came
+            out as a one-pixel rim, which reads as a hard outline rather than the soft descent
+            the prototype has. Proved with a spread shadow: six pixels of spread showed one
+            pixel until this line was added.
+        -->
+        <Setter Property="ClipToBounds" Value="False" />
 
         <!--
             The template is written out because ToggleButton paints no background of its own
@@ -331,7 +341,7 @@
         -->
         <Setter Property="Template">
             <ControlTemplate>
-                <Border x:Name="Pill"
+                <Border x:Name="Pill" ClipToBounds="False"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="17">
