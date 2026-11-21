@@ -30,6 +30,7 @@ using System.Runtime.InteropServices;
 public class Win {
     [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+    [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int attribute, out RECT r, int size);
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
 }
@@ -53,8 +54,13 @@ try {
     [void][Win]::SetForegroundWindow($proc.MainWindowHandle)
     Start-Sleep -Seconds 3
 
+    # The rectangle of a maximised window reaches eight pixels past the working area on every
+    # side. Those are the invisible resize borders, and taking the picture from there put the
+    # top of the taskbar into the bottom of every screenshot - which reads as a footer the
+    # program does not have. The frame DWM reports is the part that is seen.
     $r = New-Object Win+RECT
-    [void][Win]::GetWindowRect($proc.MainWindowHandle, [ref]$r)
+    $frame = [Win]::DwmGetWindowAttribute($proc.MainWindowHandle, 9, [ref]$r, 16)
+    if ($frame -ne 0) { [void][Win]::GetWindowRect($proc.MainWindowHandle, [ref]$r) }
     $w = $r.Right - $r.Left; $h = $r.Bottom - $r.Top
     if ($w -le 0 -or $h -le 0) { Write-Host 'FAIL: bad window rect'; Stop-Process -Id $proc.Id -Force; exit 1 }
 
