@@ -339,6 +339,7 @@
                 for "no matches".
             -->
             <ScrollViewer IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}, ConverterParameter=empty}"
+                          controls:SmoothScroll.IsEnabled="True"
                           VerticalScrollBarVisibility="Hidden"
                           HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
@@ -639,6 +640,7 @@
                  instead of pressed against the last card.
              -->
             <ScrollViewer Classes="contentScroll"
+                          controls:SmoothScroll.IsEnabled="True"
                           IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}}"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
