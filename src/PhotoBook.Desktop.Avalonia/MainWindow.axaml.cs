@@ -7,7 +7,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
-using PhotoBook.Core;
 using PhotoBook.Presentation.ViewModels;
 using PhotoBook.Shell.Navigation;
 using PhotoBook.Shell.Services;
@@ -124,33 +123,6 @@ public partial class MainWindow : Window
         bool dark = variant == ThemeVariant.Dark;
         ThemeSunPath.IsVisible = dark;
         ThemeMoonPath.IsVisible = !dark;
-    }
-
-    /// <summary>
-    /// Opens the support page: the hours and the four channels.
-    /// </summary>
-    /// <remarks>
-    /// A window of its own beside the guide for now, because the two answer different
-    /// questions and somebody looking for an address should not have to read seven chapters
-    /// to find it. It is the last of the two dialogs: the guide is a screen of the shell, and
-    /// this page follows it there next.
-    /// </remarks>
-    private async void OnContactsClick(object? sender, RoutedEventArgs e) => await ShowSupportAsync();
-
-    /// <summary>
-    /// Shows the support page, and puts the guide on screen when the page asks for it.
-    /// </summary>
-    /// <remarks>
-    /// The answer comes back from the dialog rather than through a second window: a page
-    /// that closed itself to ask for the guide and then opened another dialog would leave the
-    /// reader two windows away from where they started.
-    /// </remarks>
-    public async Task ShowSupportAsync()
-    {
-        var support = new SupportWindow();
-
-        if (await support.ShowDialog<bool>(this))
-            _navigator.CurrentMode = AppMode.Help;
     }
 
     /// <summary>

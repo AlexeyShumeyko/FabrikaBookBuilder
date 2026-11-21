@@ -112,13 +112,6 @@ namespace PhotoBook.Shell.Navigation
         /// <summary>Raised when a screen needs a password the shell has to ask for.</summary>
         public event EventHandler? SignInRequested;
 
-        /// <summary>Raised when the guide asks for the support page.</summary>
-        /// <remarks>
-        /// The page says a person was asked for and stops there; which window answers that
-        /// is the shell's business, as it is for the upload screen.
-        /// </remarks>
-        public event EventHandler? SupportRequested;
-
         /// <summary>Raised whenever the mode changes, so a shell can react.</summary>
         public event EventHandler<AppMode>? ModeChanged;
 
@@ -191,6 +184,7 @@ namespace PhotoBook.Shell.Navigation
                 AppMode.Combined => _combined,
                 AppMode.SiteOrder => _siteOrder,
                 AppMode.Help => null,
+                AppMode.Support => null,
                 _ => ProjectListProvider()
             };
 
@@ -221,10 +215,14 @@ namespace PhotoBook.Shell.Navigation
             if (_host.Content is Views.StartScreenView startScreen)
                 startScreen.Chosen += CreateProject;
 
-            // The guide offers the way to the support page, and that way belongs to the
-            // shell: the page does not know how windows are opened.
+            // The guide and the support page each offer the other, and neither knows how a
+            // screen is put up. The two subscriptions are made here, where the answer is
+            // already known to be a mode rather than a window.
             if (_host.Content is Views.HelpView help)
-                help.SupportRequested += (_, _) => SupportRequested?.Invoke(this, EventArgs.Empty);
+                help.SupportRequested += (_, _) => CurrentMode = AppMode.Support;
+
+            if (_host.Content is Views.SupportView support)
+                support.GuideRequested += (_, _) => CurrentMode = AppMode.Help;
         }
 
         /// <summary>

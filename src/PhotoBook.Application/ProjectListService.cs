@@ -543,8 +543,8 @@ namespace PhotoBook.Application
                 foreach (AppMode mode in Enum.GetValues(typeof(AppMode)))
                 {
                     // Screens that never held projects cannot have a legacy index: the mode
-                    // choice, the list itself, and the guide.
-                    if (mode == AppMode.StartScreen || mode == AppMode.ProjectList || mode == AppMode.Help)
+                    // choice, the list itself, the guide and the support page.
+                    if (mode is AppMode.StartScreen or AppMode.ProjectList or AppMode.Help or AppMode.Support)
                         continue;
 
                     var oldJson = await _index.ReadLegacyAsync(mode.ToString());

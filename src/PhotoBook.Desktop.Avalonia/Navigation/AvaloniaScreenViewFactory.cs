@@ -50,6 +50,9 @@ namespace PhotoBook.Shell.Navigation
             // built around.
             AppMode.Help => new HelpView(),
 
+            // The support page is the same shape: type to read, no view model behind it.
+            AppMode.Support => new SupportView(),
+
             AppMode.ProjectList => ProjectsScreen(viewModel),
 
             AppMode.UniqueFolders => new UniqueFoldersView

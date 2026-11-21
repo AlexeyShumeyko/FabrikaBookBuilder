@@ -15,8 +15,8 @@ namespace PhotoBook.Shell.Views;
 /// to be forwarded by hand anyway.
 /// </para>
 /// <para>
-/// The page itself does not know how windows are opened. It says the guide was asked for and
-/// leaves the owner to decide, which keeps one place responsible for what is on screen.
+/// The page itself does not know how screens are put up. It says the guide was asked for and
+/// leaves the navigator to decide, which keeps one place responsible for what is on screen.
 /// </para>
 /// </remarks>
 public partial class SupportView : UserControl

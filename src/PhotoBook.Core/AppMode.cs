@@ -12,6 +12,9 @@ namespace PhotoBook.Core
         SiteOrder,
 
         /// <summary>The guide: a screen inside the shell, not a window beside it.</summary>
-        Help
+        Help,
+
+        /// <summary>The support page: the hours and the four ways to reach a person.</summary>
+        Support
     }
 }

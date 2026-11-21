@@ -123,6 +123,10 @@ namespace PhotoBook.Shell.ViewModels
         [RelayCommand]
         private void GoToHelp() => CurrentMode = AppMode.Help;
 
+        /// <summary>The header's mark for the support page, for the same reason.</summary>
+        [RelayCommand]
+        private void GoToSupport() => CurrentMode = AppMode.Support;
+
         private bool IsReachable(AppMode mode) => CurrentMode == mode || _navigator.SessionMode == mode;
 
         private string NameOf(AppMode mode)

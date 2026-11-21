@@ -212,10 +212,6 @@ public partial class App : Avalonia.Application
                     navigator.EndSession();
             };
 
-            // The guide offers the way to the support page, and the page comes back to the
-            // guide: one window, one answer, and the heading the reader asked for.
-            navigator.SupportRequested += async (_, _) => await window.ShowSupportAsync();
-
             desktop.MainWindow = window;
 
             // Started here, where the container is an object that exists, rather than from
