@@ -177,32 +177,14 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- right: three zones, and the dividers are what say so.
+                    <!-- right: two zones, and the divider is what says so.
 
-                           [ undo / redo ] | [ theme, help, contacts ] | [ account ]
+                           [ theme, help, contacts ] | [ account ]
 
-                         Undo and redo belong to the folders editor alone: it is the only screen
-                         whose panel does not already carry the controls a person changes most,
-                         so two sets of arrows there would be two sets to read.
-
-                         Two dividers rather than one. The bar reads left to right as
-                         navigation, then history, then utilities, then who you are. -->
+                         One divider, between the utilities and the account: the bar reads left
+                         to right as navigation, then utilities, then who you are. -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6"
                                 Margin="26,0,0,0" VerticalAlignment="Center">
-
-                        <StackPanel Orientation="Horizontal" Spacing="6"
-                                    IsVisible="{Binding ShowUndoRedo}">
-                            <Button Classes="utility" AutomationProperties.Name="Отменить"
-                                    ToolTip.Tip="Отменить (Ctrl+Z)"
-                                    Command="{Binding UndoCommand}">
-                                <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
-                            </Button>
-                            <Button Classes="utility" AutomationProperties.Name="Вернуть"
-                                    ToolTip.Tip="Вернуть (Ctrl+Y)"
-                                    Command="{Binding RedoCommand}">
-                                <TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
-                            </Button>
-                        </StackPanel>
 
                         <!--
                             The theme switch. Light is the product's own face, and dark is

@@ -534,6 +534,13 @@
                 <GradientStop Color="#40B07B00" Offset="0" />
                 <GradientStop Color="#C89100" Offset="1" />
             </LinearGradientBrush>
+            <Color x:Key="BadgeFill">#3DFFCE3C</Color>
+            <Color x:Key="BadgeBorder">#42B07B00</Color>
+            <Color x:Key="BadgeInk">#8A6000</Color>
+            <LinearGradientBrush x:Key="StepLine" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#52FFCD2D" Offset="0" />
+                <GradientStop Color="#0DFFCD2D" Offset="1" />
+            </LinearGradientBrush>
             <Color x:Key="ManualNextBorder">#C89100</Color>
             <Color x:Key="ManualNextInk">#2A1C00</Color>
             <BoxShadows x:Key="ManualNextShadow">inset 0 1 0 0 #59FFFFFF</BoxShadows>
@@ -921,6 +928,13 @@
             <LinearGradientBrush x:Key="ManualDayLine" StartPoint="0%,50%" EndPoint="100%,50%">
                 <GradientStop Color="#40F2B41C" Offset="0" />
                 <GradientStop Color="#F2B41C" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="BadgeFill">#17FFCD2D</Color>
+            <Color x:Key="BadgeBorder">#38FFCD2D</Color>
+            <Color x:Key="BadgeInk">#F2B41C</Color>
+            <LinearGradientBrush x:Key="StepLine" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#52FFCD2D" Offset="0" />
+                <GradientStop Color="#0DFFCD2D" Offset="1" />
             </LinearGradientBrush>
             <Color x:Key="ManualNextBorder">#CF9105</Color>
             <Color x:Key="ManualNextInk">#2A1C00</Color>
