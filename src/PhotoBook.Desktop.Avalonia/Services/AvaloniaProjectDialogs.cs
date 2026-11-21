@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using PhotoBook.Application;
+using PhotoBook.Core;
 using PhotoBook.Shell.Views;
 
 namespace PhotoBook.Shell.Services
@@ -40,6 +41,28 @@ namespace PhotoBook.Shell.Services
             if (owner != null) window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
             return await window.ShowDialog<bool>(owner);
+        }
+
+        /// <summary>
+        /// The one question this screen asks, in the panel the prototype draws for it: the
+        /// project named on a card of its own, the promise about the photographs, and two
+        /// answers - the safe one and the red one.
+        /// </summary>
+        public async Task<bool> ConfirmDeleteProjectAsync(ProjectInfo project)
+        {
+            var main = Owner() as MainWindow;
+            if (main is null)
+            {
+                // No window to lay a panel over - never reached in the running program, and
+                // still a question that must be asked rather than a deletion taken on trust.
+                return await ConfirmAsync(
+                    "Удалить проект?",
+                    $"Проект \"{project.Name}\" будет удалён вместе со своей структурой.",
+                    "Удалить проект");
+            }
+
+            var answer = await main.ShowSheetAsync(new DeleteProjectSheet(project));
+            return answer is not null;
         }
 
         public async Task NotifyAsync(

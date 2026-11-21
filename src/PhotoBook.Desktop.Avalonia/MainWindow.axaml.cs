@@ -195,12 +195,19 @@ public partial class MainWindow : Window
         SheetHost.Content = sheet;
         SheetLayer.IsVisible = true;
 
+        // The page behind the panel is blurred as well as dimmed, which is what the prototype's
+        // backdrop does: a dim alone leaves the screen behind legible, and legible text under a
+        // question competes with it. The effect belongs to the page, not to the panel, so it is
+        // taken off again whatever the answer was.
+        PageLayer.Effect = new Avalonia.Media.BlurEffect { Radius = 8 };
+
         try
         {
             return await sheet.Answer;
         }
         finally
         {
+            PageLayer.Effect = null;
             SheetLayer.IsVisible = false;
             SheetHost.Content = null;
         }

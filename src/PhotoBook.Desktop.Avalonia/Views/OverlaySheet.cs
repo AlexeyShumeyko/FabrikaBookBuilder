@@ -4,6 +4,24 @@ using Avalonia.Controls;
 namespace PhotoBook.Shell.Views;
 
 /// <summary>
+/// The answer to a yes/no panel: present means yes, and nothing means no.
+/// </summary>
+/// <remarks>
+/// A reference type on purpose. <see cref="OverlaySheet{T}"/> is constrained to classes, and a
+/// yes is what the panel completes with - the absence of an answer is the no, which is the
+/// only safe reading of a closed panel on a destructive question.
+/// </remarks>
+public sealed class ConfirmAnswer
+{
+    private ConfirmAnswer()
+    {
+    }
+
+    /// <summary>The one instance a panel ever answers with.</summary>
+    public static readonly ConfirmAnswer Yes = new();
+}
+
+/// <summary>
 /// A panel that sits over the page and answers with something.
 /// </summary>
 /// <remarks>

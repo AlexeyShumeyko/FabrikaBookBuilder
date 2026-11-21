@@ -233,12 +233,7 @@ namespace PhotoBook.Presentation.ViewModels
         {
             if (projectInfo == null) return;
 
-            var result = await _dialogs.ConfirmAsync(
-                "Удалить проект?",
-                $"Проект \"{projectInfo.Name}\" будет удалён вместе со своей структурой.\n\n" +
-                "Фотографии на диске останутся на месте — удаляется только проект.",
-                "Удалить",
-                destructive: true);
+            var result = await _dialogs.ConfirmDeleteProjectAsync(projectInfo);
 
             if (result)
             {
@@ -256,7 +251,8 @@ namespace PhotoBook.Presentation.ViewModels
                         Projects.Remove(projectInfo);
                         FilteredProjects.Remove(projectInfo);
 
-                        OnPropertyChanged(nameof(FilterSummary));
+                        OnPropertyChanged(nameof(FilterSummaryLead));
+                        OnPropertyChanged(nameof(FilterSummaryValue));
                         OnPropertyChanged(nameof(HasNoMatches));
                     }
                     else

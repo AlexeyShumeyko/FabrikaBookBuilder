@@ -1,0 +1,157 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PhotoBook.Shell.Views.DeleteProjectSheet"
+             Focusable="True">
+
+    <!--
+        The question asked before a project is deleted, drawn as the prototype draws it.
+
+        It is a panel over the page rather than a window of its own: the page behind it is
+        dimmed and blurred, which is what says the panel is on top and belongs to this program.
+        The dimming layer is the shell's; this file is the card and nothing else.
+
+        Numbers, from the prototype's #modal-delete:
+
+            card        468 wide, radius 22, the modal surface, a hairline, two brown descents
+            head        26/22, a red wash fading downward, a 44 tile and a hairline under it
+            title       19 extra bold      subtitle 12, the faint ink
+            body        26/22/26/24, a target row, a paragraph, the promise about the files
+            target      radius 13, padding 14/12, a 38 mark and the name over the meta line
+            keep note   radius 12, padding 14/13, teal wash, teal hairline
+            foot        the sunken tray, 24/16, cancel and the red answer
+
+        The card rises fourteen pixels and settles from ninety-eight and a half percent over a
+        quarter of a second, which is the prototype's modalIn. It is done with transitions on
+        the card rather than with a storyboard so that the panel can be taken down at any time
+        without leaving an animation running.
+    -->
+    <Border x:Name="Card" Width="468" CornerRadius="22" ClipToBounds="True"
+            Background="{DynamicResource SurfaceModal}"
+            BorderBrush="{DynamicResource ModalEdge}" BorderThickness="1"
+            BoxShadow="{DynamicResource ModalShadow}"
+            Opacity="0" RenderTransform="translate(0px,14px) scale(0.985)">
+        <Border.Transitions>
+            <Transitions>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.24"
+                                               Easing="CubicEaseOut" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.24" Easing="CubicEaseOut" />
+            </Transitions>
+        </Border.Transitions>
+
+        <Grid RowDefinitions="Auto,Auto,Auto">
+
+            <!-- the head: what is being asked, with the basket and the red wash -->
+            <Border Grid.Row="0" Padding="26,22"
+                    Background="{DynamicResource DangerHeadWash}"
+                    BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+
+                    <Border Width="44" Height="44" CornerRadius="12"
+                            Background="{DynamicResource DangerTileFill}"
+                            BorderBrush="{DynamicResource DangerTileBorder}" BorderThickness="1"
+                            BoxShadow="{DynamicResource DangerTileShadow}">
+                        <Path Width="21" Height="21" Stretch="Uniform" StrokeThickness="1.5"
+                              StrokeLineCap="Round" StrokeJoin="Round"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Stroke="{DynamicResource DangerInk}"
+                              Data="M4 7h16M9.5 7V5h5v2M6.5 7l.9 12.2a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5L17.5 7M10 11v6M14 11v6" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="Удалить проект?" Classes="t19ExtraBold" />
+                        <TextBlock Text="Действие нельзя отменить" FontSize="12"
+                                   Foreground="{DynamicResource TextFaint}" />
+                    </StackPanel>
+
+                    <Button Grid.Column="2" Classes="modalClose" Click="OnCancelClick"
+                            AutomationProperties.Name="Закрыть"
+                            ToolTip.Tip="Закрыть">
+                        <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.5"
+                              StrokeLineCap="Round" StrokeJoin="Round"
+                              Stroke="{DynamicResource TextMuted}"
+                              Data="M6 6l12 12M18 6L6 18" />
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- the body: which project, what happens to it, and what does not -->
+            <StackPanel Grid.Row="1" Margin="26,22,26,24">
+
+                <Border Padding="14,12" CornerRadius="13"
+                        Background="{DynamicResource SunkenFaint}"
+                        BorderBrush="{DynamicResource BorderDefault}" BorderThickness="1">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Border Width="38" Height="38" CornerRadius="10"
+                                Background="{DynamicResource ModeMarkFill}"
+                                BoxShadow="{DynamicResource ModeMarkShadow}">
+                            <Path Width="20" Height="20" Stretch="Uniform" StrokeThickness="1.3"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Stroke="{Binding ModeInk}"
+                                  Data="{Binding ModeIcon}" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding ProjectName}" Classes="t13ExtraBold"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding ProjectMeta}" FontSize="11.5" Margin="0,2,0,0"
+                                       Foreground="{DynamicResource TextFaint}"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <TextBlock Margin="0,16,0,0" FontSize="12.5" LineHeight="21" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextMuted}"
+                           Text="Проект будет удалён вместе со структурой книг и расстановкой фотографий. Заново открыть его не получится." />
+
+                <!-- The one reassurance the panel has to give, and it is the reason the panel
+                     is worth drawing at all: what is deleted is the project, not the pictures. -->
+                <Border Margin="0,16,0,0" Padding="14,13" CornerRadius="12"
+                        Background="{DynamicResource KeepFill}"
+                        BorderBrush="{DynamicResource KeepBorder}" BorderThickness="1">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.4"
+                              StrokeLineCap="Round" StrokeJoin="Round" Margin="0,2,0,0"
+                              VerticalAlignment="Top"
+                              Stroke="{DynamicResource KeepInk}"
+                              Data="M6 4.5h12a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5H6A2.5 2.5 0 0 1 3.5 17V7A2.5 2.5 0 0 1 6 4.5zM4.5 17l4.8-4.4a1.5 1.5 0 0 1 2 0l3 2.7 2.2-2a1.5 1.5 0 0 1 2 0l1.6 1.4M10.6 10a1.6 1.6 0 1 1-3.2 0a1.6 1.6 0 1 1 3.2 0" />
+
+                        <StackPanel Grid.Column="1" Margin="11,0,0,0">
+                            <TextBlock Text="Фотографии на диске останутся на месте"
+                                       FontSize="12" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextDefault}" />
+                            <TextBlock Margin="0,2,0,0" FontSize="11.5" LineHeight="18"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFaint}"
+                                       Text="Удаляется только проект. Исходные файлы программа не трогает." />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <!-- the answers: the safe one first, the red one where the eye ends -->
+            <Border Grid.Row="2" Padding="24,16"
+                    Background="{DynamicResource ModalFootFill}"
+                    BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,1,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+                    <Button Classes="soft" Click="OnCancelClick"
+                            AutomationProperties.Name="Отмена"
+                            Content="Отмена" />
+
+                    <Button Classes="danger" Click="OnDeleteClick"
+                            AutomationProperties.Name="Удалить проект">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.6"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  VerticalAlignment="Center"
+                                  Stroke="{Binding $parent[Button].Foreground}"
+                                  Data="M4 7h16M9.5 7V5h5v2M6.5 7l.9 12.2a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5L17.5 7M10 11v6M14 11v6" />
+                            <TextBlock Text="Удалить проект" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

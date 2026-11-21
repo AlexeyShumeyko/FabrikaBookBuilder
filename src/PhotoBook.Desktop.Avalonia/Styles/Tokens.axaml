@@ -326,6 +326,51 @@
             <!-- "Открыть проект" warms toward gold under the pointer. -->
             <Color x:Key="OpenHoverFill">#1AFFCD2D</Color>
             <Color x:Key="OpenHoverBorder">#4DFFCD2D</Color>
+            <!-- The edge of a panel over the page, and the tray its buttons sit in. The
+                 shadow is the prototype's: two brown descents and a hairline of white inside
+                 the top edge, which is what makes the panel stand off the dimmed page. -->
+            <Color x:Key="ModalEdge">#1F4A3A1C</Color>
+            <Color x:Key="ModalFootFill">#094A3A1C</Color>
+            <BoxShadows x:Key="ModalShadow">0 50 110 0 #473C2D14, 0 6 20 0 #1F3C2D14, inset 0 1 0 0 #FFFFFF</BoxShadows>
+
+            <!-- The warning tile of the delete panel: a warm red wash behind a red mark,
+                 with the hairline the prototype draws inside it. -->
+            <LinearGradientBrush x:Key="DangerTileFill" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#24C85532" Offset="0" />
+                <GradientStop Color="#0DC85532" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="DangerTileBorder">#42B4461F</Color>
+            <BoxShadows x:Key="DangerTileShadow">inset 0 1 0 0 #80FFFFFF</BoxShadows>
+            <LinearGradientBrush x:Key="DangerHeadWash" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#12C85532" Offset="0" />
+                <GradientStop Color="#00C85532" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- The destructive action of a panel: a red cap of paint with a light top edge,
+                 lifted a pixel under the pointer. -->
+            <LinearGradientBrush x:Key="DangerButtonFill" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#D9563A" Offset="0" />
+                <GradientStop Color="#BD3F24" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="DangerButtonFillHover" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#E1603F" Offset="0" />
+                <GradientStop Color="#C44528" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="DangerButtonBorder">#A8341A</Color>
+            <Color x:Key="DangerButtonBorderHover">#B93A19</Color>
+            <Color x:Key="DangerButtonInk">#FFF4EE</Color>
+            <BoxShadows x:Key="DangerButtonShadow">0 2 5 0 #3D5A1E0A, inset 0 1 0 0 #38FFFFFF</BoxShadows>
+            <BoxShadows x:Key="DangerButtonShadowHover">0 8 18 0 #4212780F, inset 0 1 0 0 #3DFFFFFF</BoxShadows>
+            <BoxShadows x:Key="DangerButtonShadowPressed">inset 0 2 4 0 #665A1405</BoxShadows>
+
+            <!-- The line that says the photographs are not part of what is being deleted. -->
+            <Color x:Key="KeepInk">#0D8B79</Color>
+            <Color x:Key="KeepFill">#0F0D8B79</Color>
+            <Color x:Key="KeepBorder">#330D8B79</Color>
+
+            <!-- The mode mark inside the delete panel's target row. -->
+            <Color x:Key="ModeMarkFill">#14FFCD2D</Color>
+            <BoxShadows x:Key="ModeMarkShadow">inset 0 0 0 1 #2EFFCD2D</BoxShadows>
 
             <!-- The folders mode carries amber and the combined one the product gold, so the
                  two are told apart by the mark before the word is read. -->
@@ -549,6 +594,42 @@
             <Color x:Key="DangerWash">#1FFF7846</Color>
             <Color x:Key="OpenHoverFill">#1AFFCD2D</Color>
             <Color x:Key="OpenHoverBorder">#4DFFCD2D</Color>
+            <Color x:Key="ModalEdge">#1AFFF2D6</Color>
+            <Color x:Key="ModalFootFill">#26000000</Color>
+            <BoxShadows x:Key="ModalShadow">0 50 120 0 #A6000000, inset 0 1 0 0 #0AFFF2D6</BoxShadows>
+
+            <LinearGradientBrush x:Key="DangerTileFill" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#3DFF7E54" Offset="0" />
+                <GradientStop Color="#14FF603C" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="DangerTileBorder">#4DFF7846</Color>
+            <BoxShadows x:Key="DangerTileShadow">inset 0 1 0 0 #0FFFFFFF</BoxShadows>
+            <LinearGradientBrush x:Key="DangerHeadWash" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#12FF7846" Offset="0" />
+                <GradientStop Color="#00FF7846" Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="DangerButtonFill" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#E2613F" Offset="0" />
+                <GradientStop Color="#C8401F" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="DangerButtonFillHover" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#EC6B47" Offset="0" />
+                <GradientStop Color="#D14623" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="DangerButtonBorder">#AE3415</Color>
+            <Color x:Key="DangerButtonBorderHover">#B93A19</Color>
+            <Color x:Key="DangerButtonInk">#FFF4EE</Color>
+            <BoxShadows x:Key="DangerButtonShadow">0 2 5 0 #4D000000, inset 0 1 0 0 #2EFFFFFF</BoxShadows>
+            <BoxShadows x:Key="DangerButtonShadowHover">0 6 16 0 #571E0A00, inset 0 1 0 0 #33FFFFFF</BoxShadows>
+            <BoxShadows x:Key="DangerButtonShadowPressed">inset 0 2 4 0 #665A1405</BoxShadows>
+
+            <Color x:Key="KeepInk">#5AD9C6</Color>
+            <Color x:Key="KeepFill">#0D5AD9C6</Color>
+            <Color x:Key="KeepBorder">#295AD9C6</Color>
+
+            <Color x:Key="ModeMarkFill">#14FFCD2D</Color>
+            <BoxShadows x:Key="ModeMarkShadow">inset 0 0 0 1 #2EFFCD2D</BoxShadows>
             <Color x:Key="ModeIconUnique">#EAA063</Color>
 
 

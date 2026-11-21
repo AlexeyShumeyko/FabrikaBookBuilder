@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using PhotoBook.Core;
 
 namespace PhotoBook.Application
 {
@@ -43,6 +44,19 @@ namespace PhotoBook.Application
             string message,
             string confirmText = "Подтвердить",
             bool destructive = true);
+
+        /// <summary>
+        /// Asks whether a saved project may be deleted, with the project itself named in the
+        /// question.
+        /// </summary>
+        /// <remarks>
+        /// A question of its own rather than a message the caller assembles, because the panel
+        /// that asks it shows what is about to be lost - the name, the mode, the books and the
+        /// spreads - and a shell cannot draw a project out of a sentence. The promise that the
+        /// photographs on disk stay where they are belongs to that panel too: it is part of the
+        /// question, not of the wording of any one caller.
+        /// </remarks>
+        Task<bool> ConfirmDeleteProjectAsync(ProjectInfo project);
 
         /// <summary>
         /// Says something the user has to read and acknowledge. One button, so it reads as

@@ -52,7 +52,7 @@
          and takes no input: a background is not a control. -->
     <Border Background="{DynamicResource PageGlow}" IsHitTestVisible="False" />
 
-    <DockPanel LastChildFill="True">
+    <DockPanel x:Name="PageLayer" LastChildFill="True">
 
     <Border DockPanel.Dock="Top" Height="76"
             Background="{DynamicResource TopBarGlass}"
