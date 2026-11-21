@@ -166,7 +166,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
                             <!-- Out of the book and out of the program: an arrow leaving a tray. -->
                             <Path Width="15" Height="15" Stretch="Uniform"
-                                  Stroke="White" StrokeThickness="1.8"
+                                  Stroke="{DynamicResource ActionInk}" StrokeThickness="1.8"
                                   StrokeLineCap="Round"
                                   Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
                             <TextBlock Text="Экспортировать" VerticalAlignment="Center" />
@@ -289,9 +289,9 @@
                                     <StackPanel Orientation="Horizontal" Spacing="7">
                                         <TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                                    VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource OnAccent}" />
+                                                   Foreground="{DynamicResource ActionInk}" />
                                         <TextBlock Text="Добавить папки" VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource OnAccent}" />
+                                                   Foreground="{DynamicResource ActionInk}" />
                                     </StackPanel>
                                 </Button>
                                 <TextBlock Classes="t11Half" VerticalAlignment="Center"

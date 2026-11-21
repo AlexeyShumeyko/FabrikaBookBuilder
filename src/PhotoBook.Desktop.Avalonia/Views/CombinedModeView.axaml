@@ -274,7 +274,7 @@
                             Padding="16,10" VerticalAlignment="Center"
                             AutomationProperties.Name="Добавить структуру"
                             Command="{Binding ConfirmStructureCommand}">
-                        <TextBlock Text="{Binding StructureButtonText}" Foreground="{DynamicResource OnAccent}" />
+                        <TextBlock Text="{Binding StructureButtonText}" Foreground="{DynamicResource ActionInk}" />
                     </Button>
                 </Grid>
 
@@ -327,9 +327,9 @@
                             Command="{Binding ExportCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="7">
                             <Path Width="15" Height="15" Stretch="Uniform"
-                                  Stroke="White" StrokeThickness="1.8" StrokeLineCap="Round"
+                                  Stroke="{DynamicResource ActionInk}" StrokeThickness="1.8" StrokeLineCap="Round"
                                   Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
-                            <TextBlock Text="Экспортировать все книги" Foreground="{DynamicResource OnAccent}" />
+                            <TextBlock Text="Экспортировать все книги" Foreground="{DynamicResource ActionInk}" />
                         </StackPanel>
                     </Button>
                 </WrapPanel>

@@ -36,16 +36,10 @@ namespace PhotoBook.Shell.Converters
 
             return (parameter as string)?.ToLowerInvariant() switch
             {
-                // The selected tab is a white card lifted off the grey strip; the rest show
-                // the strip through. There is no third state and no hover colour here - the
-                // hover is the platform's, on top of whichever of these two is underneath.
-                "bg" => selected ? ThemeResources.Brush("TabSelected") : Brushes.Transparent,
-
+                // The fill and the hairline around the chosen tab are not here: a cream card
+                // is a gradient, and a gradient is painted by the styles from the theme. This
+                // answers with colours only - what the words and the mark are made of.
                 "fg" => selected ? ThemeResources.Brush("TextStrong") : ThemeResources.Brush("TextMuted"),
-
-                // The chosen tab is a card inside the tray, so it carries the hairline that
-                // separates a card from what it lies on. The rest have no frame at all.
-                "ring" => selected ? ThemeResources.Brush("TabSelectedRing") : Brushes.Transparent,
 
                 // The mark beside the words goes gold on the chosen tab and stays muted on
                 // the rest: the prototype lights the mark of the current step only, and four

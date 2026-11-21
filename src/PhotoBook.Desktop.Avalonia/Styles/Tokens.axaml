@@ -122,6 +122,16 @@
             <Color x:Key="GoldHover">#F8BF2B</Color>
             <Color x:Key="GoldPressed">#E7A80F</Color>
 
+            <!-- A filled action, in each theme's own tone. On warm paper the prototype does
+                 not lay a solid gold slab - that is a lamp in a lit room - but a 24% gold tint
+                 with a gold line and deep-gold words on it. In the evening the same button is
+                 the gold itself, because that is the only warm thing on a graphite page. -->
+            <Color x:Key="ActionFill">#3DFFC43C</Color>
+            <Color x:Key="ActionFillHover">#57FFC43C</Color>
+            <Color x:Key="ActionFillPressed">#33FFC43C</Color>
+            <Color x:Key="ActionBorder">#61B07B00</Color>
+            <Color x:Key="ActionInk">#8A5F00</Color>
+
             <!-- The line a card takes under the pointer. Gold, not a darker hairline: it is
                  the card answering, and the answer is the product's colour. -->
             <Color x:Key="BorderAccentHover">#59B07B00</Color>
@@ -130,23 +140,33 @@
             <Color x:Key="MatSurface">#E2D7C1</Color>
             <Color x:Key="TabTray">#0F4A3A1C</Color>
 
-            <!-- The chosen tab is the one surface that has to stand above the tray. -->
+            <!-- The chosen tab is a cream card lifted off the tray. The prototype paints it
+                 with the same 180-degree gradient its cards use, so it reads as paper standing
+                 on a tray - a flat near-white pill on warm paper reads as a hole cut through
+                 it, which is what this screen had. -->
+            <LinearGradientBrush x:Key="TabSelectedFill" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#FFFDF6" Offset="0" />
+                <GradientStop Color="#FBF4E3" Offset="1" />
+            </LinearGradientBrush>
 
-            <Color x:Key="TabSelected">#FFFDF7</Color>
+            <!-- A tab under the pointer, before it is chosen: the tray warms where the pointer
+                 is. A tab that is not current cannot change its words, so this is the only
+                 answer it has. -->
+            <Color x:Key="TabHoverFill">#0E4A3A1C</Color>
 
             <!-- The chosen tab stands above the tray, and a shadow is what says "above".
 
-                 The prototype is explicit about the number - 0 2px 12px rgba(0,0,0,.3) - and on
-                 a cream page a fifth of that is already enough; a full black shadow under a
-                 35-pixel pill on a light bar reads as dirt rather than as depth. -->
-            <BoxShadows x:Key="TabLift">0 2 12 0 #29000000</BoxShadows>
+                 Exactly the prototype's two shadows: the brown one - 0 2px 8px at 14% - and
+                 the hairline it draws inside the card. Brown, not black: a grey shadow on warm
+                 paper is a smudge. -->
+            <BoxShadows x:Key="TabLift">inset 0 0 0 1 #124A3A1C, 0 2 8 0 #244A3A1C</BoxShadows>
 
             <!-- The welcome panel is lit from its top-right corner: a warm glow laid over the
                  card, not part of it, because a control carries one brush and the prototype
                  paints a radial glow on top of a card gradient. -->
             <RadialGradientBrush x:Key="WelcomeGlow" Center="90%,4%" GradientOrigin="90%,4%"
-                                 RadiusX="46%" RadiusY="38%">
-                <GradientStop Color="#24FFC428" Offset="0" />
+                                 RadiusX="43%" RadiusY="50%">
+                <GradientStop Color="#40FFC428" Offset="0" />
                 <GradientStop Color="#00FFC428" Offset="0.68" />
             </RadialGradientBrush>
 
@@ -228,9 +248,9 @@
                  grey shadow: it is the card the product is pointing at. -->
             <BoxShadows x:Key="ModeCardGlow">0 18 44 0 #40AA7D00</BoxShadows>
 
-            <!-- The tray the tabs sit in, and the ring around the chosen one. -->
+            <!-- The tray the tabs sit in. The ring around the chosen one is part of its
+                 shadow, where the prototype puts it, so it cannot drift from the fill. -->
             <Color x:Key="TabTrayBorder">#144A3A1C</Color>
-            <Color x:Key="TabSelectedRing">#124A3A1C</Color>
 
             <!-- What a quiet icon shows under the pointer, and under a press. -->
             <Color x:Key="HoverWash">#0D4A3A1C</Color>
@@ -354,17 +374,29 @@
             <Color x:Key="GoldDeep">#CF9105</Color>
             <Color x:Key="GoldHover">#F8BF2B</Color>
             <Color x:Key="GoldPressed">#E7A80F</Color>
+
+            <!-- The same button at night: the gold itself, with ink on it. -->
+            <Color x:Key="ActionFill">#F2B41C</Color>
+            <Color x:Key="ActionFillHover">#F8BF2B</Color>
+            <Color x:Key="ActionFillPressed">#E7A80F</Color>
+            <Color x:Key="ActionBorder">#CF9105</Color>
+            <Color x:Key="ActionInk">#2A1C00</Color>
+
             <Color x:Key="BorderAccentHover">#3DFFCD2D</Color>
 
             <Color x:Key="MatSurface">#15120E</Color>
             <Color x:Key="TabTray">#42000000</Color>
 
-            <Color x:Key="TabSelected">#2B2318</Color>
+            <!-- In the evening the chosen tab is a pane of light rather than a card: the
+                 prototype lifts it by 7.5% of white over the tray, and the tray stays visible
+                 through it. -->
+            <Color x:Key="TabSelectedFill">#13FFFFFF</Color>
+            <Color x:Key="TabHoverFill">#0BFFFFFF</Color>
 
-            <BoxShadows x:Key="TabLift">0 2 12 0 #4D000000</BoxShadows>
+            <BoxShadows x:Key="TabLift">inset 0 0 0 1 #12FFFFFF, 0 2 12 0 #4D000000</BoxShadows>
 
             <RadialGradientBrush x:Key="WelcomeGlow" Center="90%,4%" GradientOrigin="90%,4%"
-                                 RadiusX="46%" RadiusY="38%">
+                                 RadiusX="43%" RadiusY="50%">
                 <GradientStop Color="#24FFC428" Offset="0" />
                 <GradientStop Color="#00FFC428" Offset="0.68" />
             </RadialGradientBrush>
@@ -424,7 +456,6 @@
             <BoxShadows x:Key="ModeCardGlow">0 18 44 0 #4DFFBE14</BoxShadows>
 
             <Color x:Key="TabTrayBorder">#0EFFFFFF</Color>
-            <Color x:Key="TabSelectedRing">#12FFFFFF</Color>
 
             <Color x:Key="HoverWash">#0DFFFFFF</Color>
             <Color x:Key="ActiveWash">#17FFFFFF</Color>

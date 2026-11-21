@@ -254,14 +254,14 @@
                             IsEnabled="{Binding CanUpload}"
                             AutomationProperties.Name="Отправить на сайт"
                             Click="OnSendClick">
-                        <TextBlock Text="Отправить на сайт" Foreground="{DynamicResource OnAccent}" />
+                        <TextBlock Text="Отправить на сайт" Foreground="{DynamicResource ActionInk}" />
                     </Button>
 
                     <Button Grid.Column="2" Classes="primary" Padding="16,10"
                             IsVisible="{Binding IsFinished}"
                             AutomationProperties.Name="Вернуться к проектам"
                             Click="OnProjectsClick">
-                        <TextBlock Text="Вернуться к проектам" Foreground="{DynamicResource OnAccent}" />
+                        <TextBlock Text="Вернуться к проектам" Foreground="{DynamicResource ActionInk}" />
                     </Button>
                 </Grid>
             </Border>

@@ -63,10 +63,18 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderAccentHover}" />
     </Style>
 
+    <!--
+        The one filled action of a screen, and the only definition of it in the program.
+
+        Its fill is a theme token rather than the gold, because the prototype fills it
+        differently in each theme: gold at night, and a warm gold tint on paper in daylight.
+        A solid gold slab on cream is a lamp in a lit room - it was the first thing wrong
+        with the welcome screen.
+    -->
     <Style Selector="Button.primary">
-        <Setter Property="Background" Value="{DynamicResource Gold}" />
-        <Setter Property="Foreground" Value="{DynamicResource OnAccent}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource GoldDeep}" />
+        <Setter Property="Background" Value="{DynamicResource ActionFill}" />
+        <Setter Property="Foreground" Value="{DynamicResource ActionInk}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ActionBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Height" Value="42" />
         <Setter Property="CornerRadius" Value="999" />
@@ -93,11 +101,12 @@
     </Style>
 
     <Style Selector="Button.primary:pointerover">
-        <Setter Property="Background" Value="{DynamicResource GoldHover}" />
+        <Setter Property="Background" Value="{DynamicResource ActionFillHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ActionBorder}" />
     </Style>
 
     <Style Selector="Button.primary:pressed">
-        <Setter Property="Background" Value="{DynamicResource GoldPressed}" />
+        <Setter Property="Background" Value="{DynamicResource ActionFillPressed}" />
     </Style>
 
     <!--
@@ -180,7 +189,7 @@
         words on a violet button.
     -->
     <Style Selector="Button.primary TextBlock">
-        <Setter Property="Foreground" Value="{DynamicResource OnAccent}" />
+        <Setter Property="Foreground" Value="{DynamicResource ActionInk}" />
     </Style>
 
     <Style Selector="Button.primary:disabled TextBlock">

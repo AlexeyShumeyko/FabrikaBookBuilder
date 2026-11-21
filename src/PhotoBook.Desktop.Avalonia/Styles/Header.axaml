@@ -29,26 +29,15 @@
         <Setter Property="Cursor" Value="Hand" />
     </Style>
 
-    <Style Selector="Button.primary">
-        <Setter Property="Background" Value="{DynamicResource Gold}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource GoldDeep}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Height" Value="42" />
-        <Setter Property="CornerRadius" Value="999" />
-        <Setter Property="Padding" Value="20,0" />
-        <Setter Property="FontSize" Value="13.5" />
-        <Setter Property="FontWeight" Value="Bold" />
-        <Setter Property="Foreground" Value="{DynamicResource OnAccent}" />
-        <Setter Property="Cursor" Value="Hand" />
-    </Style>
+    <!--
+        No Button.primary here.
 
-    <Style Selector="Button.primary:pointerover">
-        <Setter Property="Background" Value="{DynamicResource GoldHover}" />
-    </Style>
-
-    <Style Selector="Button.primary:pressed">
-        <Setter Property="Background" Value="{DynamicResource GoldPressed}" />
-    </Style>
+        This file carried a second definition of it, and Cards.axaml - included after this
+        one - carried the definition that actually applied. Two rules for one control is how
+        the welcome screen kept a solid gold button while the styles said it had been
+        changed: the copy that won was the copy nobody looked at. The filled action is
+        defined once, in Cards.axaml.
+    -->
     <!--
         The one action on a screen. Deliberately not the loudest thing in the window: the
         photographer is mostly looking, and the loudest control on a screen is the one they
@@ -60,15 +49,15 @@
         The mark is 12 now and the word is the same size, which is what a mark is for.
     -->
     <Style Selector="Button.createProject">
-        <Setter Property="Background" Value="{DynamicResource Gold}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource GoldDeep}" />
+        <Setter Property="Background" Value="{DynamicResource ActionFill}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ActionBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="999" />
         <Setter Property="Padding" Value="24,0" />
         <Setter Property="Height" Value="42" />
         <Setter Property="FontSize" Value="13.5" />
         <Setter Property="FontWeight" Value="Bold" />
-        <Setter Property="Foreground" Value="{DynamicResource OnAccent}" />
+        <Setter Property="Foreground" Value="{DynamicResource ActionInk}" />
         <Setter Property="Cursor" Value="Hand" />
 
         <!-- Light, not heavy: the fill LIFTS on hover and settles on press. A button that
@@ -116,12 +105,12 @@
     </Style>
 
     <Style Selector="Button.createProject:pointerover">
-        <Setter Property="Background" Value="{DynamicResource GoldHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource GoldDeep}" />
+        <Setter Property="Background" Value="{DynamicResource ActionFillHover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ActionBorder}" />
     </Style>
 
     <Style Selector="Button.createProject:pressed">
-        <Setter Property="Background" Value="{DynamicResource GoldPressed}" />
+        <Setter Property="Background" Value="{DynamicResource ActionFillPressed}" />
     </Style>
 
     <!--
@@ -343,10 +332,9 @@
         <Setter Property="Template">
             <ControlTemplate>
                 <Border x:Name="Pill"
-                        Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="999">
+                        CornerRadius="17">
                     <ContentPresenter Content="{TemplateBinding Content}"
                                       Margin="{TemplateBinding Padding}"
                                       HorizontalAlignment="Center"
@@ -357,13 +345,27 @@
     </Style>
 
     <!--
-        The chosen tab stands above the tray, and the shadow is what makes it stand: the
-        prototype has it, and a flat pill inside a filled tray reads as a hole rather than as
-        a card. It is painted on the template's own border because ToggleButton carries no
-        BoxShadow of its own; the class is bound from the same answer that paints the fill, so
-        the shadow cannot disagree with the colour about which tab is current.
+        The pill is painted here rather than from the view model.
+
+        Once the fill was bound - "am I current?" answered with a colour - the template's own
+        Background binding outranked every style, so the cream card of the prototype could not
+        be painted at all: the chosen tab could only ever be one flat colour. It is a brush
+        with a gradient in it now, and a gradient is not something a view model should be
+        asked for. The state still decides, through the class bound from the same answer, and
+        the two rules below are the whole of it: the tray warms under the pointer, and the
+        current tab is a cream card with the prototype's own shadow, which is what makes it
+        stand above the tray - a flat pill inside a filled tray reads as a hole.
     -->
+    <Style Selector="ToggleButton.tab /template/ Border#Pill">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <Style Selector="ToggleButton.tab:pointerover /template/ Border#Pill">
+        <Setter Property="Background" Value="{DynamicResource TabHoverFill}" />
+    </Style>
+
     <Style Selector="ToggleButton.tab.selected /template/ Border#Pill">
+        <Setter Property="Background" Value="{DynamicResource TabSelectedFill}" />
         <Setter Property="BoxShadow" Value="{DynamicResource TabLift}" />
     </Style>
 

@@ -62,7 +62,7 @@
                             IsEnabled="{Binding CanUpload}"
                             AutomationProperties.Name="Загрузить на сайт"
                             Click="OnUpload">
-                        <TextBlock Text="Загрузить на сайт" Foreground="{DynamicResource OnAccent}" />
+                        <TextBlock Text="Загрузить на сайт" Foreground="{DynamicResource ActionInk}" />
                     </Button>
                 </StackPanel>
             </Grid>

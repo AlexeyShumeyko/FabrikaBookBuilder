@@ -28,6 +28,19 @@
         <Style Selector="TextBlock.t16Bold">
             <Setter Property="FontSize" Value="17" />
         </Style>
+
+        <!--
+            The stack of pages answers the pointer, the way the prototype's does: the front
+            photograph rises ten pixels over half a second, and the two behind it keep still.
+            Ten pixels is a photograph being picked up - more is a card trick.
+        -->
+        <Style Selector="Border.waFront">
+            <Setter Property="RenderTransform" Value="rotate(-2deg)" />
+        </Style>
+
+        <Style Selector="Panel.welcomePanel:pointerover Border.waFront">
+            <Setter Property="RenderTransform" Value="translate(0px,-10px) rotate(-2deg)" />
+        </Style>
     </UserControl.Styles>
 
     <!--
@@ -214,7 +227,7 @@
                         and it sits centred because there is nothing else in the control to
                         align it with.
                     -->
-                    <TextBlock Text="Создать проект" Foreground="{DynamicResource OnAccent}"
+                    <TextBlock Text="Создать проект" Foreground="{DynamicResource ActionInk}"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Button>
             </Grid>
@@ -257,7 +270,7 @@
                                Text="Ни один проект не подходит под выбранные условия" />
                     <Button Classes="createProject" AutomationProperties.Name="Сбросить фильтры пусто"
                             Command="{Binding ClearFiltersCommand}">
-                        <TextBlock Text="Сбросить фильтры" Foreground="{DynamicResource OnAccent}" />
+                        <TextBlock Text="Сбросить фильтры" Foreground="{DynamicResource ActionInk}" />
                     </Button>
                 </StackPanel>
             </Border>
@@ -280,7 +293,7 @@
                     gradient has to be its own layer - and it is the layer above, because it
                     falls on the empty corner beside the stack of photographs, not on the words.
                 -->
-                <Panel>
+                <Panel Classes="welcomePanel">
                     <Border Classes="card" CornerRadius="26" Padding="44,36,44,32">
                         <Grid ColumnDefinitions="1.06*,40,0.94*">
 
@@ -353,10 +366,10 @@
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.8"
                                                   StrokeLineCap="Round"
-                                                  Stroke="{DynamicResource OnAccent}"
+                                                  Stroke="{DynamicResource ActionInk}"
                                                   Data="M12 5v14M5 12h14" />
                                             <TextBlock Text="Создать первый проект" VerticalAlignment="Center"
-                                                       Foreground="{DynamicResource OnAccent}" />
+                                                       Foreground="{DynamicResource ActionInk}" />
                                         </StackPanel>
                                     </Button>
                                     <Button Classes="ghost" Padding="8" Click="OnHowItWorksClick"
@@ -430,12 +443,18 @@
                                     </Border>
                                 </Border>
 
-                                <Border Width="250" Padding="9,9,9,30" CornerRadius="6"
+                                <Border Classes="waFront" Width="250" Padding="9,9,9,30" CornerRadius="6"
                                         Background="{DynamicResource PhotoSheet}"
                                         BoxShadow="{DynamicResource ShadowCard}"
                                         HorizontalAlignment="Center" VerticalAlignment="Center"
-                                        Margin="66,-4,-116,0"
-                                        RenderTransform="rotate(-2deg)">
+                                        Margin="66,-4,-116,0">
+                                    <Border.Transitions>
+                                        <Transitions>
+                                            <TransformOperationsTransition Property="RenderTransform"
+                                                                           Duration="0:0:0.5"
+                                                                           Easing="CubicEaseOut" />
+                                        </Transitions>
+                                    </Border.Transitions>
                                     <Border Height="176" CornerRadius="2" ClipToBounds="True">
                                         <Image Source="avares://PhotoBookRenamer/Assets/welcome-3.jpg"
                                                Stretch="UniformToFill" />
