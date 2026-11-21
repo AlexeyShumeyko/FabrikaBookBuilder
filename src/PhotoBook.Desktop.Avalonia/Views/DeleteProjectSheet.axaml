@@ -102,8 +102,11 @@
                 </Border>
 
                 <TextBlock Margin="0,16,0,0" FontSize="12.5" LineHeight="21" TextWrapping="Wrap"
-                           Foreground="{DynamicResource TextMuted}"
-                           Text="Проект будет удалён вместе со структурой книг и расстановкой фотографий. Заново открыть его не получится." />
+                           Foreground="{DynamicResource TextMuted}">
+                    <Run Text="Проект будет удалён вместе со структурой и расстановкой книг." />
+                    <LineBreak />
+                    <Run Text="Заново открыть его или восстановить не получится." />
+                </TextBlock>
 
                 <!-- The one reassurance the panel has to give, and it is the reason the panel
                      is worth drawing at all: what is deleted is the project, not the pictures. -->
