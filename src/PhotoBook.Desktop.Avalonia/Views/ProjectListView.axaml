@@ -974,7 +974,10 @@
                                             ToolTip.Tip="Удалить проект"
                                             Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
-                                        <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.2"
+                                        <!-- Thirteen, not the fourteen the spec asks for: at the
+                                             button's thirty-eight pixels the basket read as a second
+                                             label rather than as a quiet mark. -->
+                                        <Path Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.2"
                                               StrokeLineCap="Round" StrokeJoin="Round"
                                               VerticalAlignment="Center"
                                               Stroke="{Binding $parent[Button].Foreground}"
