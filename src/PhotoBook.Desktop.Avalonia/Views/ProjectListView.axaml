@@ -79,6 +79,23 @@
         <Style Selector="Button.welcomeGhost:pressed">
             <Setter Property="Background" Value="{DynamicResource ActiveWash}" />
         </Style>
+
+        <!--
+            The cards of this screen are quiet under the pointer.
+
+            They were picking up the shared card:hover, which lifts the shadow from the small one
+            the card sits on to a wide, soft descent - and on a card this large the descent reads as
+            a rectangle band along its edges rather than as depth. The prototype moves nothing on
+            `.welcome` or on the three cards under it: the only thing that answers the pointer here
+            is the front photograph, which rises ten pixels, and that rule is above.
+
+            So the two properties the shared rule changes are put back. Named per class rather than
+            by dropping the shared rule: a project card does lift, in the prototype and here.
+        -->
+        <Style Selector="Border.card.steadyCard:pointerover">
+            <Setter Property="BoxShadow" Value="{DynamicResource ShadowSubtle}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+        </Style>
     </UserControl.Styles>
 
     <!--
@@ -131,7 +148,7 @@
             because the thing below it is a grid of cards and every pixel of height is a
             row of photographs the photographer can see.
         -->
-        <Border Grid.Row="0" Classes="card" Padding="24,28"
+        <Border Grid.Row="0" Classes="card steadyCard" Padding="24,28"
                 IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}}">
             <Grid ColumnDefinitions="*,Auto,Auto,Auto" MinHeight="58">
 
@@ -332,7 +349,7 @@
                     hairlines around the stack disappear.
                 -->
                 <Panel Classes="welcomePanel">
-                    <Border Classes="card" CornerRadius="26" Padding="44,36,44,32">
+                    <Border Classes="card steadyCard" CornerRadius="26" Padding="44,36,44,32">
                         <Grid ColumnDefinitions="1.12*,36,0.88*">
 
                             <!--
@@ -534,7 +551,7 @@
                 </Panel>
 
                 <Grid ColumnDefinitions="*,16,*,16,*" Margin="0,16,0,0">
-                    <Border Grid.Column="0" Classes="card" CornerRadius="18" Padding="22,22,20,20">
+                    <Border Grid.Column="0" Classes="card steadyCard" CornerRadius="18" Padding="22,22,20,20">
                         <StackPanel>
                             <Border Width="38" Height="38" CornerRadius="11"
                                     HorizontalAlignment="Left"
@@ -554,7 +571,7 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Grid.Column="2" Classes="card" CornerRadius="18" Padding="22,22,20,20">
+                    <Border Grid.Column="2" Classes="card steadyCard" CornerRadius="18" Padding="22,22,20,20">
                         <StackPanel>
                             <Border Width="38" Height="38" CornerRadius="11"
                                     HorizontalAlignment="Left"
@@ -574,7 +591,7 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Grid.Column="4" Classes="card" CornerRadius="18" Padding="22,22,20,20">
+                    <Border Grid.Column="4" Classes="card steadyCard" CornerRadius="18" Padding="22,22,20,20">
                         <StackPanel>
                             <Border Width="38" Height="38" CornerRadius="11"
                                     HorizontalAlignment="Left"
