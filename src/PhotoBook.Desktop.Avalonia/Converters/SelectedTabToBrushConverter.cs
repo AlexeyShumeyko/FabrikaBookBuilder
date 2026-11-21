@@ -47,9 +47,10 @@ namespace PhotoBook.Shell.Converters
                 // separates a card from what it lies on. The rest have no frame at all.
                 "ring" => selected ? ThemeResources.Brush("TabSelectedRing") : Brushes.Transparent,
 
-                // The mark beside the words goes gold on the chosen tab, which is the one
-                // place in the header where the accent appears twice.
-                "icon" => ThemeResources.Brush("Accent"),
+                // The mark beside the words goes gold on the chosen tab and stays muted on
+                // the rest: the prototype lights the mark of the current step only, and four
+                // gold marks in one tray read as four current steps.
+                "icon" => selected ? ThemeResources.Brush("Accent") : ThemeResources.Brush("TextMuted"),
 
                 _ => Brushes.Transparent
             };

@@ -357,6 +357,17 @@
     </Style>
 
     <!--
+        The chosen tab stands above the tray, and the shadow is what makes it stand: the
+        prototype has it, and a flat pill inside a filled tray reads as a hole rather than as
+        a card. It is painted on the template's own border because ToggleButton carries no
+        BoxShadow of its own; the class is bound from the same answer that paints the fill, so
+        the shadow cannot disagree with the colour about which tab is current.
+    -->
+    <Style Selector="ToggleButton.tab.selected /template/ Border#Pill">
+        <Setter Property="BoxShadow" Value="{DynamicResource TabLift}" />
+    </Style>
+
+    <!--
         No pointer rule for the tab itself: Background, Foreground and BorderBrush are bound
         from the view model's answer to "am I current?", and a binding outranks a style, so a
         rule here would be a rule that never runs. The tray is the surface that reacts; a

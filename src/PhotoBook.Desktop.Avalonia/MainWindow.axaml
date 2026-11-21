@@ -117,31 +117,35 @@
                             BorderBrush="{DynamicResource TabTrayBorder}" BorderThickness="1"
                             CornerRadius="999" Padding="4">
                         <StackPanel Orientation="Horizontal" Spacing="2">
-                            <ToggleButton Classes="tab" AutomationProperties.Name="Мои проекты"
+                            <ToggleButton Classes="tab" Classes.selected="{Binding IsProjectsSelected}" AutomationProperties.Name="Мои проекты"
                                           Background="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
                                           Foreground="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                           BorderBrush="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=ring}"
                                           Command="{Binding GoToProjectsCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                                    <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.7"
+                                               StrokeLineCap="Round" StrokeJoin="Round"
+                                               Data="M4 6.5h16M4 12h16M4 17.5h9"
                                                VerticalAlignment="Center"
-                                               Foreground="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=icon}" />
+                                               Stroke="{Binding IsProjectsSelected, Converter={StaticResource SelectedTab}, ConverterParameter=icon}" />
                                     <TextBlock Text="Мои проекты" VerticalAlignment="Center" />
                                 </StackPanel>
                             </ToggleButton>
-                            <ToggleButton Classes="tab" AutomationProperties.Name="Выбор режима"
+                            <ToggleButton Classes="tab" Classes.selected="{Binding IsStartSelected}" AutomationProperties.Name="Выбор режима"
                                           Background="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
                                           Foreground="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=fg}"
                                           BorderBrush="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=ring}"
                                           Command="{Binding GoToModeSelectCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="&#xE71C;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                                    <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.7"
+                                               StrokeLineCap="Round" StrokeJoin="Round"
+                                               Data="M4 7h8M16.5 7H20M4 17h3.5M12 17h8M16.4 7a2.2 2.2 0 1 1-4.4 0a2.2 2.2 0 1 1 4.4 0ZM11.6 17a2.2 2.2 0 1 1-4.4 0a2.2 2.2 0 1 1 4.4 0Z"
                                                VerticalAlignment="Center"
-                                               Foreground="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=icon}" />
+                                               Stroke="{Binding IsStartSelected, Converter={StaticResource SelectedTab}, ConverterParameter=icon}" />
                                     <TextBlock Text="Выбор режима" VerticalAlignment="Center" />
                                 </StackPanel>
                             </ToggleButton>
-                            <ToggleButton Classes="tab" AutomationProperties.Name="Уникальные папки"
+                            <ToggleButton Classes="tab" Classes.selected="{Binding IsUniqueFoldersSelected}" AutomationProperties.Name="Уникальные папки"
                                           IsEnabled="{Binding CanOpenUniqueFoldersTab}"
                                           ToolTip.Tip="Открывается только внутри проекта"
                                           Background="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
@@ -149,13 +153,15 @@
                                           BorderBrush="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=ring}"
                                           Command="{Binding GoToUniqueFoldersCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="&#xE8C0;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                                    <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.7"
+                                               StrokeLineCap="Round" StrokeJoin="Round"
+                                               Data="M3.5 8A2.5 2.5 0 0 1 6 5.5h3.6l1.8 2.2H18a2.5 2.5 0 0 1 2.5 2.5v7A2.5 2.5 0 0 1 18 19.7H6A2.5 2.5 0 0 1 3.5 17.2z"
                                                VerticalAlignment="Center"
-                                               Foreground="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=icon}" />
+                                               Stroke="{Binding IsUniqueFoldersSelected, Converter={StaticResource SelectedTab}, ConverterParameter=icon}" />
                                     <TextBlock Text="Уникальные папки" VerticalAlignment="Center" />
                                 </StackPanel>
                             </ToggleButton>
-                            <ToggleButton Classes="tab" AutomationProperties.Name="Комбинированный"
+                            <ToggleButton Classes="tab" Classes.selected="{Binding IsCombinedSelected}" AutomationProperties.Name="Комбинированный"
                                           IsEnabled="{Binding CanOpenCombinedTab}"
                                           ToolTip.Tip="Открывается только внутри проекта"
                                           Background="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=bg}"
@@ -163,9 +169,11 @@
                                           BorderBrush="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=ring}"
                                           Command="{Binding GoToCombinedCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                                    <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.7"
+                                               StrokeLineCap="Round" StrokeJoin="Round"
+                                               Data="M5.3 3.5h3.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1-1.8 1.8H5.3a1.8 1.8 0 0 1-1.8-1.8V5.3a1.8 1.8 0 0 1 1.8-1.8zM15.3 3.5h3.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1-1.8 1.8h-3.4a1.8 1.8 0 0 1-1.8-1.8V5.3a1.8 1.8 0 0 1 1.8-1.8zM5.3 13.5h3.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1-1.8 1.8H5.3a1.8 1.8 0 0 1-1.8-1.8v-3.4a1.8 1.8 0 0 1 1.8-1.8zM15.3 13.5h3.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1-1.8 1.8h-3.4a1.8 1.8 0 0 1-1.8-1.8v-3.4a1.8 1.8 0 0 1 1.8-1.8z"
                                                VerticalAlignment="Center"
-                                               Foreground="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=icon}" />
+                                               Stroke="{Binding IsCombinedSelected, Converter={StaticResource SelectedTab}, ConverterParameter=icon}" />
                                     <TextBlock Text="Комбинированный" VerticalAlignment="Center" />
                                 </StackPanel>
                             </ToggleButton>
@@ -199,9 +207,6 @@
                             </Button>
                         </StackPanel>
 
-                        <Border Width="1" Height="24" Background="{DynamicResource BorderStrong}"
-                                Margin="8,0" VerticalAlignment="Center" />
-
                         <!--
                             The theme switch. Light is the product's own face, and dark is
                             there for the evening; whichever is chosen stays chosen, across
@@ -214,15 +219,30 @@
                         -->
                         <Button Classes="utility" Click="OnThemeClick" ToolTip.Tip="Светлая или тёмная тема"
                                 AutomationProperties.Name="Тема оформления">
-                            <TextBlock x:Name="ThemeGlyph" Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
+                            <Panel>
+                                <Path x:Name="ThemeSunPath" Width="18" Height="18" Stretch="Uniform"
+                                      StrokeThickness="1.7" StrokeLineCap="Round" StrokeJoin="Round"
+                                      Stroke="{DynamicResource TextMuted}"
+                                      Data="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4M16 12a4 4 0 1 1-8 0a4 4 0 1 1 8 0Z" />
+                                <Path x:Name="ThemeMoonPath" Width="18" Height="18" Stretch="Uniform"
+                                      StrokeThickness="1.7" StrokeLineCap="Round" StrokeJoin="Round"
+                                      Stroke="{DynamicResource TextMuted}"
+                                      Data="M20.2 14.6A8.6 8.6 0 0 1 9.4 3.8 8.6 8.6 0 1 0 20.2 14.6z" />
+                            </Panel>
                         </Button>
                         <Button Classes="utility" Click="OnHelpClick" ToolTip.Tip="Помощь и журнал работы программы"
                                 AutomationProperties.Name="Помощь">
-                            <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
+                            <Path Width="18" Height="18" Stretch="Uniform" StrokeThickness="1.7"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  Stroke="{DynamicResource TextMuted}"
+                                  Data="M21 12a9 9 0 1 1-18 0a9 9 0 1 1 18 0ZM9.4 9.2a2.7 2.7 0 1 1 3.8 2.5c-.7.35-1.2.85-1.2 1.65v.35M12 17.2h.01" />
                         </Button>
                         <Button Classes="utility" Click="OnContactsClick" ToolTip.Tip="Поддержка: часы и каналы связи"
                                 AutomationProperties.Name="Контакты">
-                            <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
+                            <Path Width="18" Height="18" Stretch="Uniform" StrokeThickness="1.7"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  Stroke="{DynamicResource TextMuted}"
+                                  Data="M20 12.4c0 3.6-3.6 6.5-8 6.5-1 0-2-.15-2.9-.45L4.6 20l1.2-3.3C4.6 15.4 4 14 4 12.4 4 8.8 7.6 5.9 12 5.9s8 2.9 8 6.5zM8.6 12.3h.01M12 12.3h.01M15.4 12.3h.01" />
                         </Button>
 
                         <Border Width="1" Height="24" Background="{DynamicResource BorderStrong}"

@@ -134,6 +134,41 @@
 
             <Color x:Key="TabSelected">#FFFDF7</Color>
 
+            <!-- The chosen tab stands above the tray, and a shadow is what says "above".
+
+                 The prototype is explicit about the number - 0 2px 12px rgba(0,0,0,.3) - and on
+                 a cream page a fifth of that is already enough; a full black shadow under a
+                 35-pixel pill on a light bar reads as dirt rather than as depth. -->
+            <BoxShadows x:Key="TabLift">0 2 12 0 #29000000</BoxShadows>
+
+            <!-- The welcome panel is lit from its top-right corner: a warm glow laid over the
+                 card, not part of it, because a control carries one brush and the prototype
+                 paints a radial glow on top of a card gradient. -->
+            <RadialGradientBrush x:Key="WelcomeGlow" Center="90%,4%" GradientOrigin="90%,4%"
+                                 RadiusX="46%" RadiusY="38%">
+                <GradientStop Color="#24FFC428" Offset="0" />
+                <GradientStop Color="#00FFC428" Offset="0.68" />
+            </RadialGradientBrush>
+
+            <!-- The halo behind the stack of pages: the same gold, softer, fading by 68%. -->
+            <RadialGradientBrush x:Key="WelcomeHalo" Center="50%,50%" GradientOrigin="50%,50%"
+                                 RadiusX="50%" RadiusY="50%">
+                <GradientStop Color="#33FFC428" Offset="0" />
+                <GradientStop Color="#0DFFC428" Offset="0.46" />
+                <GradientStop Color="#00FFC428" Offset="0.68" />
+            </RadialGradientBrush>
+
+            <!-- The two hairlines of the halo, and the paper the photographs are mounted on.
+                 The paper stays cream in both themes: it is a photograph on a desk, not a
+                 surface of the program. -->
+            <Color x:Key="WelcomeRing">#2EFFCD2D</Color>
+            <Color x:Key="WelcomeRingFaint">#1FFCDD2D</Color>
+            <Color x:Key="PhotoSheet">#FBF7EE</Color>
+
+            <!-- The chip on the stack: a dark glass pill with a gold hairline. -->
+            <Color x:Key="WelcomeChipFill">#D118140E</Color>
+            <Color x:Key="WelcomeChipBorder">#3DFFCD2D</Color>
+
             <!-- The dim over the page behind a modal panel. -->
             <Color x:Key="Backdrop">#6B3A301E</Color>
 
@@ -325,6 +360,27 @@
             <Color x:Key="TabTray">#42000000</Color>
 
             <Color x:Key="TabSelected">#2B2318</Color>
+
+            <BoxShadows x:Key="TabLift">0 2 12 0 #4D000000</BoxShadows>
+
+            <RadialGradientBrush x:Key="WelcomeGlow" Center="90%,4%" GradientOrigin="90%,4%"
+                                 RadiusX="46%" RadiusY="38%">
+                <GradientStop Color="#24FFC428" Offset="0" />
+                <GradientStop Color="#00FFC428" Offset="0.68" />
+            </RadialGradientBrush>
+
+            <RadialGradientBrush x:Key="WelcomeHalo" Center="50%,50%" GradientOrigin="50%,50%"
+                                 RadiusX="50%" RadiusY="50%">
+                <GradientStop Color="#33FFC428" Offset="0" />
+                <GradientStop Color="#0DFFC428" Offset="0.46" />
+                <GradientStop Color="#00FFC428" Offset="0.68" />
+            </RadialGradientBrush>
+
+            <Color x:Key="WelcomeRing">#2EFFCD2D</Color>
+            <Color x:Key="WelcomeRingFaint">#1FFCDD2D</Color>
+            <Color x:Key="PhotoSheet">#FBF7EE</Color>
+            <Color x:Key="WelcomeChipFill">#D118140E</Color>
+            <Color x:Key="WelcomeChipBorder">#3DFFCD2D</Color>
 
             <Color x:Key="Backdrop">#B8080505</Color>
 

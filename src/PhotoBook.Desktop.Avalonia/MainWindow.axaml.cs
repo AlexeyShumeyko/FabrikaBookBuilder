@@ -107,11 +107,20 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Draws the switch as the way out of the theme on screen: a sun in the light theme, a
-    /// moon in the dark one.
+    /// Draws the switch as the way out of the theme on screen: a moon while the light theme
+    /// is up, a sun while the dark one is.
     /// </summary>
-    private void ShowThemeGlyph(ThemeVariant variant) =>
-        ThemeGlyph.Text = variant == ThemeVariant.Dark ? "\uE708" : "\uE706";
+    /// <remarks>
+    /// The mark says what pressing it gives, not what is on screen. It used to say the other
+    /// thing - a sun in the light theme - and a control that shows its current state in its
+    /// own icon has to be read twice before it can be pressed.
+    /// </remarks>
+    private void ShowThemeGlyph(ThemeVariant variant)
+    {
+        bool dark = variant == ThemeVariant.Dark;
+        ThemeSunPath.IsVisible = dark;
+        ThemeMoonPath.IsVisible = !dark;
+    }
 
     /// <summary>
     /// Opens the help window against this one.

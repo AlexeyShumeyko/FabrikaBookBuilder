@@ -45,7 +45,8 @@
          left to the default glob: a resource that did not get picked up is a crash at
          start-up, in the engine's own vocabulary, with nothing in the message that says
          "image missing". -->
-    <AvaloniaResource Include="Assets\logo.png" />
+    <AvaloniaResource Include="Assets\logo.png" />
+    <AvaloniaResource Include="Assets\welcome-*.jpg" />
 
     <!-- Manrope, five static weights, Open Font License. The typeface is part of the
 

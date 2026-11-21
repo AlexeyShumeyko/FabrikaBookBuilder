@@ -220,25 +220,6 @@
             </Grid>
         </Border>
 
-        <!-- The empty screen gets the panel's heading on its own; there is nothing to filter.
-
-             Same 52 pixels of content as the panel above it, and that is the whole point.
-             Without it this panel was five pixels shorter, and the two are swapped for one
-             another every time the list is opened: ProjectsCount is briefly nothing while
-             the projects are read, so the short one appeared for a moment and the panel
-             visibly shrank and then grew back. A panel that changes height when you come
-             back to it looks like the program is still loading; it was, but it should not
-             be something you can watch. -->
-        <Border Grid.Row="0" Classes="card" Padding="20"
-                IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}, ConverterParameter=empty}">
-            <StackPanel MinHeight="58">
-                <TextBlock Text="Проекты фотокниг" Classes="t29ExtraBold" VerticalAlignment="Center" />
-                <TextBlock Classes="t12" Margin="0,2,0,0" VerticalAlignment="Center"
-                           Foreground="{DynamicResource Slate500}"
-                           Text="Управляйте макетами" />
-            </StackPanel>
-        </Border>
-
         <!-- ================================ body ============================== -->
         <Panel Grid.Row="2" Margin="0,24,0,0">
 
@@ -293,133 +274,195 @@
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
-                <Border Classes="card" CornerRadius="26" Padding="44,36,44,32">
-                    <Grid ColumnDefinitions="1.06*,40,0.94*">
+                <!--
+                    The panel is two layers: the card, and a warm glow laid over its top-right
+                    corner. A control carries one brush, so a glow that sits on top of a card
+                    gradient has to be its own layer - and it is the layer above, because it
+                    falls on the empty corner beside the stack of photographs, not on the words.
+                -->
+                <Panel>
+                    <Border Classes="card" CornerRadius="26" Padding="44,36,44,32">
+                        <Grid ColumnDefinitions="1.06*,40,0.94*">
 
-                        <StackPanel Grid.Column="0">
-                            <!-- the kicker, with a hairline either side of it -->
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Rectangle Width="28" Height="1" VerticalAlignment="Center"
-                                           Fill="{DynamicResource BorderStrong}" />
-                                <TextBlock Text="ПЕРВЫЙ ЗАПУСК" Classes="t11ExtraBold"
-                                           Foreground="{DynamicResource Gold}" />
-                                <Rectangle Width="28" Height="1" VerticalAlignment="Center"
-                                           Fill="{DynamicResource BorderStrong}" />
+                            <StackPanel Grid.Column="0">
+                                <!-- the kicker, with a hairline either side of it -->
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Rectangle Width="28" Height="1" VerticalAlignment="Center"
+                                               Fill="{DynamicResource BorderStrong}" />
+                                    <TextBlock Text="ПЕРВЫЙ ЗАПУСК" Classes="t11ExtraBold"
+                                               Foreground="{DynamicResource Accent}" />
+                                    <Rectangle Width="28" Height="1" VerticalAlignment="Center"
+                                               Fill="{DynamicResource BorderStrong}" />
+                                </StackPanel>
+
+                                <TextBlock Classes="t37ExtraBold" Margin="0,16,0,0"
+                                           TextWrapping="Wrap" LineHeight="45">
+                                    <Run Text="Ваша первая фотокнига" />
+                                    <LineBreak />
+                                    <Run Text="начинается здесь" Foreground="{DynamicResource BrandNameTail}" />
+                                </TextBlock>
+
+                                <TextBlock Classes="t14" Margin="0,14,0,0" MaxWidth="640" HorizontalAlignment="Left"
+                                           TextWrapping="Wrap" LineHeight="24"
+                                           Foreground="{DynamicResource Slate500}"
+                                           Text="Программа собирает макет из готовых папок или вручную: раскладывает снимки по разворотам, проверяет состав и отправляет готовый заказ на сайт. Начните с одного проекта — дальше будет быстрее." />
+
+                                <StackPanel Margin="0,22,0,0">
+                                    <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" />
+                                    <Grid ColumnDefinitions="34,*" Margin="0,13,0,13">
+                                        <TextBlock Grid.Column="0" Text="01" Classes="t11ExtraBold"
+                                                   Margin="0,4,0,0" Foreground="{DynamicResource Accent}" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Выберите режим" Classes="t13ExtraBold" />
+                                            <TextBlock Classes="t12Half" Margin="0,4,0,0" MaxWidth="560" HorizontalAlignment="Left"
+                                                       TextWrapping="Wrap" LineHeight="20"
+                                                       Foreground="{DynamicResource Slate500}"
+                                                       Text="Папки целиком или ручная раскладка по разворотам — режим определяет, как собирается книга." />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" />
+                                    <Grid ColumnDefinitions="34,*" Margin="0,13,0,13">
+                                        <TextBlock Grid.Column="0" Text="02" Classes="t11ExtraBold"
+                                                   Margin="0,4,0,0" Foreground="{DynamicResource Accent}" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Добавьте фотографии" Classes="t13ExtraBold" />
+                                            <TextBlock Classes="t12Half" Margin="0,4,0,0" MaxWidth="560" HorizontalAlignment="Left"
+                                                       TextWrapping="Wrap" LineHeight="20"
+                                                       Foreground="{DynamicResource Slate500}"
+                                                       Text="Одной папкой или по одной. В режиме папок программа сама разложит кадры и выберет обложку." />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" />
+                                    <Grid ColumnDefinitions="34,*" Margin="0,13,0,13">
+                                        <TextBlock Grid.Column="0" Text="03" Classes="t11ExtraBold"
+                                                   Margin="0,4,0,0" Foreground="{DynamicResource Accent}" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Проверьте и загрузите" Classes="t13ExtraBold" />
+                                            <TextBlock Classes="t12Half" Margin="0,4,0,0" MaxWidth="560" HorizontalAlignment="Left"
+                                                       TextWrapping="Wrap" LineHeight="20"
+                                                       Foreground="{DynamicResource Slate500}"
+                                                       Text="Состав и имена файлов видны до отправки. Загрузка на сайт — одно нажатие." />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,24,0,0">
+                                    <Button Classes="primary" Padding="18,12"
+                                            AutomationProperties.Name="Создать первый проект"
+                                            Command="{Binding CreateProjectCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.8"
+                                                  StrokeLineCap="Round"
+                                                  Stroke="{DynamicResource OnAccent}"
+                                                  Data="M12 5v14M5 12h14" />
+                                            <TextBlock Text="Создать первый проект" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource OnAccent}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Classes="ghost" Padding="8" Click="OnHowItWorksClick"
+                                            AutomationProperties.Name="Как это работает">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.7"
+                                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                                  Stroke="{DynamicResource Slate700}"
+                                                  Data="M4 19.2V5.6A2.6 2.6 0 0 1 6.6 3H20v14.4H6.6A2.6 2.6 0 0 0 4 20M8 7h8M8 10.5h5" />
+                                            <TextBlock Text="Как это работает" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+
+                                <!--
+                                    The promise, and it is the quietest line on the panel on
+                                    purpose: the lock is small, the words are small, and both
+                                    are the colour of a footnote.
+                                -->
+                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,18,0,0">
+                                    <Path Width="14" Height="14" Stretch="Uniform" StrokeThickness="1.7"
+                                          StrokeLineCap="Round" StrokeJoin="Round"
+                                          Stroke="{DynamicResource Accent}" Opacity="0.75"
+                                          VerticalAlignment="Top" Margin="0,3,0,0"
+                                          Data="M5 10h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2ZM8 10V7.5a4 4 0 0 1 8 0V10" />
+                                    <TextBlock Classes="t11Half" MaxWidth="500" HorizontalAlignment="Left"
+                                               TextWrapping="Wrap" LineHeight="18"
+                                               Foreground="{DynamicResource Slate400}"
+                                               Text="Фотографии остаются на вашем компьютере. На сайт уходят только файлы готового заказа." />
+                                </StackPanel>
                             </StackPanel>
 
-                            <TextBlock Classes="t37ExtraBold" Margin="0,16,0,0"
-                                       TextWrapping="Wrap" LineHeight="45">
-                                <Run Text="Ваша первая фотокнига" />
-                                <LineBreak />
-                                <Run Text="начинается здесь" Foreground="{DynamicResource BrandNameTail}" />
-                            </TextBlock>
+                            <!--
+                                Three photographs mounted on paper, fanned out. The pictures travel
+                                with the program as resources: a panel that loads its own pictures
+                                from the web is a panel that looks broken on the machine of a
+                                customer who is behind a proxy.
+                            -->
+                            <Grid Grid.Column="2" MinHeight="430" IsHitTestVisible="False">
+                                <Ellipse Width="430" Height="430" HorizontalAlignment="Center"
+                                         VerticalAlignment="Center" Fill="{DynamicResource WelcomeHalo}" />
+                                <Ellipse Width="392" Height="392" HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Stroke="{DynamicResource WelcomeRing}" StrokeThickness="1" />
+                                <Ellipse Width="340" Height="340" HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         Stroke="{DynamicResource WelcomeRingFaint}" StrokeThickness="1"
+                                         StrokeDashArray="4,4" />
 
-                            <TextBlock Classes="t14" Margin="0,14,0,0" MaxWidth="640" HorizontalAlignment="Left"
-                                       TextWrapping="Wrap" LineHeight="24"
-                                       Foreground="{DynamicResource Slate500}"
-                                       Text="Программа собирает макет из готовых папок или вручную: раскладывает снимки по разворотам, проверяет состав и отправляет готовый заказ на сайт. Начните с одного проекта — дальше будет быстрее." />
+                                <Border Width="250" Padding="9,9,9,30" CornerRadius="6"
+                                        Background="{DynamicResource PhotoSheet}"
+                                        BoxShadow="{DynamicResource ShadowCard}"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Margin="-96,-30,0,0" Opacity="0.72"
+                                        RenderTransform="rotate(-11deg)">
+                                    <Border Height="176" CornerRadius="2" ClipToBounds="True">
+                                        <Image Source="avares://PhotoBookRenamer/Assets/welcome-1.jpg"
+                                               Stretch="UniformToFill" />
+                                    </Border>
+                                </Border>
 
-                            <StackPanel Margin="0,20,0,0">
-                                <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" />
-                                <Grid ColumnDefinitions="34,*" Margin="0,13,0,13">
-                                    <TextBlock Grid.Column="0" Text="01" Classes="t11ExtraBold"
-                                               Margin="0,4,0,0" Foreground="{DynamicResource Gold}" />
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Выберите режим" Classes="t13ExtraBold" />
-                                        <TextBlock Classes="t12Half" Margin="0,4,0,0" MaxWidth="560" HorizontalAlignment="Left"
-                                                   TextWrapping="Wrap" LineHeight="20"
-                                                   Foreground="{DynamicResource Slate500}"
-                                                   Text="Папки целиком или ручная раскладка по разворотам — режим определяет, как собирается книга." />
-                                    </StackPanel>
-                                </Grid>
-                                <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" />
-                                <Grid ColumnDefinitions="34,*" Margin="0,13,0,13">
-                                    <TextBlock Grid.Column="0" Text="02" Classes="t11ExtraBold"
-                                               Margin="0,4,0,0" Foreground="{DynamicResource Gold}" />
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Добавьте фотографии" Classes="t13ExtraBold" />
-                                        <TextBlock Classes="t12Half" Margin="0,4,0,0" MaxWidth="560" HorizontalAlignment="Left"
-                                                   TextWrapping="Wrap" LineHeight="20"
-                                                   Foreground="{DynamicResource Slate500}"
-                                                   Text="Одной папкой или по одной. В режиме папок программа сама разложит кадры и выберет обложку." />
-                                    </StackPanel>
-                                </Grid>
-                                <Rectangle Height="1" Fill="{DynamicResource BorderSubtle}" />
-                                <Grid ColumnDefinitions="34,*" Margin="0,13,0,13">
-                                    <TextBlock Grid.Column="0" Text="03" Classes="t11ExtraBold"
-                                               Margin="0,4,0,0" Foreground="{DynamicResource Gold}" />
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Проверьте и загрузите" Classes="t13ExtraBold" />
-                                        <TextBlock Classes="t12Half" Margin="0,4,0,0" MaxWidth="560" HorizontalAlignment="Left"
-                                                   TextWrapping="Wrap" LineHeight="20"
-                                                   Foreground="{DynamicResource Slate500}"
-                                                   Text="Состав и имена файлов видны до отправки. Загрузка на сайт — одно нажатие." />
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
+                                <Border Width="250" Padding="9,9,9,30" CornerRadius="6"
+                                        Background="{DynamicResource PhotoSheet}"
+                                        BoxShadow="{DynamicResource ShadowCard}"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Margin="0,16,-58,0" Opacity="0.92"
+                                        RenderTransform="rotate(5deg)">
+                                    <Border Height="176" CornerRadius="2" ClipToBounds="True">
+                                        <Image Source="avares://PhotoBookRenamer/Assets/welcome-2.jpg"
+                                               Stretch="UniformToFill" />
+                                    </Border>
+                                </Border>
 
-                            <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,20,0,0">
-                                <Button Classes="primary" Padding="18,12"
-                                        AutomationProperties.Name="Создать первый проект"
-                                        Command="{Binding CreateProjectCommand}">
+                                <Border Width="250" Padding="9,9,9,30" CornerRadius="6"
+                                        Background="{DynamicResource PhotoSheet}"
+                                        BoxShadow="{DynamicResource ShadowCard}"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Margin="66,-4,-116,0"
+                                        RenderTransform="rotate(-2deg)">
+                                    <Border Height="176" CornerRadius="2" ClipToBounds="True">
+                                        <Image Source="avares://PhotoBookRenamer/Assets/welcome-3.jpg"
+                                               Stretch="UniformToFill" />
+                                    </Border>
+                                </Border>
+
+                                <Border HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                        Margin="0,0,0,14" Padding="12,8" CornerRadius="999"
+                                        Background="{DynamicResource WelcomeChipFill}"
+                                        BorderBrush="{DynamicResource WelcomeChipBorder}" BorderThickness="1">
                                     <StackPanel Orientation="Horizontal" Spacing="7">
-                                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                        <Path Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.9"
+                                              StrokeLineCap="Round" StrokeJoin="Round"
+                                              Stroke="{DynamicResource Accent}"
+                                              Data="M4.5 12.5l5 5 10-11" />
+                                        <TextBlock Text="001-01.jpg &#183; готов к загрузке" Classes="t11Bold"
                                                    VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource OnAccent}" />
-                                        <TextBlock Text="Создать первый проект" VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource OnAccent}" />
+                                                   Foreground="{DynamicResource PhotoSheet}" />
                                     </StackPanel>
-                                </Button>
-                            </StackPanel>
-
-                        </StackPanel>
-
-                        <!--
-                            The stack of pages, drawn rather than photographed: three sheets at
-                            slight angles over one warm glow reads as "a book is being made"
-                            without shipping stock pictures with the program.
-                        -->
-                        <Grid Grid.Column="2" MinHeight="400" IsHitTestVisible="False">
-                            <Ellipse Width="430" Height="430" HorizontalAlignment="Center"
-                                     VerticalAlignment="Center" Fill="{DynamicResource PageGlow}" />
-                            <Ellipse Width="360" Height="360" HorizontalAlignment="Center"
-                                     VerticalAlignment="Center"
-                                     Stroke="{DynamicResource Gold}" StrokeThickness="1" Opacity="0.22" />
-
-                            <Border Classes="card" Width="250" Padding="9,9,9,9" CornerRadius="6"
-                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    Margin="-96,-26,0,0" Opacity="0.72"
-                                    RenderTransform="rotate(-11deg)">
-                                <Border Height="176" CornerRadius="2" Background="{DynamicResource Slate200}" />
-                            </Border>
-
-                            <Border Classes="card" Width="250" Padding="9,9,9,9" CornerRadius="6"
-                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    Margin="0,14,-60,0" Opacity="0.92"
-                                    RenderTransform="rotate(5deg)">
-                                <Border Height="176" CornerRadius="2" Background="{DynamicResource Brand50}" />
-                            </Border>
-
-                            <Border Classes="card" Width="250" Padding="9,9,9,9" CornerRadius="6"
-                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    Margin="66,-6,-120,0"
-                                    RenderTransform="rotate(-2deg)">
-                                <Border Height="176" CornerRadius="2" Background="{DynamicResource Slate100}" />
-                            </Border>
-
-                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom"
-                                        HorizontalAlignment="Center" Margin="0,0,0,4">
-                                <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="13"
-                                           VerticalAlignment="Top" Margin="0,1,0,0"
-                                           Foreground="{DynamicResource Gold}" />
-                                <TextBlock Classes="t11Half" MaxWidth="330" HorizontalAlignment="Left" TextWrapping="Wrap" LineHeight="18"
-                                           TextAlignment="Center"
-                                           Foreground="{DynamicResource Slate400}"
-                                           Text="Фотографии остаются на вашем компьютере. На сайт уходят только файлы готового заказа." />
-                            </StackPanel>
+                                </Border>
+                            </Grid>
                         </Grid>
-                    </Grid>
-                </Border>
+                    </Border>
+
+                    <Border CornerRadius="26" IsHitTestVisible="False"
+                            Background="{DynamicResource WelcomeGlow}" />
+                </Panel>
 
                 <Grid ColumnDefinitions="*,16,*,16,*" Margin="0,16,0,0">
                     <Border Grid.Column="0" Classes="card" CornerRadius="18" Padding="22,22,20,20">
@@ -501,6 +544,7 @@
                  instead of pressed against the last card.
              -->
             <ScrollViewer Classes="contentScroll"
+                          IsVisible="{Binding ProjectsCount, Converter={StaticResource NotEmpty}}"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
                           Margin="0,0,-20,0">
