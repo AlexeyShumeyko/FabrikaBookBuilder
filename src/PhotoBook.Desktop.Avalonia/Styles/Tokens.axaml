@@ -537,9 +537,13 @@
             <Color x:Key="BadgeFill">#3DFFCE3C</Color>
             <Color x:Key="BadgeBorder">#42B07B00</Color>
             <Color x:Key="BadgeInk">#8A6000</Color>
+            <!-- The connector between the steps is the one place a pale yellow disappears
+                 on paper: the prototype's rgba(255,205,45,.32) is invisible on cream, so
+                 daylight carries the gold the badge's ring is drawn in, at a weight that
+                 reads at one pixel. -->
             <LinearGradientBrush x:Key="StepLine" StartPoint="50%,0%" EndPoint="50%,100%">
-                <GradientStop Color="#52FFCD2D" Offset="0" />
-                <GradientStop Color="#0DFFCD2D" Offset="1" />
+                <GradientStop Color="#85B07B00" Offset="0" />
+                <GradientStop Color="#1AB07B00" Offset="1" />
             </LinearGradientBrush>
             <Color x:Key="ManualNextBorder">#C89100</Color>
             <Color x:Key="ManualNextInk">#2A1C00</Color>

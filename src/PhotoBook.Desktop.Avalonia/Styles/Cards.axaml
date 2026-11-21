@@ -78,6 +78,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Height" Value="42" />
         <Setter Property="CornerRadius" Value="999" />
+        <Setter Property="Padding" Value="20,0" />
         <Setter Property="FontSize" Value="13.5" />
         <Setter Property="FontWeight" Value="Bold" />
         <!-- The filled action rises under the pointer, and a rise draws outside the
@@ -94,6 +95,7 @@
                     <Border.Transitions>
                         <Transitions>
                             <BrushTransition Property="Background" Duration="0:0:0.14" />
+                            <BrushTransition Property="BorderBrush" Duration="0:0:0.16" />
                             <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.16" />
                             <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.16" />
                         </Transitions>
@@ -113,7 +115,7 @@
 
     <Style Selector="Button.primary:pointerover">
         <Setter Property="Background" Value="{DynamicResource ActionFillHover}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource ActionBorder}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ActionBorderHover}" />
     </Style>
 
     <!-- One pixel up, and a wider and softer descent under it. -->
@@ -140,6 +142,7 @@
         <Setter Property="Background" Value="{DynamicResource Slate200}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Slate200}" />
         <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
+        <Setter Property="Cursor" Value="Arrow" />
     </Style>
 
     <!--
@@ -212,6 +215,26 @@
     -->
     <Style Selector="Button.primary TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource ActionInk}" />
+        <!-- The prototype sets -.01em on every button label, which is what makes a row of
+             them add up to the widths it draws instead of a few pixels more each. -->
+        <Setter Property="LetterSpacing" Value="-0.14" />
+    </Style>
+
+    <!-- A soft button that cannot be pressed fades into the page rather than sitting there
+         looking pressable. The card it sits on carries its own fill, so the fade is done with
+         the quiet tokens and a little opacity rather than a second pair of colours. -->
+    <Style Selector="Button.soft:disabled">
+        <Setter Property="Opacity" Value="0.8" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFaint}" />
+        <Setter Property="Cursor" Value="Arrow" />
+    </Style>
+
+    <Style Selector="Button.soft TextBlock">
+        <Setter Property="LetterSpacing" Value="-0.14" />
+    </Style>
+
+    <Style Selector="Button.soft:disabled TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextFaint}" />
     </Style>
 
     <Style Selector="Button.primary:disabled TextBlock">
@@ -220,6 +243,7 @@
 
     <Style Selector="Button.outline TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+        <Setter Property="LetterSpacing" Value="-0.14" />
     </Style>
 
     <Style Selector="Button.outline:disabled TextBlock">
@@ -267,6 +291,7 @@
 
     <Style Selector="Button.ghost TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource Slate700}" />
+        <Setter Property="LetterSpacing" Value="-0.14" />
     </Style>
 
     <!--
