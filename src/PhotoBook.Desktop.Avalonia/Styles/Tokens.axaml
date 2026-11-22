@@ -146,6 +146,7 @@
                  copied rather than tidied: the raised cap is what makes the press answer read
                  as a press. -->
             <BoxShadows x:Key="ActionShadowOff">inset 0 1 0 0 #99FFFFFF, 0 6 16 -12 #B358421C</BoxShadows>
+            <BoxShadows x:Key="ActionShadowOffHover">inset 0 1 0 0 #B3FFFFFF, 0 8 20 -12 #B358421C</BoxShadows>
 
             <!-- The line a card takes under the pointer. Gold, not a darker hairline: it is
                  the card answering, and the answer is the product's colour. -->
@@ -660,6 +661,7 @@
             <BoxShadows x:Key="ActionShadowHover">0 6 16 0 #57000000, inset 0 -2 0 0 #388C5600</BoxShadows>
             <BoxShadows x:Key="ActionShadowPressed">inset 0 2 4 0 #4D6E4200</BoxShadows>
             <BoxShadows x:Key="ActionShadowOff">0 0 0 0 #00000000</BoxShadows>
+            <BoxShadows x:Key="ActionShadowOffHover">0 0 0 0 #00000000</BoxShadows>
 
             <Color x:Key="BorderAccentHover">#3DFFCD2D</Color>
 

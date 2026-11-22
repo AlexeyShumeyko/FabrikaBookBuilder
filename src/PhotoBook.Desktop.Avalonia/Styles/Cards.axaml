@@ -270,7 +270,7 @@
                     card that is enough, and nothing is drawn behind it at all.
                 -->
                 <Border x:Name="Root"
-                        Background="Transparent"
+                        Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}"

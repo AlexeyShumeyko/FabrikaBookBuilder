@@ -24,7 +24,10 @@ namespace PhotoBook.Shell.Views;
 /// </remarks>
 public partial class UniqueFoldersView : UserControl, IPendingRename
 {
-    /// <summary>The class that sinks the site button while the pane in front of it is pressed.</summary>
+    /// <summary>The class that deepens the shadow of a site button the pointer is on.</summary>
+    private const string SiteHoverClass = "siteHover";
+
+    /// <summary>The class that paints the sunken shadow while the pane in front of it is pressed.</summary>
     private const string SitePressedClass = "sitePressed";
 
     private double _renderScaling = 1;
@@ -32,6 +35,8 @@ public partial class UniqueFoldersView : UserControl, IPendingRename
     public UniqueFoldersView()
     {
         InitializeComponent();
+
+        SiteOrderPane.PropertyChanged += OnSiteOrderPanePropertyChanged;
     }
 
     /// <summary>
@@ -163,14 +168,37 @@ public partial class UniqueFoldersView : UserControl, IPendingRename
     }
 
     /// <summary>
-    /// The pointer's answer on a site button that is off: it sinks, and no order is placed.
+    /// The pointer arriving on a site button that is off: the shadow deepens, and no order is placed.
+    /// </summary>
+    /// <remarks>
+    /// A disabled control hears nothing from the pointer, so the pane in front of the button
+    /// lends it the two looks the prototype gives it - the shadow of a hover and the shadow of
+    /// a press, and no movement in either, because its disabled rule sets the movement aside.
+    /// </remarks>
+    private void OnOrderOnSitePointerEntered(object? sender, PointerEventArgs e)
+        => SiteOrderButton.Classes.Add(SiteHoverClass);
+
+    private void OnOrderOnSitePointerExited(object? sender, PointerEventArgs e)
+        => SiteOrderButton.Classes.Remove(SiteHoverClass);
+
+    /// <summary>
+    /// The pane goes away the moment folders arrive, and an exit is not sent for a pane that
+    /// is no longer on screen - the looks it lent the button would stay on it.
+    /// </summary>
+    private void OnSiteOrderPanePropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property != Visual.IsVisibleProperty || SiteOrderPane.IsVisible) return;
+
+        SiteOrderButton.Classes.Remove(SiteHoverClass);
+        SiteOrderButton.Classes.Remove(SitePressedClass);
+    }
+
+    /// <summary>
+    /// The pointer's answer on a site button that is off: the sunken shadow, and no order placed.
     /// </summary>
     /// <remarks>
     /// The prototype's disabled filled button still depresses - its pressed rule outlives its
-    /// disabled one - and that is the only thing a press does. A disabled control hears nothing
-    /// from the pointer, so the press is taken by a pane that is on screen only while the
-    /// button is off, and the look is put on the button itself: the sink belongs to its own
-    /// template, where its shadow and its transitions already are.
+    /// disabled one - and that is the only thing a press does.
     /// </remarks>
     private void OnOrderOnSitePressed(object? sender, PointerPressedEventArgs e)
     {
@@ -190,6 +218,13 @@ public partial class UniqueFoldersView : UserControl, IPendingRename
         if (e is PointerReleasedEventArgs released)
         {
             released.Pointer.Capture(null);
+        }
+
+        // A release outside the pane ends the capture without an exit, and the sunken button
+        // would keep the hover shadow while the pointer is somewhere else on the screen.
+        if (sender is InputElement pane && !pane.IsPointerOver)
+        {
+            SiteOrderButton.Classes.Remove(SiteHoverClass);
         }
     }
 
