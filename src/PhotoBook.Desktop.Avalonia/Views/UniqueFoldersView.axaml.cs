@@ -24,6 +24,9 @@ namespace PhotoBook.Shell.Views;
 /// </remarks>
 public partial class UniqueFoldersView : UserControl, IPendingRename
 {
+    /// <summary>The class that sinks the site button while the pane in front of it is pressed.</summary>
+    private const string SitePressedClass = "sitePressed";
+
     private double _renderScaling = 1;
 
     public UniqueFoldersView()
@@ -157,6 +160,37 @@ public partial class UniqueFoldersView : UserControl, IPendingRename
     {
         ProjectNameTextBox.IsVisible = false;
         ProjectNameTextBlock.IsVisible = true;
+    }
+
+    /// <summary>
+    /// The pointer's answer on a site button that is off: it sinks, and no order is placed.
+    /// </summary>
+    /// <remarks>
+    /// The prototype's disabled filled button still depresses - its pressed rule outlives its
+    /// disabled one - and that is the only thing a press does. A disabled control hears nothing
+    /// from the pointer, so the press is taken by a pane that is on screen only while the
+    /// button is off, and the look is put on the button itself: the sink belongs to its own
+    /// template, where its shadow and its transitions already are.
+    /// </remarks>
+    private void OnOrderOnSitePressed(object? sender, PointerPressedEventArgs e)
+    {
+        SiteOrderButton.Classes.Add(SitePressedClass);
+        e.Pointer.Capture(sender as IInputElement);
+        e.Handled = true;
+    }
+
+    /// <remarks>
+    /// Capture is taken back, so the release always arrives here even when the pointer has
+    /// left the button by then, and the button cannot stay sunk.
+    /// </remarks>
+    private void OnOrderOnSiteReleased(object? sender, RoutedEventArgs e)
+    {
+        SiteOrderButton.Classes.Remove(SitePressedClass);
+
+        if (e is PointerReleasedEventArgs released)
+        {
+            released.Pointer.Capture(null);
+        }
     }
 
     /// <summary>

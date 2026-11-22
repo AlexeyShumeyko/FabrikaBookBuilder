@@ -44,6 +44,17 @@ namespace PhotoBook.Presentation.ViewModels
         public bool CanExport => Project?.IsValid ?? false;
 
         /// <summary>
+        /// Whether the panel's save button is live: a project with books in it, as the
+        /// prototype draws it.
+        /// </summary>
+        /// <remarks>
+        /// Only the button reads this. The command stays executable, because an empty project
+        /// can still be the one a user wants to keep, and the flows that save without the
+        /// panel asking would be broken by disabling it.
+        /// </remarks>
+        public bool CanSaveProject => Books.Count > 0;
+
+        /// <summary>
         /// Counts for the project panel: "2 обложек · 6 разворотов · 2 папок".
         ///
         /// All three are always shown, zeros included - a project the user has just
@@ -170,6 +181,7 @@ namespace PhotoBook.Presentation.ViewModels
             {
                 OnPropertyChanged(nameof(BooksCount));
                 OnPropertyChanged(nameof(BooksSummary));
+                OnPropertyChanged(nameof(CanSaveProject));
             };
 
             PropertyChanged += (s, e) =>
