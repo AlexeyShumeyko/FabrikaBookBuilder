@@ -122,6 +122,13 @@
             <Color x:Key="GoldHover">#F8BF2B</Color>
             <Color x:Key="GoldPressed">#E7A80F</Color>
 
+            <!-- A chip that lies on a picture: the folder card's book number and its open
+                 arrow. Dark in both themes, because it is a label on an image and not a
+                 surface of the page - the numbered scale flips with the theme, and a chip
+                 that turned white at night would sit on the picture like a hole. -->
+            <Color x:Key="OverlayChipFill">#B8140F09</Color>
+            <Color x:Key="OverlayChipInk">#FFFFEEC2</Color>
+
             <!-- A filled action, in each theme's own tone. On warm paper the prototype does
                  not lay a solid gold slab - that is a lamp in a lit room - but a 24% gold tint
                  with a gold line and deep-gold words on it. In the evening the same button is
@@ -647,6 +654,10 @@
             <Color x:Key="GoldDeep">#CF9105</Color>
             <Color x:Key="GoldHover">#F8BF2B</Color>
             <Color x:Key="GoldPressed">#E7A80F</Color>
+
+            <!-- The same chip on a picture, and the same colour in both themes. -->
+            <Color x:Key="OverlayChipFill">#B8140F09</Color>
+            <Color x:Key="OverlayChipInk">#FFFFEEC2</Color>
 
             <!-- The same button at night: the gold itself, with ink on it. -->
             <Color x:Key="ActionFill">#F2B41C</Color>
