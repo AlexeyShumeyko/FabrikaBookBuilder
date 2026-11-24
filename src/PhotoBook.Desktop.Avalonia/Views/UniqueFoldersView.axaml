@@ -141,6 +141,30 @@
         </Style>
 
         <!--
+            The reset button of a book's header: a quiet word with a small mark, which the
+            pointer washes rather than frames. It is the one action of that row that is pressed
+            often, and it gave no answer at all before - nothing moved, nothing changed colour.
+        -->
+        <Style Selector="Button.ghost.resetOrder">
+            <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.14" />
+                    <BrushTransition Property="Foreground" Duration="0:0:0.14" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.ghost.resetOrder:pointerover">
+            <Setter Property="Background" Value="{DynamicResource Slate100}" />
+            <Setter Property="Foreground" Value="{DynamicResource Slate900}" />
+        </Style>
+        <Style Selector="Button.ghost.resetOrder:pressed">
+            <Setter Property="Background" Value="{DynamicResource Slate200}" />
+        </Style>
+
+        <!--
             The control panel is a surface, not a control. The card style answers the pointer
             with a gold rim and a deeper shadow, which made the whole bar twitch every time the
             pointer crossed it; the prototype's panel simply is.
@@ -389,8 +413,12 @@
                 right-hand edge as the panel above them, which is how the projects list does
                 it. Twenty pixels are taken back here and handed over by the padding, so
                 nothing is lost and the bar is no longer pressed against the last book.
+
+                Twenty-four above the books, which is the distance the window already keeps
+                between its own bar and this screen's panel: the books used to start another
+                eighteen lower, so the area read as a second section of its own.
             -->
-            <Border Padding="0,18,20,0">
+            <Border Padding="0,0,20,0">
             <StackPanel>
 
             <!--
@@ -707,17 +735,25 @@
                                             book, and a fact reads better after the thing
                                             it follows than before it.
                                         -->
-                                        <Button Classes="ghost" Padding="10,6" Margin="0,0,8,0"
+                                        <Button Classes="ghost resetOrder" Padding="10,6" Margin="0,0,8,0"
                                                 AutomationProperties.Name="Сбросить порядок книги"
                                                 ToolTip.Tip="Вернуть развороты в исходный порядок"
                                                 Command="{Binding DataContext.ResetBookOrderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}">
+                                            <!--
+                                                The mark sits level with the words, at the words'
+                                                own size. It was twelve against a label of
+                                                twelve and a half and neither was centred, so
+                                                the glyph rode high and the pair read as
+                                                misaligned rather than as one label.
+                                            -->
                                             <StackPanel Orientation="Horizontal" Spacing="6">
                                                 <TextBlock Text="&#xE777;" FontFamily="Segoe MDL2 Assets"
-                                                           FontSize="12"
-                                                           Foreground="{DynamicResource Slate600}" />
+                                                           FontSize="13" VerticalAlignment="Center"
+                                                           Foreground="{Binding $parent[Button].Foreground}" />
                                                 <TextBlock Text="Сбросить порядок книги" Classes="t12Semi"
-                                                           Foreground="{DynamicResource Slate600}" />
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{Binding $parent[Button].Foreground}" />
                                             </StackPanel>
                                         </Button>
 
@@ -738,19 +774,43 @@
                                             the one that gates the action stays.
                                         -->
 
-                                        <Button Classes="icon" Margin="8,0,0,0"
+                                        <!--
+                                            The same basket the projects list uses to delete a
+                                            project, at the thirty-two pixels this row's
+                                            height allows: the glyph alone, with the framed
+                                            square and the red wash the list gives it. The
+                                            glyph was a fourteen-pixel outline in the header
+                                            and its pointer turned the square grey, which is
+                                            the one colour a delete should not be.
+                                        -->
+                                        <Button Classes="projectDelete" Width="32" Height="32"
+                                                Padding="0" CornerRadius="10"
+                                                Margin="8,0,0,0" VerticalAlignment="Center"
                                                 AutomationProperties.Name="Удалить книгу"
                                                 Command="{Binding DataContext.DeleteBookCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}">
-                                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource Slate400}" />
+                                            <Path Width="12" Height="12" Stretch="Uniform" StrokeThickness="1.2"
+                                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  Stroke="{Binding $parent[Button].Foreground}"
+                                                  Data="M4 7h16M9.5 7V5h5v2M6.5 7l.9 12.2a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5L17.5 7M10 11v6M14 11v6">
+                                                <Path.Transitions>
+                                                    <Transitions>
+                                                        <BrushTransition Property="Stroke" Duration="0:0:0.16" />
+                                                    </Transitions>
+                                                </Path.Transitions>
+                                            </Path>
                                         </Button>
                                     </StackPanel>
                                 </Grid>
 
-                                <!-- ============================== slots ==================== -->
-                                <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding AllSlotsPages}">
+                                <!-- ============================== slots ====================
+                                     The row of photographs keeps a wider gap under the heading
+                                     than the eight it had: the name and the first cell read as
+                                     one line of text with a picture under it. Only the margin
+                                     is wider - the cards are measured and wrapped exactly as
+                                     they were. -->
+                                <ItemsControl Margin="0,16,0,0" ItemsSource="{Binding AllSlotsPages}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <WrapPanel Orientation="Horizontal" />

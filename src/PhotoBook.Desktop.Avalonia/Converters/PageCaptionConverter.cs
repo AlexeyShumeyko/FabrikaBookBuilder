@@ -68,9 +68,11 @@ namespace PhotoBook.Shell.Converters
                     ? string.Empty
                     : page.IsCover ? "Заменить" : "Назначить обложкой",
 
-                // Violet for the cover's own action and green for the promotion, as in the
-                // released program: the colour says which of the two things this is.
-                "actionbrush" => Brush(isCover ? "Accent" : "Emerald600"),
+                // One colour for both actions: the promotion used to be green, which put a
+                // second accent in a caption row that has no state to report - it read as a
+                // different kind of control beside "Заменить" rather than as the other half
+                // of one choice. The two verbs still say which is which.
+                "actionbrush" => Brush("Accent"),
 
                 "actionname" => page is null
                     ? string.Empty
