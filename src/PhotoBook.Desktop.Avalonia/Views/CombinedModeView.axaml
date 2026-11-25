@@ -697,19 +697,18 @@
                                             ToolTip.Tip="{Binding Path}">
                                         <Grid ColumnDefinitions="Auto,*,Auto">
                                             <!--
-                                                The tile is a spread's shape, not a square: a square
-                                                crops the frame to fill itself and leaves the sliver
-                                                that is left too small to recognise, and shrinking
-                                                the whole spread into a square loses it just as
-                                                badly. At 56 by 40 the frame is drawn almost in
-                                                full at the row's own height, so the list stays as
-                                                dense as before. The copy is twice the tile for the
-                                                renderer to shrink, as on the projects screen.
+                                                Fitted, not filled: a project can be 20x20, 25x25 or
+                                                anything else, so the frame is shown whole inside the
+                                                tile whatever its shape, and nothing is cropped to
+                                                suit one format. The copy is decoded at twice the
+                                                tile's longer side, which is more than any shape can
+                                                draw here, so the fit never stretches pixels that
+                                                were not decoded.
                                             -->
                                             <Border Grid.Column="0" Width="56" Height="40"
                                                     CornerRadius="8" ClipToBounds="True"
                                                     Background="{DynamicResource Slate100}">
-                                                <Image Stretch="UniformToFill"
+                                                <Image Stretch="Uniform"
                                                        RenderOptions.BitmapInterpolationMode="HighQuality"
                                                        Source="{Binding Path, Converter={StaticResource FilePathToBitmap}, ConverterParameter=112}" />
                                             </Border>
