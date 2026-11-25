@@ -94,7 +94,15 @@ public partial class UniqueFoldersView : UserControl, IPendingRename
     /// </remarks>
     private void OnProjectNamePencilClick(object? sender, RoutedEventArgs e) => BeginProjectRename();
 
-    private void OnProjectNameClick(object? sender, PointerPressedEventArgs e) => BeginProjectRename();
+    private void OnProjectNameClick(object? sender, PointerPressedEventArgs e)
+    {
+        // The press that opens the box is the name's own, not a click beside it. The window
+        // closes a rename it finds open when a press reaches it, and this one arrives there
+        // after the box has just been shown - left to travel, it would open and close the
+        // editor in one click, and only the pencil would ever work.
+        e.Handled = true;
+        BeginProjectRename();
+    }
 
     private void OnProjectNameLostFocus(object? sender, RoutedEventArgs e) => CommitProjectName();
 
