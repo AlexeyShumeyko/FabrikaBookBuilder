@@ -747,7 +747,7 @@
                             the list's own answer.
                         -->
                         <Border Classes="emptyPhotos" IsVisible="{Binding !HasFiles}"
-                                VerticalAlignment="Top">
+                                VerticalAlignment="Center">
                             <StackPanel Spacing="5" HorizontalAlignment="Center">
                                 <Border Width="34" Height="34" CornerRadius="10" Margin="0,0,0,3"
                                         HorizontalAlignment="Center"
@@ -770,18 +770,28 @@
                         </Border>
                     </Grid>
 
-                    <!-- the quiet note of the column, at its foot -->
-                    <Grid Grid.Row="4" ColumnDefinitions="Auto,*" Margin="0,12,0,0"
-                          VerticalAlignment="Bottom">
-                        <Path Grid.Column="0" Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.7"
-                              StrokeLineCap="Round" StrokeJoin="Round" Margin="0,2,7,0"
-                              VerticalAlignment="Top" Opacity="0.7"
-                              Stroke="{DynamicResource Accent}"
-                              Data="M12 3 A 9 9 0 1 0 12 21 A 9 9 0 1 0 12 3 M12 11 V16.5 M12 7.8h.01" />
-                        <TextBlock Grid.Column="1" Text="Файлы не копируются: программа работает с оригиналами на диске."
-                                   FontSize="10.5" LineHeight="16" TextWrapping="Wrap"
-                                   Foreground="{DynamicResource TextFaint}" />
-                    </Grid>
+                    <!--
+                        The note of the column, at its foot: a filled strip rather than a line of
+                        faint grey. What it says is worth reading before a folder is moved, so it
+                        is not dressed as a caption nobody stops at.
+                    -->
+                    <Border Grid.Row="4" Margin="0,12,0,0" VerticalAlignment="Bottom"
+                            CornerRadius="10" Padding="10,8"
+                            Background="{DynamicResource SunkenFaint}"
+                            BorderBrush="{DynamicResource BorderDefault}"
+                            BorderThickness="1">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Path Grid.Column="0" Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.7"
+                                  StrokeLineCap="Round" StrokeJoin="Round" Margin="0,2,7,0"
+                                  VerticalAlignment="Top"
+                                  Stroke="{DynamicResource Accent}"
+                                  Data="M12 3 A 9 9 0 1 0 12 21 A 9 9 0 1 0 12 3 M12 11 V16.5 M12 7.8h.01" />
+                            <TextBlock Grid.Column="1" Text="Проект помнит пути к снимкам: если файлы переместить или переименовать, они перестанут открываться."
+                                       FontSize="11" LineHeight="17" TextWrapping="Wrap"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextMuted}" />
+                        </Grid>
+                    </Border>
                 </Grid>
             </Border>
 
