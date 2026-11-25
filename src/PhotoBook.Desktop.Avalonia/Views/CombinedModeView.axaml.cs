@@ -60,6 +60,14 @@ public partial class CombinedModeView : UserControl, IPendingRename
         DragDrop.SetAllowDrop(this, true);
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DropEvent, OnDrop);
+
+        // A press on the page takes the caret away from the photo search.
+        //
+        // A field keeps the keyboard until something else claims it, and most of this page
+        // is not focusable - a card, a label, a row of the photo list - so clicking beside
+        // the field left it lit and typing, as if the click had missed. The folders screen
+        // has no search field, so this is the one place the rule is needed.
+        AddHandler(PointerPressedEvent, OnPagePointerPressed, RoutingStrategies.Tunnel);
     }
 
     private CombinedModeViewModel? Model => DataContext as CombinedModeViewModel;
@@ -139,6 +147,29 @@ public partial class CombinedModeView : UserControl, IPendingRename
     {
         ProjectNameTextBox.IsVisible = false;
         ProjectNameTextBlock.IsVisible = true;
+    }
+
+    // ------------------------------------------------------------ photo search --
+
+    /// <summary>
+    /// Takes the caret out of the photo search when the press lands anywhere but a field.
+    /// </summary>
+    /// <remarks>
+    /// A press inside a field is typing or picking another field, and is left alone: clearing
+    /// focus there would take the keyboard away from the box the pointer just chose. A press
+    /// on anything else on the page ends the search, which is what a pointer outside the field
+    /// means everywhere else in the program.
+    /// </remarks>
+    private void OnPagePointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (PhotoSearchBox is not { IsFocused: true }) return;
+
+        for (Visual? node = e.Source as Visual; node is not null; node = node.GetVisualParent())
+        {
+            if (node is TextBox) return;
+        }
+
+        TopLevel.GetTopLevel(this)?.FocusManager?.ClearFocus();
     }
 
     // ------------------------------------------------------------- site button --

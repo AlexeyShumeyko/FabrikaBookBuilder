@@ -273,8 +273,15 @@
             <Setter Property="FontSize" Value="12.5" />
             <Setter Property="CornerRadius" Value="11" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+            <!--
+                Sunken once, on the field's own frame. The template draws two borders - the
+                named frame of the text control and a plain one inset by the border's
+                thickness - and a selector that named neither painted both, so six per cent
+                of brown was laid down twice and the well came out darker than the
+                prototype's. The frame is addressed by its name below.
+            -->
             <Setter Property="Background" Value="{DynamicResource Sunken}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource FieldBorder}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CaretBrush" Value="{DynamicResource Accent}" />
             <Setter Property="Transitions">
@@ -284,15 +291,15 @@
                 </Transitions>
             </Setter>
         </Style>
-        <Style Selector="TextBox.searchInput /template/ Border">
+        <Style Selector="TextBox.searchInput /template/ Border#PART_BorderElement">
             <Setter Property="Background" Value="{DynamicResource Sunken}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource FieldBorder}" />
         </Style>
-        <Style Selector="TextBox.searchInput:pointerover /template/ Border">
+        <Style Selector="TextBox.searchInput:pointerover /template/ Border#PART_BorderElement">
             <Setter Property="Background" Value="{DynamicResource Sunken}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource FieldBorder}" />
         </Style>
-        <Style Selector="TextBox.searchInput:focus /template/ Border">
+        <Style Selector="TextBox.searchInput:focus /template/ Border#PART_BorderElement">
             <Setter Property="Background" Value="{DynamicResource Sunken}" />
             <Setter Property="BorderBrush" Value="{DynamicResource ActionBorder}" />
         </Style>
@@ -626,6 +633,7 @@
 
                     <Panel Grid.Row="2" Margin="0,12,0,12">
                         <TextBox Classes="searchInput"
+                                 Name="PhotoSearchBox"
                                  Text="{Binding PhotoSearch}"
                                  AutomationProperties.Name="Поиск по имени файла"
                                  Watermark="Поиск по имени файла" />
