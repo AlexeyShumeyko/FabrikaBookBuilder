@@ -272,6 +272,7 @@ namespace PhotoBook.Presentation.ViewModels
             // finished in this session left «Экспортировать» and «Загрузить на сайт» grey until
             // the project was reopened, because only the commands were re-asked.
             OnPropertyChanged(nameof(CanExport));
+            OnPropertyChanged(nameof(CanSaveProject));
 
             if (OrderOnSiteCommand is IRelayCommand orderCommand)
             {

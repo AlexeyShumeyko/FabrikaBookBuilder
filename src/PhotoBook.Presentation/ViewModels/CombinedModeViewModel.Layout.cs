@@ -151,6 +151,13 @@ namespace PhotoBook.Presentation.ViewModels
         public bool CanExport => Project?.IsValid ?? false;
 
         /// <summary>
+        /// Whether there is anything to save. The folders screen draws its quiet button
+        /// against the same rule, and a project with no books and no photographs is a name
+        /// and nothing else - so the button stands down instead of promising a file.
+        /// </summary>
+        public bool CanSaveProject => Books.Count > 0 || AvailableFiles.Count > 0;
+
+        /// <summary>
         /// The book shown in the assembly canvas. The reference shows one book at a time
         /// with a chip strip to switch, instead of every book stacked vertically.
         /// Set by the ListBox's SelectedItem binding.

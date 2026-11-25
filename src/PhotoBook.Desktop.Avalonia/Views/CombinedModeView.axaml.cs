@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Input;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -38,9 +39,17 @@ namespace PhotoBook.Shell.Views;
 /// </remarks>
 public partial class CombinedModeView : UserControl, IPendingRename
 {
+    /// <summary>The class that deepens the shadow of a site button the pointer is on.</summary>
+    private const string SiteHoverClass = "siteHover";
+
+    /// <summary>The class that paints the sunken shadow while the pane in front of it is pressed.</summary>
+    private const string SitePressedClass = "sitePressed";
+
     public CombinedModeView()
     {
         InitializeComponent();
+
+        SiteOrderPane.PropertyChanged += OnSiteOrderPanePropertyChanged;
 
         // Drag and drop is handled once, here, rather than on each zone.
         //
@@ -130,6 +139,66 @@ public partial class CombinedModeView : UserControl, IPendingRename
     {
         ProjectNameTextBox.IsVisible = false;
         ProjectNameTextBlock.IsVisible = true;
+    }
+
+    // ------------------------------------------------------------- site button --
+
+    /// <summary>
+    /// The pointer arriving on a site button that is off: the shadow deepens, and no order is placed.
+    /// </summary>
+    /// <remarks>
+    /// A disabled control hears nothing from the pointer, so the pane in front of the button
+    /// lends it the two looks the prototype gives it - the shadow of a hover and the shadow of
+    /// a press, and no movement in either, because its disabled rule sets the movement aside.
+    /// The folders screen does this the same way, so the two panels answer the pointer alike.
+    /// </remarks>
+    private void OnOrderOnSitePointerEntered(object? sender, PointerEventArgs e)
+        => SiteOrderButton.Classes.Add(SiteHoverClass);
+
+    private void OnOrderOnSitePointerExited(object? sender, PointerEventArgs e)
+        => SiteOrderButton.Classes.Remove(SiteHoverClass);
+
+    /// <summary>
+    /// The pane goes away the moment there is a project to send, and an exit is not sent for a
+    /// pane that is no longer on screen - the looks it lent the button would stay on it.
+    /// </summary>
+    private void OnSiteOrderPanePropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property != IsVisibleProperty || SiteOrderPane.IsVisible) return;
+
+        SiteOrderButton.Classes.Remove(SiteHoverClass);
+        SiteOrderButton.Classes.Remove(SitePressedClass);
+    }
+
+    /// <summary>
+    /// The pointer's answer on a site button that is off: the sunken shadow, and no order placed.
+    /// </summary>
+    private void OnOrderOnSitePressed(object? sender, PointerPressedEventArgs e)
+    {
+        SiteOrderButton.Classes.Add(SitePressedClass);
+        e.Pointer.Capture(sender as IInputElement);
+        e.Handled = true;
+    }
+
+    /// <remarks>
+    /// Capture is taken back, so the release always arrives here even when the pointer has
+    /// left the button by then, and the button cannot stay sunk.
+    /// </remarks>
+    private void OnOrderOnSiteReleased(object? sender, RoutedEventArgs e)
+    {
+        SiteOrderButton.Classes.Remove(SitePressedClass);
+
+        if (e is PointerReleasedEventArgs released)
+        {
+            released.Pointer.Capture(null);
+        }
+
+        // A release outside the pane ends the capture without an exit, and the sunken button
+        // would keep the hover shadow while the pointer is somewhere else on the screen.
+        if (sender is InputElement pane && !pane.IsPointerOver)
+        {
+            SiteOrderButton.Classes.Remove(SiteHoverClass);
+        }
     }
 
     // ------------------------------------------------------------- whole books --

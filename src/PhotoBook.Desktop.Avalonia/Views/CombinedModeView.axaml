@@ -174,6 +174,18 @@
         </Style>
 
         <!--
+            The site button while it cannot be pressed answers the pointer the way the folders
+            screen's does: the pane in front of it lends the shadow of a hover and the sunken
+            shadow of a press, and the button itself does not move.
+        -->
+        <Style Selector="Button.primary:disabled.siteHover /template/ Border">
+            <Setter Property="BoxShadow" Value="{DynamicResource ActionShadowOffHover}" />
+        </Style>
+        <Style Selector="Button.primary:disabled.sitePressed /template/ Border">
+            <Setter Property="BoxShadow" Value="{DynamicResource ActionShadowPressed}" />
+        </Style>
+
+        <!--
             The run counter: a box of one height with a minus, the number and a plus. The number
             is still a field, so it can be typed into, but it looks like the plain bold figure the
             prototype draws - no frame of its own inside the box that already has one.
@@ -284,7 +296,13 @@
 
         <!-- ============================ control panel ============================ -->
         <Border Grid.Row="1" Classes="card" Padding="24,20" Margin="0,0,0,18">
-            <Grid ColumnDefinitions="Auto,*,Auto">
+            <!--
+                Two columns: the project on the left at its own width, the controls on the
+                right in what is left. The controls wrap (see the panel below) rather than
+                being cut off: a project with a long name and five controls is wider than a
+                1280 window, and the site button used to disappear past its edge.
+            -->
+            <Grid ColumnDefinitions="Auto,*">
 
                 <!-- left: the tile, the name, one line of state -->
                 <Grid Grid.Column="0" ColumnDefinitions="Auto,*" VerticalAlignment="Center">
@@ -344,10 +362,17 @@
                     one line. Every button is 42 tall and hangs from the same baseline as the
                     counters' boxes, so the row reads as one row.
                 -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12"
-                            Margin="18,0,0,0" VerticalAlignment="Center">
+                <!--
+                    A wrapping row, as the prototype's panel is: twelve pixels between the
+                    controls, and a second line when the window cannot hold one - never a
+                    button half past the edge. A WrapPanel has no gap of its own, so the gap
+                    is the right margin of every child but the last.
+                -->
+                <WrapPanel Grid.Column="1" Orientation="Horizontal"
+                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                           Margin="18,0,0,0">
 
-                    <StackPanel Spacing="6">
+                    <StackPanel Spacing="6" Margin="0,0,12,0">
                         <TextBlock Text="Книг" FontSize="10.5" FontWeight="SemiBold"
                                    HorizontalAlignment="Center"
                                    Foreground="{DynamicResource TextFaint}" />
@@ -379,7 +404,7 @@
                         </Border>
                     </StackPanel>
 
-                    <StackPanel Spacing="6">
+                    <StackPanel Spacing="6" Margin="0,0,12,0">
                         <TextBlock Text="Разворотов" FontSize="10.5" FontWeight="SemiBold"
                                    HorizontalAlignment="Center"
                                    Foreground="{DynamicResource TextFaint}" />
@@ -411,7 +436,7 @@
                         </Border>
                     </StackPanel>
 
-                    <Button Classes="primary" VerticalAlignment="Bottom"
+                    <Button Classes="primary" VerticalAlignment="Bottom" Margin="0,0,12,0"
                             AutomationProperties.Name="Добавить структуру"
                             Command="{Binding ConfirmStructureCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -424,12 +449,21 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Classes="ghost panelGhost" VerticalAlignment="Bottom"
+                    <!--
+                        The rule between the structure and what is done with the project, as on the
+                        folders screen: the counters and «Добавить структуру» belong to one thing,
+                        everything to the right of the line to another.
+                    -->
+                    <Border Width="1" Height="38" Margin="2,0,14,0" VerticalAlignment="Bottom"
+                            Background="{DynamicResource BorderStrong}" />
+
+                    <Button Classes="ghost panelGhost" VerticalAlignment="Bottom" Margin="0,0,12,0"
                             AutomationProperties.Name="Сохранить проект"
                             ToolTip.Tip="Сохранить проект и вернуться к списку проектов"
+                            IsEnabled="{Binding CanSaveProject}"
                             Command="{Binding SaveProjectCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <Path Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.8"
+                            <Path Width="12" Height="12" Stretch="Uniform" StrokeThickness="1.8"
                                   StrokeLineCap="Round" StrokeJoin="Round"
                                   Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                   Data="M12 3v11M7.5 10l4.5 4.5L16.5 10M4 20h16" />
@@ -437,15 +471,13 @@
                         </StackPanel>
                     </Button>
 
-                    <Border Width="1" Height="38" Margin="2,0" VerticalAlignment="Bottom"
-                            Background="{DynamicResource BorderStrong}" />
-
-                    <Button Classes="soft" VerticalAlignment="Bottom"
+                    <Button Classes="soft" VerticalAlignment="Bottom" Margin="0,0,12,0"
                             AutomationProperties.Name="Экспортировать все книги"
                             ToolTip.Tip="Выгрузка всех книг проекта в одну папку"
+                            IsEnabled="{Binding CanExport}"
                             Command="{Binding ExportCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <Path Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.8"
+                            <Path Width="12" Height="12" Stretch="Uniform" StrokeThickness="1.8"
                                   StrokeLineCap="Round" StrokeJoin="Round"
                                   Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                   Data="M12 15.2V4.2 M7.9 8.3 12 4.2l4.1 4.1 M3.9 14.2v3a2.6 2.6 0 0 0 2.6 2.6h11a2.6 2.6 0 0 0 2.6-2.6v-3" />
@@ -453,19 +485,36 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Classes="soft" VerticalAlignment="Bottom"
-                            AutomationProperties.Name="Загрузить на сайт"
-                            ToolTip.Tip="Собрать заказ для сайта: только полностью собранный проект"
-                            Command="{Binding OrderOnSiteCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.7"
-                                  StrokeLineCap="Round" StrokeJoin="Round"
-                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                  Data="M8.3 17.9a4.2 4.2 0 0 1-.6-8.4 5.5 5.5 0 0 1 10.4 1 3.7 3.7 0 0 1-.5 7.4 M12 16.6v-5.1 M9.9 13.6 12 11.5l2.1 2.1" />
-                            <TextBlock Text="Загрузить на сайт" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
+                    <!--
+                        The same pair as on the folders screen: a gold action and a pane in front of
+                        it while it cannot be pressed, so a pressable button is never covered and the
+                        pointer's two answers are still there.
+                    -->
+                    <Panel>
+                        <Button Name="SiteOrderButton" Classes="primary" VerticalAlignment="Bottom"
+                                AutomationProperties.Name="Загрузить на сайт"
+                                ToolTip.Tip="Собрать заказ для сайта: только полностью собранный проект"
+                                IsEnabled="{Binding CanExport}"
+                                Command="{Binding OrderOnSiteCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <Path Width="16" Height="16" Stretch="Uniform"
+                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                      StrokeThickness="1.7"
+                                      StrokeLineCap="Round" StrokeJoin="Round"
+                                      Data="M8.3 17.9a4.2 4.2 0 0 1-.6-8.4 5.5 5.5 0 0 1 10.4 1 3.7 3.7 0 0 1-.5 7.4 M12 16.6v-5.1 M9.9 13.6 12 11.5l2.1 2.1" />
+                                <TextBlock Text="Загрузить на сайт" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Border Name="SiteOrderPane" Background="Transparent" Cursor="Arrow"
+                                IsVisible="{Binding !CanExport}"
+                                PointerEntered="OnOrderOnSitePointerEntered"
+                                PointerExited="OnOrderOnSitePointerExited"
+                                PointerPressed="OnOrderOnSitePressed"
+                                PointerReleased="OnOrderOnSiteReleased"
+                                PointerCaptureLost="OnOrderOnSiteReleased" />
+                    </Panel>
+                </WrapPanel>
             </Grid>
         </Border>
 
