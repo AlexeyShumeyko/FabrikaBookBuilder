@@ -696,23 +696,22 @@
                                             PointerPressed="OnFileItemClick"
                                             ToolTip.Tip="{Binding Path}">
                                         <Grid ColumnDefinitions="Auto,*,Auto">
-                                            <Border Grid.Column="0" Width="40" Height="40"
+                                            <!--
+                                                The tile is a spread's shape, not a square: a square
+                                                crops the frame to fill itself and leaves the sliver
+                                                that is left too small to recognise, and shrinking
+                                                the whole spread into a square loses it just as
+                                                badly. At 56 by 40 the frame is drawn almost in
+                                                full at the row's own height, so the list stays as
+                                                dense as before. The copy is twice the tile for the
+                                                renderer to shrink, as on the projects screen.
+                                            -->
+                                            <Border Grid.Column="0" Width="56" Height="40"
                                                     CornerRadius="8" ClipToBounds="True"
                                                     Background="{DynamicResource Slate100}">
-                                                <!--
-                                                    The copy is asked for larger than the tile, not at its
-                                                    own size: a tile fills its square by cropping the
-                                                    longer side, so a copy as wide as the tile is
-                                                    stretched back up and the bars and faces smear -
-                                                    which is what made the panel useless for telling
-                                                    two frames apart. Twice the tile is enough for the
-                                                    renderer to shrink it, costs a few kilobytes per
-                                                    visible row, and matches the previews on the
-                                                    projects screen. The tile itself stays 40.
-                                                -->
                                                 <Image Stretch="UniformToFill"
                                                        RenderOptions.BitmapInterpolationMode="HighQuality"
-                                                       Source="{Binding Path, Converter={StaticResource FilePathToBitmap}, ConverterParameter=88}" />
+                                                       Source="{Binding Path, Converter={StaticResource FilePathToBitmap}, ConverterParameter=112}" />
                                             </Border>
 
                                             <StackPanel Grid.Column="1" Margin="8,0,8,0"
