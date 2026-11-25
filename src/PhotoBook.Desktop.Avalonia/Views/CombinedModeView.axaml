@@ -817,9 +817,24 @@
                         -->
                         <Border Grid.Column="0" Classes="card" CornerRadius="22" Padding="26,28,28,22">
                             <Panel>
-                                <!-- The lamp in the card's top-right corner, as the design lights it. -->
-                                <Border Background="{DynamicResource ModeCardGlowFill}"
-                                        IsHitTestVisible="False" />
+                                <!--
+                                    The lamp in the card's top-right corner, as the design lights
+                                    it: one round light hung past the corner and cut off by the
+                                    card's own frame - the frame is the clip, because a light
+                                    this size drawn inside a rounded card spills past it.
+
+                                    It used to be the mode card's glow, stretched to fill the
+                                    card. A light that fills the card is not a corner light: it
+                                    reads as a second sheet of paper of a warmer colour laid
+                                    over the first, straight edges and all.
+                                -->
+                                <Border Margin="-26,-28,-28,-22" CornerRadius="22"
+                                        ClipToBounds="True" IsHitTestVisible="False">
+                                    <Border Width="420" Height="360"
+                                            HorizontalAlignment="Right" VerticalAlignment="Top"
+                                            Margin="0,-140,-120,0"
+                                            Background="{DynamicResource StarterGlowFill}" />
+                                </Border>
 
                                 <StackPanel>
                                     <!-- The seal and the heading on one line: the mark first, the words beside it. -->

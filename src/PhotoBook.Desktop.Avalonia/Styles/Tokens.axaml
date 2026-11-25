@@ -443,6 +443,18 @@
                 <GradientStop Color="#00FFBA28" Offset="0.7" />
             </RadialGradientBrush>
 
+            <!-- The lamp of the first-run card: one round light in its top-right corner, of a
+                 size of its own rather than a share of the card. The mode card's glow is a
+                 share, which suits a card it was drawn for; on a card this tall the same
+                 share covers the whole of it and reads as a rectangle of another colour
+                 laid over the paper. The radii make a circle of the card's own scale, and
+                 the second stop is where the light is gone. -->
+            <RadialGradientBrush x:Key="StarterGlowFill" Center="50%,50%" GradientOrigin="50%,50%"
+                                 RadiusX="43%" RadiusY="50%">
+                <GradientStop Color="#29FFBA28" Offset="0" />
+                <GradientStop Color="#00FFBA28" Offset="0.72" />
+            </RadialGradientBrush>
+
             <!-- The plate a mode's mark sits on: a gold tile with a hairline ring inside it. -->
             <LinearGradientBrush x:Key="ModePlateFill" StartPoint="50%,0%" EndPoint="50%,100%">
                 <GradientStop Color="#7BFCF0D6" Offset="0" />
@@ -1006,6 +1018,12 @@
                                  RadiusX="90%" RadiusY="48%">
                 <GradientStop Color="#1FFFCD2D" Offset="0" />
                 <GradientStop Color="#00FFCD2D" Offset="0.7" />
+            </RadialGradientBrush>
+
+            <RadialGradientBrush x:Key="StarterGlowFill" Center="50%,50%" GradientOrigin="50%,50%"
+                                 RadiusX="43%" RadiusY="50%">
+                <GradientStop Color="#29FFCD2D" Offset="0" />
+                <GradientStop Color="#00FFCD2D" Offset="0.72" />
             </RadialGradientBrush>
 
             <LinearGradientBrush x:Key="ModePlateFill" StartPoint="0%,0%" EndPoint="100%,100%">
