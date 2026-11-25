@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -8,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
 using PhotoBook.Presentation.ViewModels;
+using PhotoBook.Shell.Converters;
 using PhotoBook.Shell.Navigation;
 using PhotoBook.Shell.Services;
 using PhotoBook.Shell.ViewModels;
@@ -65,6 +67,41 @@ public partial class MainWindow : Window
     }
 
     private bool _closeAfterSave;
+    private double _renderScaling = 1;
+
+    /// <summary>
+    /// The monitor's scaling, published for every converter that has to decide how large to
+    /// decode a photograph.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A binding that turns a path into an image has no visual to ask, so the number is kept
+    /// in one place. It used to be published by one screen, which meant the others decoded
+    /// for a 100-percent monitor on a denser one: a 44-pixel preview stretched to 88 device
+    /// pixels is exactly the softness a photographer sees in the upload panel.
+    /// </para>
+    /// <para>
+    /// The window is the only thing every screen shares and the only thing that knows which
+    /// monitor it is on, so it publishes the number once when it is attached and again
+    /// whenever it moves to a monitor with a different scaling.
+    /// </para>
+    /// </remarks>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        PropertyChanged += (_, _) => TrackScaling();
+        TrackScaling();
+    }
+
+    private void TrackScaling()
+    {
+        double scaling = RenderScaling;
+        if (Math.Abs(scaling - _renderScaling) < 0.001) return;
+
+        _renderScaling = scaling;
+        BitmapScale.Current = scaling;
+    }
 
     private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)
     {
