@@ -70,7 +70,7 @@
             <Border BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1"
                     IsHitTestVisible="False" />
 
-            <Border MaxWidth="1540" HorizontalAlignment="Stretch" Padding="32,0">
+            <Border HorizontalAlignment="Stretch" Padding="32,0">
                 <Grid ColumnDefinitions="Auto,*,Auto">
 
                     <!-- left: the artwork, then the product name over the open project.
@@ -279,7 +279,7 @@
              not have, and it stole that height on every screen at once. The screen's own
              margin is the page's field; a second one under it is a band.
         -->
-        <Border MaxWidth="1540" HorizontalAlignment="Stretch">
+        <Border HorizontalAlignment="Stretch">
             <ContentControl x:Name="ScreenHost" />
         </Border>
     </DockPanel>

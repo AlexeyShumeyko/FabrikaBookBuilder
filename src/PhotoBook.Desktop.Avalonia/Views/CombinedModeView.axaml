@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="using:PhotoBook.Shell.Views"
              x:Class="PhotoBook.Shell.Views.CombinedModeView"
@@ -54,31 +54,178 @@
             changed by the style that answers the pointer - which is why the first version
             of this did nothing at all.
         -->
+        <!--
+            The drop zone of the first-run page: a dashed frame of gold over a wash of gold, and
+            the cloud on the same plate every other mark in the program sits on. It answers the
+            pointer by deepening both, over a moment rather than at once.
+        -->
         <Style Selector="Border#DropZone">
-            <Setter Property="Background" Value="{DynamicResource Slate50}" />
+            <Setter Property="Background" Value="{DynamicResource CombinedDropFill}" />
             <Setter Property="Transitions">
                 <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.16" />
+                    <BrushTransition Property="Background" Duration="0:0:0.18" />
                 </Transitions>
             </Setter>
         </Style>
 
         <Style Selector="Border#DropZone:pointerover">
-            <Setter Property="Background" Value="{DynamicResource Brand50}" />
+            <Setter Property="Background" Value="{DynamicResource CombinedWash}" />
         </Style>
 
-        <!-- The zone is the product's colour at rest, not only under the pointer: it is
-             the one place on this screen that is asking to be used. -->
         <Style Selector="Rectangle#DropZoneFrame">
-            <Setter Property="Stroke" Value="{DynamicResource BorderAccentHover}" />
+            <Setter Property="Stroke" Value="{DynamicResource CombinedDashedRing}" />
         </Style>
 
         <Style Selector="Border#DropZone:pointerover Rectangle#DropZoneFrame">
-            <Setter Property="Stroke" Value="{DynamicResource Gold}" />
+            <Setter Property="Stroke" Value="{DynamicResource CombinedDashedRingHover}" />
         </Style>
 
         <Style Selector="Path#DropZoneMark">
-            <Setter Property="Stroke" Value="{DynamicResource AvatarInk}" />
+            <Setter Property="Stroke" Value="{DynamicResource ModePlateInk}" />
+        </Style>
+
+        <!-- The pencil beside the project name: the same 26 square the folders screen uses, with
+             no chrome until the pointer is on it. -->
+        <Style Selector="Button.pencil">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding CornerRadius}">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Button.pencil:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceMuted}" />
+        </Style>
+        <Style Selector="Button.pencil:pointerover Path">
+            <Setter Property="Stroke" Value="{DynamicResource TextDefault}" />
+        </Style>
+
+        <!--
+            One row of controls of one shape: the quiet button of the panel wears the same pill,
+            the same quiet fill and the same hairline as the soft one beside it, in both states.
+            A bare ghost next to a framed soft one read as two kinds of control rather than as
+            the same row of buttons.
+        -->
+        <Style Selector="Button.panelGhost">
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="Height" Value="42" />
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Padding" Value="20,0" />
+            <Setter Property="Background" Value="{DynamicResource QuietFill}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource QuietBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.16" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.16" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.panelGhost:pointerover">
+            <Setter Property="Background" Value="{DynamicResource QuietFillHover}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource QuietBorderHover}" />
+        </Style>
+        <Style Selector="Button.panelGhost TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+        </Style>
+        <Style Selector="Button.panelGhost:pointerover TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+        </Style>
+        <Style Selector="Button.panelGhost:disabled">
+            <Setter Property="Foreground" Value="{DynamicResource TextFaint}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource QuietBorder}" />
+            <Setter Property="Opacity" Value="0.8" />
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
+        <Style Selector="Button.panelGhost:disabled /template/ Border#Root">
+            <Setter Property="Background" Value="{DynamicResource QuietFill}" />
+        </Style>
+        <Style Selector="Button.panelGhost:disabled TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextFaint}" />
+        </Style>
+
+        <!-- A disabled filled button in this panel is a faint frame, not a grey slab. -->
+        <Style Selector="Button.primary:disabled">
+            <Setter Property="Background" Value="{DynamicResource QuietFill}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource QuietBorder}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFaint}" />
+        </Style>
+        <Style Selector="Button.primary:disabled /template/ Border">
+            <Setter Property="BoxShadow" Value="{DynamicResource ActionShadowOff}" />
+        </Style>
+        <Style Selector="Button.primary:disabled TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextFaint}" />
+        </Style>
+        <Style Selector="Button.primary:disabled Path">
+            <Setter Property="Stroke" Value="{DynamicResource TextFaint}" />
+        </Style>
+
+        <!--
+            The run counter: a box of one height with a minus, the number and a plus. The number
+            is still a field, so it can be typed into, but it looks like the plain bold figure the
+            prototype draws - no frame of its own inside the box that already has one.
+        -->
+        <Style Selector="Border.stepperBox">
+            <Setter Property="Height" Value="42" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Background" Value="{DynamicResource Sunken}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <Style Selector="Button.stepperStep">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFaint}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15" />
+                    <BrushTransition Property="Foreground" Duration="0:0:0.15" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.stepperStep:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+            <Setter Property="Background" Value="{DynamicResource CombinedWash}" />
+        </Style>
+        <Style Selector="Button.stepperStep:disabled">
+            <Setter Property="Opacity" Value="0.4" />
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
+
+        <Style Selector="TextBox.stepperValue">
+            <Setter Property="Width" Value="36" />
+            <Setter Property="MinWidth" Value="36" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="TextBox.stepperValue:focus /template/ Border">
+            <Setter Property="BorderBrush" Value="Transparent" />
         </Style>
 
         <!--
@@ -137,202 +284,188 @@
 
         <!-- ============================ control panel ============================ -->
         <Border Grid.Row="1" Classes="card" Padding="24,20" Margin="0,0,0,18">
-            <!--
-                58, not 52. The content of this panel is a label line over the row of boxes and
-                the structure button, and that is 58 with every control at the size the other
-                two screens give it. Holding it to 52 made the structure button 32 pixels tall
-                beside a 38-pixel export button in the same row - two violet buttons of two
-                different sizes read as one of them being less of a button. The height the
-                three panels share is therefore 58, and the other two take the same value;
-                nothing inside those panels changes shape.
-            -->
-            <Grid MinHeight="58">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" MinWidth="300" />
-                    <ColumnDefinition Width="Auto" />
-                    <!-- The actions take what they need, not a third of the row: an equal
-                         share left them wrapped onto a second line inside a card that had
-                         room for all four in one. -->
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <Grid ColumnDefinitions="Auto,*,Auto">
 
-                <!-- left: the badge, the name, one line of state -->
-                <Grid Grid.Column="0" ColumnDefinitions="Auto,*" Margin="0,0,14,0"
-                      VerticalAlignment="Center">
-                    <Border Grid.Column="0" Margin="0,0,14,0" Width="52" Height="52" CornerRadius="15" VerticalAlignment="Center"
-                            Background="{DynamicResource AvatarFill}"
-                            BorderBrush="{DynamicResource AvatarRing}" BorderThickness="1">
-                        <Path Width="24" Height="24" Stretch="Uniform"
-                              Stroke="{DynamicResource AvatarInk}" StrokeThickness="1.8"
-                              StrokeLineCap="Round"
-                              Data="M 5 5.5 V 19 M 9.5 4 V 19 M 14 6.5 V 19 M 18 8.5 V 19 M 3.4 19 H 20" />
+                <!-- left: the tile, the name, one line of state -->
+                <Grid Grid.Column="0" ColumnDefinitions="Auto,*" VerticalAlignment="Center">
+                    <!--
+                        The tile of the mode, not a badge made for this screen: the same cream
+                        plate in daylight and gold at night as the mode's own mark on the choice
+                        screen, with the second hairline inside it that makes it a plate rather
+                        than a coloured square.
+                    -->
+                    <Border Width="52" Height="52" CornerRadius="15" VerticalAlignment="Center"
+                            Background="{DynamicResource ModePlateFill}"
+                            BorderBrush="{DynamicResource ModePlateRing}" BorderThickness="1"
+                            BoxShadow="{DynamicResource ModePlateShadow}">
+                        <Panel>
+                            <Border Margin="5" CornerRadius="11" BorderThickness="1"
+                                    IsHitTestVisible="False"
+                                    BorderBrush="{DynamicResource ModePlateInnerRing}" />
+                            <Path Width="24" Height="24" Stretch="Uniform"
+                                  StrokeThickness="1.8" StrokeLineCap="Round" StrokeJoin="Round"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Stroke="{DynamicResource ModePlateInk}"
+                                  Data="M12 7.2C10.4 5.8 8.1 5.2 4.2 5.5v12.4c3.9-.3 6.2.4 7.8 1.7 1.6-1.3 3.9-2 7.8-1.7V5.5C15.9 5.2 13.6 5.8 12 7.2z M12 7.2v12.4" />
+                        </Panel>
                     </Border>
 
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" VerticalAlignment="Center">
                             <TextBlock Grid.Column="0" Text="Проект:" Classes="t19ExtraBold"
-                                       VerticalAlignment="Center" />
+                                       LetterSpacing="-0.5" VerticalAlignment="Center" />
                             <TextBlock Grid.Column="1" Name="ProjectNameTextBlock" Classes="t19ExtraBold"
-                                       Text="{Binding DisplayProjectName}" Margin="6,0,0,0"
-                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                                       Cursor="Hand"
-                                       PointerPressed="OnProjectNameClick" />
-                            <Button Grid.Column="2" Classes="icon" Padding="4,4" Margin="6,0,0,0"
+                                       Text="{Binding DisplayProjectName}" Margin="8,0,0,0"
+                                       LetterSpacing="-0.5" MaxWidth="480"
+                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                       Cursor="Hand" PointerPressed="OnProjectNameClick" />
+                            <TextBox Grid.Column="1" Name="ProjectNameTextBox" Width="360"
+                                     Margin="8,0,0,0" VerticalAlignment="Center" IsVisible="False"
+                                     KeyDown="OnProjectNameKeyDown" LostFocus="OnProjectNameLostFocus" />
+                            <Button Grid.Column="2" Classes="pencil" Margin="8,0,0,0"
                                     AutomationProperties.Name="Переименовать проект"
                                     ToolTip.Tip="Переименовать проект"
                                     Click="OnProjectNamePencilClick">
-                                <Path Width="13" Height="13" Stretch="Uniform"
-                                      Stroke="{DynamicResource Slate500}" StrokeThickness="1.7"
-                                      StrokeLineCap="Round"
-                                      Data="M 4 20 L 4 15.5 L 15.5 4 L 20 8.5 L 8.5 20 Z M 13.5 6 L 18 10.5" />
+                                <Path Width="12.5" Height="12.5" Stretch="Uniform" StrokeThickness="1.6"
+                                      StrokeLineCap="Round" StrokeJoin="Round"
+                                      Stroke="{DynamicResource TextFaint}"
+                                      Data="M4 20l4.2-1 10-10a2.3 2.3 0 0 0-3.2-3.2l-10 10z M13.5 7.5l3 3" />
                             </Button>
-
-                            <!-- 240 and not 360: this panel also carries the run fields,
-                                 and the wider box ran out of room and was cut in half
-                                 mid-word. -->
-                            <TextBox Grid.Column="3" Name="ProjectNameTextBox" Width="240" FontSize="13"
-                                     Margin="6,0,0,0" VerticalAlignment="Center"
-                                     IsVisible="False"
-                                     KeyDown="OnProjectNameKeyDown"
-                                     LostFocus="OnProjectNameLostFocus" />
                         </Grid>
 
-                        <!-- Red while the run still has books to finish, green when it is
-                             done. Muted on purpose: this is a state, not an alarm. -->
-                        <TextBlock Classes="t12" Margin="0,2,0,0"
-                                   Text="{Binding StructureProgress}"
-                                   Foreground="{Binding StructureIsComplete, Converter={StaticResource PageState}, ConverterParameter=structurecomplete}" />
+                        <TextBlock Classes="t12Half" Margin="0,3,0,0"
+                                   Foreground="{DynamicResource TextMuted}"
+                                   Text="{Binding StructureProgress}" />
                     </StackPanel>
                 </Grid>
 
-                <!-- centre: the run. Labels on one line, the fields and the button on the next.
+                <!--
+                    right: the two counters and everything that can be done with the project, on
+                    one line. Every button is 42 tall and hangs from the same baseline as the
+                    counters' boxes, so the row reads as one row.
+                -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12"
+                            Margin="18,0,0,0" VerticalAlignment="Center">
 
-                     It used to be a row of stacks - label over field, label over field,
-                     and a button aligned to the bottom - so the button sat against the
-                     bottom of the boxes while their labels were above them, and the
-                     three things a person reads together were on three different
-                     levels. Two rows and one grid: the labels on one line, the boxes and
-                     the button on the next, all sharing it.
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Книг" FontSize="10.5" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextFaint}" />
+                        <Border CornerRadius="12" BorderThickness="2"
+                                BorderBrush="{Binding NumberOfBooksIsValid, Converter={StaticResource RunFieldFrame}}">
+                            <Border Classes="stepperBox">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Classes="ghost stepperStep"
+                                            AutomationProperties.Name="Меньше книг"
+                                            ToolTip.Tip="Меньше книг"
+                                            Command="{Binding DecreaseBooksCommand}">
+                                        <TextBlock Text="&#x2212;" FontSize="16" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                    </Button>
+                                    <TextBox Classes="stepperValue"
+                                             Text="{Binding NumberOfBooksText}"
+                                             AutomationProperties.Name="Количество книг" />
+                                    <Button Classes="ghost stepperStep"
+                                            AutomationProperties.Name="Больше книг"
+                                            ToolTip.Tip="Больше книг"
+                                            Command="{Binding IncreaseBooksCommand}">
+                                        <TextBlock Text="+" FontSize="16" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </Border>
+                    </StackPanel>
 
-                     Nine pixels up, and it is the label line that costs them. The block is
-                     a label over a box and it is centred as a whole, so its lower line sits
-                     half a label below the centre of the panel - which is where the buttons
-                     beside it sit. Raising the block by half of that line puts the boxes and
-                     the structure button on the buttons' own level, and leaves the two labels
-                     on the line above them. -->
-                <Grid Grid.Column="1" Margin="24,-9,24,0" VerticalAlignment="Center"
-                      RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,Auto,Auto">
-                    <!-- Centred over its own box, not pushed against the left of the column:
-                         "Книг" hanging at the edge read as a label for the panel rather than
-                         for the number under it. Each one spans exactly the width of the field
-                         below, which is why the right margins match them.
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Разворотов" FontSize="10.5" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextFaint}" />
+                        <Border CornerRadius="12" BorderThickness="2"
+                                BorderBrush="{Binding SpreadsPerBookIsValid, Converter={StaticResource RunFieldFrame}}">
+                            <Border Classes="stepperBox">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Classes="ghost stepperStep"
+                                            AutomationProperties.Name="Меньше разворотов"
+                                            ToolTip.Tip="Меньше разворотов"
+                                            Command="{Binding DecreaseSpreadsCommand}">
+                                        <TextBlock Text="&#x2212;" FontSize="16" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                    </Button>
+                                    <TextBox Classes="stepperValue"
+                                             Text="{Binding SpreadsPerBookText}"
+                                             AutomationProperties.Name="Разворотов в книге" />
+                                    <Button Classes="ghost stepperStep"
+                                            AutomationProperties.Name="Больше разворотов"
+                                            ToolTip.Tip="Больше разворотов"
+                                            Command="{Binding IncreaseSpreadsCommand}">
+                                        <TextBlock Text="+" FontSize="16" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </Border>
+                    </StackPanel>
 
-                         The frame goes red while the box does not hold a number: the field
-                         is bound to the typed text, so an emptied box is not a failed
-                         conversion any more - and there is nothing technical printed under
-                         it to make the panel taller. -->
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Книг" Classes="t10"
-                               Margin="0,0,10,5"
-                               HorizontalAlignment="Stretch" TextAlignment="Center"
-                               Foreground="{DynamicResource Slate500}" />
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Разворотов" Classes="t10"
-                               Margin="0,0,16,5"
-                               HorizontalAlignment="Stretch" TextAlignment="Center"
-                               Foreground="{DynamicResource Slate500}" />
-
-                    <!-- The red frame is a ring drawn around the box, not the box's own border:
-                         while a field is focused the theme repaints that border in its own
-                         colour, and an empty field is always the focused one. The ring takes
-                         no room when the number is there - it is transparent, not absent. -->
-                    <Border Grid.Row="1" Grid.Column="0" Margin="0,0,10,0"
-                            VerticalAlignment="Center"
-                            CornerRadius="10" BorderThickness="2"
-                            BorderBrush="{Binding NumberOfBooksIsValid, Converter={StaticResource RunFieldFrame}}">
-                        <TextBox Classes="numberField" Classes.invalid="{Binding !NumberOfBooksIsValid}"
-                                 Margin="0"
-                                 Text="{Binding NumberOfBooksText}"
-                                 AutomationProperties.Name="Количество книг" />
-                    </Border>
-                    <Border Grid.Row="1" Grid.Column="1" Margin="0,0,16,0"
-                            VerticalAlignment="Center"
-                            CornerRadius="10" BorderThickness="2"
-                            BorderBrush="{Binding SpreadsPerBookIsValid, Converter={StaticResource RunFieldFrame}}">
-                        <TextBox Classes="numberField" Classes.invalid="{Binding !SpreadsPerBookIsValid}"
-                                 Margin="0"
-                                 Text="{Binding SpreadsPerBookText}"
-                                 AutomationProperties.Name="Разворотов в книге" />
-                    </Border>
-
-                    <!-- One button, two labels. A second button appearing with the first
-                         book is exactly what used to reshape this panel. -->
-                    <!-- Violet, like the export button: building the run is the one thing this
-                         panel is for, and a white hairline made it look like a secondary
-                         action beside one that is not. The plus that sat in front of the
-                         label is gone - a mark from an icon font in a row of drawn ones, and
-                         the words already say what it does. -->
-                    <Button Grid.Row="1" Grid.Column="2" Classes="primary"
-                            Padding="16,10" VerticalAlignment="Center"
+                    <Button Classes="primary" VerticalAlignment="Bottom"
                             AutomationProperties.Name="Добавить структуру"
                             Command="{Binding ConfirmStructureCommand}">
-                        <TextBlock Text="{Binding StructureButtonText}" Foreground="{DynamicResource ActionInk}" />
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.9"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  Stroke="{DynamicResource ActionInk}"
+                                  Data="M12 5 V19 M5 12 H19" />
+                            <TextBlock Text="{Binding StructureButtonText}" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource ActionInk}" />
+                        </StackPanel>
                     </Button>
-                </Grid>
 
-                <!-- right: what you do with the project.
-
-                     A wrapping row and not a plain one: at the window's own width the four
-                     actions and the two run fields together are wider than the card, and the
-                     last button ran past its right edge with its label cut in half. The
-                     prototype wraps this row for the same reason, so a narrower window now
-                     costs a second line instead of the end of a sentence. -->
-                <WrapPanel Grid.Column="2" Orientation="Horizontal"
-                           VerticalAlignment="Center" HorizontalAlignment="Right">
-                    <!-- The same button the folders screen has: white, a hairline, a small
-                         shadow. A flat grey slab on a white card read as a disabled thing
-                         next to the violet one, and the two were not the same kind of
-                         button at all. -->
-                    <Button Classes="outline" Padding="12,10" Margin="0,0,8,0"
+                    <Button Classes="ghost panelGhost" VerticalAlignment="Bottom"
                             AutomationProperties.Name="Сохранить проект"
                             ToolTip.Tip="Сохранить проект и вернуться к списку проектов"
                             Command="{Binding SaveProjectCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="7">
-                            <Path Width="15" Height="15" Stretch="Uniform"
-                                  Stroke="{DynamicResource Slate400}" StrokeThickness="1.8"
-                                  StrokeLineCap="Round"
-                                  Data="M 12 3.2 V 14.4 M 8.2 10.8 L 12 14.6 L 15.8 10.8 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
-                            <TextBlock Text="Сохранить проект" />
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Path Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.8"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Data="M12 3v11M7.5 10l4.5 4.5L16.5 10M4 20h16" />
+                            <TextBlock Text="Сохранить проект" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
 
-                    <Border Width="1" Height="20" Margin="0,0,8,0" Background="{DynamicResource Slate200}"
-                            VerticalAlignment="Center" />
+                    <Border Width="1" Height="38" Margin="2,0" VerticalAlignment="Bottom"
+                            Background="{DynamicResource BorderStrong}" />
 
-                    <Button Classes="outline" Padding="12,10" Margin="0,0,8,0"
-                            AutomationProperties.Name="Загрузить на сайт"
-                            ToolTip.Tip="Собрать заказ для сайта: только полностью собранный проект"
-                            IsEnabled="{Binding CanExport}"
-                            Command="{Binding OrderOnSiteCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="7">
-                            <Path Width="15" Height="15" Stretch="Uniform"
-                                  Stroke="{DynamicResource Slate400}" StrokeThickness="1.8"
-                                  StrokeLineCap="Round"
-                                  Data="M 12 16.8 V 5.6 M 8.2 9.4 L 12 5.6 L 15.8 9.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
-                            <TextBlock Text="Загрузить на сайт" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
-
-                    <Button Classes="primary" Padding="16,10" Margin="0,0,8,0"
+                    <Button Classes="soft" VerticalAlignment="Bottom"
                             AutomationProperties.Name="Экспортировать все книги"
                             ToolTip.Tip="Выгрузка всех книг проекта в одну папку"
                             Command="{Binding ExportCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="7">
-                            <Path Width="15" Height="15" Stretch="Uniform"
-                                  Stroke="{DynamicResource ActionInk}" StrokeThickness="1.8" StrokeLineCap="Round"
-                                  Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
-                            <TextBlock Text="Экспортировать все книги" Foreground="{DynamicResource ActionInk}" />
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Path Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.8"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Data="M12 15.2V4.2 M7.9 8.3 12 4.2l4.1 4.1 M3.9 14.2v3a2.6 2.6 0 0 0 2.6 2.6h11a2.6 2.6 0 0 0 2.6-2.6v-3" />
+                            <TextBlock Text="Экспортировать все книги" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                </WrapPanel>
+
+                    <Button Classes="soft" VerticalAlignment="Bottom"
+                            AutomationProperties.Name="Загрузить на сайт"
+                            ToolTip.Tip="Собрать заказ для сайта: только полностью собранный проект"
+                            Command="{Binding OrderOnSiteCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.7"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Data="M8.3 17.9a4.2 4.2 0 0 1-.6-8.4 5.5 5.5 0 0 1 10.4 1 3.7 3.7 0 0 1-.5 7.4 M12 16.6v-5.1 M9.9 13.6 12 11.5l2.1 2.1" />
+                            <TextBlock Text="Загрузить на сайт" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
 
@@ -346,74 +479,64 @@
 
             <!-- ========================== the file list =========================== -->
             <Border Grid.Column="0" Classes="card" Padding="20">
-                <Grid RowDefinitions="Auto,Auto,*">
+                <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
 
                     <!-- title and how many are loaded -->
                     <StackPanel Grid.Row="0">
                         <TextBlock Text="Загруженные фото" Classes="t15ExtraBold" />
                         <TextBlock Classes="t11Half" Margin="0,3,0,0"
-                                   Foreground="{DynamicResource Slate500}"
+                                   Foreground="{DynamicResource TextMuted}"
                                    Text="{Binding AvailableFilesCount, StringFormat='Загружено: {0}'}" />
                     </StackPanel>
 
                     <!--
                         ONE way in, not two: the zone is clickable and accepts a drop, so a
-                        separate button was the same action twice.
-
-                        ONE outline, and it is the zone's own shape: the dashed line sits on
-                        the rounded corner - 13 inside a 14 - instead of floating in the
-                        middle of a square grey box.
+                        separate button was the same action twice. The dashed line is the zone's
+                        own shape, so it follows the rounded corner instead of squaring it off.
                     -->
                     <Border x:Name="DropZone" Grid.Row="1" Margin="0,14,0,0" Cursor="Hand"
                             CornerRadius="14" MinHeight="142"
                             PointerPressed="OnUploadAreaClick"
                             AutomationProperties.Name="Загрузить фото">
                         <Grid Margin="2">
-                            <Rectangle x:Name="DropZoneFrame" RadiusX="13" RadiusY="13" StrokeThickness="1.5"
-                                       StrokeDashArray="5,4"
+                            <Rectangle x:Name="DropZoneFrame" RadiusX="13" RadiusY="13"
+                                       StrokeThickness="1.5" StrokeDashArray="5,4"
                                        IsHitTestVisible="False" />
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
                                         Margin="18,15">
-                                <!-- The cloud, and only the cloud.
-
-                                     An arrow was tried inside it and came out as a second shape
-                                     laid over the first: the two did not share a stroke weight
-                                     or a baseline, so the mark read as a smudge rather than
-                                     as a picture. Files going into a zone are already said by
-                                     the dashed frame and by the sentence under it. -->
                                 <Border Width="42" Height="42" CornerRadius="13"
-                                        Background="{DynamicResource AvatarFill}"
-                                        BorderBrush="{DynamicResource AvatarRing}" BorderThickness="1">
+                                        HorizontalAlignment="Center"
+                                        Background="{DynamicResource ModePlateFill}"
+                                        BorderBrush="{DynamicResource ModePlateRing}" BorderThickness="1"
+                                        BoxShadow="{DynamicResource ModePlateShadow}">
                                     <Path x:Name="DropZoneMark" Width="21" Height="21" Stretch="Uniform"
                                           StrokeThickness="1.8" StrokeLineCap="Round" StrokeJoin="Round"
                                           Data="M 7 17.5 A 4.5 4.5 0 0 1 5.2 8.8 A 6 6 0 0 1 17 8.6 A 4.5 4.5 0 0 1 17.5 17.5 Z" />
                                 </Border>
-                                <TextBlock Text="Перетащите снимки сюда" Classes="t12Semi"
-                                           Foreground="{DynamicResource Slate700}"
+                                <TextBlock Text="Перетащите снимки сюда" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextDefault}"
                                            HorizontalAlignment="Center" Margin="0,9,0,0" />
                                 <TextBlock Text="или нажмите, чтобы выбрать · JPEG"
-                                           Classes="t10" Foreground="{DynamicResource Slate400}"
+                                           FontSize="11" Foreground="{DynamicResource TextFaint}"
                                            HorizontalAlignment="Center" Margin="0,3,0,0" />
                             </StackPanel>
                         </Grid>
                     </Border>
 
-                    <!-- search, then the rows -->
-                    <Grid Grid.Row="2" Margin="0,14,0,0" MinHeight="0"
-                          RowDefinitions="Auto,*">
-                        <TextBox Grid.Row="0" Classes="searchField" Margin="0,0,0,8"
-                                 Text="{Binding PhotoSearch}"
-                                 AutomationProperties.Name="Поиск по имени файла"
-                                 Watermark="Поиск по имени файла" />
+                    <TextBox Grid.Row="2" Classes="searchField" Margin="0,12,0,12"
+                             Text="{Binding PhotoSearch}"
+                             AutomationProperties.Name="Поиск по имени файла"
+                             Watermark="Поиск по имени файла" />
 
+                    <Grid Grid.Row="3" MinHeight="0">
                         <!--
-                            A virtualizing list, and no scroller around it. That second part
-                            is the whole performance story: a scroller whose content is
-                            itself a scrolling list hands the inner one an infinite viewport,
-                            the inner list then builds every row, and the first paint of a
-                            hundred photographs took 1.9 seconds.
+                            A virtualizing list, and no scroller around it: a scroller whose
+                            content is itself a scrolling list hands the inner one an infinite
+                            viewport, the inner list then builds every row, and the first paint of
+                            a hundred photographs took 1.9 seconds.
                         -->
-                        <ListBox Grid.Row="1" ItemsSource="{Binding FilteredPhotoFiles}"
+                        <ListBox ItemsSource="{Binding FilteredPhotoFiles}"
+                                 IsVisible="{Binding HasFiles}"
                                  Background="Transparent" BorderThickness="0" Padding="0"
                                  Margin="0" MinWidth="0" Focusable="False"
                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -423,31 +546,14 @@
                                     <VirtualizingStackPanel />
                                 </ItemsPanelTemplate>
                             </ListBox.ItemsPanel>
-                            
+
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Border Classes="fileRow" Margin="0,0,0,2"
                                             CornerRadius="10" Padding="8"
                                             PointerPressed="OnFileItemClick"
                                             ToolTip.Tip="{Binding Path}">
-
-                                        <!-- The state is read off the badge, so the row needs no
-                                             tint of its own - but the pointer still has to
-                                             find the row it is on, and 320 pixels of white
-                                             give it nothing to hold on to. -->
                                         <Grid ColumnDefinitions="Auto,*,Auto">
-                                            <!-- 44: the size every list in the program gives a
-                                                 tile, and the size this one had before it was
-                                                 changed for the wrong reason.
-
-                                                 The number in the parameter is the width to
-                                                 decode at, in device pixels - so 44 is decoded
-                                                 at the tile's own pixels and drawn into them
-                                                 one for one. Asking for twice the tile made the
-                                                 picture be resampled twice, once by the decoder
-                                                 and once by the renderer, and two soft steps
-                                                 cost more than the extra pixels bought. It is
-                                                 also a quarter of the memory per preview. -->
                                             <Border Grid.Column="0" Width="40" Height="40"
                                                     CornerRadius="8" ClipToBounds="True"
                                                     Background="{DynamicResource Slate100}">
@@ -467,8 +573,6 @@
                                                            Foreground="{DynamicResource Slate400}" />
                                             </StackPanel>
 
-                                            <!-- free / used / run-wide: one solid colour per
-                                                 state, white text on it, no frame -->
                                             <Border Grid.Column="2" CornerRadius="6"
                                                     Padding="8,3" VerticalAlignment="Center"
                                                     Background="{Binding Usage, Converter={StaticResource PhotoUsageBrush}}">
@@ -481,6 +585,47 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+
+                        <!--
+                            The empty answer of the column: what the list will hold, not a shrug.
+                            Only while there are no files at all - a search that finds nothing is
+                            the list's own answer.
+                        -->
+                        <Border Classes="emptyPhotos" IsVisible="{Binding !HasFiles}"
+                                VerticalAlignment="Top">
+                            <StackPanel Spacing="5" HorizontalAlignment="Center">
+                                <Border Width="34" Height="34" CornerRadius="10" Margin="0,0,0,3"
+                                        HorizontalAlignment="Center"
+                                        Background="{DynamicResource CombinedEmptyFill}"
+                                        BorderBrush="{DynamicResource CombinedEmptyRing}"
+                                        BorderThickness="1">
+                                    <Path Width="16" Height="16" Stretch="Uniform"
+                                          StrokeThickness="1.7" StrokeLineCap="Round" StrokeJoin="Round"
+                                          Stroke="{DynamicResource TextFaint}"
+                                          Data="M 6 4.5 H 18 A 2.5 2.5 0 0 1 20.5 7 V 17 A 2.5 2.5 0 0 1 18 19.5 H 6 A 2.5 2.5 0 0 1 3.5 17 V 7 A 2.5 2.5 0 0 1 6 4.5 Z M 9 8.4 A 1.6 1.6 0 1 0 9 11.6 A 1.6 1.6 0 1 0 9 8.4 M 4.5 17 L 9.3 12.6 A 1.5 1.5 0 0 1 11.3 12.6 L 14.3 15.3 L 16.5 13.3 A 1.5 1.5 0 0 1 18.5 13.3 L 20.1 14.7" />
+                                </Border>
+                                <TextBlock Text="Список пока пуст" FontSize="12" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextDefault}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="Сюда попадут все JPEG проекта — по одному или целой папкой."
+                                           FontSize="11" LineHeight="17" TextWrapping="Wrap"
+                                           TextAlignment="Center" MaxWidth="190"
+                                           Foreground="{DynamicResource TextFaint}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- the quiet note of the column, at its foot -->
+                    <Grid Grid.Row="4" ColumnDefinitions="Auto,*" Margin="0,12,0,0"
+                          VerticalAlignment="Bottom">
+                        <Path Grid.Column="0" Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.7"
+                              StrokeLineCap="Round" StrokeJoin="Round" Margin="0,2,7,0"
+                              VerticalAlignment="Top" Opacity="0.7"
+                              Stroke="{DynamicResource Accent}"
+                              Data="M12 3 A 9 9 0 1 0 12 21 A 9 9 0 1 0 12 3 M12 11 V16.5 M12 7.8h.01" />
+                        <TextBlock Grid.Column="1" Text="Файлы не копируются: программа работает с оригиналами на диске."
+                                   FontSize="10.5" LineHeight="16" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFaint}" />
                     </Grid>
                 </Grid>
             </Border>
@@ -497,110 +642,266 @@
 
                 <ScrollViewer IsVisible="{Binding !HasStructure}" VerticalScrollBarVisibility="Auto"
                               Padding="0,0,10,0">
-                <StackPanel>
+                    <Grid ColumnDefinitions="*,18,306">
 
-                    <!--
-                        Empty state: no structure yet. An empty project used to show three
-                        lines of text and a shrug, which left a first-time user with no idea
-                        what to press first - the structure controls are up in the control
-                        panel, far from this card. It is the three steps of the mode, in
-                        order, with the step that comes next marked as such.
-                    -->
-                    <!--
-                        No structure yet. The steps stand on the page itself rather than in a
-                        narrow centred card: this is the only thing on the screen at that
-                        moment, and a six-hundred-pixel card in the middle of an empty column
-                        read as a message about the program being stuck.
-                    -->
-                    <Border Classes="card" CornerRadius="22" Padding="34,28,34,26"
-                            IsVisible="{Binding !HasStructure}">
-                        <StackPanel>
-                            <Border Width="58" Height="58" CornerRadius="17" HorizontalAlignment="Left"
-                                    Background="{DynamicResource AvatarFill}"
-                                    BorderBrush="{DynamicResource AvatarRing}" BorderThickness="1">
-                                <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="27"
-                                           Foreground="{DynamicResource AvatarInk}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <!--
+                            The first-run card: what the mode is, the three steps in order, and
+                            the one button that starts it. It stands on the page rather than in a
+                            narrow centred card, because at that moment it is the only thing on
+                            the screen.
+                        -->
+                        <Border Grid.Column="0" Classes="card" CornerRadius="22" Padding="26,28,28,22">
+                            <Panel>
+                                <!-- The lamp in the card's top-right corner, as the design lights it. -->
+                                <Border Background="{DynamicResource ModeCardGlowFill}"
+                                        IsHitTestVisible="False" />
+
+                                <StackPanel>
+                                    <Border Width="58" Height="58" CornerRadius="17"
+                                            HorizontalAlignment="Left"
+                                            Background="{DynamicResource ModePlateFill}"
+                                            BorderBrush="{DynamicResource ModePlateRing}" BorderThickness="1"
+                                            BoxShadow="{DynamicResource ModePlateShadow}">
+                                        <Panel>
+                                            <Border Margin="6" CornerRadius="12" BorderThickness="1"
+                                                    IsHitTestVisible="False"
+                                                    BorderBrush="{DynamicResource ModePlateInnerRing}" />
+                                            <Path Width="27" Height="27" Stretch="Uniform"
+                                                  StrokeThickness="1.7" StrokeLineCap="Round" StrokeJoin="Round"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  Stroke="{DynamicResource ModePlateInk}"
+                                                  Data="M12 7.2C10.4 5.8 8.1 5.2 4.2 5.5v12.4c3.9-.3 6.2.4 7.8 1.7 1.6-1.3 3.9-2 7.8-1.7V5.5C15.9 5.2 13.6 5.8 12 7.2z M12 7.2v12.4" />
+                                        </Panel>
+                                    </Border>
+
+                                    <TextBlock Text="КОМБИНИРОВАННЫЙ" FontSize="10" FontWeight="ExtraBold"
+                                               LetterSpacing="1.6" Margin="0,16,0,0"
+                                               Foreground="{DynamicResource TextFaint}" />
+
+                                    <TextBlock Text="Соберите первую книгу" FontSize="26"
+                                               FontWeight="ExtraBold" LetterSpacing="-0.9"
+                                               Margin="0,12,0,0" LineHeight="31"
+                                               TextWrapping="Wrap" />
+
+                                    <TextBlock FontSize="13.5" Margin="0,12,0,0" MaxWidth="820"
+                                               HorizontalAlignment="Left" TextWrapping="Wrap" LineHeight="24"
+                                               Foreground="{DynamicResource TextMuted}"
+                                               Text="Структуру задаёте вы: сколько книг и разворотов будет в проекте. Фотографии раскладываются по ячейкам вручную — или сразу во все книги, если разворот общий." />
+
+                                    <StackPanel Margin="0,20,0,0">
+                                        <Grid ColumnDefinitions="30,*">
+                                            <Border Width="30" Height="30" CornerRadius="15"
+                                                    VerticalAlignment="Top"
+                                                    Background="{DynamicResource CombinedWash}"
+                                                    BorderBrush="{DynamicResource CombinedWashRing}"
+                                                    BorderThickness="1">
+                                                <TextBlock Text="1" FontSize="12" FontWeight="ExtraBold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource Accent}" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="15,0,0,0">
+                                                <TextBlock Text="Задайте структуру" FontSize="13.5"
+                                                           FontWeight="ExtraBold" Margin="0,5,0,0" />
+                                                <TextBlock FontSize="12.5" Margin="0,4,0,0" TextWrapping="Wrap"
+                                                           LineHeight="21" MaxWidth="820"
+                                                           Foreground="{DynamicResource TextMuted}"
+                                                           Text="Укажите число книг и разворотов в шапке проекта и нажмите «Добавить структуру». Позже её можно дорастить или уменьшить." />
+                                            </StackPanel>
+                                        </Grid>
+                                        <Rectangle Width="1" Height="14" Margin="14,0,0,0"
+                                                   HorizontalAlignment="Left"
+                                                   Fill="{DynamicResource Accent}" Opacity="0.22" />
+                                        <Grid ColumnDefinitions="30,*">
+                                            <Border Width="30" Height="30" CornerRadius="15"
+                                                    VerticalAlignment="Top"
+                                                    Background="{DynamicResource CombinedWash}"
+                                                    BorderBrush="{DynamicResource CombinedWashRing}"
+                                                    BorderThickness="1">
+                                                <TextBlock Text="2" FontSize="12" FontWeight="ExtraBold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource Accent}" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="15,0,0,0">
+                                                <TextBlock Text="Загрузите фотографии" FontSize="13.5"
+                                                           FontWeight="ExtraBold" Margin="0,5,0,0" />
+                                                <TextBlock FontSize="12.5" Margin="0,4,0,0" TextWrapping="Wrap"
+                                                           LineHeight="21" MaxWidth="820"
+                                                           Foreground="{DynamicResource TextMuted}"
+                                                           Text="Перетащите файлы в зону слева или нажмите на неё. Снимок можно сразу перетащить в нужную ячейку." />
+                                            </StackPanel>
+                                        </Grid>
+                                        <Rectangle Width="1" Height="14" Margin="14,0,0,0"
+                                                   HorizontalAlignment="Left"
+                                                   Fill="{DynamicResource Accent}" Opacity="0.22" />
+                                        <Grid ColumnDefinitions="30,*">
+                                            <Border Width="30" Height="30" CornerRadius="15"
+                                                    VerticalAlignment="Top"
+                                                    Background="{DynamicResource CombinedWash}"
+                                                    BorderBrush="{DynamicResource CombinedWashRing}"
+                                                    BorderThickness="1">
+                                                <TextBlock Text="3" FontSize="12" FontWeight="ExtraBold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource Accent}" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="15,0,0,0">
+                                                <TextBlock Text="Расставьте фотографии" FontSize="13.5"
+                                                           FontWeight="ExtraBold" Margin="0,5,0,0" />
+                                                <TextBlock FontSize="12.5" Margin="0,4,0,0" TextWrapping="Wrap"
+                                                           LineHeight="21" MaxWidth="820"
+                                                           Foreground="{DynamicResource TextMuted}"
+                                                           Text="Обложку и общий разворот добавляйте сразу во все книги — так большие заказы собираются быстрее." />
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <Border Margin="0,20,0,0" Padding="0,18,0,0"
+                                            BorderBrush="{DynamicResource BorderDefault}"
+                                            BorderThickness="0,1,0,0">
+                                        <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+                                            <Button Classes="primary"
+                                                    AutomationProperties.Name="Добавить структуру"
+                                                    Command="{Binding ConfirmStructureCommand}">
+                                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                    <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.9"
+                                                          StrokeLineCap="Round" StrokeJoin="Round"
+                                                          Stroke="{DynamicResource ActionInk}"
+                                                          Data="M12 5 V19 M5 12 H19" />
+                                                    <TextBlock Text="{Binding StructureButtonText}" VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource ActionInk}" />
+                                                </StackPanel>
+                                            </Button>
+                                            <TextBlock Text="{Binding StarterHint}" FontSize="11.5"
+                                                       VerticalAlignment="Center" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextFaint}" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Panel>
+                        </Border>
+
+                        <!--
+                            What the project will look like: the two things every book gets, and
+                            one that comes later. It answers "what am I building" before the first
+                            page exists, which is the question a first-run screen leaves open.
+                        -->
+                        <StackPanel Grid.Column="2" Spacing="16">
+                            <Border Classes="card" CornerRadius="18" Padding="22">
+                                <StackPanel>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="БУДУЩАЯ КНИГА" FontSize="10" FontWeight="ExtraBold"
+                                                   LetterSpacing="1.6" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextFaint}" />
+                                        <Border Grid.Column="1" CornerRadius="999" Padding="7,3"
+                                                Background="{DynamicResource CombinedWash}"
+                                                BorderBrush="{DynamicResource CombinedWashRing}"
+                                                BorderThickness="1">
+                                            <TextBlock Text="ЧЕРНОВИК" FontSize="9" FontWeight="ExtraBold"
+                                                       LetterSpacing="0.8"
+                                                       Foreground="{DynamicResource Accent}" />
+                                        </Border>
+                                    </Grid>
+
+                                    <StackPanel Spacing="8" Margin="0,14,0,0">
+                                        <Border CornerRadius="10" Padding="9,8,11,8"
+                                                Background="{DynamicResource SunkenFaint}"
+                                                BorderBrush="{DynamicResource BorderDefault}"
+                                                BorderThickness="1">
+                                            <Grid ColumnDefinitions="34,*,Auto">
+                                                <Border Width="34" Height="26" CornerRadius="5"
+                                                        Background="{DynamicResource CombinedWash}"
+                                                        BorderBrush="{DynamicResource CombinedWashRing}"
+                                                        BorderThickness="1">
+                                                    <Path Width="13" Height="13" Stretch="Uniform"
+                                                          StrokeThickness="1.7" StrokeLineCap="Round" StrokeJoin="Round"
+                                                          Stroke="{DynamicResource Accent}"
+                                                          Data="M 6 4.5 H 18 A 2.5 2.5 0 0 1 20.5 7 V 17 A 2.5 2.5 0 0 1 18 19.5 H 6 A 2.5 2.5 0 0 1 3.5 17 V 7 A 2.5 2.5 0 0 1 6 4.5 Z M 9 8.4 A 1.6 1.6 0 1 0 9 11.6 A 1.6 1.6 0 1 0 9 8.4 M 4.5 17 L 9.3 12.6 A 1.5 1.5 0 0 1 11.3 12.6 L 14.3 15.3 L 16.5 13.3 A 1.5 1.5 0 0 1 18.5 13.3 L 20.1 14.7" />
+                                                </Border>
+                                                <TextBlock Grid.Column="1" Text="Обложка" Margin="10,0,0,0"
+                                                           FontSize="12" FontWeight="Bold"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource TextDefault}" />
+                                                <TextBlock Grid.Column="2" Text="пусто" FontSize="10"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource TextFaint}" />
+                                            </Grid>
+                                        </Border>
+
+                                        <Border CornerRadius="10" Padding="9,8,11,8"
+                                                Background="{DynamicResource SunkenFaint}"
+                                                BorderBrush="{DynamicResource BorderDefault}"
+                                                BorderThickness="1">
+                                            <Grid ColumnDefinitions="34,*,Auto">
+                                                <Border Width="34" Height="26" CornerRadius="5"
+                                                        Background="{DynamicResource CombinedWash}"
+                                                        BorderBrush="{DynamicResource CombinedWashRing}"
+                                                        BorderThickness="1">
+                                                    <Path Width="13" Height="13" Stretch="Uniform"
+                                                          StrokeThickness="1.7" StrokeLineCap="Round" StrokeJoin="Round"
+                                                          Stroke="{DynamicResource Accent}"
+                                                          Data="M 6 4.5 H 18 A 2.5 2.5 0 0 1 20.5 7 V 17 A 2.5 2.5 0 0 1 18 19.5 H 6 A 2.5 2.5 0 0 1 3.5 17 V 7 A 2.5 2.5 0 0 1 6 4.5 Z M 9 8.4 A 1.6 1.6 0 1 0 9 11.6 A 1.6 1.6 0 1 0 9 8.4 M 4.5 17 L 9.3 12.6 A 1.5 1.5 0 0 1 11.3 12.6 L 14.3 15.3 L 16.5 13.3 A 1.5 1.5 0 0 1 18.5 13.3 L 20.1 14.7" />
+                                                </Border>
+                                                <TextBlock Grid.Column="1" Text="Разворот 1" Margin="10,0,0,0"
+                                                           FontSize="12" FontWeight="Bold"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource TextDefault}" />
+                                                <TextBlock Grid.Column="2" Text="пусто" FontSize="10"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource TextFaint}" />
+                                            </Grid>
+                                        </Border>
+
+                                        <Border CornerRadius="10" Padding="9,8,11,8" Opacity="0.72"
+                                                Background="Transparent">
+                                            <Panel>
+                                                <Rectangle RadiusX="10" RadiusY="10" StrokeThickness="1"
+                                                           StrokeDashArray="4,3"
+                                                           Stroke="{DynamicResource BorderDefault}"
+                                                           IsHitTestVisible="False" />
+                                                <Grid ColumnDefinitions="34,*,Auto">
+                                                    <Border Width="34" Height="26" CornerRadius="5"
+                                                            Background="{DynamicResource CombinedWash}"
+                                                            BorderBrush="{DynamicResource CombinedWashRing}"
+                                                            BorderThickness="1">
+                                                        <Path Width="13" Height="13" Stretch="Uniform"
+                                                              StrokeThickness="1.9" StrokeLineCap="Round" StrokeJoin="Round"
+                                                              Stroke="{DynamicResource Accent}"
+                                                              Data="M12 5 V19 M5 12 H19" />
+                                                    </Border>
+                                                    <TextBlock Grid.Column="1" Text="Разворот 2" Margin="10,0,0,0"
+                                                               FontSize="12" FontWeight="Bold"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource TextDefault}" />
+                                                    <TextBlock Grid.Column="2" Text="позже" FontSize="10"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource TextFaint}" />
+                                                </Grid>
+                                            </Panel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <TextBlock Margin="0,12,0,0" TextWrapping="Wrap" FontSize="11.5"
+                                               LineHeight="19"
+                                               Foreground="{DynamicResource TextFaint}"
+                                               Text="Развороты и книги добавляются в шапке проекта — структура не фиксируется навсегда." />
+                                </StackPanel>
                             </Border>
 
-                            <TextBlock Text="НОВЫЙ ПРОЕКТ" Classes="t11ExtraBold" Margin="0,16,0,0"
-                                       Foreground="{DynamicResource Gold}" />
-
-                            <TextBlock Text="Соберите первые книги" Classes="t29ExtraBold"
-                                       Margin="0,12,0,0" LineHeight="34" TextWrapping="Wrap" />
-
-                            <TextBlock Classes="t14" Margin="0,12,0,0" MaxWidth="820" HorizontalAlignment="Left"
-                                       TextWrapping="Wrap" LineHeight="24"
-                                       Foreground="{DynamicResource Slate500}"
-                                       Text="Книги собираются вручную: структуру задаёте вы, фотографии раскладываете по ячейкам. Три шага — сверху вниз." />
-
-                            <StackPanel Margin="0,20,0,0">
-                                <Grid ColumnDefinitions="30,*" Margin="0,0,0,0">
-                                    <Border Grid.Column="0" Width="30" Height="30" CornerRadius="15"
-                                            VerticalAlignment="Top"
-                                            Background="{DynamicResource Brand50}"
-                                            BorderBrush="{DynamicResource BorderAccentHover}" BorderThickness="1">
-                                        <TextBlock Text="1" Classes="t12Bold"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource Gold}" />
-                                    </Border>
-                                    <StackPanel Grid.Column="1" Margin="15,0,0,0">
-                                        <TextBlock Text="Задайте структуру" Classes="t13ExtraBold" Margin="0,5,0,0" />
-                                        <TextBlock Classes="t12Half" Margin="0,4,0,0" TextWrapping="Wrap"
-                                                   LineHeight="20"
-                                                   Text="В панели управления укажите число книг и число разворотов — одинаковое для всех книг — и нажмите «Добавить структуру»." />
-                                    </StackPanel>
-                                </Grid>
-                                <Rectangle Width="1" Height="14" Margin="14,0,0,0"
-                                           HorizontalAlignment="Left"
-                                           Fill="{DynamicResource Gold}" Opacity="0.22" />
-                                <Grid ColumnDefinitions="30,*" Margin="0,0,0,0">
-                                    <Border Grid.Column="0" Width="30" Height="30" CornerRadius="15"
-                                            VerticalAlignment="Top"
-                                            Background="{DynamicResource Brand50}"
-                                            BorderBrush="{DynamicResource BorderAccentHover}" BorderThickness="1">
-                                        <TextBlock Text="2" Classes="t12Bold"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource Gold}" />
-                                    </Border>
-                                    <StackPanel Grid.Column="1" Margin="15,0,0,0">
-                                        <TextBlock Text="Загрузите фотографии" Classes="t13ExtraBold" Margin="0,5,0,0" />
-                                        <TextBlock Classes="t12Half" Margin="0,4,0,0" TextWrapping="Wrap"
-                                                   LineHeight="20"
-                                                   Text="Кнопкой «Загрузить фото», перетаскиванием в зону загрузки — или сразу в нужную ячейку." />
-                                    </StackPanel>
-                                </Grid>
-                                <Rectangle Width="1" Height="14" Margin="14,0,0,0"
-                                           HorizontalAlignment="Left"
-                                           Fill="{DynamicResource Gold}" Opacity="0.22" />
-                                <Grid ColumnDefinitions="30,*" Margin="0,0,0,0">
-                                    <Border Grid.Column="0" Width="30" Height="30" CornerRadius="15"
-                                            VerticalAlignment="Top"
-                                            Background="{DynamicResource Brand50}"
-                                            BorderBrush="{DynamicResource BorderAccentHover}" BorderThickness="1">
-                                        <TextBlock Text="3" Classes="t12Bold"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource Gold}" />
-                                    </Border>
-                                    <StackPanel Grid.Column="1" Margin="15,0,0,0">
-                                        <TextBlock Text="Расставьте фотографии" Classes="t13ExtraBold" Margin="0,5,0,0" />
-                                        <TextBlock Classes="t12Half" Margin="0,4,0,0" TextWrapping="Wrap"
-                                                   LineHeight="20"
-                                                   Text="Перетащите фото в нужную ячейку. Разворот, который повторяется во всех книгах, ставится сразу во все." />
-                                    </StackPanel>
-                                </Grid>
-
-                            </StackPanel>
-
-                            <Border Margin="0,20,0,0" Padding="0,18,0,0"
-                                    BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="0,1,0,0">
-                                <TextBlock Classes="t11Half" TextWrapping="Wrap"
-                                           Foreground="{DynamicResource Slate400}"
-                                           Text="Число книг и разворотов задаётся в панели управления — она над этим окном." />
+                            <Border CornerRadius="18" Padding="22"
+                                    Background="{DynamicResource SunkenFaint}"
+                                    BorderBrush="{DynamicResource BorderDefault}"
+                                    BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="СОВЕТ" FontSize="10" FontWeight="ExtraBold"
+                                               LetterSpacing="1.6"
+                                               Foreground="{DynamicResource TextFaint}" />
+                                    <TextBlock Margin="0,12,0,0" TextWrapping="Wrap" FontSize="11.5"
+                                               LineHeight="19"
+                                               Foreground="{DynamicResource TextFaint}"
+                                               Text="Начните с обложки и общего разворота. Они повторяются во всех книгах, поэтому раскладку достаточно сделать один раз." />
+                                </StackPanel>
                             </Border>
                         </StackPanel>
-                    </Border>
-                </StackPanel>
+                    </Grid>
                 </ScrollViewer>
 
                     <!--

@@ -89,6 +89,13 @@ namespace PhotoBook.Presentation.ViewModels
             // to that left the button dead until something else happened to create it.
             SaveProjectCommand = new AsyncRelayCommand(SaveProjectAsync,
                 () => Books.Count > 0 || AvailableFiles.Count > 0);
+            // The counters of the panel, the way the prototype draws them: a box with a minus,
+            // the number, and a plus. Each press is one book or one spread, and the number's own
+            // setter already clamps it to the range the fields accept.
+            DecreaseBooksCommand = new RelayCommand(() => NumberOfBooks--, () => NumberOfBooks > 1);
+            IncreaseBooksCommand = new RelayCommand(() => NumberOfBooks++, () => NumberOfBooks < 99);
+            DecreaseSpreadsCommand = new RelayCommand(() => SpreadsPerBook--, () => SpreadsPerBook > 1);
+            IncreaseSpreadsCommand = new RelayCommand(() => SpreadsPerBook++, () => SpreadsPerBook < 99);
             BackCommand = new AsyncRelayCommand(BackAsync);
             DeleteFileCommand = new RelayCommand<string>(DeleteFile);
             ResetProjectCommand = new RelayCommand(ResetProject);
@@ -178,6 +185,19 @@ namespace PhotoBook.Presentation.ViewModels
         public ICommand OrderOnSiteCommand { get; }
         public ICommand ExportWithFolderCommand { get; }
         public ICommand SaveProjectCommand { get; }
+
+        /// <summary>One press of the minus beside the books box.</summary>
+        public ICommand DecreaseBooksCommand { get; }
+
+        /// <summary>One press of the plus beside the books box.</summary>
+        public ICommand IncreaseBooksCommand { get; }
+
+        /// <summary>One press of the minus beside the spreads box.</summary>
+        public ICommand DecreaseSpreadsCommand { get; }
+
+        /// <summary>One press of the plus beside the spreads box.</summary>
+        public ICommand IncreaseSpreadsCommand { get; }
+
         public ICommand BackCommand { get; }
         public ICommand DeleteFileCommand { get; }
         public ICommand ResetProjectCommand { get; }
@@ -354,6 +374,32 @@ namespace PhotoBook.Presentation.ViewModels
         /// the panel must not reshape itself when the first book appears.
         /// </summary>
         public string StructureButtonText => Books.Count == 0 ? "Добавить структуру" : "Обновить структуру";
+
+        /// <summary>
+        /// The line beside the first-run card's button: the run as it is set up now.
+        /// </summary>
+        /// <remarks>
+        /// The numbers are the ones in the two boxes, not the ones a built run has: this card is
+        /// read before the structure exists, and "1 книга · 1 разворот · черновик" is the answer to
+        /// "what will be built if I press the button".
+        /// </remarks>
+        public string StarterHint =>
+            $"{CountOf(NumberOfBooks, "книга", "книги", "книг")} · " +
+            $"{CountOf(SpreadsPerBook, "разворот", "разворота", "разворотов")} · черновик";
+
+        /// <summary>A number and the Russian word for it in the right form.</summary>
+        private static string CountOf(int number, string one, string few, string many)
+        {
+            int lastTwo = number % 100;
+            int last = number % 10;
+
+            string word = lastTwo is >= 11 and <= 14 ? many
+                : last == 1 ? one
+                : last is >= 2 and <= 4 ? few
+                : many;
+
+            return $"{number} {word}";
+        }
 
         /// <summary>
         /// Every book of the run has every slot filled. Drives the readiness badge colour:

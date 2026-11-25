@@ -339,6 +339,7 @@ namespace PhotoBook.Presentation.ViewModels
                     if (!_typingRunNumber) SetRunText(ref _numberOfBooksText, nameof(NumberOfBooksText), value);
 
                     IsStructureConfirmed = false;
+                    OnPropertyChanged(nameof(StarterHint));
                     NotifyStructureAvailability();
                 }
             }
@@ -366,6 +367,7 @@ namespace PhotoBook.Presentation.ViewModels
                     if (!_typingRunNumber) SetRunText(ref _spreadsPerBookText, nameof(SpreadsPerBookText), value);
 
                     IsStructureConfirmed = false;
+                    OnPropertyChanged(nameof(StarterHint));
                     NotifyStructureAvailability();
                 }
             }
@@ -404,13 +406,17 @@ namespace PhotoBook.Presentation.ViewModels
             return true;
         }
 
-        /// <summary>Tells the structure button to re-read whether it can be pressed.</summary>
+        /// <summary>
+        /// Tells the buttons that read the run to re-read whether they can be pressed: the
+        /// structure button, and the four steps of the two counters.
+        /// </summary>
         private void NotifyStructureAvailability()
         {
-            if (ConfirmStructureCommand is RelayCommand confirmCmd)
-            {
-                confirmCmd.NotifyCanExecuteChanged();
-            }
+            (ConfirmStructureCommand as RelayCommand)?.NotifyCanExecuteChanged();
+            (DecreaseBooksCommand as RelayCommand)?.NotifyCanExecuteChanged();
+            (IncreaseBooksCommand as RelayCommand)?.NotifyCanExecuteChanged();
+            (DecreaseSpreadsCommand as RelayCommand)?.NotifyCanExecuteChanged();
+            (IncreaseSpreadsCommand as RelayCommand)?.NotifyCanExecuteChanged();
         }
 
         /// <summary>Assigns a number that came from the box, without sending the text back.</summary>
