@@ -64,6 +64,28 @@ public static class ThemeResources
         return default;
     }
 
+    /// <summary>
+    /// A gradient the theme names, for a plate or a wash that is not one flat colour.
+    /// </summary>
+    /// <remarks>
+    /// The solid colours are kept and repainted per variant (see <see cref="Brush"/>). The
+    /// gradients this panel uses are the same gold in both themes, so one instance is right in
+    /// either; a gradient whose stops ever differ by theme would have to be re-read the same
+    /// way the solids are.
+    /// </remarks>
+    public static IBrush Fill(string token)
+    {
+        if (Avalonia.Application.Current is { } application
+            && application.TryFindResource(token, application.ActualThemeVariant, out var value)
+            && value is IBrush brush)
+        {
+            return brush;
+        }
+
+        Journal.Write(JournalLevel.Warning, "theme", $"В теме нет заливки «{token}»");
+        return Brushes.Transparent;
+    }
+
     private static Color Read(string token)
     {
         // The variant is passed in on purpose. Without it the lookup answers from the

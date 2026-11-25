@@ -290,9 +290,15 @@
     -->
     <Border x:Name="SheetLayer" IsVisible="False" Background="{DynamicResource Backdrop}">
         <Grid Margin="28">
+            <!--
+                The sheet takes the window, not a size chosen for one screen. It used to be
+                clamped to 1120 by 760 and centred, so on a wide monitor the folder picker sat
+                in the middle of the page with a hand's width of empty space on either side and
+                its columns squashed into a laptop's proportions. The grid's own margin is the
+                space around it; everything else inside stretches.
+            -->
             <ContentControl x:Name="SheetHost"
-                            HorizontalAlignment="Center" VerticalAlignment="Center"
-                            MaxWidth="1120" MaxHeight="760" />
+                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         </Grid>
     </Border>
     </Grid>
