@@ -139,8 +139,9 @@ namespace PhotoBook.Shell.Services
         /// </summary>
         /// <remarks>
         /// <para>
-        /// A reduced copy is bounded - the thumbnail service never writes one larger than 500
-        /// pixels on its long side - and a cell draws it smaller than that. Asking the decoder
+        /// A reduced copy is bounded - the thumbnail service never writes one larger than
+        /// <see cref="ThumbnailStore.MaxPixelSize"/> - and a cell draws it smaller than that.
+        /// Asking the decoder
         /// for the cell's width anyway made it grow the picture to fit, an interpolation of
         /// pixels that were never there, and then the cell drew it back down and threw the
         /// result of that away. The released program hands its reduced copies to the renderer

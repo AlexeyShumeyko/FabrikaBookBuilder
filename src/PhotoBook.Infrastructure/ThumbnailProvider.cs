@@ -162,9 +162,20 @@ namespace PhotoBook.Infrastructure
                         // options go first in this overload. A photograph that is already small
                         // enough is loaded plainly - asking for a larger box than the original
                         // would make the decoder scale it up, which is not a reduced copy.
+                        // Sampler is the second half of the fix and the one that was missing:
+                        // DecoderOptions defaults to Box, so the decoder itself produced the
+                        // reduced copy with a box filter and the high-quality resize below
+                        // never ran - it only runs when the decoder overshoots the target.
+                        // Lanczos3 keeps the edges a photographer uses to tell two frames
+                        // apart, and the decode still stops at the target size.
                         DecoderOptions? options =
                             info.Width > MaxSize || info.Height > MaxSize
-                                ? new DecoderOptions { TargetSize = Fit(info.Width, info.Height, MaxSize), SkipMetadata = true }
+                                ? new DecoderOptions
+                                {
+                                    TargetSize = Fit(info.Width, info.Height, MaxSize),
+                                    SkipMetadata = true,
+                                    Sampler = KnownResamplers.Lanczos3
+                                }
                                 : null;
 
                         using var image = options is null
@@ -184,7 +195,7 @@ namespace PhotoBook.Infrastructure
                         {
                             Size = target,
                             Mode = ResizeMode.Max,
-                            Sampler = KnownResamplers.Bicubic
+                            Sampler = KnownResamplers.Lanczos3
                         }));
                         Write(image, thumbnailPath);
                         return thumbnailPath;
@@ -214,7 +225,9 @@ namespace PhotoBook.Infrastructure
 
         private static void Write(Image image, string path)
         {
-            var encoder = new JpegEncoder { Quality = 85 };
+            // 85 was cheap enough but visibly blocky on a big cell; 90 costs a few kilobytes
+            // per copy and keeps the detail the preview exists for.
+            var encoder = new JpegEncoder { Quality = 90 };
             if (File.Exists(path))
             {
                 try { File.Delete(path); }

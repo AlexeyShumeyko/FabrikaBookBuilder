@@ -34,13 +34,17 @@ namespace PhotoBook.Application
         /// Largest side of a reduced copy, and part of its file name.
         /// </summary>
         /// <remarks>
-        /// A slot draws at most about 190 pixels and a card on the projects screen at 48, so
-        /// 320 is already generous even on a screen at 150 percent. It was 500, and the only
-        /// thing the extra pixels bought was a slower write for every photograph in the order.
+        /// A slot on the combined screen draws at about 190 layout units, but a 4K screen at
+        /// 150-200 percent makes that 300-400 device pixels - and 320 was upscaled there,
+        /// which is the softness the photographer sees when trying to tell two frames apart.
+        /// 512 covers the largest cell without decoding the original. It was 500 before the
+        /// Avalonia move and 320 after it; only the copy written for every photograph gets
+        /// bigger, the number of reads stays the same.
+        ///
         /// The number is in the name because changing it has to invalidate the cache: a
-        /// 500-pixel copy left behind under the old name would be read as the new one.
+        /// 320-pixel copy left behind under the old name would be read as the new one.
         /// </remarks>
-        public const int MaxPixelSize = 320;
+        public const int MaxPixelSize = 512;
 
         private static readonly Lazy<string> DirectoryPath = new(() =>
             System.IO.Path.Combine(System.IO.Path.GetTempPath(), "PhotoBookRenamer", "Thumbnails"));

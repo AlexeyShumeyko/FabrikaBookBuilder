@@ -115,7 +115,35 @@ public sealed class ThumbnailTests : IDisposable
         _written.Add(created!);
 
         Assert.True(new FileInfo(created!).Length < new FileInfo(source).Length / 4,
-            "a 500 px copy of a 3000 px photograph should be far smaller than the original");
+            "a reduced copy of a 3000 px photograph should be far smaller than the original");
+    }
+
+    [Fact]
+    public async Task The_reduced_copy_fills_the_largest_cell_without_upscaling_it()
+    {
+        var source = Jpeg("slot.jpg", 4000, 3000);
+        var provider = new ThumbnailProvider();
+        var created = await provider.GetOrCreateAsync(source);
+        _written.Add(created!);
+
+        using var image = Image.Load(created!);
+
+        // The largest side is the number in the file name, and a cell that draws at nearly
+        // that width receives the copy rather than a stretched version of a smaller one.
+        Assert.Equal(ThumbnailStore.MaxPixelSize, Math.Max(image.Width, image.Height));
+    }
+
+    [Fact]
+    public async Task A_photograph_smaller_than_a_cell_is_not_enlarged()
+    {
+        var source = Jpeg("small.jpg", 300, 200);
+        var provider = new ThumbnailProvider();
+        var created = await provider.GetOrCreateAsync(source);
+        _written.Add(created!);
+
+        using var image = Image.Load(created!);
+        Assert.Equal(300, image.Width);
+        Assert.Equal(200, image.Height);
     }
 
     [Fact]
