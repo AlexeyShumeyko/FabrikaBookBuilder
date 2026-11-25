@@ -699,9 +699,20 @@
                                             <Border Grid.Column="0" Width="40" Height="40"
                                                     CornerRadius="8" ClipToBounds="True"
                                                     Background="{DynamicResource Slate100}">
+                                                <!--
+                                                    The copy is asked for larger than the tile, not at its
+                                                    own size: a tile fills its square by cropping the
+                                                    longer side, so a copy as wide as the tile is
+                                                    stretched back up and the bars and faces smear -
+                                                    which is what made the panel useless for telling
+                                                    two frames apart. Twice the tile is enough for the
+                                                    renderer to shrink it, costs a few kilobytes per
+                                                    visible row, and matches the previews on the
+                                                    projects screen. The tile itself stays 40.
+                                                -->
                                                 <Image Stretch="UniformToFill"
                                                        RenderOptions.BitmapInterpolationMode="HighQuality"
-                                                       Source="{Binding Path, Converter={StaticResource FilePathToBitmap}, ConverterParameter=44}" />
+                                                       Source="{Binding Path, Converter={StaticResource FilePathToBitmap}, ConverterParameter=88}" />
                                             </Border>
 
                                             <StackPanel Grid.Column="1" Margin="8,0,8,0"
