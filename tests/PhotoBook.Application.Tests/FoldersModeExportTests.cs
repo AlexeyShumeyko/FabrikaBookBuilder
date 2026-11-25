@@ -109,7 +109,33 @@ public sealed class FoldersModeExportTests : IDisposable
         var folders = Directory.GetDirectories(output).Select(Path.GetFileName).OrderBy(n => n).ToArray();
         Assert.Equal(new[] { "001 Book 1", "002 Book 2" }, folders);
         Assert.True(File.Exists(Path.Combine(output, "001 Book 1", "001-00.jpg")));
-        Assert.True(File.Exists(Path.Combine(output, "002 Book 2", "002-01.jpg")));
+        Assert.True(File.Exists(Path.Combine(output, "001 Book 1", "001-01.jpg")));
+
+        // Each folder is a run of one on the site, so its files say 001. They used to say
+        // 002 here, and the site read the folder as two books with the first one empty.
+        Assert.True(File.Exists(Path.Combine(output, "002 Book 2", "001-00.jpg")));
+        Assert.True(File.Exists(Path.Combine(output, "002 Book 2", "001-01.jpg")));
+        Assert.False(File.Exists(Path.Combine(output, "002 Book 2", "002-00.jpg")));
+    }
+
+    [Fact]
+    public async Task Every_book_folder_numbers_its_own_photos_from_one()
+    {
+        var project = TestProject.Folders(
+            TestProject.Book(1, Source("c1.jpg"), Source("s1.jpg")),
+            TestProject.Book(2, Source("c2.jpg"), Source("s2.jpg")),
+            TestProject.Book(3, Source("c3.jpg"), Source("s3.jpg")),
+            TestProject.Book(4, Source("c4.jpg"), Source("s4.jpg")));
+
+        var output = OutputFolder("out");
+        var options = new ExportOptions { PerBookSubfolders = true };
+        Assert.True((await Service().ExportProjectAsync(project, output, options)).IsSuccess);
+
+        foreach (var folder in Directory.GetDirectories(output))
+        {
+            var names = Directory.GetFiles(folder).Select(Path.GetFileName).OrderBy(n => n).ToArray();
+            Assert.Equal(new[] { "001-00.jpg", "001-01.jpg" }, names);
+        }
     }
 
     [Fact]
