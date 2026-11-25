@@ -1222,9 +1222,9 @@
                                     <TextBlock Text="СОВЕТ" FontSize="10" FontWeight="ExtraBold"
                                                LetterSpacing="1.6"
                                                Foreground="{DynamicResource TextFaint}" />
-                                    <TextBlock Margin="0,12,0,0" TextWrapping="Wrap" FontSize="11.5"
-                                               LineHeight="19"
-                                               Foreground="{DynamicResource TextFaint}"
+                                    <TextBlock Margin="0,12,0,0" TextWrapping="Wrap" FontSize="12"
+                                               FontWeight="Bold" LineHeight="20"
+                                               Foreground="{DynamicResource TextDefault}"
                                                Text="Начните с обложки и общего разворота. Они повторяются во всех книгах, поэтому раскладку достаточно сделать один раз." />
                                 </StackPanel>
                             </Border>
