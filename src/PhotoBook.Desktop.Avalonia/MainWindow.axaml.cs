@@ -57,6 +57,38 @@ public partial class MainWindow : Window
         // A refused token opens the same window a fresh start would, once: the profile read and
         // the header button can both find the session gone in the same moment.
         _login.SessionExpired += async (_, _) => await SignInAsync();
+
+        // The last gesture can be a few hundred milliseconds newer than the last automatic
+        // write. Closing is the one moment where waiting for it is the difference between a
+        // project and nothing.
+        Closing += OnWindowClosing;
+    }
+
+    private bool _closeAfterSave;
+
+    private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)
+    {
+        if (_closeAfterSave) return;
+
+        var editor = _navigator.SessionMode is { } mode ? _navigator.EditorFor(mode) : null;
+        if (editor is null) return;
+
+        e.Cancel = true;
+        _closeAfterSave = true;
+
+        try
+        {
+            await editor.QuickSaveAsync();
+        }
+        catch
+        {
+            // The editor has said what went wrong on its own screen; a closing window has
+            // nowhere left to put it. Closing anyway is the only way out of the program.
+        }
+        finally
+        {
+            Close();
+        }
     }
 
     /// <summary>

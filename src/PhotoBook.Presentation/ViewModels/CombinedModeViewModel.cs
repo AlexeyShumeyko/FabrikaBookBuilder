@@ -37,6 +37,12 @@ namespace PhotoBook.Presentation.ViewModels
         private string? _draggedFile;
         private bool _isStructureConfirmed = false;
 
+        /// <summary>Writes the project a moment after the last change - there is no save button.</summary>
+        private readonly AutoSave _autoSave;
+
+        /// <summary>Set while a project is being handed over or reset, so loading does not save.</summary>
+        private bool _suppressAutoSave;
+
         public CombinedModeViewModel(
             IFileService fileService,
             IPickFiles files,
@@ -64,6 +70,8 @@ namespace PhotoBook.Presentation.ViewModels
             _projectListService = projectListService;
             _dialogs = dialogs;
 
+            _autoSave = new AutoSave(ui, AutosaveNowAsync);
+
             AvailableFiles = new ObservableCollection<string>();
             Books = new ObservableCollection<Book>();
             PhotoFiles = new ObservableCollection<PhotoFileInfo>();
@@ -84,11 +92,6 @@ namespace PhotoBook.Presentation.ViewModels
                 () => OrderRequested?.Invoke(this, EventArgs.Empty),
                 () => Project?.IsValid ?? false);
             ExportWithFolderCommand = new AsyncRelayCommand(ExportWithFolderAsync, () => Project?.IsValid ?? false);
-            // Enabled as soon as there is anything to save. Not tied to
-            // CurrentProjectInfo: the record is created by the save itself, so tying it
-            // to that left the button dead until something else happened to create it.
-            SaveProjectCommand = new AsyncRelayCommand(SaveProjectAsync,
-                () => Books.Count > 0 || AvailableFiles.Count > 0);
             // The counters of the panel, the way the prototype draws them: a box with a minus,
             // the number, and a plus. Each press is one book or one spread, and the number's own
             // setter already clamps it to the range the fields accept.
@@ -160,15 +163,16 @@ namespace PhotoBook.Presentation.ViewModels
                 else if (SelectedBook == null)
                     SelectedBook = Books.FirstOrDefault();
                 UpdateExportCommands();
+                RequestAutoSave();
             };
 
             AvailableFiles.CollectionChanged += (s, e) =>
             {
                 OnPropertyChanged(nameof(AvailableFilesCount));
                 OnPropertyChanged(nameof(HasFiles));
-                // "Something to save" just became true, so the save button has to wake up.
                 UpdateExportCommands();
                 SyncPhotoFiles();
+                RequestAutoSave();
             };
         }
 
@@ -184,7 +188,6 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Opens the order page for this project; only a full project may go.</summary>
         public ICommand OrderOnSiteCommand { get; }
         public ICommand ExportWithFolderCommand { get; }
-        public ICommand SaveProjectCommand { get; }
 
         /// <summary>One press of the minus beside the books box.</summary>
         public ICommand DecreaseBooksCommand { get; }
@@ -240,6 +243,11 @@ namespace PhotoBook.Presentation.ViewModels
                     // sat at "0 из 10" while books were quietly being finished one by one.
                     OnPropertyChanged(nameof(StructureProgress));
                     OnPropertyChanged(nameof(StructureIsComplete));
+
+                    // A photograph went into a slot, a spread was removed, a cover was
+                    // replaced - every one of those raises one of these three, and every
+                    // one of them is a change worth keeping.
+                    RequestAutoSave();
                 }
             };
 
@@ -272,7 +280,6 @@ namespace PhotoBook.Presentation.ViewModels
             // finished in this session left «Экспортировать» and «Загрузить на сайт» grey until
             // the project was reopened, because only the commands were re-asked.
             OnPropertyChanged(nameof(CanExport));
-            OnPropertyChanged(nameof(CanSaveProject));
 
             if (OrderOnSiteCommand is IRelayCommand orderCommand)
             {
@@ -286,10 +293,6 @@ namespace PhotoBook.Presentation.ViewModels
             if (ExportWithFolderCommand is AsyncRelayCommand asyncCommand2)
             {
                 asyncCommand2.NotifyCanExecuteChanged();
-            }
-            if (SaveProjectCommand is AsyncRelayCommand saveCommand)
-            {
-                saveCommand.NotifyCanExecuteChanged();
             }
         }
 

@@ -98,7 +98,6 @@ function Find-ByName($rootEl, [string]$label, [string]$typeName) {
 }
 
 $labelExport  = 'Экспортировать'
-$labelSave    = 'Сохранить проект'
 $labelOpen    = '*Открыть проект*'
 $labelEmpty   = 'Пустой слот'
 $pickerTitle  = 'Выберите фото для слота'
@@ -270,13 +269,9 @@ try {
     $after = Get-ExportEnabled
     Write-Host ("export button enabled (after fill)  : {0}" -f $after)
 
-    # Assigning a photograph is deliberately not auto-saved, so ask for a save before
-    # reading the file back - otherwise the fixture on disk still shows the empty slot.
-    $save = Find-ByName (Get-Root) $labelSave 'Button'
-    if ($null -ne $save -and $save.Current.IsEnabled) {
-        $save.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
-        Start-Sleep -Seconds 4
-    }
+    # Assigning a photograph is written automatically now; there is no button to press.
+    # Give the quiet period and the write their moment before reading the file back.
+    Start-Sleep -Seconds 3
     $completeAfter = Test-Complete
     Write-Host ("run holds every photograph (after)  : {0}" -f $completeAfter)
     Write-Host ''

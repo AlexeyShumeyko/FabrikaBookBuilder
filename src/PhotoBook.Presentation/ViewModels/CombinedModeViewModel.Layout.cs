@@ -151,13 +151,6 @@ namespace PhotoBook.Presentation.ViewModels
         public bool CanExport => Project?.IsValid ?? false;
 
         /// <summary>
-        /// Whether there is anything to save. The folders screen draws its quiet button
-        /// against the same rule, and a project with no books and no photographs is a name
-        /// and nothing else - so the button stands down instead of promising a file.
-        /// </summary>
-        public bool CanSaveProject => Books.Count > 0 || AvailableFiles.Count > 0;
-
-        /// <summary>
         /// The book shown in the assembly canvas. The reference shows one book at a time
         /// with a chip strip to switch, instead of every book stacked vertically.
         /// Set by the ListBox's SelectedItem binding.
@@ -208,16 +201,7 @@ namespace PhotoBook.Presentation.ViewModels
         public ProjectInfo? CurrentProjectInfo
         {
             get => _currentProjectInfo;
-            private set
-            {
-                if (SetProperty(ref _currentProjectInfo, value))
-                {
-                    if (SaveProjectCommand is AsyncRelayCommand saveCmd)
-                    {
-                        saveCmd.NotifyCanExecuteChanged();
-                    }
-                }
-            }
+            private set => SetProperty(ref _currentProjectInfo, value);
         }
 
         public string? ProjectName
@@ -230,6 +214,7 @@ namespace PhotoBook.Presentation.ViewModels
                     // FallbackValue in XAML only fires when a path fails to resolve, not
                     // when the resolved value is null, so the placeholder lives here.
                     OnPropertyChanged(nameof(DisplayProjectName));
+                    RequestAutoSave();
                 }
             }
         }

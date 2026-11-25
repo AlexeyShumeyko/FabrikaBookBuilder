@@ -20,6 +20,22 @@ namespace PhotoBook.Presentation.ViewModels
 
         public async void SetProject(Project? project, ProjectInfo projectInfo)
         {
+            // Loading raises every notification a real edit raises. Saving during that pass
+            // would rewrite the project that is being opened, with half of it already in place.
+            _autoSave.Cancel();
+            _suppressAutoSave = true;
+            try
+            {
+                await SetProjectCoreAsync(project, projectInfo);
+            }
+            finally
+            {
+                _suppressAutoSave = false;
+            }
+        }
+
+        private async Task SetProjectCoreAsync(Project? project, ProjectInfo projectInfo)
+        {
             Books.Clear();
             Project = null;
             AvailableFiles.Clear();
@@ -266,107 +282,6 @@ namespace PhotoBook.Presentation.ViewModels
             }
         }
 
-        private async Task SaveProjectAsync()
-        {
-            // The project record is created HERE rather than on the first "load photos"
-            // click. It used to be created by the file loader only, and the save button's
-            // CanExecute was CurrentProjectInfo != null - so a photo dropped straight into
-            // an empty slot left the button dead, while the same photo loaded through the
-            // loader panel worked. The user must not have to know which door the photo
-            // came in by.
-            if (await EnsureProjectInfoAsync() == null)
-            {
-                await _dialogs.NotifyAsync("Ошибка", "Не удалось создать запись проекта.", destructive: true);
-                return;
-            }
-
-            // A project is created before its files arrive; this is where it starts.
-            if (Project == null)
-            {
-                Project = new Project { Mode = AppMode.Combined };
-            }
-
-            try
-            {
-                IsLoading = true;
-
-                var projectId = CurrentProjectInfo.Id ?? string.Empty;
-                if (string.IsNullOrEmpty(projectId))
-                {
-                    projectId = Guid.NewGuid().ToString();
-                    if (CurrentProjectInfo != null)
-                    {
-                        CurrentProjectInfo.Id = projectId;
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(ProjectName) && ProjectName != CurrentProjectInfo.Name)
-                {
-                    CurrentProjectInfo.Name = ProjectName;
-                }
-
-                // Books must mirror Project.Books: the view binds to Books, the save walks Project.Books.
-                Project.Books.Clear();
-                foreach (var book in Books)
-                {
-                    Project.Books.Add(book);
-                }
-
-                Project.AvailableFiles.Clear();
-                foreach (var file in AvailableFiles)
-                {
-                    Project.AvailableFiles.Add(file);
-                }
-
-                var projectsDir = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "PhotoBookRenamer",
-                    "Projects");
-
-                if (!Directory.Exists(projectsDir))
-                {
-                    Directory.CreateDirectory(projectsDir);
-                }
-
-                var filePath = Path.Combine(projectsDir, $"{projectId}.json");
-                await _projects.SaveAsync(Project, filePath);
-
-                if (!string.IsNullOrEmpty(ProjectName))
-                {
-                    CurrentProjectInfo.Name = ProjectName;
-                }
-
-                CurrentProjectInfo.FilePath = filePath;
-                CurrentProjectInfo.BookCount = Books.Count;
-                CurrentProjectInfo.PageCount = Books.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
-                CurrentProjectInfo.Status = DetermineStatus(Project);
-                CurrentProjectInfo.LastModified = DateTime.Now;
-
-                var updatedInfo = await _projectListService.UpdateProjectInfoAsync(Project, filePath);
-                if (updatedInfo != null)
-                {
-                    var savedName = CurrentProjectInfo.Name;
-                    CurrentProjectInfo.BookCount = updatedInfo.BookCount;
-                    CurrentProjectInfo.PageCount = updatedInfo.PageCount;
-                    CurrentProjectInfo.Status = updatedInfo.Status;
-                    CurrentProjectInfo.LastModified = updatedInfo.LastModified;
-                    CurrentProjectInfo.Name = savedName;
-                }
-
-                await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
-                RequestBackToProjectList();
-            }
-            catch (Exception ex)
-            {
-                _loggingService.LogError("Ошибка сохранения проекта", ex);
-                await _dialogs.NotifyAsync("Ошибка", $"Ошибка сохранения проекта: {ex.Message}", destructive: true);
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
         private ProjectStatus DetermineStatus(Project project)
         {
             if (project == null || project.Books == null || project.Books.Count == 0)
@@ -383,27 +298,21 @@ namespace PhotoBook.Presentation.ViewModels
 
         private async Task BackAsync()
         {
-            if (CurrentProjectInfo != null && Project != null &&
-                (Books.Count > 0 || AvailableFiles.Count > 0))
+            // There is nothing to ask about any more: every change has already gone to disk
+            // through the autosave. This only makes sure the last gesture is written before
+            // the screen it belongs to disappears.
+            if (Books.Count > 0 || AvailableFiles.Count > 0)
             {
-                // Save / discard / stay. Kept as three buttons rather than a two-button
-                // box: "не сохранять" throws work away and "отмена" keeps the user on the
-                // screen, and neither can be inferred from the other.
-                var result = await _dialogs.AskAsync(
-                    "Сохранить перед выходом?",
-                    "В проекте есть несохранённые изменения. Сохранить их перед возвратом к списку проектов?",
-                    "Сохранить",
-                    "Не сохранять");
-
-                if (result == ConfirmOutcome.Primary)
+                if (!await QuickSaveAsync())
                 {
-                    await SaveProjectAsync();
+                    // The project could not be written. Leaving would throw the work away,
+                    // so the screen stays and the error message says why.
                     return;
                 }
-                else if (result == ConfirmOutcome.Cancelled)
-                {
-                    return;
-                }
+            }
+            else
+            {
+                _autoSave.Cancel();
             }
 
             if (CurrentProjectInfo != null &&
