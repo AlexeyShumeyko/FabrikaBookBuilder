@@ -234,6 +234,137 @@
             -->
             <Color x:Key="Slate200At70">#B3E2D7C1</Color>
 
+            <!-- ~~~~~~~~~~~~~~~~~~~~~~~~ the folder picker ~~~~~~~~~~~~~~~~~~~~~~~~ -->
+            <!--
+                The panel's own numbers, read off the prototype's .pk-* rules. The gradients
+                are gold at fixed values and therefore the same in both themes; the washes are
+                the page's own ink, so they stack as translucent layers the way the
+                stylesheet's rgba() ones do - a hovered row inside the side column is a wash
+                on a wash, not a second flat colour.
+            -->
+            <Color x:Key="PickerChipWash">#0D4A3A1C</Color>
+            <Color x:Key="PickerChipRing">#144A3A1C</Color>
+            <!--
+                The place whose folders are on screen. On paper the prototype lights it with a
+                wash of gold, not with the page's own ink: a grey row on cream is the same
+                rectangle as the rows above it, only heavier.
+            -->
+            <Color x:Key="PickerPlaceActive">#29FFCD3C</Color>
+            <Color x:Key="PickerPlaceRing">#0E4A3A1C</Color>
+            <Color x:Key="PickerBookEdge">#24FFFFFF</Color>
+            <BoxShadows x:Key="PickerPlaceRingShadow">inset 0 0 0 1 #0E4A3A1C</BoxShadows>
+            <BoxShadows x:Key="PickerBarGlow">0 0 12 0 #B3F2B41C</BoxShadows>
+
+            <!-- The tray the two view buttons sit in, and the card the chosen one becomes. -->
+            <BoxShadows x:Key="PickerViewTrayRing">inset 0 0 0 1 #0F4A3A1C</BoxShadows>
+            <Color x:Key="PickerViewActiveFill">#FFFDF6</Color>
+            <BoxShadows x:Key="PickerViewActiveShadow">0 1 3 0 #2E58421C</BoxShadows>
+
+            <!-- The box of a folder in the list view, before and after it is ticked. -->
+            <Color x:Key="PickerBoxFill">#B8FFFFFF</Color>
+
+            <!-- The first-run page of a combined project: the gold wash of its small
+                 plates, the dashed frame of the drop zone, and the faint tiles of the
+                 plan rows. -->
+            <Color x:Key="CombinedWash">#29FFCE3C</Color>
+            <Color x:Key="CombinedWashRing">#42B07B00</Color>
+            <Color x:Key="CombinedDashedRing">#66B07B00</Color>
+            <Color x:Key="CombinedDashedRingHover">#99B07B00</Color>
+            <Color x:Key="CombinedEmptyFill">#0A4A3A1C</Color>
+            <Color x:Key="CombinedEmptyRing">#244A3A1C</Color>
+            <RadialGradientBrush x:Key="CombinedDropFill" Center="50%,40%" GradientOrigin="50%,40%"
+                                 RadiusX="60%" RadiusY="60%">
+                <GradientStop Color="#38FFC43C" Offset="0" />
+                <GradientStop Color="#00FFC43C" Offset="0.7" />
+            </RadialGradientBrush>
+            <Color x:Key="PickerBoxRing">#384A3A1C</Color>
+
+            <!-- The light of a lamp in the panel's top-left corner, over a warm wash down the
+                 whole band. Two gradients, because a brush carries one. -->
+            <RadialGradientBrush x:Key="PickerHeadGlow" Center="5%,0%" GradientOrigin="5%,0%"
+                                 RadiusX="38%" RadiusY="150%">
+                <GradientStop Color="#1CFFCD2D" Offset="0" />
+                <GradientStop Color="#00FFCD2D" Offset="0.72" />
+            </RadialGradientBrush>
+            <LinearGradientBrush x:Key="PickerHeadWash" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#0AFFCD2D" Offset="0" />
+                <GradientStop Color="#00FFCD2D" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- The seal: a cream cap with a hairline ring inside it, the way every other mark
+                 in the program is plated by daylight. A cap of gold on paper was the loudest
+                 thing on a page lit by the sun; at night it stays the gold the design draws. -->
+            <LinearGradientBrush x:Key="PickerBadgeFill" StartPoint="50%,0%" EndPoint="30%,100%">
+                <GradientStop Color="#FCF1D4" Offset="0" />
+                <GradientStop Color="#FBEAC0" Offset="1" />
+            </LinearGradientBrush>
+            <BoxShadows x:Key="PickerBadgeShadow">inset 0 1 0 0 #B3FFFFFF, inset 0 0 0 1 #61B07B00, 0 10 22 -14 #BF58421C</BoxShadows>
+            <Color x:Key="PickerBadgeInk">#8A5F00</Color>
+
+            <!-- The plate that says what the project already holds, and the bar that says how
+                 much of the result this visit adds. -->
+            <LinearGradientBrush x:Key="PickerProjectFill" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#1AFFCD2D" Offset="0" />
+                <GradientStop Color="#05FFCD2D" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="PickerProjectRing">#24FFCD2D</Color>
+            <Color x:Key="PickerBarTrack">#1A4A3A1C</Color>
+            <LinearGradientBrush x:Key="PickerBarFill" StartPoint="0%,50%" EndPoint="100%,50%">
+                <GradientStop Color="#F2B41C" Offset="0" />
+                <GradientStop Color="#FFD977" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- A folder card: a wash of the panel's ink at rest, a warmer one under the
+                 pointer, and a gold-lit gradient once it is chosen. -->
+            <Color x:Key="PickerCardFill">#064A3A1C</Color>
+            <Color x:Key="PickerCardHover">#0A4A3A1C</Color>
+            <Color x:Key="PickerCardLineHover">#244A3A1C</Color>
+            <LinearGradientBrush x:Key="PickerCardChosen" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#13FFCD2D" Offset="0" />
+                <GradientStop Color="#04FFCD2D" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="PickerCardChosenRing">#6BFFCD2D</Color>
+            <BoxShadows x:Key="PickerCardChosenShadow">0 16 32 -20 #99F2B41C, inset 0 0 0 1 #14FFCD2D</BoxShadows>
+            <BoxShadows x:Key="PickerCardLift">0 14 28 -18 #D9000000</BoxShadows>
+
+            <RadialGradientBrush x:Key="PickerCoverGlow" Center="50%,0%" GradientOrigin="50%,0%"
+                                 RadiusX="120%" RadiusY="90%">
+                <GradientStop Color="#0FF2B41C" Offset="0" />
+                <GradientStop Color="#00F2B41C" Offset="0.72" />
+            </RadialGradientBrush>
+            <Color x:Key="PickerCoverRing">#0D4A3A1C</Color>
+            <Color x:Key="PickerSumFill">#084A3A1C</Color>
+            <Color x:Key="PickerSumRing">#0E4A3A1C</Color>
+
+            <!-- The tick, and the gold cap of the filled action. -->
+            <LinearGradientBrush x:Key="PickerTickFill" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#FFE066" Offset="0" />
+                <GradientStop Color="#F2B41C" Offset="1" />
+            </LinearGradientBrush>
+            <BoxShadows x:Key="PickerTickShadow">0 3 10 0 #73F2B41C, inset 0 1 0 0 #73FFFFFF</BoxShadows>
+            <BoxShadows x:Key="PickerBookRing">inset 0 0 0 1 #24FFFFFF</BoxShadows>
+            <Color x:Key="PickerOpenFill">#8C140F09</Color>
+            <!--
+                The folder on the picture of a chosen card. It is pale gold at night, where it
+                catches the lamp on a dark cover; on paper that same pale gold is invisible
+                against the warm light of the cover, so there it is the darker gold the other
+                folder marks are drawn in.
+            -->
+            <Color x:Key="PickerOnIcon">#A97400</Color>
+            <BoxShadows x:Key="PickerButtonShadow">0 2 5 0 #4D000000, inset 0 -2 0 0 #388C5600</BoxShadows>
+
+            <!-- The close ring under the pointer, in the gold the prototype answers with. -->
+            <Color x:Key="PickerIconRing">#8CE0AC57</Color>
+            <Color x:Key="PickerIconWash">#14E0AC57</Color>
+
+            <!-- The tray of an empty column: a gold light with its own hairline. -->
+            <RadialGradientBrush x:Key="PickerEmptyFill" Center="50%,40%" GradientOrigin="50%,40%"
+                                 RadiusX="60%" RadiusY="60%">
+                <GradientStop Color="#38FFCD2D" Offset="0" />
+                <GradientStop Color="#0DFFCD2D" Offset="1" />
+            </RadialGradientBrush>
+            <Color x:Key="PickerEmptyRing">#38FFCD2D</Color>
+
             <!-- The page, as the prototype draws it: a warm wash from the top down, not one
                  flat colour. A flat fill reads as a screenshot of the design, not the design. -->
             <LinearGradientBrush x:Key="PageBackdrop" StartPoint="50%,0%" EndPoint="50%,100%">
@@ -400,6 +531,12 @@
                  icon, pale enough to stay a warning rather than an alarm. -->
             <Color x:Key="DangerInk">#B4461F</Color>
             <Color x:Key="DangerWash">#13B4461F</Color>
+
+            <!-- The block that reports a broken choice stands over the folder list, so its
+                 fill is opaque and its words are read against it: a wash let the names behind
+                 the block show through the sentence that explains the mistake. -->
+            <Color x:Key="DangerPaperFill">#FCEEE7</Color>
+            <Color x:Key="DangerPaperRing">#EFC3B3</Color>
 
             <!-- "Открыть проект" warms toward gold under the pointer. -->
             <Color x:Key="OpenHoverFill">#1AFFCD2D</Color>
@@ -716,6 +853,103 @@
 
             <Color x:Key="Slate200At70">#14FFF2D6</Color>
 
+            <!-- The folder picker at night: the same gold, and the panel's washes turned
+                 white. See the light theme for what each one is. -->
+            <Color x:Key="PickerChipWash">#0DFFFFFF</Color>
+            <Color x:Key="PickerChipRing">#14FFFFFF</Color>
+            <Color x:Key="PickerPlaceActive">#12FFFFFF</Color>
+            <Color x:Key="PickerPlaceRing">#0EFFFFFF</Color>
+            <Color x:Key="PickerBookEdge">#24FFFFFF</Color>
+            <BoxShadows x:Key="PickerPlaceRingShadow">inset 0 0 0 1 #0EFFFFFF</BoxShadows>
+            <BoxShadows x:Key="PickerBarGlow">0 0 12 0 #B3F2B41C</BoxShadows>
+
+            <BoxShadows x:Key="PickerViewTrayRing">inset 0 0 0 1 #0FFFFFFF</BoxShadows>
+            <Color x:Key="PickerViewActiveFill">#17FFFFFF</Color>
+            <BoxShadows x:Key="PickerViewActiveShadow">0 1 3 0 #40000000</BoxShadows>
+            <Color x:Key="PickerBoxFill">#0DFFFFFF</Color>
+            <Color x:Key="PickerBoxRing">#2EFFFFFF</Color>
+
+            <Color x:Key="CombinedWash">#1FF2B41C</Color>
+            <Color x:Key="CombinedWashRing">#3DFFCD2D</Color>
+            <Color x:Key="CombinedDashedRing">#52FFCD2D</Color>
+            <Color x:Key="CombinedDashedRingHover">#8CFFCD2D</Color>
+            <Color x:Key="CombinedEmptyFill">#0DFFFFFF</Color>
+            <Color x:Key="CombinedEmptyRing">#1FFFFFFF</Color>
+            <RadialGradientBrush x:Key="CombinedDropFill" Center="50%,40%" GradientOrigin="50%,40%"
+                                 RadiusX="60%" RadiusY="60%">
+                <GradientStop Color="#1FF2B41C" Offset="0" />
+                <GradientStop Color="#00F2B41C" Offset="0.7" />
+            </RadialGradientBrush>
+
+            <RadialGradientBrush x:Key="PickerHeadGlow" Center="5%,0%" GradientOrigin="5%,0%"
+                                 RadiusX="38%" RadiusY="150%">
+                <GradientStop Color="#1CFFCD2D" Offset="0" />
+                <GradientStop Color="#00FFCD2D" Offset="0.72" />
+            </RadialGradientBrush>
+            <LinearGradientBrush x:Key="PickerHeadWash" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#0AFFCD2D" Offset="0" />
+                <GradientStop Color="#00FFCD2D" Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="PickerBadgeFill" StartPoint="50%,0%" EndPoint="30%,100%">
+                <GradientStop Color="#FFD977" Offset="0" />
+                <GradientStop Color="#F2B41C" Offset="0.55" />
+                <GradientStop Color="#D9990A" Offset="1" />
+            </LinearGradientBrush>
+            <BoxShadows x:Key="PickerBadgeShadow">inset 0 1 0 0 #8CFFFFFF, 0 12 26 -12 #E6F2B41C</BoxShadows>
+            <Color x:Key="PickerBadgeInk">#2A1C00</Color>
+
+            <LinearGradientBrush x:Key="PickerProjectFill" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#1AFFCD2D" Offset="0" />
+                <GradientStop Color="#05FFCD2D" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="PickerProjectRing">#24FFCD2D</Color>
+            <Color x:Key="PickerBarTrack">#1AFFFFFF</Color>
+            <LinearGradientBrush x:Key="PickerBarFill" StartPoint="0%,50%" EndPoint="100%,50%">
+                <GradientStop Color="#F2B41C" Offset="0" />
+                <GradientStop Color="#FFD977" Offset="1" />
+            </LinearGradientBrush>
+
+            <Color x:Key="PickerCardFill">#06FFFFFF</Color>
+            <Color x:Key="PickerCardHover">#0AFFFFFF</Color>
+            <Color x:Key="PickerCardLineHover">#24FFFFFF</Color>
+            <LinearGradientBrush x:Key="PickerCardChosen" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#13FFCD2D" Offset="0" />
+                <GradientStop Color="#04FFCD2D" Offset="1" />
+            </LinearGradientBrush>
+            <Color x:Key="PickerCardChosenRing">#6BFFCD2D</Color>
+            <BoxShadows x:Key="PickerCardChosenShadow">0 16 32 -20 #99F2B41C, inset 0 0 0 1 #14FFCD2D</BoxShadows>
+            <BoxShadows x:Key="PickerCardLift">0 14 28 -18 #D9000000</BoxShadows>
+
+            <RadialGradientBrush x:Key="PickerCoverGlow" Center="50%,0%" GradientOrigin="50%,0%"
+                                 RadiusX="120%" RadiusY="90%">
+                <GradientStop Color="#0FF2B41C" Offset="0" />
+                <GradientStop Color="#00F2B41C" Offset="0.72" />
+            </RadialGradientBrush>
+            <Color x:Key="PickerCoverRing">#0DFFFFFF</Color>
+            <Color x:Key="PickerSumFill">#08FFFFFF</Color>
+            <Color x:Key="PickerSumRing">#0EFFFFFF</Color>
+
+            <LinearGradientBrush x:Key="PickerTickFill" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#FFE066" Offset="0" />
+                <GradientStop Color="#F2B41C" Offset="1" />
+            </LinearGradientBrush>
+            <BoxShadows x:Key="PickerTickShadow">0 3 10 0 #73F2B41C, inset 0 1 0 0 #73FFFFFF</BoxShadows>
+            <BoxShadows x:Key="PickerBookRing">inset 0 0 0 1 #24FFFFFF</BoxShadows>
+            <Color x:Key="PickerOpenFill">#8C140F09</Color>
+            <Color x:Key="PickerOnIcon">#FFD45E</Color>
+            <BoxShadows x:Key="PickerButtonShadow">0 2 5 0 #4D000000, inset 0 -2 0 0 #388C5600</BoxShadows>
+
+            <Color x:Key="PickerIconRing">#8CE0AC57</Color>
+            <Color x:Key="PickerIconWash">#14E0AC57</Color>
+
+            <RadialGradientBrush x:Key="PickerEmptyFill" Center="50%,40%" GradientOrigin="50%,40%"
+                                 RadiusX="60%" RadiusY="60%">
+                <GradientStop Color="#38FFCD2D" Offset="0" />
+                <GradientStop Color="#0DFFCD2D" Offset="1" />
+            </RadialGradientBrush>
+            <Color x:Key="PickerEmptyRing">#38FFCD2D</Color>
+
             <!-- No light wash here: the dark page is the same graphite with the glow at its
                  top left, and the card is lifted off it by a slight lightening. -->
             <LinearGradientBrush x:Key="PageBackdrop" StartPoint="50%,0%" EndPoint="50%,100%">
@@ -836,6 +1070,8 @@
             <Color x:Key="ActionBorderHover">#FFD9990A</Color>
             <Color x:Key="DangerInk">#FF9A73</Color>
             <Color x:Key="DangerWash">#1AFF7846</Color>
+            <Color x:Key="DangerPaperFill">#35201A</Color>
+            <Color x:Key="DangerPaperRing">#5E3629</Color>
             <Color x:Key="OpenHoverFill">#1AFFCD2D</Color>
             <Color x:Key="OpenHoverBorder">#4DFFCD2D</Color>
             <Color x:Key="ModalEdge">#1AFFF2D6</Color>
