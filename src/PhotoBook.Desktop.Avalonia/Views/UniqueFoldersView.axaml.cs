@@ -243,6 +243,21 @@ public partial class UniqueFoldersView : UserControl, IPendingRename
         if (command.CanExecute(argument)) command.Execute(argument);
     }
 
+    /// <summary>
+    /// A double click on a filled slot opens the original in the viewer Windows keeps for it.
+    /// </summary>
+    /// <remarks>
+    /// The whole card is the target, so the gesture works wherever on the photograph the
+    /// pointer lands. An empty slot has no original to open and is left alone.
+    /// </remarks>
+    private void OnSlotDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not Control { DataContext: Page page } || page.IsEmpty) return;
+
+        OriginalPhoto.Show(page.SourcePath);
+        e.Handled = true;
+    }
+
     private void Execute(string command, object? sender)
     {
         var editor = DataContext as UniqueFoldersViewModel;

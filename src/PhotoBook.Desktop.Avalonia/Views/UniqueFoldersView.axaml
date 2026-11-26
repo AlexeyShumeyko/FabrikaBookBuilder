@@ -801,6 +801,7 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Margin="0,0,16,16" CornerRadius="12" ClipToBounds="True" Classes="slotCard"
+                                                    DoubleTapped="OnSlotDoubleTapped"
                                                     PointerEntered="OnCardPointerEntered"
                                                     PointerExited="OnCardPointerExited"
                                                     BorderBrush="{Binding Converter={StaticResource PageCaption}, ConverterParameter=border}"

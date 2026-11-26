@@ -297,6 +297,22 @@ public partial class CombinedModeView : UserControl, IPendingRename
         Execute(nameof(CombinedModeViewModel.LoadPageFileCommand), sender);
     }
 
+    /// <summary>
+    /// A double click on a filled slot opens the original in the viewer Windows keeps for it.
+    /// </summary>
+    /// <remarks>
+    /// The whole card is the target, so the gesture works wherever on the photograph the
+    /// pointer lands. An empty slot is left to <see cref="OnSlotPressed"/>: it has no original
+    /// to open, and its press already asks which file to put there.
+    /// </remarks>
+    private void OnSlotDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not Control { DataContext: Page page } || page.IsEmpty) return;
+
+        OriginalPhoto.Show(page.SourcePath);
+        e.Handled = true;
+    }
+
     // ------------------------------------------------------------------ upload --
 
     private void OnUploadAreaClick(object? sender, PointerPressedEventArgs e)
