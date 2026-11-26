@@ -31,9 +31,10 @@
     -->
     <UserControl.Styles>
         <!--
-            The chosen group, as the prototype draws it: the card takes a gold line and a lift,
-            and the number turns into the theme's gold cap. The quiet state is the same wash the
-            prototype gives a number at rest, not a filled slate tile.
+            The chosen group: the card takes a line and a lift, and the number turns into the
+            chosen cap. The line is the theme's own chosen colour - the light caramel on paper,
+            where every chosen thing in this theme is caramel, and the gold at night. The quiet
+            state is the same wash the prototype gives a number at rest, not a filled slate tile.
         -->
         <Style Selector="Border.card.selected">
             <Setter Property="BorderBrush" Value="{DynamicResource GroupCardSelectedBorder}" />
@@ -200,10 +201,10 @@
                              on one baseline, not a row of chips. -->
                         <StackPanel Orientation="Horizontal" Spacing="7"
                                     VerticalAlignment="Bottom">
-                            <TextBlock Text="К отправке" FontSize="11.5" FontWeight="Bold"
+                            <TextBlock Text="К ОТПРАВКЕ" FontSize="11.5" FontWeight="Bold"
                                        LetterSpacing="1.61"
                                        Foreground="{DynamicResource TextMuted}"
-                                       VerticalAlignment="Bottom" Margin="0,0,4,0" />
+                                       VerticalAlignment="Bottom" Margin="0,0,4,1" />
 
                             <TextBlock Text="{Binding GoingBookCount}" FontSize="15"
                                        FontWeight="ExtraBold" LetterSpacing="-0.3"
@@ -211,7 +212,7 @@
                                        VerticalAlignment="Bottom" />
                             <TextBlock Text="{Binding GoingBooksUnit}" FontSize="11.5"
                                        Foreground="{DynamicResource TextMuted}"
-                                       VerticalAlignment="Bottom" />
+                                       VerticalAlignment="Bottom" Margin="0,0,0,1" />
 
                             <Border Width="1" Height="14" VerticalAlignment="Center"
                                     Margin="3,0"
@@ -223,7 +224,7 @@
                                        VerticalAlignment="Bottom" />
                             <TextBlock Text="{Binding GoingFilesUnit}" FontSize="11.5"
                                        Foreground="{DynamicResource TextMuted}"
-                                       VerticalAlignment="Bottom" />
+                                       VerticalAlignment="Bottom" Margin="0,0,0,1" />
 
                             <Border Width="1" Height="14" VerticalAlignment="Center"
                                     Margin="3,0"
@@ -239,7 +240,7 @@
                                            VerticalAlignment="Bottom" />
                                 <TextBlock Text="без доставки" FontSize="10.5"
                                            Foreground="{DynamicResource TextFaint}"
-                                           VerticalAlignment="Bottom" />
+                                           VerticalAlignment="Bottom" Margin="0,0,0,1.3" />
                             </StackPanel>
                         </StackPanel>
 
@@ -349,15 +350,15 @@
                                     <Border Grid.Column="0" Name="BooksCard" Classes="card" Padding="0"
                                             Classes.selected="{Binding IsSelected}"
                                             HorizontalAlignment="Stretch"
-                                            Opacity="{Binding CardOpacity}">
+                                            Opacity="{Binding CardOpacity}"
+                                            PointerPressed="OnSelectGroup">
                                         <Grid RowDefinitions="Auto,Auto,Auto">
 
                                             <!-- the head: which group, how big, in what state, and
                                                  the one switch that takes it out of the run -->
                                             <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto"
                                                   Margin="18,15,18,14"
-                                                  Background="Transparent" Cursor="Hand"
-                                                  PointerPressed="OnSelectGroup">
+                                                  Background="Transparent" Cursor="Hand">
 
                                                 <!-- The group's number in its own square, as the
                                                      mockup marks a card's place in the order: two

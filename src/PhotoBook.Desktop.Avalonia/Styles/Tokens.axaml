@@ -474,8 +474,10 @@
             <Color x:Key="GroupNoInk">#776A53</Color>
             <Color x:Key="GroupNoOnFill">#ECCB7B</Color>
             <Color x:Key="GroupNoOnInk">#2A1E00</Color>
-            <Color x:Key="GroupCardSelectedBorder">#6BB07B00</Color>
-            <BoxShadows x:Key="GroupCardSelectedShadow">0 18 44 0 #2458421C, 0 0 0 1 #24D6A014</BoxShadows>
+            <!-- On paper the chosen card takes the light caramel of the section's own tile,
+                 as every chosen thing in this theme does; the gold line belongs to the night. -->
+            <Color x:Key="GroupCardSelectedBorder">#ECCB7B</Color>
+            <BoxShadows x:Key="GroupCardSelectedShadow">0 18 44 0 #2458421C, 0 0 0 1 #33ECCB7B</BoxShadows>
 
             <!-- The prototype's switch: an ink wash when off, a gold cap when on, and a knob
                  that is paper-coloured so it reads on both. -->

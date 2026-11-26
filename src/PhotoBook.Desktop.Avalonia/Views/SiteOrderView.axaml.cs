@@ -42,9 +42,10 @@ namespace PhotoBook.Shell.Views
         /// Chooses the group whose card is being read.
         /// </summary>
         /// <remarks>
-        /// The whole head is the target, as it is in the prototype, so the card is chosen by the
-        /// part of it a customer already points at. The switch and the chevron are answers of
-        /// their own and are left out: taking a group out of the run must not also choose it.
+        /// The whole card is the target - the head, the rows of books and the plate under them -
+        /// so a group is chosen by a press anywhere on it rather than only by the narrow strip
+        /// of its head. The switch, the chevrons and the tools on a row are answers of their
+        /// own and are left out: taking a group out of the run must not also choose it.
         /// </remarks>
         private void OnSelectGroup(object? sender, PointerPressedEventArgs e)
         {
