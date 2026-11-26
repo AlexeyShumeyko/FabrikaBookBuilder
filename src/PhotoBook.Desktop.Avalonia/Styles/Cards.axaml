@@ -700,8 +700,8 @@
                 <StackPanel Orientation="Horizontal" Background="Transparent">
                     <Border x:Name="Track" Width="34" Height="20" CornerRadius="999"
                             VerticalAlignment="Center"
-                            Background="{DynamicResource Sunken}"
-                            BorderBrush="{DynamicResource BorderStrong}" BorderThickness="1">
+                            Background="{DynamicResource SwitchTrack}"
+                            BorderBrush="{DynamicResource SwitchTrackBorder}" BorderThickness="1">
                         <Border.Transitions>
                             <Transitions>
                                 <BrushTransition Property="Background" Duration="0:0:0.16" />
@@ -711,8 +711,8 @@
                         <Border x:Name="Knob" Width="14" Height="14" CornerRadius="7"
                                 Margin="2,0,0,0" HorizontalAlignment="Left"
                                 VerticalAlignment="Center"
-                                Background="{DynamicResource Surface}"
-                                BoxShadow="{DynamicResource ShadowSm}"
+                                Background="{DynamicResource SwitchKnob}"
+                                BoxShadow="{DynamicResource SwitchKnobShadow}"
                                 RenderTransform="translate(0px,0px)">
                             <Border.Transitions>
                                 <Transitions>
@@ -724,9 +724,9 @@
                         </Border>
                     </Border>
 
-                    <ContentPresenter Margin="9,0,0,0" VerticalAlignment="Center"
+                    <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"
                                       Content="{TemplateBinding Content}"
-                                      TextElement.FontSize="11.5"
+                                      TextElement.FontSize="11"
                                       TextElement.Foreground="{TemplateBinding Foreground}" />
                 </StackPanel>
             </ControlTemplate>
@@ -734,11 +734,12 @@
     </Style>
 
     <Style Selector="CheckBox.switch:checked /template/ Border#Track">
-        <Setter Property="Background" Value="{DynamicResource Accent}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource AccentStrong}" />
+        <Setter Property="Background" Value="{DynamicResource SwitchTrackOn}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SwitchTrackOnBorder}" />
     </Style>
 
     <Style Selector="CheckBox.switch:checked /template/ Border#Knob">
+        <Setter Property="Background" Value="{DynamicResource SwitchKnobOn}" />
         <Setter Property="RenderTransform" Value="translate(14px,0px)" />
     </Style>
 

@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using PhotoBook.Presentation.ViewModels;
@@ -34,6 +36,30 @@ namespace PhotoBook.Shell.Views
         {
             if ((sender as Control)?.DataContext is SiteOrderGroup group)
                 group.ToggleCollapse();
+        }
+
+        /// <summary>
+        /// Chooses the group whose card is being read.
+        /// </summary>
+        /// <remarks>
+        /// The whole head is the target, as it is in the prototype, so the card is chosen by the
+        /// part of it a customer already points at. The switch and the chevron are answers of
+        /// their own and are left out: taking a group out of the run must not also choose it.
+        /// </remarks>
+        private void OnSelectGroup(object? sender, PointerPressedEventArgs e)
+        {
+            if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+                return;
+
+            if (e.Source is Visual source &&
+                (source is Button || source is CheckBox ||
+                 source.GetVisualAncestors().Any(control => control is Button || control is CheckBox)))
+            {
+                return;
+            }
+
+            if ((sender as Control)?.DataContext is SiteOrderGroup group)
+                (DataContext as SiteOrderViewModel)?.SelectGroup(group);
         }
 
         /// <summary>

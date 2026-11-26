@@ -69,6 +69,7 @@ namespace PhotoBook.Presentation.ViewModels
         private long _uploadedProjectId;
         private bool _excluded;
         private bool _exclusionChosen;
+        private bool _isSelected;
 
         private OrderFileCheck? _files;
         private bool _checkingFiles;
@@ -107,6 +108,27 @@ namespace PhotoBook.Presentation.ViewModels
 
         /// <summary>The group's place in the order, starting at one.</summary>
         public int Number { get; private set; }
+
+        /// <summary>The number as the prototype writes it: 01, 02.</summary>
+        public string NumberText => Number.ToString("00");
+
+        /// <summary>Whether this group's card is the chosen one on the page.</summary>
+        /// <remarks>
+        /// The page owns the choice and clears the previous group before this one is set; the
+        /// card only carries the state its own outline and number are drawn from.
+        /// </remarks>
+        public bool IsSelected
+        {
+            get => _isSelected;
+            internal set
+            {
+                if (_isSelected == value)
+                    return;
+
+                _isSelected = value;
+                OnPropertyChanged(nameof(IsSelected));
+            }
+        }
 
         /// <summary>What the group's card is headed with.</summary>
         public string Title => "Группа " + Number;

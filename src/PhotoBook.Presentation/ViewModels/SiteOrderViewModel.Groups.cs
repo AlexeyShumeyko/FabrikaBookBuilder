@@ -23,6 +23,50 @@ namespace PhotoBook.Presentation.ViewModels
         public SiteOrderGroup? GroupOf(OrderBookRow row) =>
             Groups.FirstOrDefault(group => group.Books.Contains(row));
 
+        /// <summary>The group whose card is the chosen one on the page.</summary>
+        /// <remarks>
+        /// One choice for the whole page rather than a flag per card: the chosen group is what
+        /// the page reads from, and two cards both drawn as chosen would say it has two.
+        /// </remarks>
+        public SiteOrderGroup? SelectedGroup
+        {
+            get => _selectedGroup;
+            private set
+            {
+                if (ReferenceEquals(_selectedGroup, value))
+                    return;
+
+                if (_selectedGroup is not null)
+                    _selectedGroup.IsSelected = false;
+
+                _selectedGroup = value;
+
+                if (value is not null)
+                    value.IsSelected = true;
+
+                OnPropertyChanged(nameof(SelectedGroup));
+            }
+        }
+
+        private SiteOrderGroup? _selectedGroup;
+
+        /// <summary>Chooses a group's card, opening it if it was folded away.</summary>
+        /// <remarks>
+        /// The prototype opens the card it chooses: a chosen group whose books are hidden would
+        /// leave the page with nothing to read. The switch and the chevron never come here - the
+        /// view leaves them out of the head's own press.
+        /// </remarks>
+        public void SelectGroup(SiteOrderGroup group)
+        {
+            if (group is null || !Groups.Contains(group))
+                return;
+
+            SelectedGroup = group;
+
+            if (!group.IsExpanded)
+                group.ToggleCollapse();
+        }
+
         /// <summary>
         /// Moves one book into another group, or into a group of its own.
         /// </summary>
@@ -71,6 +115,12 @@ namespace PhotoBook.Presentation.ViewModels
 
             Groups = groups.ToList();
             OnPropertyChanged(nameof(HasGroups));
+
+            // The chosen card is a card that still exists: if the move took the chosen group
+            // away, the first one left becomes the page's choice.
+            var chosen = SelectedGroup;
+            if (chosen is null || !Groups.Contains(chosen))
+                SelectedGroup = Groups.FirstOrDefault();
 
             // A group made by the move still has to read its questions; an existing group
             // already holds them, and a new book takes the answers it already has.

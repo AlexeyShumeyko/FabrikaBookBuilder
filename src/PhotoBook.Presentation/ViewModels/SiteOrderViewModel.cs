@@ -287,6 +287,11 @@ namespace PhotoBook.Presentation.ViewModels
             }
 
             Groups = groups;
+
+            // The prototype opens with one card chosen, and so does the page: the first group
+            // is the one the eye meets, and a choice already made says what the gold means.
+            SelectedGroup = groups.FirstOrDefault();
+
             ProjectName = name;
             SpreadCount = inventory.Books.Sum(book => book.Spreads);
 

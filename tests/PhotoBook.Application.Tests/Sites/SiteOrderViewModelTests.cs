@@ -360,6 +360,35 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Equal(new[] { 1, 2 }, page.Books.Select(book => book.Number));
         }
 
+        /// <summary>
+        /// The page opens with its first card chosen, and a choice is one card at a time: the
+        /// gold line and the gold number are how the page says which group it is reading.
+        /// </summary>
+        [Fact]
+        public void ChoosesOneGroupAtATimeStartingWithTheFirst()
+        {
+            var page = new SiteOrderViewModel();
+            page.Prepare(TwoPageSizes(), "Разные проекты");
+
+            Assert.Same(page.Groups[0], page.SelectedGroup);
+            Assert.True(page.Groups[0].IsSelected);
+            Assert.False(page.Groups[1].IsSelected);
+
+            // The number is the prototype's two-digit one, 01 and 02, not 1 and 2.
+            Assert.Equal("01", page.Groups[0].NumberText);
+            Assert.Equal("02", page.Groups[1].NumberText);
+
+            page.Groups[1].IsCollapsed = true;
+            page.SelectGroup(page.Groups[1]);
+
+            Assert.Same(page.Groups[1], page.SelectedGroup);
+            Assert.False(page.Groups[0].IsSelected);
+            Assert.True(page.Groups[1].IsSelected);
+
+            // A chosen card is open: a choice whose books are hidden leaves nothing to read.
+            Assert.True(page.Groups[1].IsExpanded);
+        }
+
         [Fact]
         public void KeepsBooksOfOnePageSizeInOneGroup()
         {

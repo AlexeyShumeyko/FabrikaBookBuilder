@@ -208,6 +208,7 @@ namespace PhotoBook.Presentation.ViewModels
 
             Number = number;
             OnPropertyChanged(nameof(Number));
+            OnPropertyChanged(nameof(NumberText));
             OnPropertyChanged(nameof(Title));
             NotifyCard();
         }

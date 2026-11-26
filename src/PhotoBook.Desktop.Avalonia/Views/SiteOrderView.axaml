@@ -29,6 +29,78 @@
         a page opened by the project's name read as the project's page, and this page is about
         sending it.
     -->
+    <UserControl.Styles>
+        <!--
+            The chosen group, as the prototype draws it: the card takes a gold line and a lift,
+            and the number turns into the theme's gold cap. The quiet state is the same wash the
+            prototype gives a number at rest, not a filled slate tile.
+        -->
+        <Style Selector="Border.card.selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource GroupCardSelectedBorder}" />
+            <Setter Property="BoxShadow" Value="{DynamicResource GroupCardSelectedShadow}" />
+        </Style>
+
+        <Style Selector="Border.groupNo">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Background" Value="{DynamicResource GroupNoFill}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource GroupNoBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <Style Selector="Border.groupNo TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource GroupNoInk}" />
+        </Style>
+
+        <Style Selector="Border.groupNo.selected">
+            <Setter Property="Background" Value="{DynamicResource GroupNoOnFill}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+
+        <Style Selector="Border.groupNo.selected TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource GroupNoOnInk}" />
+        </Style>
+
+        <!--
+            «Показать» is the prototype's ghost button, small: words in the muted ink and no box
+            at rest. The wash appears only under the pointer, at four and a half percent, and the
+            words take the page's ink.
+        -->
+        <Style Selector="Button.pageGhost">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.pageGhost:pointerover">
+            <Setter Property="Background" Value="{DynamicResource GhostHoverWash}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+        </Style>
+
+        <!-- Pressed keeps the pointer's wash: the prototype paints no third state for it. -->
+        <Style Selector="Button.pageGhost:pressed">
+            <Setter Property="Background" Value="{DynamicResource GhostHoverWash}" />
+        </Style>
+    </UserControl.Styles>
+
     <Grid RowDefinitions="Auto,*" MaxWidth="1600" Margin="32,24" HorizontalAlignment="Stretch">
 
         <!-- ============================ control panel ========================== -->
@@ -123,17 +195,20 @@
                     <Grid ColumnDefinitions="*,Auto">
 
                         <!-- The count at 15 extra bold, its word at 11.5 in the muted ink and
-                             the label at 10 in wide capitals: a line of type sitting on one
-                             baseline, as the prototype sets it, not a row of chips. -->
+                             the label at 11.5 in wide capitals - the size the prototype's own
+                             cascade gives it, not the 10 in its rule: a line of type sitting
+                             on one baseline, not a row of chips. -->
                         <StackPanel Orientation="Horizontal" Spacing="7"
                                     VerticalAlignment="Bottom">
-                            <TextBlock Text="К отправке" FontSize="10" FontWeight="Bold"
-                                       LetterSpacing="1.4"
-                                       Foreground="{DynamicResource TextFaint}"
-                                       VerticalAlignment="Bottom" Margin="0,0,8,1" />
+                            <TextBlock Text="К отправке" FontSize="11.5" FontWeight="Bold"
+                                       LetterSpacing="1.61"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       VerticalAlignment="Bottom" Margin="0,0,4,0" />
 
                             <TextBlock Text="{Binding GoingBookCount}" FontSize="15"
-                                       FontWeight="ExtraBold" VerticalAlignment="Bottom" />
+                                       FontWeight="ExtraBold" LetterSpacing="-0.3"
+                                       Foreground="{DynamicResource TextStrong}"
+                                       VerticalAlignment="Bottom" />
                             <TextBlock Text="{Binding GoingBooksUnit}" FontSize="11.5"
                                        Foreground="{DynamicResource TextMuted}"
                                        VerticalAlignment="Bottom" />
@@ -143,7 +218,9 @@
                                     Background="{DynamicResource BorderStrong}" />
 
                             <TextBlock Text="{Binding GoingFileCount}" FontSize="15"
-                                       FontWeight="ExtraBold" VerticalAlignment="Bottom" />
+                                       FontWeight="ExtraBold" LetterSpacing="-0.3"
+                                       Foreground="{DynamicResource TextStrong}"
+                                       VerticalAlignment="Bottom" />
                             <TextBlock Text="{Binding GoingFilesUnit}" FontSize="11.5"
                                        Foreground="{DynamicResource TextMuted}"
                                        VerticalAlignment="Bottom" />
@@ -153,17 +230,21 @@
                                     Background="{DynamicResource BorderStrong}"
                                     IsVisible="{Binding HasTotal}" />
 
-                            <TextBlock Text="{Binding TotalText}" FontSize="15"
-                                       FontWeight="ExtraBold" VerticalAlignment="Bottom"
-                                       IsVisible="{Binding HasTotal}" />
-                            <TextBlock Text="без доставки" FontSize="10.5"
-                                       Foreground="{DynamicResource TextFaint}"
-                                       VerticalAlignment="Bottom" Margin="0,0,0,1"
-                                       IsVisible="{Binding HasTotal}" />
+                            <StackPanel Orientation="Horizontal" Spacing="5"
+                                        VerticalAlignment="Bottom"
+                                        IsVisible="{Binding HasTotal}">
+                                <TextBlock Text="{Binding TotalText}" FontSize="15"
+                                           FontWeight="ExtraBold" LetterSpacing="-0.3"
+                                           Foreground="{DynamicResource TextStrong}"
+                                           VerticalAlignment="Bottom" />
+                                <TextBlock Text="без доставки" FontSize="10.5"
+                                           Foreground="{DynamicResource TextFaint}"
+                                           VerticalAlignment="Bottom" />
+                            </StackPanel>
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
-                                    VerticalAlignment="Center">
+                                    VerticalAlignment="Center" Margin="16,0,0,0">
                             <Border Background="{DynamicResource StatusWarnFill}"
                                     BorderBrush="{DynamicResource StatusWarnBorder}"
                                     BorderThickness="1" CornerRadius="999" Height="26"
@@ -208,33 +289,37 @@
                          only say what is wrong with its own books, and a customer reading four
                          cards would have to find them; the plate names them and its button goes
                          to the group. -->
-                    <Border CornerRadius="14" Padding="16,13"
+                    <Border CornerRadius="14" Padding="16,12"
                             Background="{DynamicResource StatusWarnFill}"
                             BorderBrush="{DynamicResource StatusWarnBorder}" BorderThickness="1"
                             IsVisible="{Binding HasProblemAlert}">
                         <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Path Width="17" Height="17" Stretch="Uniform" StrokeThickness="1.6"
+                            <!-- The mark is centred on the plate, as the prototype's flex row
+                                 centres it; it sat two pixels down when it was top-aligned. -->
+                            <Path Width="18" Height="18" Stretch="Uniform" StrokeThickness="1.6"
                                   StrokeLineCap="Round" StrokeJoin="Round"
-                                  VerticalAlignment="Top" Margin="0,2,0,0"
+                                  VerticalAlignment="Center" Margin="0,0,12,0"
                                   Stroke="{DynamicResource StatusWarnInk}"
                                   Data="M12 3.4 21 19.6H3zM12 9.6v4.2M12 16.9v.1" />
 
-                            <StackPanel Grid.Column="1" Margin="12,0,16,0">
+                            <StackPanel Grid.Column="1" Margin="0,0,12,0" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding AlertTitle}" FontSize="12.5"
-                                           FontWeight="Bold"
+                                           FontWeight="ExtraBold"
                                            Foreground="{DynamicResource StatusWarnInk}"
                                            TextWrapping="Wrap" />
                                 <TextBlock Text="{Binding AlertText}" FontSize="11.5"
-                                           Margin="0,3,0,0" LineHeight="18"
+                                           Margin="0,2,0,0" LineHeight="17"
                                            Foreground="{DynamicResource TextMuted}"
                                            TextWrapping="Wrap" />
                             </StackPanel>
 
-                            <Button Grid.Column="2" Classes="soft" Padding="12,8"
+                            <Button Grid.Column="2" Classes="pageGhost"
                                     VerticalAlignment="Center"
                                     AutomationProperties.Name="Показать проблемные книги"
                                     Click="OnShowProblem">
-                                <TextBlock Text="Показать" VerticalAlignment="Center" />
+                                <TextBlock Text="Показать" VerticalAlignment="Center"
+                                           LetterSpacing="-0.13"
+                                           Foreground="{Binding $parent[Button].Foreground}" />
                             </Button>
                         </Grid>
                     </Border>
@@ -262,6 +347,7 @@
 
                                     <!-- ===================== the group of books ================== -->
                                     <Border Grid.Column="0" Name="BooksCard" Classes="card" Padding="0"
+                                            Classes.selected="{Binding IsSelected}"
                                             HorizontalAlignment="Stretch"
                                             Opacity="{Binding CardOpacity}">
                                         <Grid RowDefinitions="Auto,Auto,Auto">
@@ -269,19 +355,20 @@
                                             <!-- the head: which group, how big, in what state, and
                                                  the one switch that takes it out of the run -->
                                             <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto"
-                                                  Margin="18,15,18,14">
+                                                  Margin="18,15,18,14"
+                                                  Background="Transparent" Cursor="Hand"
+                                                  PointerPressed="OnSelectGroup">
 
                                                 <!-- The group's number in its own square, as the
-                                                     mockup marks a card's place in the order. -->
-                                                <Border Width="30" Height="30" CornerRadius="9"
-                                                        VerticalAlignment="Center"
-                                                        Background="{DynamicResource Slate100}"
-                                                        BorderBrush="{DynamicResource Slate200}"
-                                                        BorderThickness="1">
-                                                    <TextBlock Text="{Binding Number}" Classes="t11ExtraBold"
+                                                     mockup marks a card's place in the order: two
+                                                     digits, 01 and 02, not 1 and 2. -->
+                                                <Border Classes="groupNo"
+                                                        Classes.selected="{Binding IsSelected}"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding NumberText}"
+                                                               FontSize="11.5" FontWeight="ExtraBold"
                                                                HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"
-                                                               Foreground="{DynamicResource Slate500}" />
+                                                               VerticalAlignment="Center" />
                                                 </Border>
 
                                                 <StackPanel Grid.Column="1" Margin="11,0,12,0"
