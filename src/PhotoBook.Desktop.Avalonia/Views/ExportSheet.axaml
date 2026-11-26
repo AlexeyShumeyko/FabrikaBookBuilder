@@ -1,0 +1,279 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PhotoBook.Shell.Views.ExportSheet"
+             AutomationProperties.Name="Параметры экспорта"
+             Focusable="True">
+
+    <!--
+        The parameters of an export, drawn as the prototype draws the panel, and laid over the
+        page rather than opened as a window of its own.
+
+        A window cannot blur what stands behind it. This program's answer is the sheet: the
+        page under the panel is dimmed and blurred by the shell, which is what says the panel
+        belongs to this program and is on top of it. The delete question and the folder picker
+        are drawn the same way.
+
+        Numbers, from the prototype's #modal-export:
+
+            card        590 wide, radius 22, the modal surface, a hairline, two brown descents
+            head        26/22, a 44 gold tile and a hairline under it
+            title       19 extra bold      subtitle 12, the faint ink
+            body        26/22/26/24, the field boxes, a hint under each
+            field       radius 12, padding 13/11, the card's quiet wash and hairline
+            tag         «Фиксировано», 10 bold, the faint ink, a pill
+            foot        the sunken tray, 24/16, the quiet answer and the gold one
+
+        The card rises fourteen pixels and settles from ninety-eight and a half percent over a
+        quarter of a second, which is the prototype's modalIn. Transitions on the card rather
+        than a storyboard, so the panel can be taken down at any time without leaving an
+        animation running.
+    -->
+    <Border x:Name="Card" Width="590" CornerRadius="22" ClipToBounds="True"
+            VerticalAlignment="Center"
+            Background="{DynamicResource SurfaceModal}"
+            BorderBrush="{DynamicResource ModalEdge}" BorderThickness="1"
+            BoxShadow="{DynamicResource ModalShadow}"
+            Opacity="0" RenderTransform="translate(0px,14px) scale(0.985)">
+        <Border.Transitions>
+            <Transitions>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.24"
+                                               Easing="CubicEaseOut" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.24" Easing="CubicEaseOut" />
+            </Transitions>
+        </Border.Transitions>
+
+        <Grid RowDefinitions="Auto,Auto,Auto">
+
+            <!-- the head: what this panel is, with the export mark on the gold -->
+            <Border Grid.Row="0" Padding="26,22"
+                    BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+
+                    <Border Width="44" Height="44" CornerRadius="12"
+                            Background="{DynamicResource ActionFill}"
+                            BorderBrush="{DynamicResource ActionBorder}" BorderThickness="1"
+                            BoxShadow="{DynamicResource ActionShadow}">
+                        <Path Width="21" Height="21" Stretch="Uniform" StrokeThickness="1.8"
+                              StrokeLineCap="Round" StrokeJoin="Round"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Stroke="{DynamicResource ActionInk}"
+                              Data="M12 15.2V4.2 M7.9 8.3 12 4.2l4.1 4.1 M3.9 14.2v3a2.6 2.6 0 0 0 2.6 2.6h11a2.6 2.6 0 0 0 2.6-2.6v-3" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="Параметры экспорта" Classes="t19ExtraBold" />
+                        <TextBlock Text="Проверьте настройки перед выгрузкой книг"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextFaint}" />
+                    </StackPanel>
+
+                    <Button Grid.Column="2" Classes="modalClose" Click="OnCloseClick"
+                            AutomationProperties.Name="Закрыть"
+                            ToolTip.Tip="Закрыть">
+                        <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.5"
+                              StrokeLineCap="Round" StrokeJoin="Round"
+                              Stroke="{DynamicResource TextMuted}"
+                              Data="M6 6l12 12M18 6L6 18" />
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- ============================== body ============================== -->
+            <StackPanel Grid.Row="1" Margin="26,22,26,24" Spacing="18">
+
+                <!-- what the run comes to, in the panel's own field boxes -->
+                <Grid ColumnDefinitions="*,10,*">
+                    <Border Grid.Column="0" Background="{DynamicResource FieldFill}"
+                            BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1"
+                            CornerRadius="12" Padding="14,11">
+                        <StackPanel>
+                            <TextBlock Text="Книг" Classes="t10"
+                                       Foreground="{DynamicResource TextFaint}" />
+                            <TextBlock x:Name="BooksValue" Text="0" Classes="t20Bold"
+                                       Margin="0,3,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Background="{DynamicResource FieldFill}"
+                            BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1"
+                            CornerRadius="12" Padding="14,11">
+                        <StackPanel>
+                            <TextBlock x:Name="FilesCaption" Text="Файлов" Classes="t10"
+                                       Foreground="{DynamicResource TextFaint}" />
+                            <TextBlock x:Name="FilesValue" Text="0" Classes="t20Bold"
+                                       Margin="0,3,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- the naming rule: fixed, and said before it is used -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Имена файлов" FontSize="12.5" FontWeight="Bold"
+                               Foreground="{DynamicResource TextDefault}"
+                               Margin="2,0,0,0" />
+
+                    <Border Background="{DynamicResource FieldFill}"
+                            BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1"
+                            CornerRadius="12" Padding="13,11">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="001-00.jpg, 001-01.jpg, 001-02.jpg …"
+                                       FontFamily="Consolas" FontSize="11.5"
+                                       Foreground="{DynamicResource TextDefault}"
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" />
+
+                            <!--
+                                A tag rather than a green tick: the rule is not a result that
+                                passed, it is a promise the program keeps, and a tick beside
+                                it read as something that had already been checked.
+                            -->
+                            <Border Grid.Column="1" Height="20" CornerRadius="999"
+                                    Padding="9,0" Margin="10,0,0,0"
+                                    BorderThickness="1"
+                                    Background="{DynamicResource SunkenFaint}"
+                                    BorderBrush="{DynamicResource BorderDefault}"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="Фиксировано" FontSize="10" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextFaint}"
+                                           VerticalAlignment="Center" />
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Text="Формат фиксирован — сайт приёма загружает файлы по нему."
+                               Classes="t10"
+                               Foreground="{DynamicResource TextFaint}"
+                               Margin="2,0,0,0" />
+                </StackPanel>
+
+                <!-- where it goes -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Папка назначения" FontSize="12.5" FontWeight="Bold"
+                               Foreground="{DynamicResource TextDefault}"
+                               Margin="2,0,0,0" />
+
+                    <Grid ColumnDefinitions="*,8,Auto">
+                        <Border Grid.Column="0" Background="{DynamicResource FieldFill}"
+                                BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1"
+                                CornerRadius="12" Padding="12,0" Height="40">
+                            <TextBlock x:Name="FolderText" Classes="t12"
+                                       FontFamily="Consolas" FontSize="11.5"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" />
+                        </Border>
+
+                        <Button Grid.Column="2" Classes="outline" Padding="14,9"
+                                AutomationProperties.Name="Обзор"
+                                Click="OnBrowseClick">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <Path Width="14" Height="14" Stretch="Uniform"
+                                      Stroke="{DynamicResource TextFaint}" StrokeThickness="1.8"
+                                      StrokeJoin="Round"
+                                      VerticalAlignment="Center"
+                                      Data="M 3 7.2 A 1.4 1.4 0 0 1 4.4 5.8 H 9.2 L 11.4 8 H 19.6 A 1.4 1.4 0 0 1 21 9.4 V 17.6 A 1.4 1.4 0 0 1 19.6 19 H 4.4 A 1.4 1.4 0 0 1 3 17.6 Z" />
+                                <TextBlock Text="Обзор" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Text="Каждый экспорт получает свою папку — файлы прошлой выгрузки не перезаписываются."
+                               Classes="t10"
+                               Foreground="{DynamicResource TextFaint}"
+                               TextWrapping="Wrap"
+                               Margin="2,0,0,0" />
+                </StackPanel>
+
+                <!--
+                    Only where it means something. A shared spread in the combined mode is one
+                    file for several books, so it cannot be put in one book's folder - the
+                    option is absent there rather than present and refused.
+                -->
+                <Border x:Name="SubfoldersBox" IsVisible="False"
+                        Background="{DynamicResource FieldFill}"
+                        BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1"
+                        CornerRadius="12" Padding="14,12">
+                    <StackPanel Spacing="4">
+                        <CheckBox x:Name="SubfoldersCheck" MinHeight="0"
+                                  AutomationProperties.Name="Создавать отдельную папку для каждого альбома">
+                            <TextBlock Text="Создавать отдельную папку для каждого альбома"
+                                       Classes="t12Semi"
+                                       Foreground="{DynamicResource TextDefault}"
+                                       Margin="6,0,0,0"
+                                       VerticalAlignment="Center" />
+                        </CheckBox>
+                        <TextBlock Text="По умолчанию выключено: все книги складываются в одну папку. Включайте, только если загрузка на сайт это допускает."
+                                   Classes="t10"
+                                   Foreground="{DynamicResource TextFaint}"
+                                   TextWrapping="Wrap"
+                                   Margin="24,0,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!--
+                    Why the export did not happen. The reason the service returned is a
+                    sentence, so it gets a panel that wraps and stays up until the window is
+                    closed or the export is tried again.
+                -->
+                <Border x:Name="ErrorPanel" IsVisible="False"
+                        Background="{DynamicResource Red50}"
+                        BorderBrush="{DynamicResource Red200}" BorderThickness="1"
+                        CornerRadius="12" Padding="14,12">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Экспорт не выполнен" Classes="t12Semi"
+                                   Foreground="{DynamicResource Red700}" />
+                        <TextBlock x:Name="ErrorText" Classes="t12"
+                                   Foreground="{DynamicResource Red700}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!-- progress, shown only while it is running -->
+                <StackPanel x:Name="ProgressPanel" IsVisible="False" Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="Копирование файлов…" Classes="t12Semi"
+                                   VerticalAlignment="Center" />
+                        <TextBlock x:Name="ProgressText" Grid.Column="1" Classes="t12Semi"
+                                   Foreground="{DynamicResource Brand600}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                    <ProgressBar x:Name="Progress" Minimum="0" Maximum="100" Value="0"
+                                 Height="8" CornerRadius="4"
+                                 Background="{DynamicResource Slate200}"
+                                 Foreground="{DynamicResource Brand600}" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ============================= footer ============================= -->
+            <Border Grid.Row="2" Padding="24,16"
+                    Background="{DynamicResource ModalFootFill}"
+                    BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,1,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+                    <!--
+                        The panel's quiet answer, the same control the delete question uses.
+                        It used to be the card's outline button, whose fill is opaque at rest
+                        and a wash under the pointer: fading one into the other flashed.
+                    -->
+                    <Button x:Name="CancelButton" Classes="soft"
+                            AutomationProperties.Name="Отмена"
+                            Click="OnCancelClick"
+                            Content="Отмена" />
+
+                    <Button x:Name="ExportButton" Classes="primary"
+                            AutomationProperties.Name="Начать экспорт"
+                            Click="OnExportClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Path Width="14" Height="14" Stretch="Uniform" StrokeThickness="1.8"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  VerticalAlignment="Center"
+                                  Stroke="{Binding $parent[Button].Foreground}"
+                                  Data="M12 15.2V4.2 M7.9 8.3 12 4.2l4.1 4.1 M3.9 14.2v3a2.6 2.6 0 0 0 2.6 2.6h11a2.6 2.6 0 0 0 2.6-2.6v-3" />
+                            <TextBlock Text="Начать экспорт" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

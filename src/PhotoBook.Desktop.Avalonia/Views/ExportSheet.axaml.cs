@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media.Transformation;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using PhotoBook.Application;
 using PhotoBook.Core;
 using PhotoBook.Infrastructure;
@@ -24,29 +24,27 @@ namespace PhotoBook.Shell.Views;
 /// new one and the name of that folder is the only irreversible thing on this screen.
 /// </para>
 /// <para>
-/// The markup is a card from the program's own design system rather than a page of borders
-/// written by hand in a constructor: the first version drew its own greys, its own radii and
-/// its own type sizes, and the result read as a window from another program that happened to
-/// be open. What is left in this file is only what changes while the window is up.
+/// A panel over the page rather than a window of its own: the page behind it is dimmed and
+/// blurred, which is what says the panel is on top and belongs to this program. A window
+/// cannot blur what stands behind it, and a frameless white rectangle on a white page had no
+/// edge to say it was in front either. Escape and the close button mean cancel, Enter means
+/// export, and the answer - the folder written to - is the only thing the panel completes
+/// with. The dimming and blurring of the page behind belongs to the shell.
+/// </para>
+/// <para>
+/// What is left in this file is only what changes while the panel is up; the markup is the
+/// program's own design system rather than a page of borders written by hand.
 /// </para>
 /// </remarks>
-public partial class ExportWindow : Window
+public partial class ExportSheet : OverlaySheet<string>
 {
     private readonly Project _project;
     private readonly IExportService _export;
 
     private string _targetFolder;
     private bool _running;
-    private bool _succeeded;
-    private string _exportedFolder = string.Empty;
 
-    /// <summary>The folder the export went to, once it has.</summary>
-    public string ExportedFolder => _exportedFolder;
-
-    /// <summary>Whether the export finished. A window that was closed is not a failure.</summary>
-    public bool Exported => _succeeded;
-
-    public ExportWindow(Project project, IExportService exportService, string? defaultFolder = null)
+    public ExportSheet(Project project, IExportService exportService, string? defaultFolder = null)
     {
         InitializeComponent();
 
@@ -65,10 +63,31 @@ public partial class ExportWindow : Window
         // that mode's naming is the whole point.
         SubfoldersBox.IsVisible = _project.Mode != AppMode.Combined;
 
-        KeyDown += OnWindowKeyDown;
+        AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
     }
 
-    // ------------------------------------------------------------------- the window --
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        // Focusable so that Escape and Enter reach it without the person having to click
+        // something first. The first attempt usually finds the layer still hidden - the host
+        // puts the panel in before it shows the layer - so it is made again once the frame is
+        // up; a panel that never takes focus swallows neither key, and the button behind it
+        // keeps the focus it was pressed with.
+        Focus();
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                Card.RenderTransform = TransformOperations.Parse("translate(0px,0px) scale(1)");
+                Card.Opacity = 1;
+                Focus();
+            },
+            DispatcherPriority.Loaded);
+    }
+
+    // ------------------------------------------------------------------- the panel --
 
     private void ShowTargetFolder()
     {
@@ -96,23 +115,28 @@ public partial class ExportWindow : Window
             return n;
         }) ?? 0;
 
-    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
+    private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Escape) return;
-        if (_running) return;
-
-        Close();
-        e.Handled = true;
+        if (e.Key == Key.Escape)
+        {
+            if (!_running) Leave();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Enter)
+        {
+            if (!_running) _ = RunAsync();
+            e.Handled = true;
+        }
     }
 
     private void OnCloseClick(object? sender, RoutedEventArgs e)
     {
-        if (!_running) Close();
+        if (!_running) Leave();
     }
 
     private void OnCancelClick(object? sender, RoutedEventArgs e)
     {
-        if (!_running) Close();
+        if (!_running) Leave();
     }
 
     // -------------------------------------------------------------------- actions --
@@ -136,8 +160,9 @@ public partial class ExportWindow : Window
 
     private async Task<List<string>?> PickFoldersAsync()
     {
-        var window = Owner as Window ?? MainWindowOf();
-        var storage = window?.StorageProvider;
+        // The panel lives in the window rather than owning one, so the picker hangs off the
+        // top level it was put in - the window this sheet is standing over.
+        var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
         if (storage is null || !storage.CanOpen) return null;
 
         var picked = await storage.OpenFolderPickerAsync(new FolderPickerOpenOptions
@@ -176,22 +201,18 @@ public partial class ExportWindow : Window
 
             var result = await _export.ExportProjectAsync(_project, _targetFolder, options);
 
-            _succeeded = result.IsSuccess;
-            _exportedFolder = result.IsSuccess ? _targetFolder : string.Empty;
-
             if (result.IsSuccess)
             {
-                Close(_targetFolder);
+                Finish(_targetFolder);
                 return;
             }
 
             // The service answers with a sentence naming the file, the folder or the disk; the
-            // window shows it rather than the word "Не удалось" it used to leave behind.
+            // panel shows it rather than the word "Не удалось" it used to leave behind.
             ShowError(result.Error ?? "Не удалось выгрузить файлы.");
         }
         catch (Exception ex)
         {
-            _succeeded = false;
             ShowError("Не удалось выгрузить: " + ex.Message);
         }
         finally
@@ -214,7 +235,4 @@ public partial class ExportWindow : Window
         Progress.Value = value;
         ProgressText.Text = $"{value:0}%";
     }
-
-    private static Window? MainWindowOf() =>
-        (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
 }

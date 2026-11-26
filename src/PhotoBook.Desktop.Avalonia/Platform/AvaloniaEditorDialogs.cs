@@ -42,8 +42,17 @@ namespace PhotoBook.Shell.Platform
 
         public async Task<string?> AskToExport(Project project)
         {
-            var window = new ExportWindow(project, _export);
-            return await window.ShowDialog<string>(OwnerOf(() => window));
+            // A panel over the page rather than a second window, for the same reason the
+            // delete question and the folder picker are: the page behind it dims and blurs,
+            // which is what says the panel is on top of this program's own screen.
+            var main = MainWindow() as MainWindow;
+            if (main is null)
+            {
+                throw new InvalidOperationException(
+                    "Параметры экспорта открываются поверх окна программы, а окна нет.");
+            }
+
+            return await main.ShowSheetAsync(new ExportSheet(project, _export));
         }
 
         public async Task ShowExportSucceeded(string outputFolder)
