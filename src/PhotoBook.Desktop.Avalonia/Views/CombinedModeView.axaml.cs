@@ -136,7 +136,7 @@ public partial class CombinedModeView : UserControl, IPendingRename
 
         ShowNameAsText();
 
-        var newName = ProjectNameTextBox.Text?.Trim();
+        var newName = ProjectNameRule.Limit(ProjectNameTextBox.Text?.Trim());
         if (string.IsNullOrEmpty(newName) || newName == model.ProjectName) return;
 
         // The record first and the property second: the header shows the record's name, and

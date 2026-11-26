@@ -206,7 +206,7 @@ namespace PhotoBook.Presentation.ViewModels
                 return CurrentProjectInfo;
 
             var name = string.IsNullOrWhiteSpace(ProjectName)
-                ? $"Новый проект {DateTime.Now:yyyy-MM-dd HH:mm}"
+                ? ProjectNameRule.Unnamed(DateTime.Now)
                 : ProjectName!;
 
             var info = await _projectListService.CreateProjectAsync(AppMode.UniqueFolders, name);
@@ -214,6 +214,11 @@ namespace PhotoBook.Presentation.ViewModels
 
             CurrentProjectInfo = info;
             OnPropertyChanged(nameof(CurrentProjectInfo));
+
+            // The bar reads the name off the screen's own property, not off the record, so a
+            // project nobody named kept saying "Новый проект" while the list already showed
+            // its date and time. Taking the record's name is what makes the two agree.
+            ProjectName = info.Name;
             return info;
         }
 

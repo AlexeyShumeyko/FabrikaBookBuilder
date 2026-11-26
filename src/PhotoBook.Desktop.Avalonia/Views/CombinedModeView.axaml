@@ -436,6 +436,7 @@
                                        Cursor="Hand" PointerPressed="OnProjectNameClick" />
                             <TextBox Grid.Column="1" Name="ProjectNameTextBox"
                                      MinWidth="200" MaxWidth="300" HorizontalAlignment="Left"
+                                     MaxLength="25"
                                      Margin="8,0,0,0" VerticalAlignment="Center" IsVisible="False"
                                      KeyDown="OnProjectNameKeyDown" LostFocus="OnProjectNameLostFocus" />
                             <Button Grid.Column="2" Classes="pencil" Margin="8,0,0,0"

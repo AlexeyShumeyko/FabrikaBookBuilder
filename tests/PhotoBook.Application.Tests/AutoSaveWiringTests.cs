@@ -79,7 +79,29 @@ public class AutoSaveWiringTests
         Assert.Contains("/photos/new.jpg", saved.SourcePaths);
     }
 
-    private static CombinedModeViewModel CombinedModel(IProjectRepository repository)
+    [Fact]
+    public async Task A_project_nobody_named_is_called_by_the_moment_it_started()
+    {
+        var repository = new RecordingProjectRepository();
+        var projectList = new RecordingProjectListService();
+        var model = CombinedModel(repository, projectList);
+
+        model.Books.Add(new Book { BookIndex = 1 });
+        await repository.nextSaveAsync();
+
+        var name = Assert.Single(projectList.CreatedNames);
+
+        Assert.Matches(@"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$", name);
+        Assert.True(name.Length <= ProjectNameRule.MaxLength);
+
+        // The bar reads the screen's own property: a record that exists and a bar that still
+        // says "Новый проект" is the pair this keeps together.
+        Assert.Equal(name, model.ProjectName);
+    }
+
+    private static CombinedModeViewModel CombinedModel(
+        IProjectRepository repository,
+        IProjectListService? projectList = null)
         => new(
             fileService: null!,
             files: null!,
@@ -88,7 +110,7 @@ public class AutoSaveWiringTests
             exportService: null!,
             loggingService: new SilentLog(),
             projects: repository,
-            projectListService: new RecordingProjectListService(),
+            projectListService: projectList ?? new RecordingProjectListService(),
             dialogs: null!,
             images: new NullImageCache(),
             ui: new ImmediateUiThread(),
@@ -151,6 +173,9 @@ public class AutoSaveWiringTests
 
     private sealed class RecordingProjectListService : IProjectListService
     {
+        /// <summary>The names the editor asked a new project to be called, in order.</summary>
+        public List<string> CreatedNames { get; } = new();
+
         public Task<List<ProjectInfo>> GetProjectsAsync(AppMode mode)
             => Task.FromResult(new List<ProjectInfo>());
 
@@ -158,12 +183,16 @@ public class AutoSaveWiringTests
             => Task.FromResult(new List<ProjectInfo>());
 
         public Task<ProjectInfo?> CreateProjectAsync(AppMode mode, string name)
-            => Task.FromResult<ProjectInfo?>(new ProjectInfo
+        {
+            CreatedNames.Add(name);
+
+            return Task.FromResult<ProjectInfo?>(new ProjectInfo
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = name,
                 Mode = mode
             });
+        }
 
         public Task<Result> SaveProjectInfoAsync(ProjectInfo projectInfo) => Task.FromResult(Result.Ok());
 

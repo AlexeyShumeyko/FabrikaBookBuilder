@@ -114,7 +114,7 @@ public partial class UniqueFoldersView : UserControl, IPendingRename
 
         ShowProjectNameAsText();
 
-        var newName = ProjectNameTextBox.Text?.Trim();
+        var newName = ProjectNameRule.Limit(ProjectNameTextBox.Text?.Trim());
         if (string.IsNullOrEmpty(newName) || newName == editor.ProjectName) return;
 
         if (editor.CurrentProjectInfo is { } info)

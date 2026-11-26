@@ -242,7 +242,7 @@ namespace PhotoBook.Application
                 var projectInfo = new ProjectInfo
                 {
                     Id = projectId,
-                    Name = string.IsNullOrWhiteSpace(name) ? $"Проект {now:yyyy-MM-dd HH:mm}" : name,
+                    Name = string.IsNullOrWhiteSpace(name) ? ProjectNameRule.Unnamed(now) : name,
                     Mode = mode,
                     Status = ProjectStatus.NotFilled,
                     BookCount = 0,
