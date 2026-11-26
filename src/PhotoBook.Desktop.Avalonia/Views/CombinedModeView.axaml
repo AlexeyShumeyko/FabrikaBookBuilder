@@ -436,6 +436,7 @@
                                        Cursor="Hand" PointerPressed="OnProjectNameClick" />
                             <TextBox Grid.Column="1" Name="ProjectNameTextBox"
                                      MinWidth="200" MaxWidth="300" HorizontalAlignment="Left"
+                                     MaxLength="25"
                                      Margin="8,0,0,0" VerticalAlignment="Center" IsVisible="False"
                                      KeyDown="OnProjectNameKeyDown" LostFocus="OnProjectNameLostFocus" />
                             <Button Grid.Column="2" Classes="pencil" Margin="8,0,0,0"
@@ -559,20 +560,6 @@
                     -->
                     <Border Width="1" Height="38" Margin="2,0,14,0" VerticalAlignment="Bottom"
                             Background="{DynamicResource BorderStrong}" />
-
-                    <Button Classes="ghost panelGhost" VerticalAlignment="Bottom" Margin="0,0,12,0"
-                            AutomationProperties.Name="Сохранить проект"
-                            ToolTip.Tip="Сохранить проект и вернуться к списку проектов"
-                            IsEnabled="{Binding CanSaveProject}"
-                            Command="{Binding SaveProjectCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <Path Width="12" Height="12" Stretch="Uniform" StrokeThickness="1.8"
-                                  StrokeLineCap="Round" StrokeJoin="Round"
-                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                  Data="M12 3v11M7.5 10l4.5 4.5L16.5 10M4 20h16" />
-                            <TextBlock Text="Сохранить проект" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
 
                     <Button Classes="soft" VerticalAlignment="Bottom" Margin="0,0,12,0"
                             AutomationProperties.Name="Экспортировать"
@@ -710,12 +697,21 @@
                                             PointerPressed="OnFileItemClick"
                                             ToolTip.Tip="{Binding Path}">
                                         <Grid ColumnDefinitions="Auto,*,Auto">
-                                            <Border Grid.Column="0" Width="40" Height="40"
+                                            <!--
+                                                Fitted, not filled: a project can be 20x20, 25x25 or
+                                                anything else, so the frame is shown whole inside the
+                                                tile whatever its shape, and nothing is cropped to
+                                                suit one format. The copy is decoded at twice the
+                                                tile's longer side, which is more than any shape can
+                                                draw here, so the fit never stretches pixels that
+                                                were not decoded.
+                                            -->
+                                            <Border Grid.Column="0" Width="56" Height="40"
                                                     CornerRadius="8" ClipToBounds="True"
                                                     Background="{DynamicResource Slate100}">
-                                                <Image Stretch="UniformToFill"
+                                                <Image Stretch="Uniform"
                                                        RenderOptions.BitmapInterpolationMode="HighQuality"
-                                                       Source="{Binding Path, Converter={StaticResource FilePathToBitmap}, ConverterParameter=44}" />
+                                                       Source="{Binding Path, Converter={StaticResource FilePathToBitmap}, ConverterParameter=112}" />
                                             </Border>
 
                                             <StackPanel Grid.Column="1" Margin="8,0,8,0"
@@ -1340,6 +1336,7 @@
                                                     <Border Name="SlotCard" Classes="slotCard"
                                                             Margin="0,0,16,16"
                                                             PointerPressed="OnSlotPressed"
+                                                            DoubleTapped="OnSlotDoubleTapped"
                                                             PointerEntered="OnSlotPointerEntered"
                                                             PointerExited="OnSlotPointerExited"
                                                             BorderBrush="{Binding Converter={StaticResource PageCaption}, ConverterParameter=border}"

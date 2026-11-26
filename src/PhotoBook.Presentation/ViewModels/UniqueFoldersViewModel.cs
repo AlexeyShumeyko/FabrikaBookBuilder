@@ -35,6 +35,15 @@ namespace PhotoBook.Presentation.ViewModels
         private string? _errorMessage;
         private Book? _selectedBook;
 
+        /// <summary>Writes the project a moment after the last change - there is no save button.</summary>
+        private readonly AutoSave _autoSave;
+
+        /// <summary>Set while a project is being handed over or reset, so loading does not save.</summary>
+        private bool _suppressAutoSave;
+
+        /// <summary>One handler per book, so a page change reaches the autosave.</summary>
+        private readonly Dictionary<Book, System.ComponentModel.PropertyChangedEventHandler> _bookWatchers = new();
+
         /// <summary>
         /// Count for bindings. See the CollectionChanged subscription in the constructor:
         /// binding straight to <see cref="Books"/> would not update when books are added.
@@ -42,17 +51,6 @@ namespace PhotoBook.Presentation.ViewModels
         public int BooksCount => Books.Count;
 
         public bool CanExport => Project?.IsValid ?? false;
-
-        /// <summary>
-        /// Whether the panel's save button is live: a project with books in it, as the
-        /// prototype draws it.
-        /// </summary>
-        /// <remarks>
-        /// Only the button reads this. The command stays executable, because an empty project
-        /// can still be the one a user wants to keep, and the flows that save without the
-        /// panel asking would be broken by disabling it.
-        /// </remarks>
-        public bool CanSaveProject => Books.Count > 0;
 
         /// <summary>
         /// Counts for the project panel: "2 обложек · 6 разворотов · 2 папок".
@@ -93,16 +91,7 @@ namespace PhotoBook.Presentation.ViewModels
         public ProjectInfo? CurrentProjectInfo
         {
             get => _currentProjectInfo;
-            private set
-            {
-                if (SetProperty(ref _currentProjectInfo, value))
-                {
-                    if (SaveProjectCommand is AsyncRelayCommand saveCmd)
-                    {
-                        saveCmd.NotifyCanExecuteChanged();
-                    }
-                }
-            }
+            private set => SetProperty(ref _currentProjectInfo, value);
         }
 
         public UniqueFoldersViewModel(
@@ -136,6 +125,8 @@ namespace PhotoBook.Presentation.ViewModels
             _loggingService = loggingService;
             _projectListService = projectListService;
 
+            _autoSave = new AutoSave(ui, AutosaveNowAsync);
+
             Books = new ObservableCollection<Book>();
             LoadFoldersCommand = new AsyncRelayCommand(LoadFoldersAsync);
             SelectCoverCommand = new AsyncRelayCommand<Book?>(SelectCoverAsync);
@@ -146,24 +137,7 @@ namespace PhotoBook.Presentation.ViewModels
                 () => OrderRequested?.Invoke(this, EventArgs.Empty),
                 () => Project?.IsValid ?? false);
             ExportWithFolderCommand = new AsyncRelayCommand(ExportWithFolderAsync, () => Project?.IsValid ?? false);
-            BackCommand = new AsyncRelayCommand(async () =>
-            {
-                if (CurrentProjectInfo != null)
-                {
-                    var wasSaved = !string.IsNullOrEmpty(CurrentProjectInfo.FilePath) &&
-                                   System.IO.File.Exists(CurrentProjectInfo.FilePath);
-
-                    // Nothing was saved and there is nothing in it, so it goes: an empty
-                    // project in the list is a card that opens onto nothing.
-                    if (!wasSaved && (Project == null || Project.Books == null || Project.Books.Count == 0))
-                    {
-                        await _projectListService.DeleteProjectAsync(CurrentProjectInfo);
-                    }
-                }
-
-                RequestBackToProjectList();
-            });
-            SaveProjectCommand = new AsyncRelayCommand(SaveAndCloseAsync);
+            BackCommand = new AsyncRelayCommand(BackAsync);
             DeleteBookCommand = new RelayCommand<Book>(DeleteBook);
             ResetProjectCommand = new RelayCommand(ResetProject);
             ResetBookOrderCommand = new RelayCommand<Book>(ResetBookOrder);
@@ -177,11 +151,17 @@ namespace PhotoBook.Presentation.ViewModels
             // WPF only re-evaluates a binding when the SOURCE raises PropertyChanged.
             // An ObservableCollection growing is not enough, so counts are surfaced
             // explicitly for the empty state and the toolbar summary.
-            Books.CollectionChanged += (_, _) =>
+            Books.CollectionChanged += (_, e) =>
             {
+                if (e.NewItems != null)
+                    foreach (var book in e.NewItems.OfType<Book>()) WatchBook(book);
+
+                if (e.OldItems != null)
+                    foreach (var book in e.OldItems.OfType<Book>()) UnwatchBook(book);
+
                 OnPropertyChanged(nameof(BooksCount));
                 OnPropertyChanged(nameof(BooksSummary));
-                OnPropertyChanged(nameof(CanSaveProject));
+                RequestAutoSave();
             };
 
             PropertyChanged += (s, e) =>
@@ -192,15 +172,8 @@ namespace PhotoBook.Presentation.ViewModels
                     // this can arrive off the UI thread - where a command cannot be re-asked.
                     RunOnUi(RefreshExportState);
                 }
-                if (e.PropertyName == nameof(CurrentProjectInfo))
-                {
-                    RunOnUi(() =>
-                    {
-                        if (SaveProjectCommand is AsyncRelayCommand saveCmd)
-                            saveCmd.NotifyCanExecuteChanged();
-                    });
-                }
             };
+
         }
 
         /// <summary>
@@ -308,6 +281,8 @@ namespace PhotoBook.Presentation.ViewModels
                     {
                         CurrentProjectInfo.Name = value ?? string.Empty;
                     }
+
+                    RequestAutoSave();
                 }
             }
         }
@@ -327,7 +302,6 @@ namespace PhotoBook.Presentation.ViewModels
         public ICommand OrderOnSiteCommand { get; }
         public ICommand ExportWithFolderCommand { get; }
         public ICommand BackCommand { get; private set; }
-        public ICommand SaveProjectCommand { get; }
         public ICommand DeleteBookCommand { get; }
         public ICommand ResetProjectCommand { get; }
 

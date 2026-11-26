@@ -231,13 +231,24 @@ namespace PhotoBook.Presentation.ViewModels
 
         private void ResetProject()
         {
-            Project = null;
-            Books.Clear();
-            AvailableFiles.Clear();
-            ErrorMessage = null;
-            IsStructureConfirmed = false;
-            CurrentProjectInfo = null;
-            ProjectName = null;
+            // A pending write belongs to the project that is being closed. Letting it fire
+            // would write the emptied screen over it.
+            _autoSave.Cancel();
+            _suppressAutoSave = true;
+            try
+            {
+                Project = null;
+                Books.Clear();
+                AvailableFiles.Clear();
+                ErrorMessage = null;
+                IsStructureConfirmed = false;
+                CurrentProjectInfo = null;
+                ProjectName = null;
+            }
+            finally
+            {
+                _suppressAutoSave = false;
+            }
         }
 
         private void DeletePageFromAllBooks(Page? page)

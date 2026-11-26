@@ -25,7 +25,14 @@
         the card rather than with a storyboard so that the panel can be taken down at any time
         without leaving an animation running.
     -->
+    <!--
+        Centred and as tall as its own content, not the window's: the layer that hosts a
+        sheet stretches, because the folder picker is meant to take the whole window, and a
+        card without its own height is stretched with it - which left the question at the
+        top of a tall empty surface.
+    -->
     <Border x:Name="Card" Width="468" CornerRadius="22" ClipToBounds="True"
+            VerticalAlignment="Center"
             Background="{DynamicResource SurfaceModal}"
             BorderBrush="{DynamicResource ModalEdge}" BorderThickness="1"
             BoxShadow="{DynamicResource ModalShadow}"

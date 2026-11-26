@@ -91,6 +91,30 @@ namespace PhotoBook.Shell.Navigation
             _upload.NeedsSignIn += (_, _) => SignInRequested?.Invoke(this, EventArgs.Empty);
         }
 
+        /// <summary>
+        /// Writes the open project before its screen goes away. Fire-and-forget on purpose:
+        /// navigation is synchronous and the write does not have to finish before the next
+        /// screen is drawn - it only has to have started, and never outlive the model.
+        /// </summary>
+        private async void SaveSessionBeforeLeaving()
+        {
+            if (_sessionMode is not { } mode) return;
+
+            var editor = EditorFor(mode);
+            if (editor is null) return;
+
+            try
+            {
+                await editor.QuickSaveAsync();
+            }
+            catch (Exception ex)
+            {
+                // The editor has already put its own failure on screen; the journal keeps
+                // the rest. A tab switch must not turn into an unhandled exception.
+                _siteOrder.ShowMessage("Не удалось сохранить проект: " + ex.Message);
+            }
+        }
+
         private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName is nameof(UniqueFoldersViewModel.ProjectName)) ProjectNameChanged?.Invoke(this, EventArgs.Empty);
@@ -152,6 +176,11 @@ namespace PhotoBook.Shell.Navigation
             set
             {
                 bool changed = _currentMode != value;
+
+                // The screen is about to be replaced. The autosave would write a moment
+                // later anyway, but "a moment later" is exactly the window in which the
+                // project is still only in memory - so the write is started here.
+                if (changed) SaveSessionBeforeLeaving();
                 _previousMode = _currentMode;
                 _currentMode = value;
                 if (changed || _host?.Content is null) Show();
@@ -370,6 +399,10 @@ namespace PhotoBook.Shell.Navigation
 
         public void EndSession()
         {
+            // Leaving the editor for the project list is a navigation too, and it clears
+            // the session before the mode changes - so the save has to be asked for here.
+            SaveSessionBeforeLeaving();
+
             _sessionMode = null;
             CurrentMode = AppMode.ProjectList;
             ProjectChanged?.Invoke(this, EventArgs.Empty);

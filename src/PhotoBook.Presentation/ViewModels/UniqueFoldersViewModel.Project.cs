@@ -20,6 +20,22 @@ namespace PhotoBook.Presentation.ViewModels
 
         public void SetProject(Project? project, ProjectInfo projectInfo)
         {
+            // Loading raises the same notifications a real edit raises. Saving during that
+            // pass would rewrite the project that is being opened, with half of it in place.
+            _autoSave.Cancel();
+            _suppressAutoSave = true;
+            try
+            {
+                SetProjectCore(project, projectInfo);
+            }
+            finally
+            {
+                _suppressAutoSave = false;
+            }
+        }
+
+        private void SetProjectCore(Project? project, ProjectInfo projectInfo)
+        {
             Books.Clear();
             Project = null;
             ProjectName = null;
@@ -126,11 +142,6 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(Project));
             OnPropertyChanged(nameof(ProjectName));
 
-            if (SaveProjectCommand is AsyncRelayCommand saveCmd)
-            {
-                saveCmd.NotifyCanExecuteChanged();
-            }
-
             // Previews that already exist are attached first: the path is computed by one
             // helper now, rather than by three copies of the same formula in two view models.
             //
@@ -193,29 +204,6 @@ namespace PhotoBook.Presentation.ViewModels
                     });
                 }, "prewarm and warm thumbnails");
             }
-        }
-
-        /// <summary>
-        /// "Сохранить проект" in the project panel: writes the project and closes the
-        /// session, the same as the header button.
-        ///
-        /// This replaces a 60-line copy of the save routine that refused to work on a
-        /// project with no record yet ("Информация о проекте не найдена") - exactly the
-        /// project a user has just created and wants to keep. QuickSaveAsync creates the
-        /// record on demand and reports whether anything was written.
-        /// </summary>
-        private async Task SaveAndCloseAsync()
-        {
-            if (!await QuickSaveAsync())
-            {
-                ErrorMessage = "Не удалось сохранить проект.";
-                OnPropertyChanged(nameof(ErrorMessage));
-                return;
-            }
-
-            // The shell drops the project session on the way back - the mode tab goes
-            // back out with it.
-            RequestBackToProjectList();
         }
 
         /// <summary>

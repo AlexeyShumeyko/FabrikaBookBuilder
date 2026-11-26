@@ -34,6 +34,11 @@ namespace PhotoBook.Presentation.ViewModels
 
         private void ResetProject()
         {
+            // A pending write belongs to the project that is being closed. Letting it fire
+            // would write the emptied screen over it.
+            _autoSave.Cancel();
+            _suppressAutoSave = true;
+
             // Starting over: whatever was being prepared for the previous project is not
             // wanted any more.
             StopPreparing();
@@ -48,6 +53,8 @@ namespace PhotoBook.Presentation.ViewModels
             ErrorMessage = null;
             _editHistory.ClearHistory();
             _images.Invalidate(DecodedImageKind.Page);
+
+            _suppressAutoSave = false;
         }
 
         private void Undo()

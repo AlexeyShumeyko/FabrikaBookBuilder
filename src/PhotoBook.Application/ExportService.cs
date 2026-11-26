@@ -41,7 +41,23 @@ namespace PhotoBook.Application
                 // Build the full work list first so progress can be reported by file count
                 // instead of jumping in uneven steps while the copies run in parallel.
                 var work = new List<(string Source, string Destination)>();
-                var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                // Names are unique per destination folder, not per run. With a folder per book
+                // every folder is its own upload, so the same 001-01.jpg legitimately appears
+                // in each of them; one set for the whole run turned the second book's files
+                // into 001-01-2.jpg and so on.
+                var usedNames = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+
+                HashSet<string> NamesIn(string folder)
+                {
+                    if (!usedNames.TryGetValue(folder, out var names))
+                    {
+                        names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        usedNames[folder] = names;
+                    }
+
+                    return names;
+                }
 
                 // The combined run writes the smallest set the client's site accepts: one
                 // 000-FF file per position every book shares, and one KKK-FF file per book
@@ -50,10 +66,11 @@ namespace PhotoBook.Application
                 if (project.Mode == AppMode.Combined)
                 {
                     var plan = CombinedExportPlanner.Build(project, GenerateFileName);
+                    var combinedNames = NamesIn(outputFolder);
                     foreach (var entry in plan.Entries)
                     {
                         work.Add((entry.SourcePath,
-                                  System.IO.Path.Combine(outputFolder, UniqueName(entry.FileName, usedNames))));
+                                  System.IO.Path.Combine(outputFolder, UniqueName(entry.FileName, combinedNames))));
                     }
                 }
                 else
@@ -63,9 +80,16 @@ namespace PhotoBook.Application
                         var bookIndex = book.BookIndex;
                         var bookFolder = outputFolder;
 
+                        // The number the site reads. With a folder per book the folder holds a
+                        // run of one, and its files must say so: 004-00.jpg inside "004 Book"
+                        // made the site read four books, three of them empty. Flat exports keep
+                        // the run's own numbering.
+                        var fileBookIndex = bookIndex;
+
                         if (options.PerBookSubfolders)
                         {
                             bookFolder = System.IO.Path.Combine(outputFolder, SanitizeFolderName($"{bookIndex:D3} {book.Name}"));
+                            fileBookIndex = 1;
 
                             // The per-book folder must exist BEFORE its first file is copied
                             // into it. It is created here rather than left to CopyFileAsync
@@ -79,10 +103,12 @@ namespace PhotoBook.Application
                             }
                         }
 
+                        var folderNames = NamesIn(bookFolder);
+
                         if (book.Cover != null && !string.IsNullOrEmpty(book.Cover.SourcePath))
                         {
                             work.Add((book.Cover.SourcePath,
-                                      System.IO.Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, 0), usedNames))));
+                                      System.IO.Path.Combine(bookFolder, UniqueName(GenerateFileName(fileBookIndex, 0), folderNames))));
                         }
 
                         // Ordered by index: the order on disk has to be the order in the book, and
@@ -91,7 +117,7 @@ namespace PhotoBook.Application
                         foreach (var page in book.Pages.Where(p => !p.IsEmpty).OrderBy(p => p.Index))
                         {
                             work.Add((page.SourcePath!,
-                                      System.IO.Path.Combine(bookFolder, UniqueName(GenerateFileName(bookIndex, pageIndex), usedNames))));
+                                      System.IO.Path.Combine(bookFolder, UniqueName(GenerateFileName(fileBookIndex, pageIndex), folderNames))));
                             pageIndex++;
                         }
                     }

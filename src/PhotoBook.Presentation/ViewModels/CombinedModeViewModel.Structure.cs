@@ -302,28 +302,10 @@ namespace PhotoBook.Presentation.ViewModels
                 confirmCmd.NotifyCanExecuteChanged();
             }
 
-            // One more automatic save, and only here. The structure is the most expensive
-            // thing in a run to put back by hand, and setting it is a single deliberate act
-            // rather than something done sixty times in a row - so it is written straight
-            // away instead of waiting for a button we may never press. Photo
-            // assignment is deliberately NOT auto-saved: that is where "без перебора" comes
-            // in, and the export saves the whole project anyway.
-            await SaveStructureAsync();
-        }
-
-        private async Task SaveStructureAsync()
-        {
-            try
-            {
-                if (await EnsureProjectInfoAsync() == null) return;
-                await SaveProjectSilentlyAsync();
-            }
-            catch (Exception ex)
-            {
-                // A failed auto-save must never interrupt the work: we can still
-                // press "Сохранить проект", and the error log keeps the reason.
-                _loggingService.LogError("Не удалось автоматически сохранить проект после изменения структуры", ex);
-            }
+            // The structure is the most expensive thing in a run to put back by hand, so it
+            // is written now rather than after the quiet period the autosave waits for. The
+            // rest of the work is saved the same way, one gesture at a time.
+            await QuickSaveAsync();
         }
 
         /// <summary>

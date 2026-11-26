@@ -2408,27 +2408,14 @@
                                 </Border>
                                 <Border Grid.Column="2" BorderBrush="{DynamicResource ManualRule}"
                                         BorderThickness="0,1,0,0" Padding="0,12">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Text="Сохранить проект" FontSize="12.2"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource TextMuted}" />
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
-                                            <Border CornerRadius="5" Padding="7,2"
-                                                    BorderThickness="1,1,1,2"
-                                                    BorderBrush="{DynamicResource ManualMockLineSoft}"
-                                                    Background="{DynamicResource ManualKeyFill}">
-                                                <TextBlock Text="Ctrl" FontSize="10.5" FontWeight="Bold"
-                                                           Foreground="{DynamicResource ManualKeyInk}" />
-                                            </Border>
-                                            <Border CornerRadius="5" Padding="7,2"
-                                                    BorderThickness="1,1,1,2"
-                                                    BorderBrush="{DynamicResource ManualMockLineSoft}"
-                                                    Background="{DynamicResource ManualKeyFill}">
-                                                <TextBlock Text="S" FontSize="10.5" FontWeight="Bold"
-                                                           Foreground="{DynamicResource ManualKeyInk}" />
-                                            </Border>
-                                        </StackPanel>
-                                    </Grid>
+                                    <!--
+                                        Saving stopped being a key and a button: every change is
+                                        written on its own. The row stays so the pair of columns
+                                        keeps its shape, and says what happens instead.
+                                    -->
+                                    <TextBlock Text="Проект сохраняется автоматически" FontSize="12.2"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextMuted}" />
                                 </Border>
                                 <Border Grid.Column="0" BorderBrush="{DynamicResource ManualRule}"
                                         BorderThickness="0,1,0,0" Padding="0,12">

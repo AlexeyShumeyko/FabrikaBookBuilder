@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -8,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
 using PhotoBook.Presentation.ViewModels;
+using PhotoBook.Shell.Converters;
 using PhotoBook.Shell.Navigation;
 using PhotoBook.Shell.Services;
 using PhotoBook.Shell.ViewModels;
@@ -57,6 +59,73 @@ public partial class MainWindow : Window
         // A refused token opens the same window a fresh start would, once: the profile read and
         // the header button can both find the session gone in the same moment.
         _login.SessionExpired += async (_, _) => await SignInAsync();
+
+        // The last gesture can be a few hundred milliseconds newer than the last automatic
+        // write. Closing is the one moment where waiting for it is the difference between a
+        // project and nothing.
+        Closing += OnWindowClosing;
+    }
+
+    private bool _closeAfterSave;
+    private double _renderScaling = 1;
+
+    /// <summary>
+    /// The monitor's scaling, published for every converter that has to decide how large to
+    /// decode a photograph.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A binding that turns a path into an image has no visual to ask, so the number is kept
+    /// in one place. It used to be published by one screen, which meant the others decoded
+    /// for a 100-percent monitor on a denser one: a 44-pixel preview stretched to 88 device
+    /// pixels is exactly the softness a photographer sees in the upload panel.
+    /// </para>
+    /// <para>
+    /// The window is the only thing every screen shares and the only thing that knows which
+    /// monitor it is on, so it publishes the number once when it is attached and again
+    /// whenever it moves to a monitor with a different scaling.
+    /// </para>
+    /// </remarks>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        PropertyChanged += (_, _) => TrackScaling();
+        TrackScaling();
+    }
+
+    private void TrackScaling()
+    {
+        double scaling = RenderScaling;
+        if (Math.Abs(scaling - _renderScaling) < 0.001) return;
+
+        _renderScaling = scaling;
+        BitmapScale.Current = scaling;
+    }
+
+    private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)
+    {
+        if (_closeAfterSave) return;
+
+        var editor = _navigator.SessionMode is { } mode ? _navigator.EditorFor(mode) : null;
+        if (editor is null) return;
+
+        e.Cancel = true;
+        _closeAfterSave = true;
+
+        try
+        {
+            await editor.QuickSaveAsync();
+        }
+        catch
+        {
+            // The editor has said what went wrong on its own screen; a closing window has
+            // nowhere left to put it. Closing anyway is the only way out of the program.
+        }
+        finally
+        {
+            Close();
+        }
     }
 
     /// <summary>

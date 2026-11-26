@@ -16,6 +16,100 @@ namespace PhotoBook.Presentation.ViewModels
     /// <summary>Putting the project on disk, loudly or quietly.</summary>
     public partial class UniqueFoldersViewModel : ViewModelBase, IProjectEditor
     {
+        /// <summary>Whether the last write reached the disk. Drives what a flush answers.</summary>
+        private bool _lastSaveSucceeded = true;
+
+        /// <summary>
+        /// Asks for the project to be written once the current gesture has finished. Every
+        /// change a photographer can make raises something this listens to.
+        /// </summary>
+        private void RequestAutoSave()
+        {
+            if (_suppressAutoSave) return;
+            _autoSave.Request();
+        }
+
+        /// <summary>
+        /// What the autosave writes. The record is created on demand, so a run assembled
+        /// from folders gets a card in the list without anybody pressing anything.
+        /// </summary>
+        private async Task AutosaveNowAsync()
+        {
+            if (Project == null || Project.Books == null || Project.Books.Count == 0) return;
+
+            if (await EnsureProjectInfoAsync() == null)
+            {
+                _lastSaveSucceeded = false;
+                ErrorMessage = "Не удалось создать запись проекта.";
+                return;
+            }
+
+            await SaveProjectSilentlyAsync();
+        }
+
+        /// <summary>
+        /// Watches a book's slots. A photograph going in, a spread leaving or a cover being
+        /// replaced all reach the screen as one of these three notifications, and each of
+        /// them is a change worth keeping.
+        /// </summary>
+        private void WatchBook(Book book)
+        {
+            if (_bookWatchers.ContainsKey(book)) return;
+
+            System.ComponentModel.PropertyChangedEventHandler handler = (_, e) =>
+            {
+                if (e.PropertyName is nameof(Book.Cover)
+                                     or nameof(Book.Pages)
+                                     or nameof(Book.AllSlotsPages))
+                {
+                    RequestAutoSave();
+                }
+            };
+
+            _bookWatchers[book] = handler;
+            book.PropertyChanged += handler;
+        }
+
+        private void UnwatchBook(Book book)
+        {
+            if (!_bookWatchers.TryGetValue(book, out var handler)) return;
+
+            book.PropertyChanged -= handler;
+            _bookWatchers.Remove(book);
+        }
+
+        /// <summary>
+        /// Returns to the project list. Everything is saved as it is made, so there is no
+        /// question to ask; the save here only makes sure the last gesture reached the disk.
+        /// </summary>
+        private async Task BackAsync()
+        {
+            bool hasWork = Project?.Books is { Count: > 0 };
+
+            if (hasWork && !await QuickSaveAsync())
+            {
+                // The screen stays: leaving with the project unwritten would lose the run,
+                // and the error message already says what to do about it.
+                return;
+            }
+
+            if (!hasWork) _autoSave.Cancel();
+
+            if (CurrentProjectInfo != null)
+            {
+                var wasSaved = !string.IsNullOrEmpty(CurrentProjectInfo.FilePath) &&
+                               System.IO.File.Exists(CurrentProjectInfo.FilePath);
+
+                // Nothing was saved and there is nothing in it, so it goes: an empty
+                // project in the list is a card that opens onto nothing.
+                if (!wasSaved && (Project == null || Project.Books == null || Project.Books.Count == 0))
+                {
+                    await _projectListService.DeleteProjectAsync(CurrentProjectInfo);
+                }
+            }
+
+            RequestBackToProjectList();
+        }
 
         private async Task LoadThumbnailForPage(Page page)
         {
@@ -43,23 +137,27 @@ namespace PhotoBook.Presentation.ViewModels
             }
         }
 
-        private async Task SaveProjectSilentlyAsync()
+        private async Task<bool> SaveProjectSilentlyAsync()
         {
-            if (CurrentProjectInfo == null || Project == null)
+            var info = CurrentProjectInfo;
+            var project = Project;
+
+            if (info == null || project == null)
             {
-                return;
+                return false;
             }
+
+            // Captured before the first await: a different project can be opened while this
+            // write waits for the disk, and the fields must not redirect it.
+            var projectName = ProjectName;
 
             try
             {
-                var projectId = CurrentProjectInfo?.Id ?? string.Empty;
+                var projectId = info.Id ?? string.Empty;
                 if (string.IsNullOrEmpty(projectId))
                 {
                     projectId = Guid.NewGuid().ToString();
-                    if (CurrentProjectInfo != null)
-                    {
-                        CurrentProjectInfo.Id = projectId;
-                    }
+                    info.Id = projectId;
                 }
 
                 var projectsDir = Path.Combine(
@@ -74,25 +172,26 @@ namespace PhotoBook.Presentation.ViewModels
 
                 var projectFilePath = Path.Combine(projectsDir, $"{projectId}.json");
 
-                await _projects.SaveAsync(Project, projectFilePath);
+                await _projects.SaveAsync(project, projectFilePath);
 
-                if (CurrentProjectInfo != null)
-                {
-                    CurrentProjectInfo.FilePath = projectFilePath;
-                    CurrentProjectInfo.Name = ProjectName ?? CurrentProjectInfo.Name;
-                    CurrentProjectInfo.BookCount = Project.Books?.Count ?? 0;
-                    CurrentProjectInfo.PageCount = Project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
-                    CurrentProjectInfo.Status = DetermineProjectStatus(Project);
-                    CurrentProjectInfo.LastModified = DateTime.Now;
-                }
+                info.FilePath = projectFilePath;
+                info.Name = projectName ?? info.Name;
+                info.BookCount = project.Books?.Count ?? 0;
+                info.PageCount = project.Books?.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
+                info.Status = DetermineProjectStatus(project);
+                info.LastModified = DateTime.Now;
 
-                {
-                    await _projectListService.SaveProjectInfoAsync(CurrentProjectInfo);
-                }
+                await _projectListService.SaveProjectInfoAsync(info);
+
+                _lastSaveSucceeded = true;
+                return true;
             }
             catch (Exception ex)
             {
+                _lastSaveSucceeded = false;
                 _loggingService.LogError("Ошибка автоматического сохранения проекта", ex);
+                ErrorMessage = "Не удалось сохранить проект. Проверьте свободное место на диске.";
+                return false;
             }
         }
 
@@ -107,7 +206,7 @@ namespace PhotoBook.Presentation.ViewModels
                 return CurrentProjectInfo;
 
             var name = string.IsNullOrWhiteSpace(ProjectName)
-                ? $"Новый проект {DateTime.Now:yyyy-MM-dd HH:mm}"
+                ? ProjectNameRule.Unnamed(DateTime.Now)
                 : ProjectName!;
 
             var info = await _projectListService.CreateProjectAsync(AppMode.UniqueFolders, name);
@@ -115,28 +214,38 @@ namespace PhotoBook.Presentation.ViewModels
 
             CurrentProjectInfo = info;
             OnPropertyChanged(nameof(CurrentProjectInfo));
+
+            // The bar reads the name off the screen's own property, not off the record, so a
+            // project nobody named kept saying "Новый проект" while the list already showed
+            // its date and time. Taking the record's name is what makes the two agree.
+            ProjectName = info.Name;
             return info;
         }
 
         /// <summary>
-        /// Silent save used by the header "Сохранить" button. Unlike SaveProjectAsync it
-        /// does not navigate away, and unlike SaveProjectSilentlyAsync it creates the
-        /// project record if none exists yet and surfaces failures to the user.
+        /// A save that does not navigate away, and the one the shell calls before leaving a
+        /// screen. Pending automatic work is written first, so leaving cannot outrun it.
         /// </summary>
         public async Task<bool> QuickSaveAsync()
         {
             if (Project == null || Project.Books == null || Project.Books.Count == 0)
+            {
+                _autoSave.Cancel();
                 return false;
+            }
 
             if (await EnsureProjectInfoAsync() == null)
             {
                 ErrorMessage = "Не удалось создать запись проекта.";
-                OnPropertyChanged(nameof(ErrorMessage));
                 return false;
             }
 
-            await SaveProjectSilentlyAsync();
-            return true;
+            if (await _autoSave.FlushAsync())
+            {
+                return _lastSaveSucceeded;
+            }
+
+            return await SaveProjectSilentlyAsync();
         }
     }
 }

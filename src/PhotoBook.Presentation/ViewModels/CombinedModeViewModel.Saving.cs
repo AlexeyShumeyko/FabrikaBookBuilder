@@ -17,6 +17,8 @@ namespace PhotoBook.Presentation.ViewModels
     /// <summary>Putting the project on disk, loudly or quietly.</summary>
     public partial class CombinedModeViewModel : ViewModelBase, IProjectEditor
     {
+        /// <summary>Whether the last write reached the disk. Drives what a flush answers.</summary>
+        private bool _lastSaveSucceeded = true;
 
         /// <summary>
         /// Saves the project right before an export, and never lets a save problem stop the
@@ -37,11 +39,42 @@ namespace PhotoBook.Presentation.ViewModels
             }
         }
 
-        private async Task SaveProjectSilentlyAsync()
+        /// <summary>
+        /// Asks for the project to be written once the current gesture has finished. This is
+        /// the whole save story of the mode: there is no button, and nothing a user can do to
+        /// a photographed or a spread is left out.
+        /// </summary>
+        private void RequestAutoSave()
         {
-            if (CurrentProjectInfo == null)
+            if (_suppressAutoSave) return;
+            _autoSave.Request();
+        }
+
+        /// <summary>
+        /// What the autosave writes. The record is created on demand, exactly as the removed
+        /// button used to do it, so a project assembled entirely with the mouse still gets a
+        /// card in the list.
+        /// </summary>
+        private async Task AutosaveNowAsync()
+        {
+            if (Books.Count == 0 && AvailableFiles.Count == 0) return;
+
+            if (await EnsureProjectInfoAsync() == null)
             {
+                _lastSaveSucceeded = false;
+                ErrorMessage = "Не удалось создать запись проекта.";
                 return;
+            }
+
+            await SaveProjectSilentlyAsync();
+        }
+
+        private async Task<bool> SaveProjectSilentlyAsync()
+        {
+            var info = CurrentProjectInfo;
+            if (info == null)
+            {
+                return false;
             }
 
             if (Project == null)
@@ -49,34 +82,37 @@ namespace PhotoBook.Presentation.ViewModels
                 Project = new Project { Mode = AppMode.Combined };
             }
 
+            // Both are captured before the first await. A different project can be opened
+            // while this write is waiting for the disk; re-reading the fields afterwards
+            // would put the new project's contents into the old project's file.
+            var project = Project;
+            var projectName = ProjectName;
+
             try
             {
-                var projectId = CurrentProjectInfo.Id ?? string.Empty;
+                var projectId = info.Id ?? string.Empty;
                 if (string.IsNullOrEmpty(projectId))
                 {
                     projectId = Guid.NewGuid().ToString();
-                    if (CurrentProjectInfo != null)
-                    {
-                        CurrentProjectInfo.Id = projectId;
-                    }
+                    info.Id = projectId;
                 }
 
-                if (!string.IsNullOrEmpty(ProjectName) && ProjectName != CurrentProjectInfo.Name)
+                if (!string.IsNullOrEmpty(projectName) && projectName != info.Name)
                 {
-                    CurrentProjectInfo.Name = ProjectName;
+                    info.Name = projectName;
                 }
 
                 // Books must mirror Project.Books: the view binds to Books, the save walks Project.Books.
-                Project.Books.Clear();
+                project.Books.Clear();
                 foreach (var book in Books)
                 {
-                    Project.Books.Add(book);
+                    project.Books.Add(book);
                 }
 
-                Project.AvailableFiles.Clear();
+                project.AvailableFiles.Clear();
                 foreach (var file in AvailableFiles)
                 {
-                    Project.AvailableFiles.Add(file);
+                    project.AvailableFiles.Add(file);
                 }
 
                 var projectsDir = Path.Combine(
@@ -90,24 +126,33 @@ namespace PhotoBook.Presentation.ViewModels
                 }
 
                 var filePath = Path.Combine(projectsDir, $"{projectId}.json");
-                await _projects.SaveAsync(Project, filePath);
+                await _projects.SaveAsync(project, filePath);
 
-                if (!string.IsNullOrEmpty(ProjectName))
+                if (!string.IsNullOrEmpty(projectName))
                 {
-                    CurrentProjectInfo.Name = ProjectName;
+                    info.Name = projectName;
                 }
 
-                CurrentProjectInfo.FilePath = filePath;
-                CurrentProjectInfo.BookCount = Books.Count;
-                CurrentProjectInfo.PageCount = Books.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
-                CurrentProjectInfo.Status = DetermineStatus(Project);
-                CurrentProjectInfo.LastModified = DateTime.Now;
+                info.FilePath = filePath;
+                info.BookCount = project.Books.Count;
+                info.PageCount = project.Books.FirstOrDefault()?.Pages?.Count(p => !p.IsCover) ?? 0;
+                info.Status = DetermineStatus(project);
+                info.LastModified = DateTime.Now;
 
-                await _projectListService.UpdateProjectInfoAsync(Project, filePath);
+                await _projectListService.UpdateProjectInfoAsync(project, filePath);
+                _lastSaveSucceeded = true;
+                return true;
             }
             catch (Exception ex)
             {
+                _lastSaveSucceeded = false;
                 _loggingService.LogError("Ошибка автоматического сохранения проекта", ex);
+
+                // The work is still on screen, and the next change asks again, so this is
+                // information rather than an ending. Silence, on the other hand, is how a
+                // customer keeps working in a project that is not being written anywhere.
+                ErrorMessage = "Не удалось сохранить проект. Проверьте свободное место на диске.";
+                return false;
             }
         }
 
@@ -122,7 +167,7 @@ namespace PhotoBook.Presentation.ViewModels
                 return CurrentProjectInfo;
 
             var name = string.IsNullOrWhiteSpace(ProjectName)
-                ? $"Новый проект {DateTime.Now:yyyy-MM-dd HH:mm}"
+                ? ProjectNameRule.Unnamed(DateTime.Now)
                 : ProjectName!;
 
             var info = await _projectListService.CreateProjectAsync(AppMode.Combined, name);
@@ -130,28 +175,41 @@ namespace PhotoBook.Presentation.ViewModels
 
             CurrentProjectInfo = info;
             OnPropertyChanged(nameof(CurrentProjectInfo));
+
+            // The bar reads the name off the screen's own property, not off the record, so a
+            // project nobody named kept saying "Новый проект" while the list already showed
+            // its date and time. Taking the record's name is what makes the two agree.
+            ProjectName = info.Name;
             return info;
         }
 
         /// <summary>
-        /// Silent save used by the header "Сохранить" button. Unlike SaveProjectAsync it
-        /// does not navigate away, and unlike SaveProjectSilentlyAsync it creates the
-        /// project record if none exists yet and surfaces failures to the user.
+        /// A save that does not navigate away, and the one the shell calls before leaving a
+        /// screen. Pending automatic work is written first, so leaving cannot outrun it; a
+        /// write that was already running is waited for rather than raced with.
         /// </summary>
         public async Task<bool> QuickSaveAsync()
         {
             if (Books.Count == 0 && AvailableFiles.Count == 0)
+            {
+                _autoSave.Cancel();
                 return false;
+            }
 
             if (await EnsureProjectInfoAsync() == null)
             {
                 ErrorMessage = "Не удалось создать запись проекта.";
-                OnPropertyChanged(nameof(ErrorMessage));
                 return false;
             }
 
-            await SaveProjectSilentlyAsync();
-            return true;
+            if (await _autoSave.FlushAsync())
+            {
+                // The flush wrote through AutosaveNowAsync; a failure there is already on
+                // screen, and answering "saved" would let the caller leave the project.
+                return _lastSaveSucceeded;
+            }
+
+            return await SaveProjectSilentlyAsync();
         }
 
         /// <summary>
