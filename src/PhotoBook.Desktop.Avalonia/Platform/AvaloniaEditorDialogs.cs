@@ -57,10 +57,20 @@ namespace PhotoBook.Shell.Platform
 
         public async Task ShowExportSucceeded(string outputFolder)
         {
-            var window = new ExportSuccessWindow(outputFolder);
-            await window.ShowDialog(OwnerOf(() => window));
+            // A panel over the page, like the parameters it follows: the page behind it dims
+            // and blurs, so the last step of the export reads as part of the same action
+            // rather than as a window that happened to appear over a white screen.
+            var main = MainWindow() as MainWindow;
+            if (main is null)
+            {
+                // The files are written either way, so a missing owner is a panel not shown
+                // rather than an export that failed.
+                _journal.Write(JournalLevel.Warning, "export",
+                    "окно программы не найдено: панель об успешном экспорте не показана");
+                return;
+            }
 
-            if (!window.GoToFolder) return;
+            if (await main.ShowSheetAsync(new ExportSuccessSheet(outputFolder)) is null) return;
 
             // The button used to say "Открыть папку" and only close the window, which is the
             // one thing a button must not do. A folder that has gone away in the meantime is

@@ -83,31 +83,21 @@ function Find-ByName($rootEl, [string]$label, [string]$typeName) {
     return $null
 }
 
-# The export always writes to a folder that does not exist yet (PhotoBookExport, then
-# PhotoBookExport1, ...). The plain name and every numbered one are left alone, so this run
-# is forced to the first free name - and, because the folders before it hold real files from
-# earlier runs, the rule is assertable: they must keep exactly what they had, instead of an
-# earlier export's files being silently overwritten.
+# The export always writes to a folder that does not exist yet - PhotoBookExport, then the
+# first free number after it - but which number that is depends on the project's own output
+# folder, which is the name the numbering starts from. So the run's folder is read back
+# afterwards rather than predicted, and the rule is asserted where it can be: everything that
+# existed before the run must still hold exactly what it held, and exactly one new folder must
+# have appeared. A predicted name made this script fail on a project whose output folder was
+# not the default one, for a reason that had nothing to do with the export.
 $desktop = [Environment]::GetFolderPath('Desktop')
 $base = 'PhotoBookExport'
-$outDir = $base
-$index = 0
-for ($i = 0; $i -lt 500; $i++) {
-    $candidate = if ($i -eq 0) { $base } else { "$base$i" }
-    if (-not (Test-Path (Join-Path $desktop $candidate))) { $outDir = $candidate; $index = $i; break }
-}
-$expected = $outDir
-Write-Host "export must land in: $expected (the first free name)"
 
-# Everything before it in the sequence: it must be untouched.
 $takenBefore = @{}
-if ($index -gt 0) {
-    for ($i = 0; $i -lt $index; $i++) {
-        $name = if ($i -eq 0) { $base } else { "$base$i" }
-        $takenBefore[$name] = @(Get-ChildItem (Join-Path $desktop $name) -Recurse -File).Count
-    }
-    Write-Host "occupied folders that must not be touched: $(($takenBefore.Keys | Sort-Object) -join ', ')"
+foreach ($folder in Get-ChildItem $desktop -Directory -Filter "$base*" -ErrorAction SilentlyContinue) {
+    $takenBefore[$folder.Name] = @(Get-ChildItem $folder.FullName -Recurse -File).Count
 }
+Write-Host "folders before the run, which must not be touched: $(($takenBefore.Keys | Sort-Object) -join ', ')"
 
 
 $exe = Get-AppExe
@@ -182,18 +172,20 @@ try {
     if (-not $exportBtn.Current.IsEnabled) { throw 'export button is disabled' }
     $exportBtn.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
 
-    # Wait for the modal.
-    $dlgHwnd = [intptr]::Zero
+    # Wait for the panel. It is drawn inside the window rather than opened as one of its own:
+    # the page behind it dims and blurs, which is what says it is on top - and a window cannot
+    # dim what stands behind it. So its button is looked for in the main window's own tree.
     $deadline = (Get-Date).AddSeconds(20)
-    while ((Get-Date) -lt $deadline -and $dlgHwnd -eq [intptr]::Zero) {
-        foreach ($h in [W7]::Visible($proc.Id)) { if ($h -ne $mainHwnd) { $dlgHwnd = $h; break } }
-        if ($dlgHwnd -eq [intptr]::Zero) { Start-Sleep -Milliseconds 500 }
+    $start = $null
+    while ((Get-Date) -lt $deadline -and $null -eq $start) {
+        $start = Find-ByName $el 'Начать экспорт' 'Button'
+        if ($null -eq $start) { Start-Sleep -Milliseconds 500 }
     }
-    if ($dlgHwnd -eq [intptr]::Zero) { throw 'export dialog never appeared' }
-    [void][W7]::SetForegroundWindow($dlgHwnd)
-    Start-Sleep -Seconds 1
+    if ($null -eq $start) { throw 'export panel never appeared' }
+    [void][W7]::SetForegroundWindow($mainHwnd)
+    Start-Sleep -Milliseconds 500
 
-    $dlg = [System.Windows.Automation.AutomationElement]::FromHandle($dlgHwnd)
+    $dlg = $el
     if ($PerBookSubfolders) {
         $cb = Find-ByName $dlg 'Создавать отдельную папку' 'CheckBox'
         if ($null -eq $cb) { throw 'subfolder checkbox not found' }
@@ -209,11 +201,12 @@ try {
     if ($null -eq $start) { throw 'start button not found' }
     $start.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
 
-    # Wait for the copy to finish (dialog closes on success).
+    # Wait for the copy to finish: the parameters panel goes away when the files are written,
+    # and the success panel that follows it is left standing - the run is over either way, and
+    # the program is taken down at the end of this script.
     $deadline = (Get-Date).AddSeconds(90)
     while ((Get-Date) -lt $deadline) {
-        $still = @([W7]::Visible($proc.Id) | Where-Object { $_ -ne $mainHwnd })
-        if ($still.Count -eq 0) { break }
+        if ($null -eq (Find-ByName $el 'Начать экспорт' 'Button')) { break }
         Start-Sleep -Milliseconds 700
     }
     Start-Sleep -Seconds 3
@@ -221,16 +214,19 @@ try {
     # Every folder that was already occupied must come out of this run byte for byte: the
     # we's rule is that each export gets its own folder, so a second export of the same
     # project can never overwrite the first one's files.
+    $created = @(Get-ChildItem $desktop -Directory -Filter "$base*" |
+        Where-Object { -not $takenBefore.ContainsKey($_.Name) })
+    if ($created.Count -ne 1) { throw "expected exactly one new export folder, found $($created.Count)" }
+
     foreach ($name in $takenBefore.Keys) {
-        $after = @(Get-ChildItem (Join-Path $desktop $name) -Recurse -File).Count
-        if ($after -ne $takenBefore[$name]) {
-            throw "the occupied folder $name was written to after all ($($takenBefore[$name]) before, $after after)"
+        $now = @(Get-ChildItem (Join-Path $desktop $name) -Recurse -File).Count
+        if ($now -ne $takenBefore[$name]) {
+            throw "the occupied folder $name was written to after all ($($takenBefore[$name]) before, $now after)"
         }
     }
 
-    $outDir = Join-Path $desktop $expected
-    Write-Host "exported into: $expected"
-    if (-not (Test-Path $outDir)) { throw "no output at $outDir" }
+    $outDir = $created[0].FullName
+    Write-Host "exported into: $($created[0].Name)"
 
     $files = @(Get-ChildItem $outDir -Recurse -File | Sort-Object FullName)
     Write-Host ''

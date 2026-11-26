@@ -1,0 +1,134 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PhotoBook.Shell.Views.ExportSuccessSheet"
+             AutomationProperties.Name="Экспорт завершён"
+             Focusable="True">
+
+    <!--
+        The word that the files are written, drawn as a panel over the page rather than as a
+        window of its own.
+
+        A window cannot blur what stands behind it. The prototype's answer to that is the
+        backdrop, and this program's is the sheet: the page under the panel is dimmed and
+        blurred by the shell - here it is the export parameters panel that was up a moment ago,
+        over the same page - so the panel reads as the last step of the same action.
+
+        The prototype has no panel for this moment (its #modal-upload-done is the upload's own
+        success, not the export's), so it is built out of the same parts as its siblings:
+
+            card        468 wide, radius 22, the modal surface, a hairline, two brown descents
+            head        26/22, a 44 tile on the success wash, a hairline under it
+            title       19 extra bold      subtitle 12, the faint ink
+            body        26/22/26/24, the sentence and the folder in its own box
+            foot        the sunken tray, 24/16, the folder and the way back
+
+        The card rises fourteen pixels and settles from ninety-eight and a half percent over a
+        quarter of a second, which is the prototype's modalIn, done with transitions rather
+        than with a storyboard so the panel can be taken down at any time.
+    -->
+    <Border x:Name="Card" Width="468" CornerRadius="22" ClipToBounds="True"
+            VerticalAlignment="Center"
+            Background="{DynamicResource SurfaceModal}"
+            BorderBrush="{DynamicResource ModalEdge}" BorderThickness="1"
+            BoxShadow="{DynamicResource ModalShadow}"
+            Opacity="0" RenderTransform="translate(0px,14px) scale(0.985)">
+        <Border.Transitions>
+            <Transitions>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.24"
+                                               Easing="CubicEaseOut" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.24" Easing="CubicEaseOut" />
+            </Transitions>
+        </Border.Transitions>
+
+        <Grid RowDefinitions="Auto,Auto,Auto">
+
+            <!-- the head: what has just happened, with the check on the success wash -->
+            <Border Grid.Row="0" Padding="26,22"
+                    BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+
+                    <Border Width="44" Height="44" CornerRadius="12"
+                            Background="{DynamicResource Emerald50}"
+                            BorderBrush="{DynamicResource Emerald100}" BorderThickness="1">
+                        <Path Width="21" Height="21" Stretch="Uniform" StrokeThickness="2.2"
+                              StrokeLineCap="Round" StrokeJoin="Round"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Stroke="{DynamicResource Emerald700}"
+                              Data="M 4.5 12.4 L 9.8 17.6 L 19.5 6.4" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="Экспорт завершён" Classes="t19ExtraBold" />
+                        <TextBlock Text="Файлы готовы к загрузке на сайт"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextFaint}" />
+                    </StackPanel>
+
+                    <Button Grid.Column="2" Classes="modalClose" Click="OnCloseClick"
+                            AutomationProperties.Name="Закрыть"
+                            ToolTip.Tip="Закрыть">
+                        <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.5"
+                              StrokeLineCap="Round" StrokeJoin="Round"
+                              Stroke="{DynamicResource TextMuted}"
+                              Data="M6 6l12 12M18 6L6 18" />
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- the body: what was written, and where it went -->
+            <StackPanel Grid.Row="1" Margin="26,22,26,24">
+
+                <TextBlock x:Name="SummaryText" FontSize="12.5" LineHeight="21"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextMuted}" />
+
+                <!-- The folder, in full: it is new every time, so nobody has it memorised. -->
+                <Border Margin="0,16,0,0" Padding="14,12" CornerRadius="13"
+                        Background="{DynamicResource SunkenFaint}"
+                        BorderBrush="{DynamicResource BorderDefault}" BorderThickness="1">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Файлы сохранены в:" Classes="t10"
+                                   Foreground="{DynamicResource TextFaint}" />
+                        <TextBlock x:Name="PathText" FontFamily="Consolas" FontSize="11.5"
+                                   LineHeight="18" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextStrong}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- the answers: the folder first, the way back where the eye ends -->
+            <Border Grid.Row="2" Padding="24,16"
+                    Background="{DynamicResource ModalFootFill}"
+                    BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,1,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+
+                    <Button Classes="soft" Click="OnOpenFolderClick"
+                            AutomationProperties.Name="Открыть папку">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.6"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  VerticalAlignment="Center"
+                                  Stroke="{Binding $parent[Button].Foreground}"
+                                  Data="M 3 7.2 A 1.4 1.4 0 0 1 4.4 5.8 H 9.2 L 11.4 8 H 19.6 A 1.4 1.4 0 0 1 21 9.4 V 17.6 A 1.4 1.4 0 0 1 19.6 19 H 4.4 A 1.4 1.4 0 0 1 3 17.6 Z" />
+                            <TextBlock Text="Открыть папку" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Classes="primary" Click="OnReturnClick"
+                            AutomationProperties.Name="Вернуться к проекту">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.8"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  VerticalAlignment="Center"
+                                  Stroke="{DynamicResource ActionInk}"
+                                  Data="M19 12H5M11.4 5.6 5 12l6.4 6.4" />
+                            <TextBlock Text="Вернуться к проекту"
+                                       Foreground="{DynamicResource ActionInk}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>
