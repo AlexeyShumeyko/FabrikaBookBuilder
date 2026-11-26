@@ -8,12 +8,20 @@ using PhotoBook.Presentation.ViewModels;
 namespace PhotoBook.Shell.Converters
 {
     /// <summary>
-    /// The file list's state badge: one solid colour per state, white text on it, no frame.
+    /// The file list's state badge: a quiet chip with a word, a wash and a hairline.
     /// </summary>
     /// <remarks>
-    /// Assigned is the green of "used", run-wide is the product's own colour because it is
-    /// the one state that is the same in every book, and free is the faint grey of a state
-    /// that needs no attention. Painted like a button, which is what it is.
+    /// <para>
+    /// Each state owns one family of three colours - ink, fill and ring - and the caller asks
+    /// for the part it needs. Shared is the product's own gold, because it is the one state
+    /// that is the same in every book; assigned is the teal of a photograph that is in use;
+    /// free is the grey of one that still waits.
+    /// </para>
+    /// <para>
+    /// Filled like a button the badge was an orange slab among cream controls in daylight.
+    /// On paper a state is a word in gold on a gold wash, which is what the prototype draws,
+    /// and at night the same chip is cream on a thin wash of the gold.
+    /// </para>
     /// </remarks>
     public class PhotoUsageToBrushConverter : IValueConverter
     {
@@ -22,12 +30,34 @@ namespace PhotoBook.Shell.Converters
             Type targetType,
             object? parameter,
             CultureInfo culture)
-            => value switch
+            => ThemeResources.Brush(Token(value, parameter));
+
+        /// <summary>
+        /// The token a state is painted with, for the part of the chip the caller asked for.
+        /// </summary>
+        /// <remarks>
+        /// Ink, fill and ring come from the same family, so a chip cannot end up carrying the
+        /// word of one state on the wash of another. An unknown part answers with the fill,
+        /// which is what the badge was before the ink and the ring were asked for by name.
+        /// </remarks>
+        private static string Token(object? value, object? parameter)
+        {
+            var family = value switch
             {
-                PhotoUsage.Assigned => ThemeResources.Brush("Emerald500"),
-                PhotoUsage.Shared => ThemeResources.Brush("Gold"),
-                _ => ThemeResources.Brush("Slate400")
+                PhotoUsage.Shared => "StatusShared",
+                PhotoUsage.Assigned => "StatusTeal",
+                _ => "StatusMuted"
             };
+
+            var part = (parameter as string)?.ToLowerInvariant() switch
+            {
+                "ink" => "Ink",
+                "border" => "Border",
+                _ => "Fill"
+            };
+
+            return family + part;
+        }
 
         public object? ConvertBack(
             object? value,

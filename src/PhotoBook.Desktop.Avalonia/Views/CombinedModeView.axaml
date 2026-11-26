@@ -338,34 +338,19 @@
         </Style>
 
         <!--
-            A row answers the pointer with a light wash, as the folders screen's rows do.
+            The row itself carries no wash any more: both answers - the quiet hover and the
+            gold of a chosen row - live on the list's own frame, which is where a click is
+            counted. Painted here as well, the hover would cover the gold of the last row
+            chosen the moment the pointer crossed it.
 
-            It is a hover and not a selection: nothing in this list is selected, and a row that
-            stayed tinted after a click would claim it was. The wash sits on the row's own
-            rounded border rather than on the list's square cell, so it follows the corner.
+            The transparent background stays written down: a border with no background is not
+            hit-tested, so the pointer only counted while it was over the picture or a word.
+            Crossing a row quickly went through the gaps between them and the wash never came
+            up, which is what made the highlight feel slow and unreliable.
         -->
         <Style Selector="Border.fileRow">
             <Setter Property="Cursor" Value="Hand" />
-
-            <!--
-                Transparent, and written down: a border with no background is not hit-tested,
-                so the pointer only counted while it was over the picture or a word. Crossing
-                a row quickly went through the gaps between them and the wash never came up,
-                which is what made the highlight feel slow and unreliable. The background is
-                null right up to the moment the style is applied, so the colour is set here.
-            -->
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Transitions">
-                <Transitions>
-                    <!-- Just over a frame's worth: a wash that fades in says the row is live,
-                         and anything slower than a tenth of a second is read as lag. -->
-                    <BrushTransition Property="Background" Duration="0:0:0.07" />
-                </Transitions>
-            </Setter>
-        </Style>
-
-        <Style Selector="Border.fileRow:pointerover">
-            <Setter Property="Background" Value="{DynamicResource Slate100}" />
         </Style>
 
         <!--
@@ -375,6 +360,92 @@
         -->
         <Style Selector="TextBox.numberField.invalid:focus /template/ Border">
             <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+
+        <!--
+            A row of the loaded list, chosen: the prototype paints the file it is holding with
+            a wash of the product's gold inside a gold hairline, and the platform answers a
+            click with a grey slab across the whole cell - the colour a disabled control
+            wears, on the one list where a photograph is picked up.
+
+            The frame is the row's own, so it follows the corner of the row rather than
+            squaring it off, and the two words of the state stay readable on both washes.
+        -->
+        <Style Selector="ListBox#PhotoFileList ListBoxItem">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,0,2" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="10">
+                        <!--
+                            Transparent on the presenter itself: the platform paints its own
+                            background on this part for a hovered or a chosen row, and a value
+                            set here outranks that style, so the row's frame is the only thing
+                            that answers.
+                        -->
+                        <ContentPresenter Background="Transparent"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+
+        <Style Selector="ListBox#PhotoFileList ListBoxItem:pointerover">
+            <Setter Property="Background" Value="{DynamicResource Slate100}" />
+        </Style>
+
+        <Style Selector="ListBox#PhotoFileList ListBoxItem:selected">
+            <Setter Property="Background" Value="{DynamicResource CombinedWash}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CombinedWashRing}" />
+        </Style>
+
+        <Style Selector="ListBox#PhotoFileList ListBoxItem:selected:pointerover">
+            <Setter Property="Background" Value="{DynamicResource CombinedWash}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CombinedWashRing}" />
+        </Style>
+
+        <!--
+            The two marks of a book's header: one quiet square each, as the prototype draws
+            them, and the basket turns red under the pointer. The pair used to be platform
+            glyphs - a second label rather than a mark, and the basket was a different shape
+            from the one the rest of the program had already been given.
+        -->
+        <Style Selector="Button.bookMark">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource Slate400}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.16" />
+                    <BrushTransition Property="Foreground" Duration="0:0:0.16" />
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.bookMark:pointerover">
+            <Setter Property="Background" Value="{DynamicResource Slate100}" />
+            <Setter Property="Foreground" Value="{DynamicResource Slate600}" />
+        </Style>
+
+        <Style Selector="Button.bookMark.basket:pointerover">
+            <Setter Property="Background" Value="{DynamicResource DangerWash}" />
+            <Setter Property="Foreground" Value="{DynamicResource DangerInk}" />
         </Style>
     </UserControl.Styles>
 
@@ -678,7 +749,8 @@
                             viewport, the inner list then builds every row, and the first paint of
                             a hundred photographs took 1.9 seconds.
                         -->
-                        <ListBox ItemsSource="{Binding FilteredPhotoFiles}"
+                        <ListBox Name="PhotoFileList"
+                                 ItemsSource="{Binding FilteredPhotoFiles}"
                                  IsVisible="{Binding HasFiles}"
                                  Background="Transparent" BorderThickness="0" Padding="0"
                                  Margin="0" MinWidth="0" Focusable="False"
@@ -692,8 +764,8 @@
 
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Classes="fileRow" Margin="0,0,0,2"
-                                            CornerRadius="10" Padding="8"
+                                    <Border Classes="fileRow"
+                                            CornerRadius="9" Padding="8"
                                             PointerPressed="OnFileItemClick"
                                             ToolTip.Tip="{Binding Path}">
                                         <Grid ColumnDefinitions="Auto,*,Auto">
@@ -725,12 +797,22 @@
                                                            Foreground="{DynamicResource Slate400}" />
                                             </StackPanel>
 
-                                            <Border Grid.Column="2" CornerRadius="6"
-                                                    Padding="8,3" VerticalAlignment="Center"
-                                                    Background="{Binding Usage, Converter={StaticResource PhotoUsageBrush}}">
+                                            <!--
+                                                A pill, as the prototype draws the state of a
+                                                file: a word on a wash, closed by a hairline of
+                                                the same colour. Three states, three families:
+                                                the gold of a photograph every book holds, the
+                                                teal of one in use, the grey of one that still
+                                                waits.
+                                            -->
+                                            <Border Grid.Column="2" Height="22" CornerRadius="999"
+                                                    Padding="8,0" VerticalAlignment="Center"
+                                                    BorderThickness="1"
+                                                    Background="{Binding Usage, Converter={StaticResource PhotoUsageBrush}, ConverterParameter=fill}"
+                                                    BorderBrush="{Binding Usage, Converter={StaticResource PhotoUsageBrush}, ConverterParameter=border}">
                                                 <TextBlock Text="{Binding UsageText}" FontSize="10"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource OnAccent}" />
+                                                           FontWeight="Bold" VerticalAlignment="Center"
+                                                           Foreground="{Binding Usage, Converter={StaticResource PhotoUsageBrush}, ConverterParameter=ink}" />
                                             </Border>
                                         </Grid>
                                     </Border>
@@ -773,6 +855,7 @@
                         is not dressed as a caption nobody stops at.
                     -->
                     <Border Grid.Row="4" Margin="0,12,0,0" VerticalAlignment="Bottom"
+                            IsVisible="{Binding !HasFiles}"
                             CornerRadius="10" Padding="10,8"
                             Background="{DynamicResource SunkenFaint}"
                             BorderBrush="{DynamicResource BorderDefault}"
@@ -1258,14 +1341,29 @@
                         out the parts of a list row that are not a card. Its scroll bar is the
                         one this column already had.
                     -->
+                    <!--
+                        The bar hangs in the window's own margin, and the books finish at the
+                        same right-hand edge as the control panel above them - the way the
+                        folders screen and the projects list already do it. Twenty-two pixels
+                        are taken back by the margin and handed over by the padding, so the
+                        cards keep the width of the panel and the bar is no longer pressed
+                        against the last one.
+                    -->
                     <ListBox ItemsSource="{Binding Books}"
                              Background="Transparent"
                              BorderThickness="0"
-                             Padding="0,0,10,0"
+                             Margin="0,0,-22,0"
+                             Padding="0,0,22,0"
                              SelectionMode="Single"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                              ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <ListBox.Styles>
+                            <!-- The trough the bar sits in, wide enough to stand clear of
+                                 the cards: the handle is six pixels in the middle of it. -->
+                            <Style Selector="ScrollBar">
+                                <Setter Property="Width" Value="22" />
+                                <Setter Property="MinWidth" Value="22" />
+                            </Style>
                             <Style Selector="ListBoxItem">
                                 <Setter Property="Padding" Value="0" />
                                 <Setter Property="Margin" Value="0" />
@@ -1288,38 +1386,65 @@
                                         <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
                                             <StackPanel Grid.Column="0" Orientation="Horizontal"
                                                         Spacing="10" VerticalAlignment="Center">
-                                                <Border Background="{DynamicResource Gold}"
-                                                        CornerRadius="8" Padding="10,4"
+                                                <!--
+                                                    The book's number is a pill in the colour a
+                                                    filled button is filled with - cream on warm
+                                                    paper, the gold itself at night - because a
+                                                    saturated slab among cream controls is the
+                                                    orange the design keeps for the evening.
+                                                -->
+                                                <Border Background="{DynamicResource ActionFill}"
+                                                        BorderBrush="{DynamicResource ActionBorder}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="999" Height="26" Padding="11,0"
                                                         VerticalAlignment="Center">
-                                                    <TextBlock FontSize="12" FontWeight="Bold"
-                                                               Foreground="{DynamicResource OnAccent}"
+                                                    <TextBlock FontSize="11.5" FontWeight="Bold"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource ActionInk}"
                                                                Text="{Binding BookIndex, StringFormat='Книга {0:D2}'}" />
                                                 </Border>
-                                                <!-- Green once the book is full. Bound to IsFilled,
-                                                     not to the book: bound to the book the colour
-                                                     was decided when the card was built, so
-                                                     "Готово 8 из 8" stayed red. -->
-                                                <TextBlock Text="{Binding ProgressText}"
-                                                           Classes="t12" VerticalAlignment="Center"
-                                                           FontWeight="{Binding IsFilled, Converter={StaticResource PageState}, ConverterParameter=filledsemi}"
-                                                           Foreground="{Binding IsFilled, Converter={StaticResource PageState}, ConverterParameter=filledbrush}" />
+                                                <!--
+                                                    The line itself says nothing in colour: the
+                                                    lamp at its left does. Green once the book
+                                                    is full, red while it is not, and the words
+                                                    stay in the grey of a caption so a card of
+                                                    books does not read as a traffic light.
+
+                                                    Bound to IsFilled, not to the book: bound to
+                                                    the book the colour was decided when the card
+                                                    was built, so "Готово 8 из 8" stayed red.
+                                                -->
+                                                <StackPanel Orientation="Horizontal" Spacing="7"
+                                                            VerticalAlignment="Center">
+                                                    <Ellipse Width="7" Height="7" VerticalAlignment="Center"
+                                                             Fill="{Binding IsFilled, Converter={StaticResource PageState}, ConverterParameter=filledbrush}" />
+                                                    <TextBlock Text="{Binding ProgressText}"
+                                                               Classes="t12" VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource TextMuted}" />
+                                                </StackPanel>
                                             </StackPanel>
 
                                             <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                         Spacing="4" VerticalAlignment="Center">
-                                                <Button Classes="icon"
+                                                <Button Classes="bookMark"
                                                         AutomationProperties.Name="Дублировать книгу"
                                                         ToolTip.Tip="Дублировать книгу"
                                                         Click="OnDuplicateBookClick">
-                                                    <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets"
-                                                               FontSize="13" />
+                                                    <Path Width="13" Height="13" Stretch="Uniform"
+                                                          StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                          Stroke="{Binding $parent[Button].Foreground}"
+                                                          Data="M11.2 9h6.6A2.2 2.2 0 0 1 20 11.2v6.6A2.2 2.2 0 0 1 17.8 20h-6.6A2.2 2.2 0 0 1 9 17.8v-6.6A2.2 2.2 0 0 1 11.2 9Z M15 5.5A2.5 2.5 0 0 0 12.5 3H6A2.5 2.5 0 0 0 3.5 5.5V13" />
                                                 </Button>
-                                                <Button Classes="icon"
+                                                <Button Classes="bookMark basket"
                                                         AutomationProperties.Name="Удалить книгу"
                                                         ToolTip.Tip="Удалить книгу"
                                                         Click="OnDeleteBookClick">
-                                                    <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"
-                                                               FontSize="13" />
+                                                    <Path Width="13" Height="13" Stretch="Uniform"
+                                                          StrokeThickness="1.4" StrokeLineCap="Round" StrokeJoin="Round"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                          Stroke="{Binding $parent[Button].Foreground}"
+                                                          Data="M4 7h16M9.5 7V5h5v2M6.5 7l.9 12.2a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5L17.5 7M10 11v6M14 11v6" />
                                                 </Button>
                                             </StackPanel>
                                         </Grid>
@@ -1520,16 +1645,26 @@
                                                                     </Grid>
 
                                                                     <!-- clear the slot: always visible -->
+                                                                    <!--
+                                                                        The basket the program already uses elsewhere, at
+                                                                        the twenty-two pixels this footer allows, and
+                                                                        centred: the platform glyph hung from its own
+                                                                        baseline and read as a mark sitting askew in
+                                                                        the corner of the cell.
+                                                                    -->
                                                                     <Button Grid.Column="1" Classes="icon"
                                                                             Padding="0" Width="22" Height="22"
+                                                                            CornerRadius="7"
+                                                                            VerticalAlignment="Center"
                                                                             AutomationProperties.Name="Очистить слот"
                                                                             ToolTip.Tip="Убрать фото из слота"
                                                                             Click="OnClearSlotClick"
                                                                             IsVisible="{Binding IsEmpty, Converter={StaticResource PageState}, ConverterParameter=hasphoto}">
-                                                                        <TextBlock Text="&#xE74D;"
-                                                                                   FontFamily="Segoe MDL2 Assets"
-                                                                                   FontSize="12"
-                                                                                   Foreground="{DynamicResource Red500}" />
+                                                                        <Path Width="12" Height="12" Stretch="Uniform"
+                                                                              StrokeThickness="1.4" StrokeLineCap="Round" StrokeJoin="Round"
+                                                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                              Stroke="{DynamicResource Red500}"
+                                                                              Data="M4 7h16M9.5 7V5h5v2M6.5 7l.9 12.2a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5L17.5 7M10 11v6M14 11v6" />
                                                                     </Button>
                                                                 </Grid>
                                                             </Border>

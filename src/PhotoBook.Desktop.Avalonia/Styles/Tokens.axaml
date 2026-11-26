@@ -630,6 +630,14 @@
             <Color x:Key="StatusTealFill">#1A0D8B79</Color>
             <Color x:Key="StatusTealBorder">#330D8B79</Color>
 
+            <!-- The loaded list's shared state: the product's own gold as a wash, with a deep
+                 gold word on it. The solid gold the badge used to be is what a button is, not
+                 what a label is - on warm paper it read as an orange slab among cream
+                 controls, which is the one colour the design never puts on a surface. -->
+            <Color x:Key="StatusSharedInk">#8A6000</Color>
+            <Color x:Key="StatusSharedFill">#2EFFC828</Color>
+            <Color x:Key="StatusSharedBorder">#4DA07000</Color>
+
             <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ the guide ~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
             <!--
                 The manual is a page of type on paper rather than a set of cards, so it needs
@@ -1146,6 +1154,12 @@
             <Color x:Key="StatusTealInk">#5AD9C6</Color>
             <Color x:Key="StatusTealFill">#1A5AD9C6</Color>
             <Color x:Key="StatusTealBorder">#2E5AD9C6</Color>
+
+            <!-- The shared state at night: cream words on a thin gold wash, as the prototype
+                 draws it. The gold is the accent here, so it speaks without a slab. -->
+            <Color x:Key="StatusSharedInk">#FFDF96</Color>
+            <Color x:Key="StatusSharedFill">#14FFD23F</Color>
+            <Color x:Key="StatusSharedBorder">#47FFD23F</Color>
 
             <!-- The guide in the evening: the gold itself for its small capitals, and the
                  mock washes turned white. See the light theme for what each one is. -->
