@@ -37,15 +37,28 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Files the run sends, one per page that holds a photograph.</summary>
         public int GoingFileCount => GoingGroups.Sum(group => group.FileCount);
 
-        /// <summary>Books the run sends, as the strip prints them: «2 книги».</summary>
-        public string GoingBooksText =>
-            RussianPlural.With(GoingBookCount, "книга", "книги", "книг");
+        /// <summary>The word the strip prints after the count: «2 книги» — this is «книги».</summary>
+        /// <remarks>
+        /// The count and its word are two runs, not one sentence: the prototype sets the number
+        /// at 15 extra bold and the word beside it at 11.5 in the muted ink, and a sentence
+        /// would print both the same size.
+        /// </remarks>
+        public string GoingBooksUnit =>
+            RussianPlural.Of(GoingBookCount, "книга", "книги", "книг");
 
-        /// <summary>Files the run sends, as the strip prints them: «10 файлов».</summary>
-        public string GoingFilesText =>
-            RussianPlural.With(GoingFileCount, "файл", "файла", "файлов");
+        /// <summary>The word after the file count: «10 файлов» — this is «файлов».</summary>
+        public string GoingFilesUnit =>
+            RussianPlural.Of(GoingFileCount, "файл", "файла", "файлов");
 
-        /// <summary>The project under the page's name: «Проект «выпуск» · 4 группы · 13 книг · 65 файлов».</summary>
+        /// <summary>The project's name in the sentence under the page's name: «выпуск».</summary>
+        /// <remarks>
+        /// Quoted and bound on its own because it is the one bold run of that sentence: the
+        /// prototype writes «Проект **«выпуск»** · 4 группы · 13 книг · 65 файлов», and the
+        /// name is what the eye is meant to catch there.
+        /// </remarks>
+        public string ProjectNameText => "«" + ProjectName + "»";
+
+        /// <summary>The rest of that sentence: «· 4 группы · 13 книг · 65 файлов».</summary>
         /// <remarks>
         /// All of the project, not only what goes: the sentence introduces the page, and a page
         /// that opened by saying it held two books out of thirteen would read as a page about
@@ -53,7 +66,7 @@ namespace PhotoBook.Presentation.ViewModels
         /// </remarks>
         public string HeaderSummary => Groups.Count == 0
             ? string.Empty
-            : "Проект «" + ProjectName + "» · " +
+            : " · " +
               RussianPlural.With(Groups.Count, "группа", "группы", "групп") + " · " +
               RussianPlural.With(AllBooks.Count(), "книга", "книги", "книг") + " · " +
               RussianPlural.With(
@@ -141,8 +154,9 @@ namespace PhotoBook.Presentation.ViewModels
         {
             OnPropertyChanged(nameof(GoingBookCount));
             OnPropertyChanged(nameof(GoingFileCount));
-            OnPropertyChanged(nameof(GoingBooksText));
-            OnPropertyChanged(nameof(GoingFilesText));
+            OnPropertyChanged(nameof(GoingBooksUnit));
+            OnPropertyChanged(nameof(GoingFilesUnit));
+            OnPropertyChanged(nameof(ProjectNameText));
             OnPropertyChanged(nameof(HeaderSummary));
             OnPropertyChanged(nameof(AttentionCount));
             OnPropertyChanged(nameof(HasAttentionTag));

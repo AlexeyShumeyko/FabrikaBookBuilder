@@ -12,9 +12,9 @@
 
         Numbers, from the prototype:
 
-            control panel   24/22/24/20, a 52 tile and the name at 25 extra bold
-            strip           a sunken tray under the name: «К отправке», books, files, price,
-                            and the two tags on the right
+            control panel   24/22/24/0, a 52 gold tile and the name at 25 extra bold
+            strip           a line across the panel's foot, then «К отправке», the count,
+                            its word, files, price, and the two tags on the right
             alert           warm wash, a mark, a title and a sentence, one button «Показать»
             group head      18/15, a 30 number, the name at 14 extra bold, the composition
                             under it, the state in a pill, the sum, «В загрузке», the chevron
@@ -32,32 +32,51 @@
     <Grid RowDefinitions="Auto,*" MaxWidth="1600" Margin="32,24" HorizontalAlignment="Stretch">
 
         <!-- ============================ control panel ========================== -->
-        <Border Grid.Row="0" Classes="card" Padding="24,20,24,18"
+        <Border Grid.Row="0" Classes="card" Padding="24,22,24,0"
                 HorizontalAlignment="Stretch" VerticalAlignment="Top">
-            <StackPanel Spacing="16">
+            <StackPanel Spacing="0">
 
-                <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center"
+                      Margin="0,0,0,20">
 
-                    <!-- A mark of the page's own, as every other screen has: the same tile and
-                         12 radius, in the product's colour, with the upload arrow the send
-                         panel uses. -->
+                    <!-- The prototype's own tile: a gold plate, the hairline it draws four
+                         pixels inside, and the upload mark. Not the avatar's gold - by day the
+                         tile is a pale wash with deep-gold ink, and the avatar stays gold. -->
                     <Border Grid.Column="0" Width="52" Height="52" CornerRadius="15"
                             VerticalAlignment="Center"
-                            Background="{DynamicResource AvatarFill}"
-                            BorderBrush="{DynamicResource AvatarRing}" BorderThickness="1">
-                        <Path Width="23" Height="23" Stretch="Uniform"
-                              Stroke="{DynamicResource AvatarInk}" StrokeThickness="1.8"
-                              StrokeLineCap="Round" StrokeJoin="Round"
-                              HorizontalAlignment="Center" VerticalAlignment="Center"
-                              Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
+                            Background="{DynamicResource ModePlateFill}"
+                            BorderBrush="{DynamicResource ModePlateRing}" BorderThickness="1"
+                            BoxShadow="{DynamicResource ModePlateShadow}">
+                        <Panel>
+                            <Border Margin="4" CornerRadius="11" BorderThickness="1"
+                                    IsHitTestVisible="False"
+                                    BorderBrush="{DynamicResource ModePlateInnerRing}" />
+                            <!-- The upload mark from the prototype's sprite, point for point:
+                                 the shaft, the two strokes of the head and the tray's box, at the
+                                 size the sprite draws them - 16.2 of its 24-pixel grid, not
+                                 stretched to the tile. -->
+                            <Path Width="18" Height="17.4" Stretch="Uniform"
+                                  Stroke="{DynamicResource ModePlateInk}" StrokeThickness="1.8"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Data="M12 15.2V4.2 M7.9 8.3 L12 4.2 L15.8 8.3 M3.9 14.2v3a2.6 2.6 0 0 0 2.6 2.6h11a2.6 2.6 0 0 0 2.6-2.6v-3" />
+                        </Panel>
                     </Border>
 
                     <StackPanel Grid.Column="1" Margin="16,0,24,0" VerticalAlignment="Center" Spacing="3">
                         <TextBlock Text="Загрузка на сайт" Classes="t25ExtraBold" />
-                        <TextBlock Text="{Binding HeaderSummary}" FontSize="12"
-                                   Foreground="{DynamicResource TextMuted}"
-                                   TextTrimming="CharacterEllipsis"
-                                   IsVisible="{Binding HasGroups}" />
+                        <!-- «Проект «выпуск» · 4 группы · 13 книг · 65 файлов»: one sentence
+                             in three runs, because only the project's name is bold. -->
+                        <TextBlock FontSize="12.5" Foreground="{DynamicResource TextMuted}"
+                                   Margin="0,1,0,0" TextTrimming="CharacterEllipsis"
+                                   IsVisible="{Binding HasGroups}">
+                            <TextBlock.Inlines>
+                                <Run Text="Проект " />
+                                <Run Text="{Binding ProjectNameText}" FontWeight="Bold"
+                                     Foreground="{DynamicResource TextDefault}" />
+                                <Run Text="{Binding HeaderSummary}" />
+                            </TextBlock.Inlines>
+                        </TextBlock>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10"
@@ -95,66 +114,79 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- What the run is worth, before what is wrong with it. A sunken tray rather
-                     than a second card: it is part of the panel's own head, not another thing
-                     on the page. -->
-                <Border Background="{DynamicResource SunkenFaint}"
-                        BorderBrush="{DynamicResource BorderDefault}" BorderThickness="1"
-                        CornerRadius="14" Padding="16,11"
+                <!-- What the run is worth, before what is wrong with it. The prototype closes
+                     the panel with a line across its foot and a row of numbers under it: not a
+                     tray inside a tray, which read as a second, smaller card. -->
+                <Border BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,1,0,0"
+                        Padding="0,13,0,15"
                         IsVisible="{Binding HasGroups}">
                     <Grid ColumnDefinitions="*,Auto">
 
-                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                            <TextBlock Text="К ОТПРАВКЕ" FontSize="10" FontWeight="Bold"
+                        <!-- The count at 15 extra bold, its word at 11.5 in the muted ink and
+                             the label at 10 in wide capitals: a line of type sitting on one
+                             baseline, as the prototype sets it, not a row of chips. -->
+                        <StackPanel Orientation="Horizontal" Spacing="7"
+                                    VerticalAlignment="Bottom">
+                            <TextBlock Text="К отправке" FontSize="10" FontWeight="Bold"
+                                       LetterSpacing="1.4"
                                        Foreground="{DynamicResource TextFaint}"
-                                       VerticalAlignment="Center" />
+                                       VerticalAlignment="Bottom" Margin="0,0,8,1" />
 
-                            <TextBlock Text="{Binding GoingBooksText}" FontSize="15"
-                                       FontWeight="ExtraBold" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding GoingBookCount}" FontSize="15"
+                                       FontWeight="ExtraBold" VerticalAlignment="Bottom" />
+                            <TextBlock Text="{Binding GoingBooksUnit}" FontSize="11.5"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       VerticalAlignment="Bottom" />
 
-                            <Border Width="1" Height="18" VerticalAlignment="Center"
-                                    Background="{DynamicResource BorderDefault}" />
+                            <Border Width="1" Height="14" VerticalAlignment="Center"
+                                    Margin="3,0"
+                                    Background="{DynamicResource BorderStrong}" />
 
-                            <TextBlock Text="{Binding GoingFilesText}" FontSize="15"
-                                       FontWeight="ExtraBold" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding GoingFileCount}" FontSize="15"
+                                       FontWeight="ExtraBold" VerticalAlignment="Bottom" />
+                            <TextBlock Text="{Binding GoingFilesUnit}" FontSize="11.5"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       VerticalAlignment="Bottom" />
 
-                            <Border Width="1" Height="18" VerticalAlignment="Center"
-                                    Background="{DynamicResource BorderDefault}"
+                            <Border Width="1" Height="14" VerticalAlignment="Center"
+                                    Margin="3,0"
+                                    Background="{DynamicResource BorderStrong}"
                                     IsVisible="{Binding HasTotal}" />
 
-                            <StackPanel Orientation="Horizontal" Spacing="7"
-                                        VerticalAlignment="Center"
-                                        IsVisible="{Binding HasTotal}">
-                                <TextBlock Text="{Binding TotalText}" FontSize="15"
-                                           FontWeight="ExtraBold" VerticalAlignment="Center" />
-                                <TextBlock Text="без доставки" FontSize="11"
-                                           Foreground="{DynamicResource TextFaint}"
-                                           VerticalAlignment="Center" />
-                            </StackPanel>
+                            <TextBlock Text="{Binding TotalText}" FontSize="15"
+                                       FontWeight="ExtraBold" VerticalAlignment="Bottom"
+                                       IsVisible="{Binding HasTotal}" />
+                            <TextBlock Text="без доставки" FontSize="10.5"
+                                       Foreground="{DynamicResource TextFaint}"
+                                       VerticalAlignment="Bottom" Margin="0,0,0,1"
+                                       IsVisible="{Binding HasTotal}" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
                                     VerticalAlignment="Center">
                             <Border Background="{DynamicResource StatusWarnFill}"
                                     BorderBrush="{DynamicResource StatusWarnBorder}"
-                                    BorderThickness="1" CornerRadius="999" Padding="9,4"
+                                    BorderThickness="1" CornerRadius="999" Height="26"
+                                    Padding="11,0"
                                     IsVisible="{Binding HasAttentionTag}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                <StackPanel Orientation="Horizontal" Spacing="7">
                                     <Border Width="6" Height="6" CornerRadius="3"
                                             Background="{DynamicResource StatusWarnInk}"
                                             VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding AttentionTagText}" FontSize="11"
+                                    <TextBlock Text="{Binding AttentionTagText}" FontSize="11.5"
                                                FontWeight="Bold"
+                                               VerticalAlignment="Center"
                                                Foreground="{DynamicResource StatusWarnInk}" />
                                 </StackPanel>
                             </Border>
 
                             <Border Background="{DynamicResource StatusMutedFill}"
                                     BorderBrush="{DynamicResource StatusMutedBorder}"
-                                    BorderThickness="1" CornerRadius="999" Padding="9,4"
+                                    BorderThickness="1" CornerRadius="999" Height="26"
+                                    Padding="11,0"
                                     IsVisible="{Binding HasExcludedTag}">
-                                <TextBlock Text="{Binding ExcludedTagText}" FontSize="11"
-                                           FontWeight="Bold"
+                                <TextBlock Text="{Binding ExcludedTagText}" FontSize="11.5"
+                                           FontWeight="Bold" VerticalAlignment="Center"
                                            Foreground="{DynamicResource StatusMutedInk}" />
                             </Border>
                         </StackPanel>
