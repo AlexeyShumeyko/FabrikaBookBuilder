@@ -549,6 +549,10 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(NoteIsProblem));
             OnPropertyChanged(nameof(StatusText));
             OnPropertyChanged(nameof(HasStatus));
+
+            // The card's own numbers - composition, sum, badge - follow the same changes as
+            // the sentences: there is one place a group says it changed, and this is it.
+            NotifyCard();
         }
 
         /// <summary>Forgets the sentences that belonged to the answers that just changed.</summary>

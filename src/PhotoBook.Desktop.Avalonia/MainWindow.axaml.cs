@@ -232,6 +232,33 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>Raised when the corner plate is pressed, which asks for the run's panel back.</summary>
+    public event EventHandler? UploadDockPressed;
+
+    /// <summary>
+    /// Leaves the plate in the corner that says how far a put-aside upload has got.
+    /// </summary>
+    /// <remarks>
+    /// The plate borrows the screen's own view model rather than a copy of its numbers: a
+    /// second copy would have to be kept in step with a run that changes several times a
+    /// second, and the one thing a progress plate must not be is a second behind.
+    /// </remarks>
+    public void ShowUploadDock(SiteUploadViewModel screen)
+    {
+        UploadDock.DataContext = screen;
+        UploadDock.IsVisible = true;
+    }
+
+    /// <summary>Takes the plate away, with the panel that explains it coming back.</summary>
+    public void HideUploadDock()
+    {
+        UploadDock.IsVisible = false;
+        UploadDock.DataContext = null;
+    }
+
+    private void OnUploadDockClick(object? sender, RoutedEventArgs e) =>
+        UploadDockPressed?.Invoke(this, EventArgs.Empty);
+
     /// <summary>
     /// Puts a panel over the page, dims the page, and waits for the panel's answer.
     /// </summary>

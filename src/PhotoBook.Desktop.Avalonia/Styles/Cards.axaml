@@ -642,4 +642,108 @@
         <Setter Property="Foreground" Value="{DynamicResource TextDefault}" />
     </Style>
 
+    <!--
+        The plate in the corner of the window while an upload runs out of the way.
+
+        It floats over the page rather than sitting in a bar of its own: the page is being used
+        while the run goes, and a strip that took height from every screen would take it at
+        exactly the moment the customer needs the room.
+    -->
+    <Style Selector="Button.uploadDock">
+        <Setter Property="Background" Value="{DynamicResource SurfaceModal}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ModalEdge}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border x:Name="Plate"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}"
+                        BoxShadow="{DynamicResource ShadowHover}">
+                    <Border.Transitions>
+                        <Transitions>
+                            <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.16" />
+                        </Transitions>
+                    </Border.Transitions>
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.uploadDock:pointerover /template/ Border#Plate">
+        <Setter Property="BoxShadow" Value="{DynamicResource ModalShadow}" />
+    </Style>
+
+    <!--
+        The switch: a track thirty-four by twenty with a fourteen knob, which is the prototype's
+        `switch` and the one control on the order page that is not a checkbox visually.
+
+        It is still a CheckBox rather than a button drawn as a track, because the thing being
+        asked is yes or no and a screen reader, a keyboard and a test all know how to operate a
+        checkbox and none of them know how to operate a border. The template is the whole of the
+        difference: the tick is replaced by the knob, and the states are the checkbox's own.
+    -->
+    <Style Selector="CheckBox.switch">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <StackPanel Orientation="Horizontal" Background="Transparent">
+                    <Border x:Name="Track" Width="34" Height="20" CornerRadius="999"
+                            VerticalAlignment="Center"
+                            Background="{DynamicResource Sunken}"
+                            BorderBrush="{DynamicResource BorderStrong}" BorderThickness="1">
+                        <Border.Transitions>
+                            <Transitions>
+                                <BrushTransition Property="Background" Duration="0:0:0.16" />
+                                <BrushTransition Property="BorderBrush" Duration="0:0:0.16" />
+                            </Transitions>
+                        </Border.Transitions>
+                        <Border x:Name="Knob" Width="14" Height="14" CornerRadius="7"
+                                Margin="2,0,0,0" HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Background="{DynamicResource Surface}"
+                                BoxShadow="{DynamicResource ShadowSm}"
+                                RenderTransform="translate(0px,0px)">
+                            <Border.Transitions>
+                                <Transitions>
+                                    <TransformOperationsTransition Property="RenderTransform"
+                                                                   Duration="0:0:0.16"
+                                                                   Easing="CubicEaseOut" />
+                                </Transitions>
+                            </Border.Transitions>
+                        </Border>
+                    </Border>
+
+                    <ContentPresenter Margin="9,0,0,0" VerticalAlignment="Center"
+                                      Content="{TemplateBinding Content}"
+                                      TextElement.FontSize="11.5"
+                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                </StackPanel>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="CheckBox.switch:checked /template/ Border#Track">
+        <Setter Property="Background" Value="{DynamicResource Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentStrong}" />
+    </Style>
+
+    <Style Selector="CheckBox.switch:checked /template/ Border#Knob">
+        <Setter Property="RenderTransform" Value="translate(14px,0px)" />
+    </Style>
+
+    <Style Selector="CheckBox.switch:pointerover /template/ Border#Track">
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderAccentHover}" />
+    </Style>
+
 </Styles>

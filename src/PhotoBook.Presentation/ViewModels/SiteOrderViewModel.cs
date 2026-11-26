@@ -234,6 +234,7 @@ namespace PhotoBook.Presentation.ViewModels
                 SpreadCount = 0;
                 IsReady = false;
                 SetProjectMessage("Проект не открыт.");
+                NotifyCard();
                 return;
             }
 
@@ -439,6 +440,10 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(TotalText));
             OnPropertyChanged(nameof(HasTotal));
             OnPropertyChanged(nameof(CanUpload));
+
+            // The head is rebuilt from the same answer as the plan, so it can never say a
+            // price or a count that belongs to the order as it stood a moment ago.
+            NotifyCard();
         }
 
         /// <summary>The line that names a group left out, and what will happen to its books.</summary>

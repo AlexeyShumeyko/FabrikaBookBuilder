@@ -284,6 +284,44 @@
         </Border>
     </DockPanel>
 
+    <!-- ============================== upload dock ============================
+         Where an upload goes when it is put aside. A run that must be watched is a run the
+         customer cannot work during, and the prototype's answer is to fold it into a plate in
+         the corner with the same bar. The plate belongs to the window and not to a screen: the
+         run carries on across screens, and the plate has to follow it there.
+
+         Bottom right, out of the page's way, above the page and under a sheet - a panel over
+         the window covers it, which is what says the panel is the more important thing.
+    -->
+    <Button x:Name="UploadDock" Classes="uploadDock" IsVisible="False"
+            HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,28,28"
+            AutomationProperties.Name="Загрузка на сайт"
+            Click="OnUploadDockClick">
+        <Grid ColumnDefinitions="Auto,Auto" VerticalAlignment="Center">
+            <Border Width="34" Height="34" CornerRadius="10" VerticalAlignment="Center"
+                    Background="{DynamicResource ActionFill}"
+                    BorderBrush="{DynamicResource ActionBorder}" BorderThickness="1"
+                    BoxShadow="{DynamicResource ActionShadow}">
+                <Path Width="16" Height="16" Stretch="Uniform"
+                      Stroke="{DynamicResource ActionInk}" StrokeThickness="1.9"
+                      StrokeLineCap="Round" StrokeJoin="Round"
+                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                      Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
+            </Border>
+
+            <StackPanel Grid.Column="1" Margin="11,0,0,0" Spacing="2" MinWidth="200"
+                        VerticalAlignment="Center">
+                <TextBlock Text="{Binding DockTitle}" FontSize="12" FontWeight="Bold" />
+                <TextBlock Text="{Binding DockText}" FontSize="11"
+                           Foreground="{DynamicResource TextFaint}" />
+                <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressValue}"
+                             Height="4" CornerRadius="99" MinWidth="0" Margin="0,3,0,0"
+                             Background="{DynamicResource Sunken}"
+                             Foreground="{DynamicResource Accent}" />
+            </StackPanel>
+        </Grid>
+    </Button>
+
     <!-- ================================ sheet ================================
          The dimming layer and nothing else. What is in it is put there by code and taken
          out again when it has answered; the layer itself knows no more than that.

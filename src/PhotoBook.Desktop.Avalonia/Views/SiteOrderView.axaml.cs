@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using PhotoBook.Presentation.ViewModels;
 
 namespace PhotoBook.Shell.Views
@@ -26,6 +27,35 @@ namespace PhotoBook.Shell.Views
         {
             if ((sender as Control)?.DataContext is OrderBookRow row)
                 row.IsExpanded = !row.IsExpanded;
+        }
+
+        /// <summary>Folds a group's books away, or brings them back.</summary>
+        private void OnToggleGroup(object? sender, RoutedEventArgs e)
+        {
+            if ((sender as Control)?.DataContext is SiteOrderGroup group)
+                group.ToggleCollapse();
+        }
+
+        /// <summary>
+        /// Takes the eye to the first group that needs an answer.
+        /// </summary>
+        /// <remarks>
+        /// The plate over the page names the books and cannot show them: four groups of cards
+        /// are taller than a window, and the one that is wrong can be the last of them. The
+        /// button therefore scrolls rather than repeats the sentence, and it scrolls to the
+        /// card the page itself considers first - the same one the flag is read from - so the
+        /// two can never disagree.
+        /// </remarks>
+        private void OnShowProblem(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is not SiteOrderViewModel page || page.FirstProblemGroup is not { } target)
+                return;
+
+            var card = this.GetVisualDescendants()
+                .OfType<Border>()
+                .FirstOrDefault(border => border.Name == "BooksCard" && ReferenceEquals(border.DataContext, target));
+
+            card?.BringIntoView();
         }
 
         /// <summary>

@@ -165,6 +165,8 @@ namespace PhotoBook.Presentation.ViewModels
                 OnPropertyChanged(nameof(IsConfirming));
                 OnPropertyChanged(nameof(IsRunning));
                 OnPropertyChanged(nameof(IsFinished));
+                OnPropertyChanged(nameof(CanResume));
+                OnPropertyChanged(nameof(DockTitle));
                 OnPropertyChanged(nameof(HeaderText));
             }
         }
@@ -200,6 +202,7 @@ namespace PhotoBook.Presentation.ViewModels
                     return;
 
                 OnPropertyChanged(nameof(UploadedText));
+                OnPropertyChanged(nameof(DockText));
             }
         }
 
@@ -213,6 +216,7 @@ namespace PhotoBook.Presentation.ViewModels
                     return;
 
                 OnPropertyChanged(nameof(UploadedText));
+                OnPropertyChanged(nameof(DockText));
             }
         }
 
@@ -230,8 +234,19 @@ namespace PhotoBook.Presentation.ViewModels
                     return;
 
                 OnPropertyChanged(nameof(PercentText));
+                OnPropertyChanged(nameof(DockText));
             }
         }
+
+        /// <summary>
+        /// The line under the corner plate while a run is out of the way: «45% · 12 из 65 файлов».
+        /// </summary>
+        public string DockText => PercentText + " · " + Uploaded + " из " + Total + " файлов";
+
+        /// <summary>What the corner plate is headed with: the run, or what became of it.</summary>
+        public string DockTitle => !IsFinished
+            ? "Загрузка на сайт"
+            : IsDone ? "Загрузка завершена" : "Загрузка остановлена";
 
         /// <summary>How far the run is, in percent, as the window prints it.</summary>
         public string PercentText =>
@@ -363,6 +378,17 @@ namespace PhotoBook.Presentation.ViewModels
 
         /// <summary>Whether the customer may stop the run.</summary>
         public bool CanCancel => IsBusy;
+
+        /// <summary>
+        /// Whether a stopped run may be taken up again.
+        /// </summary>
+        /// <remarks>
+        /// What the site already holds was written down, so the next press starts at the page
+        /// that failed rather than at the first one. A panel that only offered «Вернуться к
+        /// проектам» after a dropped connection made the customer pay for it with every file
+        /// that had already arrived.
+        /// </remarks>
+        public bool CanResume => Step == UploadStep.Stopped && CanUpload;
 
         /// <summary>
         /// Shows what is about to be sent. Costs the site nothing: the summary and the groups are

@@ -200,17 +200,12 @@ public partial class App : Avalonia.Application
                 navigator.ResumeAfterSignIn();
             };
 
-            // Sending is a window over the order page rather than a page of its own: the order
+            // Sending is a panel over the order page rather than a page of its own: the order
             // stays behind it, so a stopped run does not cost the customer the plan they built.
-            // A closed window with "вернуться к проектам" ends the session the way an export
-            // does, because the order it belonged to is finished.
+            // A run put aside leaves a plate in the corner, and pressing it brings the panel
+            // back - which is why this is a loop and not one call.
             navigator.UploadWindowRequested += async (_, _) =>
-            {
-                var upload = new UploadWindow(navigator.UploadScreen);
-
-                if (await upload.ShowDialog<bool>(window))
-                    navigator.EndSession();
-            };
+                await RunUploadAsync(window, navigator);
 
             desktop.MainWindow = window;
 
@@ -233,6 +228,85 @@ public partial class App : Avalonia.Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>
+    /// Watches an upload, and puts its panel back whenever it was asked for.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The panel is shown, answered, and shown again: leaving it for the corner plate is not
+    /// leaving the run, and a run that finished while it was folded away comes back open, so
+    /// the result is read rather than discovered in a plate that changed its word.
+    /// </para>
+    /// <para>
+    /// The session ends only on «Вернуться к проектам». Closing the panel, or the run stopping,
+    /// leaves the customer where the order was assembled, because a stopped run is not a
+    /// finished one and the plan behind it is still theirs to fix or to send.
+    /// </para>
+    /// </remarks>
+    private static async Task RunUploadAsync(MainWindow window, AvaloniaNavigator navigator)
+    {
+        var screen = navigator.UploadScreen;
+
+        while (true)
+        {
+            var answer = await window.ShowSheetAsync(new UploadSheet(screen));
+
+            if (answer == UploadAnswer.Projects)
+            {
+                navigator.EndSession();
+                return;
+            }
+
+            if (answer != UploadAnswer.Minimized)
+                return;
+
+            window.ShowUploadDock(screen);
+            try
+            {
+                await WaitForDockAsync(window, screen);
+            }
+            finally
+            {
+                window.HideUploadDock();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Waits until the corner plate is pressed, or until the run it shows has finished.
+    /// </summary>
+    /// <remarks>
+    /// Both end the wait, and both lead to the same place: the panel comes back. A plate that
+    /// waited for a click after saying «завершена» would be a result nobody could read.
+    /// </remarks>
+    private static async Task WaitForDockAsync(MainWindow window, SiteUploadViewModel screen)
+    {
+        var done = new TaskCompletionSource<object?>();
+
+        void OnPressed(object? sender, EventArgs e) => done.TrySetResult(null);
+        void OnChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (screen.IsFinished)
+                done.TrySetResult(null);
+        }
+
+        window.UploadDockPressed += OnPressed;
+        screen.PropertyChanged += OnChanged;
+
+        try
+        {
+            if (screen.IsFinished)
+                return;
+
+            await done.Task;
+        }
+        finally
+        {
+            window.UploadDockPressed -= OnPressed;
+            screen.PropertyChanged -= OnChanged;
+        }
     }
 
     /// <summary>

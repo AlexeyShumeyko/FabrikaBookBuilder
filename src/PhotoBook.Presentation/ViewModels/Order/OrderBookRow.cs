@@ -62,6 +62,22 @@ namespace PhotoBook.Presentation.ViewModels
         /// <summary>Slots holding a photo, the cover counted.</summary>
         public int Photos => _book.FilledSlotCount;
 
+        /// <summary>
+        /// The book's cover, as the small picture its row draws.
+        /// </summary>
+        /// <remarks>
+        /// The photograph itself rather than a thumbnail path recorded beside it: the picture
+        /// that is drawn picks the thumbnail up on its own when one exists, and a recorded path
+        /// that has been cleaned up since would decode to nothing and leave the row with an
+        /// empty frame - which reads as a book whose cover is missing.
+        /// </remarks>
+        public string? ThumbnailPath => _book.Cover is { IsEmpty: false } cover
+            ? cover.SourcePath
+            : null;
+
+        /// <summary>Whether the row has a picture to draw.</summary>
+        public bool HasThumbnail => ThumbnailPath is not null;
+
         /// <summary>Whether every slot holds a photograph.</summary>
         public bool IsReady => _book.IsValid;
 

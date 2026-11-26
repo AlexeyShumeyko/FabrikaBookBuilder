@@ -1,0 +1,397 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PhotoBook.Shell.Views.UploadSheet"
+             AutomationProperties.Name="Отправка на сайт"
+             Focusable="True">
+
+    <!--
+        Sending the order, drawn as a panel over the page rather than as a window of its own.
+
+        A window cannot blur what stands behind it, and the order page is exactly what should
+        stay behind this one: the customer presses the button, watches the files go, and comes
+        back to the plan they built - a stopped run must not cost them the page it started from.
+        The shell dims and blurs the page under it, so the panel reads as the last step of the
+        order rather than as a second program.
+
+        Three moments in one panel, because they are one action: the question, the run, and what
+        became of it. The prototype draws them as #modal-upload-confirm, #modal-upload-progress
+        and #modal-upload-done, and the parts are its parts:
+
+            card        590 wide, radius 22, the modal surface, a hairline, a shadow
+            head        26/22, a 44 tile on the action palette, the moment and its line
+            stats       3 boxes, radius 12, the field wash
+            total       the brand wash, the sum on the right at 20 extra bold
+            run         a percentage at 24 bold over a ten-pixel bar, with its own count
+            done        a check on the success wash, the link, and what the site holds
+            foot        the sunken tray, 24/16, the quiet answer and the gold one
+
+        Nothing here is written before «Отправить» is pressed, and the panel says what became of
+        a run rather than closing on it: an order that is on the site is a fact the customer has
+        to be able to read.
+    -->
+    <UserControl.Styles>
+        <!-- The bar is the one moving thing on the screen, so it gets the product's own colour
+             on a sunken track. Eight pixels, as the prototype draws the odd bar. -->
+        <Style Selector="ProgressBar">
+            <Setter Property="Height" Value="8" />
+            <Setter Property="CornerRadius" Value="99" />
+            <Setter Property="Background" Value="{DynamicResource Sunken}" />
+            <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+            <Setter Property="MinWidth" Value="0" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border x:Name="Card" Width="590" CornerRadius="22" ClipToBounds="True"
+            VerticalAlignment="Center"
+            Background="{DynamicResource SurfaceModal}"
+            BorderBrush="{DynamicResource ModalEdge}" BorderThickness="1"
+            BoxShadow="{DynamicResource ModalShadow}"
+            Opacity="0" RenderTransform="translate(0px,14px) scale(0.985)">
+        <Border.Transitions>
+            <Transitions>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.24"
+                                               Easing="CubicEaseOut" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.24" Easing="CubicEaseOut" />
+            </Transitions>
+        </Border.Transitions>
+
+        <Grid RowDefinitions="Auto,Auto,Auto">
+
+            <!-- ============================= header ============================= -->
+            <Border Grid.Row="0" Padding="26,22"
+                    BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+
+                    <Border Width="44" Height="44" CornerRadius="12"
+                            Background="{DynamicResource ActionFill}"
+                            BorderBrush="{DynamicResource ActionBorder}" BorderThickness="1"
+                            BoxShadow="{DynamicResource ActionShadow}"
+                            VerticalAlignment="Center">
+                        <Path Width="21" Height="21" Stretch="Uniform"
+                              Stroke="{DynamicResource ActionInk}" StrokeThickness="1.8"
+                              StrokeLineCap="Round" StrokeJoin="Round"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" Spacing="2"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="{Binding HeaderText}" Classes="t19ExtraBold" />
+                        <TextBlock Text="{Binding ProgressText}" FontSize="12"
+                                   Foreground="{DynamicResource TextFaint}" TextWrapping="Wrap"
+                                   MaxLines="2" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <!-- The cross while there is nothing to lose, and the way to the tray while
+                         a run is going: a run cannot be closed, only put aside. -->
+                    <Button Grid.Column="2" Classes="modalClose" Margin="8,0,0,0"
+                            AutomationProperties.Name="Закрыть"
+                            IsVisible="{Binding !IsRunning}"
+                            Click="OnCloseClick">
+                        <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.5"
+                              StrokeLineCap="Round" StrokeJoin="Round"
+                              Stroke="{DynamicResource TextMuted}"
+                              Data="M6 6l12 12M18 6L6 18" />
+                    </Button>
+                    <Button Grid.Column="2" Classes="modalClose" Margin="8,0,0,0"
+                            AutomationProperties.Name="Свернуть"
+                            ToolTip.Tip="Свернуть"
+                            IsVisible="{Binding IsRunning}"
+                            Click="OnMinimizeClick">
+                        <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.8"
+                              StrokeLineCap="Round"
+                              Stroke="{DynamicResource TextMuted}"
+                              Data="M5 12h14" />
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- ============================== body ============================== -->
+            <StackPanel Grid.Row="1" Margin="26,22,26,0" Spacing="14">
+
+                <!-- what is about to be sent, before anything is written -->
+                <StackPanel Spacing="12" IsVisible="{Binding IsConfirming}">
+                    <Grid ColumnDefinitions="*,10,*,10,*">
+                        <Border Grid.Column="0" Background="{DynamicResource FieldFill}"
+                                BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1"
+                                CornerRadius="12" Padding="14,11">
+                            <StackPanel>
+                                <TextBlock Text="Проектов" Classes="t10"
+                                           Foreground="{DynamicResource TextFaint}" />
+                                <TextBlock Text="{Binding ProjectCount}" Classes="t20Bold"
+                                           Margin="0,3,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Background="{DynamicResource FieldFill}"
+                                BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1"
+                                CornerRadius="12" Padding="14,11">
+                            <StackPanel>
+                                <TextBlock Text="Книг" Classes="t10"
+                                           Foreground="{DynamicResource TextFaint}" />
+                                <TextBlock Text="{Binding BookCount}" Classes="t20Bold"
+                                           Margin="0,3,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="4" Background="{DynamicResource FieldFill}"
+                                BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1"
+                                CornerRadius="12" Padding="14,11">
+                            <StackPanel>
+                                <TextBlock Text="Файлов" Classes="t10"
+                                           Foreground="{DynamicResource TextFaint}" />
+                                <TextBlock Text="{Binding Total}" Classes="t20Bold"
+                                           Margin="0,3,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Border Background="{DynamicResource Brand50}"
+                            BorderBrush="{DynamicResource Brand100}" BorderThickness="1"
+                            CornerRadius="12" Padding="16,13">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Итого по заказу" FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource Brand700}" />
+                                <TextBlock Text="Сумма сайта, в корзину ничего не добавляется."
+                                           FontSize="11" Foreground="{DynamicResource TextMuted}"
+                                           Margin="0,3,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="{Binding ConfirmTotalText}"
+                                       Classes="t20Bold" Foreground="{DynamicResource Brand700}"
+                                       VerticalAlignment="Center" Margin="16,0,0,0"
+                                       TextWrapping="Wrap" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <!-- what stands in the way, or what the run reported before it started -->
+                <Border IsVisible="{Binding HasMessage}" Background="{DynamicResource StatusMutedFill}"
+                        BorderBrush="{DynamicResource StatusMutedBorder}" BorderThickness="1"
+                        CornerRadius="12" Padding="14,12">
+                    <TextBlock Text="{Binding Message}" FontSize="12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextMuted}" />
+                </Border>
+
+                <!-- the run, visible while it happens -->
+                <StackPanel Spacing="12" IsVisible="{Binding IsRunning}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{Binding PercentText}" Classes="t24Bold"
+                                       Foreground="{DynamicResource Brand600}" />
+                            <TextBlock Text="{Binding UploadedText}" Classes="t12"
+                                       Foreground="{DynamicResource TextMuted}" />
+                        </StackPanel>
+
+                        <Border Grid.Column="1" Background="{DynamicResource Sunken}"
+                                CornerRadius="999" Padding="11,6" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding ButtonText}" FontSize="11"
+                                       Foreground="{DynamicResource TextMuted}" />
+                        </Border>
+                    </Grid>
+
+                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressValue}" />
+
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Path Width="14" Height="14" Stretch="Uniform" StrokeThickness="1.6"
+                              StrokeLineCap="Round" StrokeJoin="Round"
+                              VerticalAlignment="Top" Margin="0,2,0,0"
+                              Stroke="{DynamicResource TextFaint}"
+                              Data="M12 10.6v5M12 7.4v.1M12 21a9 9 0 1 1 0-18a9 9 0 1 1 0 18" />
+                        <TextBlock Grid.Column="1" Margin="10,0,0,0" FontSize="11" LineHeight="17"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFaint}"
+                                   Text="Окно можно свернуть — загрузка продолжится в фоне и работе с программой мешать не будет." />
+                    </Grid>
+                </StackPanel>
+
+                <!-- what became of it -->
+                <StackPanel Spacing="12" IsVisible="{Binding IsFinished}">
+                    <Border Background="{DynamicResource Emerald50}"
+                            BorderBrush="{DynamicResource Emerald100}" BorderThickness="1"
+                            CornerRadius="12" Padding="16,13"
+                            IsVisible="{Binding IsDone}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Border Width="32" Height="32" CornerRadius="16"
+                                    Background="{DynamicResource Emerald100}">
+                                <Path Width="14" Height="14" Stretch="Uniform"
+                                      Stroke="{DynamicResource Emerald700}" StrokeThickness="2.2"
+                                      StrokeLineCap="Round" StrokeJoin="Round"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Data="M 5 12.5 L 10 17.5 L 19 6.5" />
+                            </Border>
+                            <TextBlock Grid.Column="1" Text="{Binding ResultText}" FontSize="12"
+                                       Foreground="{DynamicResource Emerald700}"
+                                       VerticalAlignment="Center" Margin="12,0,0,0"
+                                       TextWrapping="Wrap" />
+                        </Grid>
+                    </Border>
+
+                    <Border Background="{DynamicResource StatusWarnFill}"
+                            BorderBrush="{DynamicResource StatusWarnBorder}" BorderThickness="1"
+                            CornerRadius="12" Padding="16,13"
+                            IsVisible="{Binding !IsDone}">
+                        <TextBlock Text="{Binding ResultText}" FontSize="12"
+                                   Foreground="{DynamicResource StatusWarnInk}" TextWrapping="Wrap" />
+                    </Border>
+
+                    <!-- the address the order has on the site: what the customer keeps -->
+                    <Border IsVisible="{Binding HasUrl}" Background="{DynamicResource SunkenFaint}"
+                            BorderBrush="{DynamicResource BorderDefault}" BorderThickness="1"
+                            CornerRadius="12" Padding="12,10">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Path Width="14" Height="14" Stretch="Uniform" StrokeThickness="1.6"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  VerticalAlignment="Center"
+                                  Stroke="{DynamicResource TextFaint}"
+                                  Data="M14 4h6v6M20 4l-8.4 8.4M18 13.4V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4.6" />
+                            <TextBlock Grid.Column="1" Text="{Binding Url}" FontSize="11.5"
+                                       Margin="10,0,8,0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextLink}"
+                                       TextWrapping="Wrap" />
+                            <Button Grid.Column="2" Classes="ghostClear" Padding="6"
+                                    VerticalAlignment="Center"
+                                    AutomationProperties.Name="Копировать ссылку"
+                                    ToolTip.Tip="Копировать ссылку"
+                                    Click="OnCopyLinkClick">
+                                <Path Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.6"
+                                      StrokeLineCap="Round" StrokeJoin="Round"
+                                      Stroke="{DynamicResource TextMuted}"
+                                      Data="M9 9.6A1.9 1.9 0 0 1 10.9 7.7h7.4a1.9 1.9 0 0 1 1.9 1.9v7.4a1.9 1.9 0 0 1-1.9 1.9h-7.4A1.9 1.9 0 0 1 9 17zM5.7 15.2A1.9 1.9 0 0 1 3.8 13.3V5.9A1.9 1.9 0 0 1 5.7 4h7.4a1.9 1.9 0 0 1 1.9 1.9" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- one line per project: the site's own number, how many pages arrived, and
+                         what does not match. Kept beside the sentence rather than instead of it:
+                         the sentence is the outcome, this is the evidence. -->
+                    <Border IsVisible="{Binding HasResults}" Background="{DynamicResource SunkenFaint}"
+                            BorderBrush="{DynamicResource BorderDefault}" BorderThickness="1"
+                            CornerRadius="12" Padding="14,12" MaxHeight="220">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Results}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Spacing="2" Margin="0,0,0,10">
+                                            <TextBlock Text="{Binding ProjectText}" FontSize="12"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding PagesText}" FontSize="11"
+                                                       Foreground="{DynamicResource TextFaint}" />
+                                            <TextBlock Text="{Binding ProblemsText}" FontSize="11"
+                                                       Foreground="{DynamicResource Red600}"
+                                                       TextWrapping="Wrap"
+                                                       IsVisible="{Binding HasProblems}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- ============================= footer ============================= -->
+            <Border Grid.Row="2" BorderBrush="{DynamicResource BorderDefault}" BorderThickness="0,1,0,0"
+                    Background="{DynamicResource ModalFootFill}"
+                    Margin="0,20,0,0" Padding="24,16">
+                <Grid ColumnDefinitions="*,Auto">
+
+                    <!-- What the panel promises, in the place the prototype keeps its own note. -->
+                    <TextBlock FontSize="11" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFaint}"
+                               TextWrapping="Wrap" MaxWidth="260"
+                               IsVisible="{Binding IsConfirming}"
+                               Text="Файлы уже проверены сайтом" />
+                    <TextBlock FontSize="11" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFaint}"
+                               TextWrapping="Wrap" MaxWidth="260"
+                               IsVisible="{Binding IsRunning}"
+                               Text="Не закрывайте программу до завершения" />
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10"
+                                HorizontalAlignment="Right">
+
+                        <Button Classes="soft" IsVisible="{Binding IsConfirming}"
+                                AutomationProperties.Name="Отмена"
+                                Click="OnCloseClick">
+                            <TextBlock Text="Отмена" VerticalAlignment="Center" />
+                        </Button>
+
+                        <Button Classes="ghost" IsVisible="{Binding IsRunning}"
+                                AutomationProperties.Name="Свернуть"
+                                Click="OnMinimizeClick">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Path Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.8"
+                                      StrokeLineCap="Round" VerticalAlignment="Center"
+                                      Stroke="{Binding $parent[Button].Foreground}"
+                                      Data="M4 12h16" />
+                                <TextBlock Text="Свернуть" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Classes="soft" IsVisible="{Binding IsRunning}"
+                                IsEnabled="{Binding CanCancel}"
+                                AutomationProperties.Name="Остановить"
+                                Click="OnCancelClick">
+                            <TextBlock Text="Остановить" VerticalAlignment="Center" />
+                        </Button>
+
+                        <!-- A stopped run carries on from the page that failed, because what the
+                             site already holds was written down: abandoning it would cost the
+                             customer every file that did arrive. -->
+                        <Button Classes="soft" IsVisible="{Binding CanResume}"
+                                AutomationProperties.Name="Продолжить загрузку"
+                                Click="OnSendClick">
+                            <TextBlock Text="Продолжить загрузку" VerticalAlignment="Center" />
+                        </Button>
+
+                        <Button Classes="outline" IsVisible="{Binding CanOpenSite}"
+                                AutomationProperties.Name="Открыть на сайте"
+                                Click="OnOpenSiteClick">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Path Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.6"
+                                      StrokeLineCap="Round" StrokeJoin="Round"
+                                      VerticalAlignment="Center"
+                                      Stroke="{Binding $parent[Button].Foreground}"
+                                      Data="M14 4h6v6M20 4l-8.4 8.4M18 13.4V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4.6" />
+                                <TextBlock Text="Открыть на сайте" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Classes="primary" IsVisible="{Binding IsConfirming}"
+                                IsEnabled="{Binding CanUpload}"
+                                AutomationProperties.Name="Отправить на сайт"
+                                Click="OnSendClick">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.8"
+                                      StrokeLineCap="Round" StrokeJoin="Round"
+                                      VerticalAlignment="Center"
+                                      Stroke="{DynamicResource ActionInk}"
+                                      Data="M 12 14.8 V 3.6 M 8.2 7.4 L 12 3.6 L 15.8 7.4 M 4 17.2 V 19.4 A 1.5 1.5 0 0 0 5.5 20.9 H 18.5 A 1.5 1.5 0 0 0 20 19.4 V 17.2" />
+                                <TextBlock Text="Отправить на сайт"
+                                           Foreground="{DynamicResource ActionInk}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Classes="primary" IsVisible="{Binding IsFinished}"
+                                AutomationProperties.Name="Вернуться к проектам"
+                                Click="OnProjectsClick">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.8"
+                                      StrokeLineCap="Round" StrokeJoin="Round"
+                                      VerticalAlignment="Center"
+                                      Stroke="{DynamicResource ActionInk}"
+                                      Data="M19 12H5M11.4 5.6 5 12l6.4 6.4" />
+                                <TextBlock Text="Вернуться к проектам"
+                                           Foreground="{DynamicResource ActionInk}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>
