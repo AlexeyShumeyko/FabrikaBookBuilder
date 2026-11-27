@@ -247,16 +247,19 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Equal("Ошибка в файлах", book.ConditionText);
             Assert.Contains(book.FileRows, file => file.HasProblem);
             Assert.Equal(string.Empty, page.Groups[0].FilesText);
-            Assert.Contains("Исправьте отмеченные книги", page.Groups[0].NoteText, StringComparison.Ordinal);
+
+            // The group says which file and what to do, not «исправьте отмеченные книги».
+            Assert.Contains("Замените файлы", page.Groups[0].NoteText, StringComparison.Ordinal);
+            Assert.Contains("800×600", page.Groups[0].NoteText, StringComparison.Ordinal);
         }
 
         /// <summary>
-        /// A file the site would only trim is a question, not a failure: the book stays ready and
-        /// opens itself so the customer can see which file the question is about. The book's own
-        /// reasons stay empty - the sentence about the file is in the file's row, once.
+        /// A file the site would trim stops the book and the group, and says so in the customer's
+        /// words: the row turns red with the reason under the name, the group's card names the
+        /// file, and there is nothing to tick - only a file to replace or a format to check.
         /// </summary>
         [Fact]
-        public async Task OpensABookWithAQuestionAndKeepsTheSentenceInTheFilesRow()
+        public async Task ATrimmedFileStopsTheBookAndTheGroupWithoutAnythingToTick()
         {
             var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
             var catalog = new StubCatalog(
@@ -281,9 +284,16 @@ namespace PhotoBook.Application.Tests.Sites
             await page.FileCheck;
 
             var book = page.Books[0];
-            Assert.True(page.Groups[0].NeedsConfirmation);
-            Assert.False(book.IsFailed);
+            Assert.False(page.Groups[0].CanGo);
+            Assert.True(page.Groups[0].HasProblem);
+            Assert.True(book.IsFailed);
+            Assert.Equal("Ошибка в файлах", book.ConditionText);
             Assert.True(book.IsExpanded);
+            Assert.True(book.HasProblem);
+            Assert.Contains("Обложка", book.ProblemText, StringComparison.Ordinal);
+
+            Assert.Contains("Замените файлы", page.Groups[0].NoteText, StringComparison.Ordinal);
+            Assert.DoesNotContain("Отметьте", page.Groups[0].NoteText, StringComparison.Ordinal);
             Assert.Equal(string.Empty, book.ReasonsText);
 
             var file = Assert.Single(book.FileRows, row => row.Title == "Разворот 1");
@@ -479,6 +489,29 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Contains("куда отправлять развороты", book.ReasonsText, StringComparison.Ordinal);
             Assert.Contains("Исправьте отмеченные книги", page.Groups[0].NoteText, StringComparison.Ordinal);
             Assert.False(page.HasMessage);
+        }
+
+        /// <summary>
+        /// A group with no format is not set up, and its books say so: the row cannot read
+        /// «Готова» over a group the site cannot price or print.
+        /// </summary>
+        [Fact]
+        public async Task AGroupWithoutAFormatDoesNotCallItsBooksReady()
+        {
+            var project = TestProject.Combined(TestProject.Book(1, "/c1.jpg", "/p1.jpg"));
+            var catalog = new StubCatalog(
+                new CatalogProduct(4494, "Лайфлат", "kit", 1, new[] { new CatalogFormat(9255, "21x30") }));
+            var page = new SiteOrderViewModel(catalog, new StubSessionStore(), new StubQuotes(), new StubFiles());
+
+            page.Prepare(project, "Проект");
+            await page.LoadFormatsAsync();
+
+            var book = page.Books[0];
+            Assert.Null(page.Groups[0].SelectedFormat);
+            Assert.True(book.IsGroupUnconfigured);
+            Assert.False(book.IsFine);
+            Assert.Equal("Не готова", book.ConditionText);
+            Assert.True(page.Groups[0].NoteIsAlert);
         }
 
         [Fact]

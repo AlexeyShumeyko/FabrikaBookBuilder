@@ -15,6 +15,9 @@ namespace PhotoBook.Application.Sites.Books.Files
     /// This is not the gate - <see cref="BookReadiness"/> is. The gate blocks on pages that are
     /// empty or beyond the book; this list says what is wrong with the files that are there, and
     /// at what level, so the preparation screen can explain a refusal instead of just showing it.
+    /// A file the site would trim is a refusal too: there is no box to tick that makes an
+    /// oversized cover the page the customer ordered, so the sentence names the file and sends
+    /// the customer back to the file or to the format's parameters.
     /// </para>
     /// </remarks>
     public static class BookFileCheck
@@ -106,10 +109,10 @@ namespace PhotoBook.Application.Sites.Books.Files
             if (rule.IsTooLarge(size))
             {
                 return new FileAlert(
-                    FileAlertLevel.NeedsConfirmation,
+                    FileAlertLevel.Blocking,
                     number,
                     $"{where}: «{name}» — {size} при требуемых {required}. " +
-                    "Сайт может обрезать файл по краям.");
+                    "Файл больше страницы, сайт напечатает его с обрезанными краями.");
             }
 
             if (rule.IsWithinTolerance(size))

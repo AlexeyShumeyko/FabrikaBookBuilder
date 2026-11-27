@@ -18,9 +18,10 @@ namespace PhotoBook.Presentation.ViewModels
     /// </para>
     /// <para>
     /// The reading runs by itself once the group has a plan, because a list of books that says
-    /// nothing about their files is a list the customer has to guess from. A problem that only
-    /// needs a yes is not hidden: the customer ticks the box, the group goes, and the line stays
-    /// in the list.
+    /// nothing about their files is a list the customer has to guess from. A file the site would
+    /// print cropped stops the group like any other refusal: the group names it on the card and
+    /// on the book's row, and the way forward is another file or another format - never a box to
+    /// tick, which could not make the page the size the site prints.
     /// </para>
     /// </remarks>
     public sealed partial class SiteOrderGroup
@@ -71,8 +72,6 @@ namespace PhotoBook.Presentation.ViewModels
             _cancelFiles = cancel;
             _pendingPlan = null;
 
-            // A new reading of the files is a new question, so an old yes no longer answers it.
-            ConfirmationsAccepted = false;
             _filesProblem = null;
             IsCheckingFiles = true;
             FilesText = "Читаем файлы книги.";

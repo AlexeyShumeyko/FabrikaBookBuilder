@@ -42,7 +42,7 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
         }
 
         [Fact]
-        public void ReportsAWiderFileAsAQuestionRatherThanARefusal()
+        public void BlocksAWiderFileAndSaysTheSiteWouldTrimIt()
         {
             // The roadmap's own case: 87 px wider and 5 px taller than the page.
             var pages = new[]
@@ -54,10 +54,13 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
 
             var alert = Assert.Single(BookFileCheck.Check(pages, PageImageRuleTests.Rule()));
 
-            Assert.Equal(FileAlertLevel.NeedsConfirmation, alert.Level);
+            // There is no third answer to an oversized file: the customer replaces it or checks
+            // the format. The order cannot go with a page the site would print cropped.
+            Assert.Equal(FileAlertLevel.Blocking, alert.Level);
             Assert.Equal(3, alert.PageNumber);
             Assert.Contains("5000×3500", alert.Message);
             Assert.Contains("4913×3495", alert.Message);
+            Assert.Contains("обрезан", alert.Message);
         }
 
         [Fact]

@@ -35,9 +35,6 @@ namespace PhotoBook.Application.Sites.Books.Files
         /// <summary>Problems that stop the order outright.</summary>
         public int BlockingCount => CountOf(FileAlertLevel.Blocking);
 
-        /// <summary>Problems the customer has to say yes to before the order goes.</summary>
-        public int ConfirmationCount => CountOf(FileAlertLevel.NeedsConfirmation);
-
         /// <summary>Whether nothing stops the order from being sent.</summary>
         public bool CanSend => Books.Count > 0 && BlockingCount == 0;
 

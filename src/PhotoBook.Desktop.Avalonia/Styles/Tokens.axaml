@@ -493,6 +493,9 @@
                  percent of ink. -->
             <Color x:Key="GhostHoverWash">#0B4A3A1C</Color>
 
+            <!-- A book's menu: the prototype's own shadow, a wide warm lift and a short one. -->
+            <BoxShadows x:Key="RowMenuShadow">0 26 60 0 #3D3C2D14, 0 4 12 0 #1A3C2D14</BoxShadows>
+
             <!-- The one line the recommended mode leads with: a warm box inside the card. -->
             <LinearGradientBrush x:Key="CalloutFill" StartPoint="0%,0%" EndPoint="35%,100%">
                 <GradientStop Color="#3DFFCE3C" Offset="0" />
@@ -1094,6 +1097,9 @@
 
             <!-- The same wash at night: four and a half percent of white. -->
             <Color x:Key="GhostHoverWash">#0BFFFFFF</Color>
+
+            <!-- The book menu's lift at night: the prototype's black, deeper than the page. -->
+            <BoxShadows x:Key="RowMenuShadow">0 26 60 0 #80000000, 0 4 12 0 #40000000</BoxShadows>
 
             <LinearGradientBrush x:Key="CalloutFill" StartPoint="0%,0%" EndPoint="35%,100%">
                 <GradientStop Color="#1AFFCD2D" Offset="0" />

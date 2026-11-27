@@ -73,7 +73,6 @@ namespace PhotoBook.Presentation.ViewModels
 
         private OrderFileCheck? _files;
         private bool _checkingFiles;
-        private bool _confirmationsAccepted;
         private string _filesText = string.Empty;
         private CancellationTokenSource? _cancelFiles;
         private Task _filesRun = Task.CompletedTask;
@@ -315,8 +314,7 @@ namespace PhotoBook.Presentation.ViewModels
             !IsExcluded &&
             _plan is { IsComplete: true } &&
             !_checkingFiles &&
-            _files is { CanSend: true } &&
-            (!NeedsConfirmation || _confirmationsAccepted);
+            _files is { CanSend: true };
 
         /// <summary>The files as the check found them; null until it has run.</summary>
         public OrderFileCheck? Files
@@ -328,7 +326,6 @@ namespace PhotoBook.Presentation.ViewModels
                     return;
 
                 OnPropertyChanged(nameof(HasFiles));
-                OnPropertyChanged(nameof(NeedsConfirmation));
                 OnPropertyChanged(nameof(CanGo));
                 NotifyProblem();
                 OnPropertyChanged(nameof(FileLines));
@@ -350,24 +347,6 @@ namespace PhotoBook.Presentation.ViewModels
 
         /// <summary>Whether the group itself has something the books do not.</summary>
         public bool HasFileLines => FileLines.Count > 0;
-
-        /// <summary>Whether the customer has to accept something before this group goes.</summary>
-        public bool NeedsConfirmation => _files is { ConfirmationCount: > 0 };
-
-        /// <summary>Whether the customer has said yes to the files this group's site may trim.</summary>
-        public bool ConfirmationsAccepted
-        {
-            get => _confirmationsAccepted;
-            set
-            {
-                if (!SetProperty(ref _confirmationsAccepted, value))
-                    return;
-
-                OnPropertyChanged(nameof(CanGo));
-                NotifyProblem();
-                _changed();
-            }
-        }
 
         /// <summary>Whether the files are being read right now.</summary>
         public bool IsCheckingFiles
@@ -522,6 +501,13 @@ namespace PhotoBook.Presentation.ViewModels
         {
             var included = IncludedBooks;
 
+            // A group without a format or without its parameters answered is not set up, and
+            // its books say so on their own rows: a green «Готова» beside a group that cannot
+            // be sent was the same false answer as a green badge over a refused file.
+            var unconfigured = SelectedFormat is null || !_parametersLoaded || !_parameters.IsAnswered;
+            foreach (var row in Books)
+                row.IsGroupUnconfigured = unconfigured;
+
             IsReady = included.Count > 0 &&
                 included.All(book => book.IsReady && book.SelectedFormat is not null) &&
                 _parametersLoaded &&
@@ -530,6 +516,8 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(CanGo));
             OnPropertyChanged(nameof(ProblemText));
             OnPropertyChanged(nameof(SummaryText));
+            OnPropertyChanged(nameof(NoteIsInfo));
+            OnPropertyChanged(nameof(NoteIsAlert));
 
             _changed();
 
@@ -556,7 +544,6 @@ namespace PhotoBook.Presentation.ViewModels
 
             Files = null;
             FilesText = string.Empty;
-            ConfirmationsAccepted = false;
 
             ApplyCheck();
         }
@@ -569,6 +556,8 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(HasNote));
             OnPropertyChanged(nameof(NoteIsWarning));
             OnPropertyChanged(nameof(NoteIsProblem));
+            OnPropertyChanged(nameof(NoteIsInfo));
+            OnPropertyChanged(nameof(NoteIsAlert));
             OnPropertyChanged(nameof(StatusText));
             OnPropertyChanged(nameof(HasStatus));
 

@@ -32,8 +32,10 @@ namespace PhotoBook.Application.Sites.Books.Files
     /// as reasons for the book's own expansion rather than lost.
     /// </para>
     /// <para>
-    /// A file the site may trim is not a failure: the customer says yes to it on the screen, and
-    /// the book stays «Готова». Only a file the site would refuse stops the book.
+    /// A file the site would trim is a failure like any other: the order cannot go with a page
+    /// that will be printed cropped, and a book that said «Готова» over one hid the very thing
+    /// the customer had to fix. Its sentence is in the file's own row, and the row says the book
+    /// has an error in its files.
     /// </para>
     /// <para>
     /// What the site said about one file is not repeated here. The expansion under the book

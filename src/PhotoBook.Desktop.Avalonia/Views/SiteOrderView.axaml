@@ -100,6 +100,105 @@
         <Style Selector="Button.pageGhost:pressed">
             <Setter Property="Background" Value="{DynamicResource GhostHoverWash}" />
         </Style>
+
+        <!--
+            The state pill is the prototype's own tag: twenty-six high, eleven and a half bold,
+            a six-pixel dot and eleven of air on either side. It used to be a smaller, tighter
+            pill, which read as a note beside the name rather than as the card's verdict.
+        -->
+        <Style Selector="Border.stateTag">
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Padding" Value="11,0" />
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,14,0" />
+        </Style>
+
+        <Style Selector="Border.stateTag TextBlock">
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <!-- The table's headings: the prototype's 9.5 bold capitals with a tenth of an em. -->
+        <Style Selector="TextBlock.columnHead">
+            <Setter Property="FontSize" Value="9.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="LetterSpacing" Value="0.95" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFaint}" />
+        </Style>
+
+        <!--
+            The menu a book's three dots open, transcribed from the prototype's .row-menu: a
+            344-wide card of one-pixel line at the theme's strong border, radius thirteen, and
+            a shadow deep enough to lift it off the page. Its lines are the prototype's too -
+            a mark, a name, and the format or the consequence under it in smaller faint ink.
+        -->
+        <Style Selector="Border.rowMenu">
+            <Setter Property="Width" Value="344" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="CornerRadius" Value="13" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceModal}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BoxShadow" Value="{DynamicResource RowMenuShadow}" />
+        </Style>
+
+        <Style Selector="TextBlock.rowMenuLabel">
+            <Setter Property="FontSize" Value="9.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="LetterSpacing" Value="0.95" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFaint}" />
+            <Setter Property="Margin" Value="10,8,10,5" />
+        </Style>
+
+        <Style Selector="Border.rowMenuSeparator">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Background" Value="{DynamicResource Slate200}" />
+            <Setter Property="Margin" Value="4,5" />
+        </Style>
+
+        <Style Selector="Button.rowMenuItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="9,8" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Foreground" Value="{DynamicResource TextDefault}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          HorizontalAlignment="Stretch" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.rowMenuItem:pointerover">
+            <Setter Property="Background" Value="{DynamicResource GhostHoverWash}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
+        </Style>
+
+        <Style Selector="Button.rowMenuItem.danger">
+            <Setter Property="Foreground" Value="{DynamicResource DangerInk}" />
+        </Style>
+
+        <Style Selector="Button.rowMenuItem.danger:pointerover">
+            <Setter Property="Background" Value="{DynamicResource DangerWash}" />
+        </Style>
+
+        <!-- The prototype paints the menu's marks a step quieter than its words. -->
+        <Style Selector="Button.rowMenuItem Path">
+            <Setter Property="Stroke" Value="{DynamicResource TextFaint}" />
+        </Style>
+
+        <Style Selector="Button.rowMenuItem.danger Path">
+            <Setter Property="Stroke" Value="{DynamicResource DangerInk}" />
+        </Style>
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*" MaxWidth="1600" Margin="32,24" HorizontalAlignment="Stretch">
@@ -382,46 +481,40 @@
 
                                                 <!-- The state in a pill: one word, because the
                                                      reason is the line under the head. -->
-                                                <Border Grid.Column="2" CornerRadius="999" Padding="9,3"
-                                                        VerticalAlignment="Center" Margin="0,0,14,0"
+                                                <Border Grid.Column="2" Classes="stateTag"
                                                         Background="{DynamicResource StatusTealFill}"
                                                         BorderBrush="{DynamicResource StatusTealBorder}"
                                                         BorderThickness="1"
                                                         IsVisible="{Binding StatusIsReady}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <StackPanel Orientation="Horizontal" Spacing="7">
                                                         <Border Width="6" Height="6" CornerRadius="3"
                                                                 Background="{DynamicResource StatusTealInk}"
                                                                 VerticalAlignment="Center" />
-                                                        <TextBlock Text="{Binding StatusTagText}" FontSize="11"
-                                                                   FontWeight="Bold"
+                                                        <TextBlock Text="{Binding StatusTagText}"
                                                                    Foreground="{DynamicResource StatusTealInk}" />
                                                     </StackPanel>
                                                 </Border>
 
-                                                <Border Grid.Column="2" CornerRadius="999" Padding="9,3"
-                                                        VerticalAlignment="Center" Margin="0,0,14,0"
+                                                <Border Grid.Column="2" Classes="stateTag"
                                                         Background="{DynamicResource StatusWarnFill}"
                                                         BorderBrush="{DynamicResource StatusWarnBorder}"
                                                         BorderThickness="1"
                                                         IsVisible="{Binding StatusIsProblem}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <StackPanel Orientation="Horizontal" Spacing="7">
                                                         <Border Width="6" Height="6" CornerRadius="3"
                                                                 Background="{DynamicResource StatusWarnInk}"
                                                                 VerticalAlignment="Center" />
-                                                        <TextBlock Text="{Binding StatusTagText}" FontSize="11"
-                                                                   FontWeight="Bold"
+                                                        <TextBlock Text="{Binding StatusTagText}"
                                                                    Foreground="{DynamicResource StatusWarnInk}" />
                                                     </StackPanel>
                                                 </Border>
 
-                                                <Border Grid.Column="2" CornerRadius="999" Padding="9,3"
-                                                        VerticalAlignment="Center" Margin="0,0,14,0"
+                                                <Border Grid.Column="2" Classes="stateTag"
                                                         Background="{DynamicResource StatusMutedFill}"
                                                         BorderBrush="{DynamicResource StatusMutedBorder}"
                                                         BorderThickness="1"
                                                         IsVisible="{Binding StatusIsMuted}">
-                                                    <TextBlock Text="{Binding StatusTagText}" FontSize="11"
-                                                               FontWeight="Bold"
+                                                    <TextBlock Text="{Binding StatusTagText}"
                                                                Foreground="{DynamicResource StatusMutedInk}" />
                                                 </Border>
 
@@ -431,7 +524,7 @@
                                                     <!-- The group's price, or the note that there is
                                                          none yet: the same place, so the eye can
                                                          compare one card with another. -->
-                                                    <TextBlock Text="{Binding SumText}" FontSize="13"
+                                                    <TextBlock Text="{Binding SumText}" FontSize="13.5"
                                                                FontWeight="ExtraBold"
                                                                VerticalAlignment="Center"
                                                                IsVisible="{Binding HasSum}" />
@@ -477,34 +570,56 @@
 
                                             <!-- What the group has to say about itself: why it
                                                  cannot go, that its books stay behind, or that it
-                                                 was uploaded before. One plate, so a card with
-                                                 nothing to say has no empty row. -->
-                                            <Border Grid.Row="1" Margin="18,0,18,12"
-                                                    Padding="12,10" CornerRadius="10"
-                                                    Background="{DynamicResource SunkenFaint}"
-                                                    BorderBrush="{DynamicResource BorderDefault}"
-                                                    BorderThickness="1"
-                                                    IsVisible="{Binding HasNote}">
-                                                <Grid ColumnDefinitions="Auto,*">
-                                                    <Path Width="14" Height="14" Stretch="Uniform"
-                                                          StrokeThickness="1.6"
-                                                          StrokeLineCap="Round" StrokeJoin="Round"
-                                                          VerticalAlignment="Top" Margin="0,2,0,0"
-                                                          Stroke="{DynamicResource TextFaint}"
-                                                          Data="M12 10.6v5M12 7.4v.1M12 21a9 9 0 1 1 0-18a9 9 0 1 1 0 18" />
+                                                 was uploaded before. A reason is an error and
+                                                 is painted like one - the same warm danger wash
+                                                 and ink the prototype gives a book that failed,
+                                                 a mark, and the next step in the sentence. Only
+                                                 the two quiet notes - a group taken out of the
+                                                 run, and one still reading - stay grey. -->
+                                            <Grid Grid.Row="1" Margin="18,0,18,12"
+                                                  IsVisible="{Binding HasNote}">
 
-                                                    <TextBlock Grid.Column="1" Margin="10,0,0,0"
-                                                               Text="{Binding NoteText}" FontSize="11.5"
-                                                               LineHeight="18" TextWrapping="Wrap"
-                                                               Foreground="{DynamicResource TextMuted}"
-                                                               IsVisible="{Binding NoteIsProblem}" />
-                                                    <TextBlock Grid.Column="1" Margin="10,0,0,0"
-                                                               Text="{Binding NoteText}" FontSize="11.5"
-                                                               LineHeight="18" TextWrapping="Wrap"
-                                                               Foreground="{DynamicResource StatusWarnInk}"
-                                                               IsVisible="{Binding NoteIsWarning}" />
-                                                </Grid>
-                                            </Border>
+                                                <Border Padding="12,10" CornerRadius="10"
+                                                        Background="{DynamicResource SunkenFaint}"
+                                                        BorderBrush="{DynamicResource BorderDefault}"
+                                                        BorderThickness="1"
+                                                        IsVisible="{Binding NoteIsInfo}">
+                                                    <Grid ColumnDefinitions="Auto,*">
+                                                        <Path Width="14" Height="14" Stretch="Uniform"
+                                                              StrokeThickness="1.6"
+                                                              StrokeLineCap="Round" StrokeJoin="Round"
+                                                              VerticalAlignment="Top" Margin="0,2,0,0"
+                                                              Stroke="{DynamicResource TextFaint}"
+                                                              Data="M12 10.6v5M12 7.4v.1M12 21a9 9 0 1 1 0-18a9 9 0 1 1 0 18" />
+
+                                                        <TextBlock Grid.Column="1" Margin="10,0,0,0"
+                                                                   Text="{Binding NoteText}" FontSize="11.5"
+                                                                   LineHeight="18" TextWrapping="Wrap"
+                                                                   Foreground="{DynamicResource TextMuted}" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <Border Padding="12,10" CornerRadius="10"
+                                                        Background="{DynamicResource DangerWash}"
+                                                        BorderBrush="{DynamicResource DangerPaperRing}"
+                                                        BorderThickness="1"
+                                                        IsVisible="{Binding NoteIsAlert}">
+                                                    <Grid ColumnDefinitions="Auto,*">
+                                                        <Path Width="14" Height="14" Stretch="Uniform"
+                                                              StrokeThickness="1.6"
+                                                              StrokeLineCap="Round" StrokeJoin="Round"
+                                                              VerticalAlignment="Top" Margin="0,2,0,0"
+                                                              Stroke="{DynamicResource DangerInk}"
+                                                              Data="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0M12 9v4M12 17v.1" />
+
+                                                        <TextBlock Grid.Column="1" Margin="10,0,0,0"
+                                                                   Text="{Binding NoteText}" FontSize="11.5"
+                                                                   FontWeight="SemiBold"
+                                                                   LineHeight="18" TextWrapping="Wrap"
+                                                                   Foreground="{DynamicResource DangerInk}" />
+                                                    </Grid>
+                                                </Border>
+                                            </Grid>
 
                                             <!-- the books, folded away by the chevron in the head -->
                                             <Grid Grid.Row="2" RowDefinitions="Auto,Auto"
@@ -512,19 +627,19 @@
 
                                                 <!-- the column headings, once -->
                                                 <Grid Grid.Row="0" ColumnDefinitions="38,*,72,68,112,88,26,26"
-                                                      Margin="18,0,18,9">
-                                                    <TextBlock Grid.Column="0" Text="№" Classes="t11"
-                                                               Foreground="{DynamicResource Slate500}" />
-                                                    <TextBlock Grid.Column="1" Text="Книга" Classes="t11"
-                                                               Foreground="{DynamicResource Slate500}" />
-                                                    <TextBlock Grid.Column="2" Text="Развороты" Classes="t11"
-                                                               Foreground="{DynamicResource Slate500}" />
-                                                    <TextBlock Grid.Column="3" Text="Фото" Classes="t11"
-                                                               Foreground="{DynamicResource Slate500}" />
-                                                    <TextBlock Grid.Column="4" Text="Состояние" Classes="t11"
-                                                               Foreground="{DynamicResource Slate500}" />
-                                                    <TextBlock Grid.Column="5" Text="Цена" Classes="t11"
-                                                               Foreground="{DynamicResource Slate500}" />
+                                                      Margin="18,8,18,9">
+                                                    <TextBlock Grid.Column="0" Text="№"
+                                                               Classes="columnHead" />
+                                                    <TextBlock Grid.Column="1" Text="КНИГА"
+                                                               Classes="columnHead" />
+                                                    <TextBlock Grid.Column="2" Text="РАЗВОРОТЫ"
+                                                               Classes="columnHead" />
+                                                    <TextBlock Grid.Column="3" Text="ФОТО"
+                                                               Classes="columnHead" />
+                                                    <TextBlock Grid.Column="4" Text="СОСТОЯНИЕ"
+                                                               Classes="columnHead" />
+                                                    <TextBlock Grid.Column="5" Text="ЦЕНА"
+                                                               Classes="columnHead" />
                                                 </Grid>
 
                                                 <Border Grid.Row="0" Height="1"
@@ -539,7 +654,7 @@
                                                                      sits on the danger wash, so the
                                                                      row is found before it is read. -->
                                                                 <Border CornerRadius="10" Margin="8,0"
-                                                                        Background="{DynamicResource Red50}"
+                                                                        Background="{DynamicResource DangerWash}"
                                                                         IsVisible="{Binding IsFailed}" />
 
                                                                 <StackPanel Opacity="{Binding RowOpacity}">
@@ -553,9 +668,9 @@
                                                                           Margin="18,9">
                                                                         <TextBlock Grid.Column="0"
                                                                                    Text="{Binding Number}"
-                                                                                   Classes="t12"
+                                                                                   FontSize="11"
                                                                                    VerticalAlignment="Center"
-                                                                                   Foreground="{DynamicResource Slate500}" />
+                                                                                   Foreground="{DynamicResource TextFaint}" />
 
                                                                         <Grid Grid.Column="1"
                                                                               ColumnDefinitions="Auto,*"
@@ -578,21 +693,34 @@
                                                                                        Stretch="UniformToFill" />
                                                                             </Border>
 
-                                                                            <TextBlock Grid.Column="1"
-                                                                                       Text="{Binding Name}"
-                                                                                       Classes="t12"
-                                                                                       Margin="10,0,0,0"
-                                                                                       VerticalAlignment="Center"
-                                                                                       TextTrimming="CharacterEllipsis" />
+                                                                            <!-- The name in the prototype's semibold, and
+                                                                                 the reason under it in the danger ink: a
+                                                                                 book with a bad cover is found by reading
+                                                                                 the row, not by opening it. -->
+                                                                            <StackPanel Grid.Column="1"
+                                                                                        Margin="10,0,0,0"
+                                                                                        VerticalAlignment="Center"
+                                                                                        Spacing="2">
+                                                                                <TextBlock Text="{Binding Name}"
+                                                                                           Classes="t12Semi"
+                                                                                           TextTrimming="CharacterEllipsis" />
+                                                                                <TextBlock Text="{Binding ProblemText}"
+                                                                                           FontSize="10.5" LineHeight="14"
+                                                                                           Foreground="{DynamicResource DangerInk}"
+                                                                                           TextWrapping="Wrap"
+                                                                                           IsVisible="{Binding HasProblem}" />
+                                                                            </StackPanel>
                                                                         </Grid>
 
                                                                         <TextBlock Grid.Column="2"
                                                                                    Text="{Binding Spreads}"
-                                                                                   Classes="t12"
+                                                                                   FontSize="12"
+                                                                                   Foreground="{DynamicResource TextMuted}"
                                                                                    VerticalAlignment="Center" />
                                                                         <TextBlock Grid.Column="3"
                                                                                    Text="{Binding Photos}"
-                                                                                   Classes="t12"
+                                                                                   FontSize="12"
+                                                                                   Foreground="{DynamicResource TextMuted}"
                                                                                    VerticalAlignment="Center" />
 
                                                                         <StackPanel Grid.Column="4"
@@ -602,73 +730,169 @@
                                                                                     IsVisible="{Binding IsFailed}">
                                                                             <Border Width="6" Height="6"
                                                                                     CornerRadius="3"
-                                                                                    Background="{DynamicResource Red500}"
+                                                                                    Background="{DynamicResource DangerInk}"
                                                                                     VerticalAlignment="Center" />
                                                                             <TextBlock Text="{Binding ConditionText}"
-                                                                                       Classes="t12"
-                                                                                       Foreground="{DynamicResource Red600}" />
+                                                                                       FontSize="11" FontWeight="Bold"
+                                                                                       Foreground="{DynamicResource DangerInk}" />
                                                                         </StackPanel>
                                                                         <StackPanel Grid.Column="4"
                                                                                     Orientation="Horizontal"
                                                                                     Spacing="6"
                                                                                     VerticalAlignment="Center"
-                                                                                    IsVisible="{Binding !IsFailed}">
+                                                                                    IsVisible="{Binding IsFine}">
                                                                             <Border Width="6" Height="6"
                                                                                     CornerRadius="3"
-                                                                                    Background="{DynamicResource Emerald500}"
+                                                                                    Background="{DynamicResource StatusTealInk}"
                                                                                     VerticalAlignment="Center" />
                                                                             <TextBlock Text="{Binding ConditionText}"
-                                                                                       Classes="t12" />
+                                                                                       FontSize="11" FontWeight="Bold"
+                                                                                       Foreground="{DynamicResource StatusTealInk}" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Column="4"
+                                                                                    Orientation="Horizontal"
+                                                                                    Spacing="6"
+                                                                                    VerticalAlignment="Center"
+                                                                                    IsVisible="{Binding ShowsGroupUnconfigured}">
+                                                                            <Border Width="6" Height="6"
+                                                                                    CornerRadius="3"
+                                                                                    Background="{DynamicResource StatusWarnInk}"
+                                                                                    VerticalAlignment="Center" />
+                                                                            <TextBlock Text="{Binding ConditionText}"
+                                                                                       FontSize="11" FontWeight="Bold"
+                                                                                       Foreground="{DynamicResource StatusWarnInk}" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Column="4"
+                                                                                    Orientation="Horizontal"
+                                                                                    Spacing="6"
+                                                                                    VerticalAlignment="Center"
+                                                                                    IsVisible="{Binding IsExcluded}">
+                                                                            <Border Width="6" Height="6"
+                                                                                    CornerRadius="3"
+                                                                                    Background="{DynamicResource TextFaint}"
+                                                                                    VerticalAlignment="Center" />
+                                                                            <TextBlock Text="{Binding ConditionText}"
+                                                                                       FontSize="11" FontWeight="Bold"
+                                                                                       Foreground="{DynamicResource TextFaint}" />
                                                                         </StackPanel>
 
                                                                         <TextBlock Grid.Column="5"
                                                                                    Text="{Binding PriceText}"
-                                                                                   Classes="t12"
-                                                                                   VerticalAlignment="Center" />
+                                                                                   FontSize="12" FontWeight="Bold"
+                                                                                   VerticalAlignment="Center"
+                                                                                   IsVisible="{Binding !IsPriceEmpty}" />
+                                                                        <TextBlock Grid.Column="5"
+                                                                                   Text="{Binding PriceText}"
+                                                                                   FontSize="12"
+                                                                                   Foreground="{DynamicResource TextFaint}"
+                                                                                   VerticalAlignment="Center"
+                                                                                   IsVisible="{Binding IsPriceEmpty}" />
 
                                                                         <!-- A book can be moved when
                                                                              the page's own split put
                                                                              it beside books it does
                                                                              not share parameters
                                                                              with. -->
+                                                                        <!-- The prototype's three dots, then the chevron: both 26 square with
+                                                                             a 14 mark, and the menu drops from the dots themselves. -->
                                                                         <Button Grid.Column="6"
+                                                                                x:Name="RowMenuButton"
                                                                                 Classes="ghostClear"
-                                                                                Padding="2"
+                                                                                Width="26" Height="26" Padding="0"
                                                                                 HorizontalAlignment="Center"
                                                                                 VerticalAlignment="Center"
-                                                                                AutomationProperties.Name="Переместить книгу"
+                                                                                AutomationProperties.Name="Действия с книгой"
                                                                                 Click="OnMoveBook">
-                                                                            <TextBlock Text="&#xE712;"
-                                                                                       FontFamily="Segoe MDL2 Assets"
-                                                                                       FontSize="12"
-                                                                                       Foreground="{DynamicResource Slate500}" />
+                                                                            <Path Width="14" Height="14" Stretch="Uniform"
+                                                                                  Fill="{DynamicResource Slate500}"
+                                                                                  Data="M5 10.8a1.2 1.2 0 1 0 0 2.4a1.2 1.2 0 1 0 0-2.4M12 10.8a1.2 1.2 0 1 0 0 2.4a1.2 1.2 0 1 0 0-2.4M19 10.8a1.2 1.2 0 1 0 0 2.4a1.2 1.2 0 1 0 0-2.4" />
                                                                         </Button>
                                                                         <Button Grid.Column="7"
                                                                                 Classes="ghostClear"
-                                                                                Padding="2"
+                                                                                Width="26" Height="26" Padding="0"
                                                                                 HorizontalAlignment="Right"
                                                                                 VerticalAlignment="Center"
                                                                                 AutomationProperties.Name="Файлы книги"
                                                                                 IsVisible="{Binding !IsExpanded}"
                                                                                 Click="OnToggleBook">
-                                                                            <TextBlock Text="&#xE70D;"
-                                                                                       FontFamily="Segoe MDL2 Assets"
-                                                                                       FontSize="10"
-                                                                                       Foreground="{DynamicResource Slate500}" />
+                                                                            <Path Width="14" Height="14" Stretch="Uniform"
+                                                                                  Stroke="{DynamicResource Slate500}"
+                                                                                  StrokeThickness="1.8"
+                                                                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                                                                  Data="M6 9l6 6 6-6" />
                                                                         </Button>
                                                                         <Button Grid.Column="7"
                                                                                 Classes="ghostClear"
-                                                                                Padding="2"
+                                                                                Width="26" Height="26" Padding="0"
                                                                                 HorizontalAlignment="Right"
                                                                                 VerticalAlignment="Center"
                                                                                 AutomationProperties.Name="Свернуть книгу"
                                                                                 IsVisible="{Binding IsExpanded}"
                                                                                 Click="OnToggleBook">
-                                                                            <TextBlock Text="&#xE70E;"
-                                                                                       FontFamily="Segoe MDL2 Assets"
-                                                                                       FontSize="10"
-                                                                                       Foreground="{DynamicResource Slate500}" />
+                                                                            <Path Width="14" Height="14" Stretch="Uniform"
+                                                                                  Stroke="{DynamicResource Slate500}"
+                                                                                  StrokeThickness="1.8"
+                                                                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                                                                  Data="M6 15l6-6 6 6" />
                                                                         </Button>
+
+                                                                        <!-- The prototype's .row-menu: a 344-wide card under the dots, a
+                                                                             heading, the other groups by name with their formats, a group of
+                                                                             the book's own, and the red line that takes it out of the run. -->
+                                                                        <Popup x:Name="RowMenuPopup"
+                                                                               Grid.Column="7"
+                                                                               IsOpen="{Binding IsMenuOpen, Mode=TwoWay}"
+                                                                               PlacementTarget="{Binding $parent[Grid]}"
+                                                                               Placement="BottomEdgeAlignedRight"
+                                                                               HorizontalOffset="-14"
+                                                                               VerticalOffset="-2"
+                                                                               IsLightDismissEnabled="True">
+                                                                            <Border Classes="rowMenu">
+                                                                                <StackPanel>
+                                                                                    <TextBlock Text="ПЕРЕМЕСТИТЬ В ГРУППУ"
+                                                                                               Classes="rowMenuLabel" />
+
+                                                                                    <ItemsControl ItemsSource="{Binding MenuEntries}">
+                                                                                        <ItemsControl.ItemTemplate>
+                                                                                            <DataTemplate>
+                                                                                                <Panel>
+                                                                                                    <Border Classes="rowMenuSeparator"
+                                                                                                            IsVisible="{Binding IsSeparator}" />
+                                                                                                    <Button Classes="rowMenuItem"
+                                                                                                            Classes.danger="{Binding IsDanger}"
+                                                                                                            IsVisible="{Binding !IsSeparator}"
+                                                                                                            AutomationProperties.Name="{Binding Title}"
+                                                                                                            Click="OnMenuEntry">
+                                                                                                        <Grid ColumnDefinitions="Auto,*">
+                                                                                                            <Path Width="15" Height="15"
+                                                                                                                  Stretch="Uniform"
+                                                                                                                  VerticalAlignment="Center"
+                                                                                                                  StrokeThickness="1.6"
+                                                                                                                  StrokeLineCap="Round"
+                                                                                                                  StrokeJoin="Round"
+                                                                                                                  Data="{Binding Icon}" />
+                                                                                                            <StackPanel Grid.Column="1"
+                                                                                                                        Margin="9,0,0,0"
+                                                                                                                        Spacing="1">
+                                                                                                                <TextBlock Text="{Binding Title}"
+                                                                                                                           FontSize="11.5"
+                                                                                                                           FontWeight="SemiBold"
+                                                                                                                           Foreground="{Binding $parent[Button].Foreground}"
+                                                                                                                           TextWrapping="Wrap" />
+                                                                                                                <TextBlock Text="{Binding Subtitle}"
+                                                                                                                           FontSize="10.5"
+                                                                                                                           Foreground="{DynamicResource TextFaint}"
+                                                                                                                           TextWrapping="Wrap" />
+                                                                                                            </StackPanel>
+                                                                                                        </Grid>
+                                                                                                    </Button>
+                                                                                                </Panel>
+                                                                                            </DataTemplate>
+                                                                                        </ItemsControl.ItemTemplate>
+                                                                                    </ItemsControl>
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                        </Popup>
                                                                     </Grid>
 
                                                                     <StackPanel Spacing="6" Margin="76,0,24,12"
@@ -727,29 +951,21 @@
                                                 </ItemsControl>
                                             </Grid>
 
-                                            <!-- What belongs to the group rather than to one book,
-                                                 and the one answer the customer has to give before
-                                                 sending. -->
+                                            <!-- What belongs to the group rather than to one book.
+                                                 There is no box to tick here: a group either goes
+                                                 with files the site can print, or says which file
+                                                 to replace and which format to check. -->
                                             <Border Grid.Row="2" Padding="20,12"
                                                     IsVisible="{Binding HasFileLines}">
-                                                <StackPanel Spacing="8">
-                                                    <ItemsControl ItemsSource="{Binding FileLines}">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <TextBlock Text="{Binding}" Classes="t11"
-                                                                           Foreground="{DynamicResource Red600}"
-                                                                           TextWrapping="Wrap" Margin="0,0,0,4" />
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-
-                                                    <CheckBox IsVisible="{Binding NeedsConfirmation}"
-                                                              IsChecked="{Binding ConfirmationsAccepted, Mode=TwoWay}"
-                                                              AutomationProperties.Name="Подтвердить файлы">
-                                                        <TextBlock Text="Да, отправить эти файлы — край сайт может обрезать."
-                                                                   Classes="t12" TextWrapping="Wrap" />
-                                                    </CheckBox>
-                                                </StackPanel>
+                                                <ItemsControl ItemsSource="{Binding FileLines}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding}" FontSize="11.5"
+                                                                       Foreground="{DynamicResource DangerInk}"
+                                                                       TextWrapping="Wrap" Margin="0,0,0,4" />
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
                                             </Border>
                                         </Grid>
                                     </Border>

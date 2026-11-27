@@ -56,10 +56,11 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
         {
             var missing = Group(PageFile("1.jpg"));
             var present = Group(PageFile("2.jpg"));
+            var layout = SpreadLayout(410, 290);
+            var required = PageImageRule.For(
+                layout.RequiredPixels(PagePart, 10, null)!, 0, layout.ResolutionDpi).Required;
 
-            var check = await ServiceFor(
-                call => call == 1 ? null : SpreadLayout(410, 290),
-                new PixelSize(4913, 3495))
+            var check = await ServiceFor(call => call == 1 ? null : layout, required)
                 .CheckAsync(new[] { missing, present });
 
             Assert.Equal(2, check.Books.Count);

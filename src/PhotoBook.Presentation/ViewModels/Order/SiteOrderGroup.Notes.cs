@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PhotoBook.Application.Sites.Books.Files;
 using CoreBook = PhotoBook.Core.Book;
 
 namespace PhotoBook.Presentation.ViewModels
@@ -56,10 +57,29 @@ namespace PhotoBook.Presentation.ViewModels
         public bool HasNote => NoteText.Length > 0;
 
         /// <summary>Whether the line is a warning about books left behind rather than a reason.</summary>
-        public bool NoteIsWarning => _staysBehind && HasNote;
+        public bool NoteIsWarning => HasNote && !IsExcluded && _staysBehind;
 
         /// <summary>Whether the line is the group's own reason for not being ready.</summary>
-        public bool NoteIsProblem => HasNote && !_staysBehind;
+        public bool NoteIsProblem => HasNote && !IsExcluded && !_staysBehind;
+
+        /// <summary>
+        /// Whether the line is a fact to read rather than a reason to act on.
+        /// </summary>
+        /// <remarks>
+        /// Two notes are quiet: the one a group says when the customer took it out of the run,
+        /// and the one it says while it is still reading its format or its files. Everything
+        /// else on this line is why the group cannot go, and it is painted as an error - a
+        /// grey sentence at the top of the card was the one thing the customer had to act on
+        /// and the last thing the eye found.
+        /// </remarks>
+        public bool NoteIsInfo => HasNote && (IsExcluded || IsReading);
+
+        /// <summary>Whether the line is an error or a warning, painted warm and loud.</summary>
+        public bool NoteIsAlert => HasNote && !NoteIsInfo;
+
+        /// <summary>Whether the group is still reading its format or its files.</summary>
+        private bool IsReading =>
+            !IsExcluded && SelectedFormat is not null && (IsBusy || !_parametersLoaded);
 
         /// <summary>
         /// Says whether this group is one the coming run leaves out, so its card reads as a
@@ -134,6 +154,20 @@ namespace PhotoBook.Presentation.ViewModels
                 if (_draftNote is not null)
                     return _draftNote;
 
+                // A refusal is named before the books are summed up: the group's line is what
+                // the customer reads first, and «исправьте отмеченные книги» left them to open
+                // each one to find out which file and why. The first refusal by name, then the
+                // only two ways out: another file, or a format whose parameters ask for the
+                // file the customer really has. There is no third answer, and the old line
+                // asking to tick a box was not one.
+                if (_files is { CanSend: false })
+                {
+                    var first = FirstFileProblem();
+
+                    return (first is null ? "Файлы книг не прошли проверку." : first) +
+                        " Замените файлы или проверьте, что выбран нужный формат и параметры.";
+                }
+
                 if (included.Any(book => book.IsFailed))
                     return "Исправьте отмеченные книги: откройте книгу в списке, чтобы увидеть причину.";
 
@@ -143,17 +177,39 @@ namespace PhotoBook.Presentation.ViewModels
                 if (_plan is null)
                     return "Сайт не назвал цену — проверьте параметры формата.";
 
-                if (NeedsConfirmation && !_confirmationsAccepted)
-                    return "Отметьте, что файлы можно отправлять: край сайта может обрезать.";
-
                 if (_files is null)
                     return _filesProblem ?? "Файлы ещё не проверены.";
 
-                if (_files is { CanSend: false })
-                    return "Файлы не готовы к отправке — исправьте отмеченное в книгах.";
-
                 return CanGo ? string.Empty : "Заказ не готов к отправке.";
             }
+        }
+
+        /// <summary>The first refusal the reading found, in the group's own order.</summary>
+        /// <remarks>
+        /// One sentence rather than a list: the group's line is a signpost to the books under it,
+        /// where every file stands on its own row with its own size and its own complaint.
+        /// </remarks>
+        private string? FirstFileProblem()
+        {
+            if (_files is null)
+                return null;
+
+            foreach (var book in _files.Books)
+            {
+                foreach (var alert in book.Alerts)
+                {
+                    if (alert.Level == FileAlertLevel.Blocking)
+                        return alert.Message;
+                }
+            }
+
+            foreach (var alert in _files.OrderAlerts)
+            {
+                if (alert.Level == FileAlertLevel.Blocking)
+                    return alert.Message;
+            }
+
+            return null;
         }
 
         /// <summary>Takes the formats the site offers and keeps the one the books carry.</summary>

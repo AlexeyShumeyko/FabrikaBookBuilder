@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using PhotoBook.Application.Sites.Books;
 using PhotoBook.Application.Sites.Books.Files;
@@ -30,6 +31,9 @@ namespace PhotoBook.Presentation.ViewModels
         private string _checkReasons = string.Empty;
         private string _planProblem = string.Empty;
         private IReadOnlyList<UploadFileRow> _fileRows = Array.Empty<UploadFileRow>();
+        private readonly ObservableCollection<BookMenuEntry> _menu = new();
+        private bool _isMenuOpen;
+        private bool _isGroupUnconfigured;
 
         public OrderBookRow(
             CoreBook book,
@@ -133,7 +137,7 @@ namespace PhotoBook.Presentation.ViewModels
         /// </remarks>
         public string ConditionText => IsExcluded
             ? "Исключена из загрузки"
-            : _planProblem.Length > 0
+            : _planProblem.Length > 0 || IsGroupUnconfigured
                 ? "Не готова"
                 : _statusText.Length > 0
                     ? _statusText
@@ -145,6 +149,101 @@ namespace PhotoBook.Presentation.ViewModels
 
         /// <summary>Whether the book needs attention, which the list shows in red.</summary>
         public bool IsFailed => !IsExcluded && (_checkFailed || _planProblem.Length > 0);
+
+        /// <summary>
+        /// Whether the group this book stands in is not set up yet.
+        /// </summary>
+        /// <remarks>
+        /// A book cannot be «Готова» in a group that is not set up: without a format or without
+        /// its parameters answered the site has nothing to price and nothing to print, so the
+        /// row says it is not ready in the warm tone the prototype gives an unconfigured group -
+        /// not in the green of a book that passed.
+        /// </remarks>
+        public bool IsGroupUnconfigured
+        {
+            get => _isGroupUnconfigured;
+            set
+            {
+                if (SetProperty(ref _isGroupUnconfigured, value))
+                    NotifyBook();
+            }
+        }
+
+        /// <summary>Whether the row's state is the warm «not set up» one.</summary>
+        /// <remarks>
+        /// One row shows one state: a book the site refused keeps its own red word even when
+        /// its group is also unconfigured, and an excluded book keeps the quiet one.
+        /// </remarks>
+        public bool ShowsGroupUnconfigured =>
+            IsGroupUnconfigured && !IsExcluded && !IsFailed;
+
+        /// <summary>Whether the book goes and has nothing wrong with it.</summary>
+        /// <remarks>
+        /// The green state is the going book's own: a book the customer took out of the run is
+        /// not a book that passed, and showing its «Исключена из загрузки» in the ready green
+        /// was the same mistake as calling a failed book ready.
+        /// </remarks>
+        public bool IsFine => !IsExcluded && !IsFailed && !IsGroupUnconfigured;
+
+        /// <summary>
+        /// The one sentence under the book's name: why it cannot go.
+        /// </summary>
+        /// <remarks>
+        /// The prototype writes the reason under the name, in red, so a book with a bad cover is
+        /// found by reading the row rather than by opening it: the files are listed in full in
+        /// the expansion, but the customer should not have to open a row to learn it is wrong.
+        /// </remarks>
+        public string ProblemText
+        {
+            get
+            {
+                if (IsExcluded)
+                    return string.Empty;
+
+                if (_planProblem.Length > 0)
+                    return _planProblem;
+
+                var file = _fileRows.FirstOrDefault(row => row.IsProblem);
+                if (file?.Problem is { Length: > 0 } problem)
+                    return problem;
+
+                var first = _checkReasons.Split('\n')[0].Trim();
+                return first;
+            }
+        }
+
+        /// <summary>Whether the row has a reason to show under its name.</summary>
+        public bool HasProblem => ProblemText.Length > 0;
+
+        /// <summary>Whether the row's three-dot menu is open.</summary>
+        public bool IsMenuOpen
+        {
+            get => _isMenuOpen;
+            set => SetProperty(ref _isMenuOpen, value);
+        }
+
+        /// <summary>What the three-dot menu offers right now.</summary>
+        /// <remarks>
+        /// Rebuilt on every opening from the page's groups, so the menu can never offer a group
+        /// the book already left, and it is empty while it is closed - which is also what keeps
+        /// a stale list out of the row's layout.
+        /// </remarks>
+        public IReadOnlyList<BookMenuEntry> MenuEntries => _menu;
+
+        /// <summary>Fills the menu and opens it.</summary>
+        public void ShowMenu(IEnumerable<BookMenuEntry> entries)
+        {
+            _menu.Clear();
+
+            foreach (var entry in entries)
+                _menu.Add(entry);
+
+            OnPropertyChanged(nameof(MenuEntries));
+            IsMenuOpen = true;
+        }
+
+        /// <summary>Closes the menu, keeping its last entries until it is filled again.</summary>
+        public void CloseMenu() => IsMenuOpen = false;
 
         /// <summary>Whether the book's files are listed under it.</summary>
         /// <remarks>
@@ -250,8 +349,12 @@ namespace PhotoBook.Presentation.ViewModels
             OnPropertyChanged(nameof(HasFileRows));
             OnPropertyChanged(nameof(ReasonsText));
             OnPropertyChanged(nameof(HasReasons));
+            OnPropertyChanged(nameof(ProblemText));
+            OnPropertyChanged(nameof(HasProblem));
             OnPropertyChanged(nameof(IsActive));
             OnPropertyChanged(nameof(IsLeftOut));
+            OnPropertyChanged(nameof(IsFine));
+            OnPropertyChanged(nameof(ShowsGroupUnconfigured));
             OnPropertyChanged(nameof(RowOpacity));
             OnPropertyChanged(nameof(ExclusionText));
         }
@@ -300,8 +403,15 @@ namespace PhotoBook.Presentation.ViewModels
         public string PriceText
         {
             get => _priceText;
-            private set => SetProperty(ref _priceText, value ?? "—");
+            private set
+            {
+                if (SetProperty(ref _priceText, value ?? "—"))
+                    OnPropertyChanged(nameof(IsPriceEmpty));
+            }
         }
+
+        /// <summary>Whether the row is still waiting for a price rather than showing one.</summary>
+        public bool IsPriceEmpty => _priceText == "—";
 
         /// <summary>Clears whatever price was shown, for when a choice below changes.</summary>
         public void ForgetPrice() => PriceText = "—";

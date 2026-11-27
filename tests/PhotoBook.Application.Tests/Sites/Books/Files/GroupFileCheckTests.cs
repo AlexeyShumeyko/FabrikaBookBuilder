@@ -35,7 +35,7 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
         }
 
         [Fact]
-        public void AsksWhenTheGroupHoldsTwoFormats()
+        public void BlocksAGroupThatHoldsTwoFormats()
         {
             var rules = new List<PageImageRule>
             {
@@ -46,10 +46,11 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
 
             var alert = Assert.Single(GroupFileCheck.Check(rules));
 
-            Assert.Equal(FileAlertLevel.NeedsConfirmation, alert.Level);
+            Assert.Equal(FileAlertLevel.Blocking, alert.Level);
             Assert.Null(alert.PageNumber);
             Assert.Contains("4913×3495 (2 кн.)", alert.Message);
             Assert.Contains("5481×3898 (1 кн.)", alert.Message);
+            Assert.Contains("Переместите", alert.Message);
         }
 
         [Fact]

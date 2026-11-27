@@ -6,10 +6,11 @@ namespace PhotoBook.Application.Sites.Books.Files
 {
     /// <summary>Checks the books of one order against each other.</summary>
     /// <remarks>
-    /// A group is what the customer confirms as one order, so its books have to be the same
-    /// book: pages of different pixel sizes mean the order holds two formats, which is either a
-    /// deliberate mix or a book left in the wrong group. Only the customer can tell those
-    /// apart, so this asks rather than decides.
+    /// A group is one order on the site, so its books have to be the same book: pages of
+    /// different pixel sizes mean the order holds two formats, which the site will print as two
+    /// products under one project. The customer decides what to do - move the book into a group
+    /// of its own, or correct the format and its parameters - but the order cannot go while it
+    /// holds both, and the sentence says which groups the sizes belong to.
     /// </remarks>
     public static class GroupFileCheck
     {
@@ -39,10 +40,10 @@ namespace PhotoBook.Application.Sites.Books.Files
             return new[]
             {
                 new FileAlert(
-                    FileAlertLevel.NeedsConfirmation,
+                    FileAlertLevel.Blocking,
                     null,
                     $"Книги в заказе требуют разный размер страницы: {described}. " +
-                    "Сайт напечатает их как разные книги — проверьте, так ли задумано.")
+                    "Переместите книгу в другую группу или проверьте выбранный формат и параметры.")
             };
         }
     }

@@ -58,24 +58,6 @@ namespace PhotoBook.Application.Tests.Sites.Books.Files
             Assert.Empty(status.Reasons);
         }
 
-        /// <summary>
-        /// A file the site may trim is not a refusal: the customer answers it on the screen, and
-        /// the book stays ready. The question is in the file's own row.
-        /// </summary>
-        [Fact]
-        public void AFileTheSiteMayTrimIsStillReady()
-        {
-            var book = Book(files: 2);
-            var check = Checked(book, new FileAlert(FileAlertLevel.NeedsConfirmation, 1, "Разворот 1: край обрежется."));
-
-            var status = BookStatus.Of(book, check, isChecking: false);
-
-            Assert.Equal(BookStatusKind.Ready, status.Kind);
-            Assert.True(status.IsReady);
-            Assert.False(status.HasProblem);
-            Assert.Empty(status.Reasons);
-        }
-
         [Fact]
         public void ABookWhoseFilesWereNotReadYetIsBeingChecked()
         {

@@ -727,6 +727,7 @@
                     <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"
                                       Content="{TemplateBinding Content}"
                                       TextElement.FontSize="11"
+                                      TextElement.FontWeight="SemiBold"
                                       TextElement.Foreground="{TemplateBinding Foreground}" />
                 </StackPanel>
             </ControlTemplate>

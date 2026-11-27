@@ -8,10 +8,9 @@ namespace PhotoBook.Presentation.ViewModels
 {
     /// <summary>One file of a book as the list shows it: what it is, its name, and its problem.</summary>
     /// <remarks>
-    /// The level decides the colour, not the presence of the text. A file the site refuses and a
-    /// file it would trim are both problems the customer has to look at, and both are red; a file
-    /// inside the site's own tolerance is a remark and stays grey. Painting every line red made a
-    /// saveable book look broken, and painting a real problem grey hid it.
+    /// The level decides the colour, not the presence of the text. A file the order cannot go
+    /// with is red; a file inside the site's own tolerance is a remark and stays grey. Painting
+    /// every line red made a saveable book look broken, and painting a real problem grey hid it.
     /// </remarks>
     public sealed record UploadFileRow(
         string Title,
@@ -23,7 +22,7 @@ namespace PhotoBook.Presentation.ViewModels
         public bool HasProblem => !string.IsNullOrEmpty(Problem);
 
         /// <summary>Whether the site's words are a problem rather than a remark.</summary>
-        public bool IsProblem => HasProblem && Level is FileAlertLevel.Blocking or FileAlertLevel.NeedsConfirmation;
+        public bool IsProblem => HasProblem && Level == FileAlertLevel.Blocking;
 
         /// <summary>Whether the site only remarked on the file.</summary>
         public bool IsRemark => HasProblem && Level == FileAlertLevel.Information;

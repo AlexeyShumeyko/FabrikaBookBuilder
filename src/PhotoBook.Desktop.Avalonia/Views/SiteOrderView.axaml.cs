@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -85,13 +86,27 @@ namespace PhotoBook.Shell.Views
             card?.BringIntoView();
         }
 
+        // The prototype's sprite, point for point: the four arrows of «move», the folder with a
+        // plus, and the cross of the red line at the menu's foot.
+        private const string MoveIcon =
+            "M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3";
+
+        private const string NewGroupIcon =
+            "M3.5 8A2.5 2.5 0 0 1 6 5.5h3.6l1.8 2.2H18A2.5 2.5 0 0 1 20.5 10v3" +
+            "M3.5 8v9.2A2.5 2.5 0 0 0 6 19.7h6" +
+            "M17.5 14v6M14.5 17h6";
+
+        private const string RemoveIcon = "M6 6l12 12M18 6L6 18";
+
         /// <summary>
-        /// Offers the groups this book can move to, and a group of its own.
+        /// Opens the book's own menu: the groups it can move to, a group of its own, and the
+        /// line that takes it out of the run.
         /// </summary>
         /// <remarks>
-        /// The menu is built from the page's groups at the moment of the click rather than
-        /// bound: the list changes after every move, and a bound menu would show the groups
-        /// the book has already left.
+        /// The menu is the prototype's, built from the page's groups at the moment of the click
+        /// rather than bound: the list changes after every move, and a bound menu would show the
+        /// groups the book has already left. Only one menu is open at a time - a second set of
+        /// dots closes the first, and so does the same set of dots pressed again.
         /// </remarks>
         private void OnMoveBook(object? sender, RoutedEventArgs e)
         {
@@ -102,36 +117,59 @@ namespace PhotoBook.Shell.Views
                 return;
             }
 
+            var wasOpen = row.IsMenuOpen;
+
+            foreach (var other in page.Groups.SelectMany(group => group.Books))
+                other.CloseMenu();
+
+            if (wasOpen)
+                return;
+
             var current = page.GroupOf(row);
-            var flyout = new MenuFlyout();
+            var entries = new List<BookMenuEntry>();
 
             foreach (var group in page.Groups.Where(group => !ReferenceEquals(group, current)))
             {
                 var target = group;
-                flyout.Items.Add(Item(
-                    "В группу " + target.Number + " — " + target.SummaryText,
+                entries.Add(BookMenuEntry.Item(
+                    "В группу " + target.Number,
+                    target.SelectedFormat?.DisplayText ?? "Формат не выбран",
+                    MoveIcon,
                     () => page.MoveBook(row, target)));
             }
 
-            if (flyout.Items.Count > 0)
-                flyout.Items.Add(new Separator());
+            entries.Add(BookMenuEntry.Item(
+                "В новую группу",
+                "Создать группу под этот формат",
+                NewGroupIcon,
+                () => page.MoveBook(row, null)));
 
-            flyout.Items.Add(Item("В новую группу", () => page.MoveBook(row, null)));
-
-            // The book stays in the group and keeps its row; it is only taken out of the run.
-            flyout.Items.Add(new Separator());
-            flyout.Items.Add(Item(
+            // The book stays in the project and keeps its row; it is only taken out of the run,
+            // so the last line is red and says so.
+            entries.Add(BookMenuEntry.Separator());
+            entries.Add(BookMenuEntry.Item(
                 row.IsExcluded ? "Вернуть книгу в загрузку" : "Исключить книгу из загрузки",
-                row.ToggleExcluded));
+                row.IsExcluded ? "Книга снова будет отправлена" : "Книга останется в проекте",
+                RemoveIcon,
+                row.ToggleExcluded,
+                danger: true));
 
-            flyout.ShowAt(control);
+            row.ShowMenu(entries);
         }
 
-        private static MenuItem Item(string header, Action action)
+        /// <summary>Runs the line of the book's menu that was pressed.</summary>
+        private void OnMenuEntry(object? sender, RoutedEventArgs e)
         {
-            var item = new MenuItem { Header = header };
-            item.Click += (_, _) => action();
-            return item;
+            if ((sender as Control)?.DataContext is not BookMenuEntry entry || entry.Run is null)
+                return;
+
+            if (DataContext is SiteOrderViewModel page)
+            {
+                foreach (var row in page.Groups.SelectMany(group => group.Books))
+                    row.CloseMenu();
+            }
+
+            entry.Run();
         }
     }
 }

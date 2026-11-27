@@ -79,8 +79,13 @@ namespace PhotoBook.Presentation.ViewModels
         public bool HasSum => HasTotal;
 
         /// <summary>Books of the group that are ready to go.</summary>
+        /// <remarks>
+        /// The count is of books the order would actually send: a full book whose files the site
+        /// refused is not ready, and a panel that said «2 из 2 книг готовы» over two errors was
+        /// the one place on the page still claiming the group was fine.
+        /// </remarks>
         public int ReadyBookCount =>
-            IncludedBooks.Count(book => book.IsReady && book.SelectedFormat is not null);
+            IncludedBooks.Count(book => book.IsReady && book.SelectedFormat is not null && !book.IsFailed);
 
         /// <summary>How many of the group's books are answered, as the panel's foot says it.</summary>
         public string ReadyBooksText
