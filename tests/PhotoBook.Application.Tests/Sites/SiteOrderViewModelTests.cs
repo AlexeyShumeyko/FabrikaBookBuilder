@@ -203,6 +203,14 @@ namespace PhotoBook.Application.Tests.Sites
             Assert.Contains("«Прослойка»", block.MissingText, StringComparison.Ordinal);
             Assert.Contains("«Прослойка»", page.Groups[0].ProblemText, StringComparison.Ordinal);
 
+            // The group names the step that belongs to the customer, not the one the program
+            // is taking: "читаем параметры" asked them to wait for a panel that was already
+            // on screen, and nothing would happen until they answered it.
+            Assert.StartsWith("Выберите параметры формата", page.Groups[0].ProblemText,
+                StringComparison.Ordinal);
+            Assert.DoesNotContain("Читаем параметры", page.Groups[0].ProblemText,
+                StringComparison.Ordinal);
+
             question.Selected = question.Elements[0];
 
             Assert.Equal(420268, project.Books[0].SiteOptions[65738]);

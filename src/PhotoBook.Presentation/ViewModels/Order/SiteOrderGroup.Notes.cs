@@ -78,8 +78,13 @@ namespace PhotoBook.Presentation.ViewModels
         public bool NoteIsAlert => HasNote && !NoteIsInfo;
 
         /// <summary>Whether the group is still reading its format or its files.</summary>
+        /// <remarks>
+        /// A group whose questions are already on screen is not reading: the customer has
+        /// something to answer, and that belongs in the loud line rather than in a grey note
+        /// that reads as the program being busy on their behalf.
+        /// </remarks>
         private bool IsReading =>
-            !IsExcluded && SelectedFormat is not null && (IsBusy || !_parametersLoaded);
+            !IsExcluded && SelectedFormat is not null && (IsBusy || (!_parametersLoaded && !HasParameters));
 
         /// <summary>
         /// Says whether this group is one the coming run leaves out, so its card reads as a
@@ -133,14 +138,22 @@ namespace PhotoBook.Presentation.ViewModels
                 if (SelectedFormat is null)
                     return "Выберите формат группы — по нему сайт считает цену.";
 
-                if (!_parametersLoaded)
-                    return "Читаем параметры формата на сайте — это займёт несколько секунд.";
-
                 if (_parametersProblem is not null)
                     return _parametersProblem;
 
+                // The questions themselves come first, whether or not the read has reported
+                // back: the line has to say what the customer must do, not what the program is
+                // doing. «Читаем параметры…» stood here while the panel beside it was already
+                // asking, and it invited the customer to wait for a step that was theirs.
                 if (!_parameters.IsAnswered)
-                    return "Выберите параметры формата: " + _parameters.MissingText + ".";
+                {
+                    return _parameters.MissingText.Length > 0
+                        ? "Выберите параметры формата: " + _parameters.MissingText + "."
+                        : "Выберите параметры формата — по ним сайт считает цену.";
+                }
+
+                if (!_parametersLoaded)
+                    return "Читаем параметры формата на сайте.";
 
                 if (_isPricing)
                     return "Считаем цену на сайте…";

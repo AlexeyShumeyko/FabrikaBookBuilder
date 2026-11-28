@@ -660,6 +660,13 @@
             <Color x:Key="StatusTealFill">#1A0D8B79</Color>
             <Color x:Key="StatusTealBorder">#330D8B79</Color>
 
+            <!-- On paper the prototype gives a book's own state a brighter green than the
+                 pill's: the pill is a label and its green is deepened for legs (#0b7a69 on
+                 the light theme), while a book's state takes the prototype's teal as it is.
+                 Two greens, not one used twice, which is what made a ready book look faded
+                 beside the tag above it. -->
+            <Color x:Key="StateOkInk">#0D8B79</Color>
+
             <!-- The loaded list's shared state: the product's own gold as a wash, with a deep
                  gold word on it. The solid gold the badge used to be is what a button is, not
                  what a label is - on warm paper it read as an orange slab among cream
@@ -1211,6 +1218,7 @@
             <Color x:Key="StatusTealInk">#5AD9C6</Color>
             <Color x:Key="StatusTealFill">#1A5AD9C6</Color>
             <Color x:Key="StatusTealBorder">#2E5AD9C6</Color>
+            <Color x:Key="StateOkInk">#5AD9C6</Color>
 
             <!-- The shared state at night: cream words on a thin gold wash, as the prototype
                  draws it. The gold is the accent here, so it speaks without a slab. -->

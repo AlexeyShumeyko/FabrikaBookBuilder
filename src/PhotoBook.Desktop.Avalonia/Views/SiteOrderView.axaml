@@ -114,9 +114,16 @@
             <Setter Property="Margin" Value="0,0,14,0" />
         </Style>
 
+        <!--
+            The words sit in the middle of the pill, not at the top of it. A horizontal stack
+            stretches its children to the pill's twenty-six pixels, and a stretched TextBlock
+            draws its one line at the top of that box - which is what put «Требует внимания»
+            against the pill's upper edge with the dot centred beside it.
+        -->
         <Style Selector="Border.stateTag TextBlock">
             <Setter Property="FontSize" Value="11.5" />
             <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
         <!-- The table's headings: the prototype's 9.5 bold capitals with a tenth of an em. -->
@@ -526,6 +533,7 @@
                                                          compare one card with another. -->
                                                     <TextBlock Text="{Binding SumText}" FontSize="13.5"
                                                                FontWeight="ExtraBold"
+                                                               Foreground="{DynamicResource TextStrong}"
                                                                VerticalAlignment="Center"
                                                                IsVisible="{Binding HasSum}" />
                                                     <TextBlock Text="{Binding SumText}" FontSize="11.5"
@@ -626,7 +634,10 @@
                                                   IsVisible="{Binding IsExpanded}">
 
                                                 <!-- the column headings, once -->
-                                                <Grid Grid.Row="0" ColumnDefinitions="38,*,72,68,112,88,26,26"
+                                                <!-- The prototype's table has eight of air between its columns; the
+                                                     fixed ones here are wider than their longest word so the
+                                                     headings and the values beside them stop touching. -->
+                                                <Grid Grid.Row="0" ColumnDefinitions="38,*,92,88,146,112,26,26"
                                                       Margin="18,8,18,9">
                                                     <TextBlock Grid.Column="0" Text="№"
                                                                Classes="columnHead" />
@@ -664,7 +675,7 @@
                                                                          what the check found: the
                                                                          cover, the spreads, and the
                                                                          file the site refused. -->
-                                                                    <Grid ColumnDefinitions="38,*,72,68,112,88,26,26"
+                                                                    <Grid ColumnDefinitions="38,*,92,88,146,112,26,26"
                                                                           Margin="18,9">
                                                                         <TextBlock Grid.Column="0"
                                                                                    Text="{Binding Number}"
@@ -703,6 +714,7 @@
                                                                                         Spacing="2">
                                                                                 <TextBlock Text="{Binding Name}"
                                                                                            Classes="t12Semi"
+                                                                                           Foreground="{DynamicResource TextDefault}"
                                                                                            TextTrimming="CharacterEllipsis" />
                                                                                 <TextBlock Text="{Binding ProblemText}"
                                                                                            FontSize="10.5" LineHeight="14"
@@ -736,6 +748,9 @@
                                                                                        FontSize="11" FontWeight="Bold"
                                                                                        Foreground="{DynamicResource DangerInk}" />
                                                                         </StackPanel>
+                                                                        <!-- A book that went through says so in the prototype's .state-ok green,
+                                                                             which is a shade brighter than the pill's own: the row is a fact,
+                                                                             the pill above it is a label. -->
                                                                         <StackPanel Grid.Column="4"
                                                                                     Orientation="Horizontal"
                                                                                     Spacing="6"
@@ -743,11 +758,11 @@
                                                                                     IsVisible="{Binding IsFine}">
                                                                             <Border Width="6" Height="6"
                                                                                     CornerRadius="3"
-                                                                                    Background="{DynamicResource StatusTealInk}"
+                                                                                    Background="{DynamicResource StateOkInk}"
                                                                                     VerticalAlignment="Center" />
                                                                             <TextBlock Text="{Binding ConditionText}"
                                                                                        FontSize="11" FontWeight="Bold"
-                                                                                       Foreground="{DynamicResource StatusTealInk}" />
+                                                                                       Foreground="{DynamicResource StateOkInk}" />
                                                                         </StackPanel>
                                                                         <StackPanel Grid.Column="4"
                                                                                     Orientation="Horizontal"
@@ -779,6 +794,7 @@
                                                                         <TextBlock Grid.Column="5"
                                                                                    Text="{Binding PriceText}"
                                                                                    FontSize="12" FontWeight="Bold"
+                                                                                   Foreground="{DynamicResource TextDefault}"
                                                                                    VerticalAlignment="Center"
                                                                                    IsVisible="{Binding !IsPriceEmpty}" />
                                                                         <TextBlock Grid.Column="5"
@@ -793,8 +809,10 @@
                                                                              it beside books it does
                                                                              not share parameters
                                                                              with. -->
-                                                                        <!-- The prototype's three dots, then the chevron: both 26 square with
-                                                                             a 14 mark, and the menu drops from the dots themselves. -->
+                                                                        <!-- The prototype's three dots, then the chevron: a 26 square of air
+                                                                             around a mark that is smaller than the words beside it, so the
+                                                                             two tools read as controls of the row rather than as glyphs
+                                                                             competing with it. Both are centred on the row's own height. -->
                                                                         <Button Grid.Column="6"
                                                                                 x:Name="RowMenuButton"
                                                                                 Classes="ghostClear"
@@ -803,35 +821,35 @@
                                                                                 VerticalAlignment="Center"
                                                                                 AutomationProperties.Name="Действия с книгой"
                                                                                 Click="OnMoveBook">
-                                                                            <Path Width="14" Height="14" Stretch="Uniform"
+                                                                            <Path Width="12" Height="12" Stretch="Uniform"
                                                                                   Fill="{DynamicResource Slate500}"
                                                                                   Data="M5 10.8a1.2 1.2 0 1 0 0 2.4a1.2 1.2 0 1 0 0-2.4M12 10.8a1.2 1.2 0 1 0 0 2.4a1.2 1.2 0 1 0 0-2.4M19 10.8a1.2 1.2 0 1 0 0 2.4a1.2 1.2 0 1 0 0-2.4" />
                                                                         </Button>
                                                                         <Button Grid.Column="7"
                                                                                 Classes="ghostClear"
                                                                                 Width="26" Height="26" Padding="0"
-                                                                                HorizontalAlignment="Right"
+                                                                                HorizontalAlignment="Center"
                                                                                 VerticalAlignment="Center"
                                                                                 AutomationProperties.Name="Файлы книги"
                                                                                 IsVisible="{Binding !IsExpanded}"
                                                                                 Click="OnToggleBook">
-                                                                            <Path Width="14" Height="14" Stretch="Uniform"
+                                                                            <Path Width="12" Height="12" Stretch="Uniform"
                                                                                   Stroke="{DynamicResource Slate500}"
-                                                                                  StrokeThickness="1.8"
+                                                                                  StrokeThickness="2.1"
                                                                                   StrokeLineCap="Round" StrokeJoin="Round"
                                                                                   Data="M6 9l6 6 6-6" />
                                                                         </Button>
                                                                         <Button Grid.Column="7"
                                                                                 Classes="ghostClear"
                                                                                 Width="26" Height="26" Padding="0"
-                                                                                HorizontalAlignment="Right"
+                                                                                HorizontalAlignment="Center"
                                                                                 VerticalAlignment="Center"
                                                                                 AutomationProperties.Name="Свернуть книгу"
                                                                                 IsVisible="{Binding IsExpanded}"
                                                                                 Click="OnToggleBook">
-                                                                            <Path Width="14" Height="14" Stretch="Uniform"
+                                                                            <Path Width="12" Height="12" Stretch="Uniform"
                                                                                   Stroke="{DynamicResource Slate500}"
-                                                                                  StrokeThickness="1.8"
+                                                                                  StrokeThickness="2.1"
                                                                                   StrokeLineCap="Round" StrokeJoin="Round"
                                                                                   Data="M6 15l6-6 6 6" />
                                                                         </Button>
